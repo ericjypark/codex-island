@@ -2,9 +2,12 @@ import SwiftUI
 
 /// Breathing live-status dot. Active = teal with a pulsing outer halo;
 /// inactive = dim white. Driven by TimelineView so the breath ticks at
-/// display refresh rate, not via Timer.
+/// display refresh rate. Briefly bumps on each fresh sync so the user can
+/// see new data has just landed.
 struct LiveDot: View {
     let active: Bool
+    @ObservedObject private var store = UsageStore.shared
+    @State private var syncBump: CGFloat = 1.0
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 120.0)) { context in
@@ -22,6 +25,16 @@ struct LiveDot: View {
             }
             .frame(width: 6, height: 6)
             .shadow(color: active ? IslandColor.liveTeal.opacity(0.55) : .clear, radius: 3)
+        }
+        .scaleEffect(syncBump)
+        // Two-phase bump on each fresh sync: snap up to 1.18, then settle
+        // back to 1.0 over strongEaseOut. Reads as "data just arrived" —
+        // the breath continues underneath, the bump rides on top.
+        .onChange(of: store.lastUpdated) { _, _ in
+            withAnimation(.strongEaseOut) { syncBump = 1.18 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.14) {
+                withAnimation(.strongEaseOut) { syncBump = 1.0 }
+            }
         }
     }
 }
