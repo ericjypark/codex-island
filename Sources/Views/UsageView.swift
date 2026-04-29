@@ -212,15 +212,10 @@ struct ChartTile: View {
             }
         }
         .id(style)
-        // Scale-from-0.96 + opacity + strong ease-out so Ring → Bar settles
-        // into place rather than reading as two distinct objects crossfading.
-        // Slightly faster than .strongEaseOut (220 vs 280ms) — content swap,
-        // not a value change.
-        .transition(
-            .opacity
-            .combined(with: .scale(scale: 0.96))
-            .animation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.22))
-        )
+        // Blur + scale + opacity, all on the same strong ease-out at 220ms.
+        // The blur masks the geometric mismatch between Ring and Bar so the
+        // crossfade reads as one morph instead of two stacked objects.
+        .transition(.chartSwap.animation(.chartSwap))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .frame(height: Self.tileHeight)
     }
