@@ -8,7 +8,7 @@
 
 A floating macOS overlay that turns the MacBook notch into a Dynamic-Island-style live activity for Claude Code and Codex API rate limits.
 
-![CodexIsland expanded](Assets/screenshot-expanded.png)
+<img width="800" height="450" alt="ezgif-2bf490cee1dd4dc7" src="https://github.com/user-attachments/assets/f00ec519-c1e9-48f9-8d42-adda4d0a2f24" />
 
 <sub>_Screenshots and GIF land with the v0.1.0 release. The reference build is fully working — see the [latest release](https://github.com/ericjypark/codex-island/releases) for binaries._</sub>
 
