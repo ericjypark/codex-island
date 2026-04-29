@@ -21,6 +21,8 @@ sits quietly over the notch, expands on hover, and shows both providers'
 5-hour and weekly windows with reset timing, chart controls, and a small
 settings surface.
 
+<img width="800" height="450" alt="ezgif-2bf490cee1dd4dc7" src="https://github.com/user-attachments/assets/f00ec519-c1e9-48f9-8d42-adda4d0a2f24" />
+
 The app is free, open source, unsigned, and local-first. It reads credentials
 already written by Claude Code / Claude Desktop and Codex, then calls only the
 providers' own usage endpoints.
