@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Build DMG
+        run: ./release.sh
+
+      - name: Compute checksum
+        id: sha
+        run: echo "sha=$(shasum -a 256 dist/CodexIsland-*.dmg | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/CodexIsland-*.dmg
+          generate_release_notes: true
+          body: |
+            **SHA-256:** `${{ steps.sha.outputs.sha }}`
+
+            ⚠️ **Unsigned build** — see the README for install instructions.
+
+            One-line install:
+            ```
+            brew install --cask --no-quarantine codexisland
+            ```
