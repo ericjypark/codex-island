@@ -32,7 +32,7 @@ struct RingChart: View {
                         Text("\(Int(value))")
                             .font(.system(size: 18, weight: .semibold).monospacedDigit())
                             .foregroundStyle(UrgencyColor.value(value))
-                            .contentTransition(.numericText(value: value))
+                            .numericTransition(value: value)
                             .animation(.strongEaseOut, value: value)
                         Text("%")
                             .font(.system(size: 11, weight: .medium))

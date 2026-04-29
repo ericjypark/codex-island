@@ -5,6 +5,10 @@ import AppKit
 struct CodexIslandApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     var body: some Scene {
+        // Placeholder scene — `App` requires at least one `Scene`. We never
+        // trigger the system Settings menu (we're a `.accessory` app with
+        // no menu bar), so this stays inert. Settings is shown via our own
+        // SettingsWindowController.
         Settings { EmptyView() }
     }
 }
@@ -24,7 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         UsageStore.shared.startAutoRefresh()
     }
 
-    /// Pin the app to the run loop until QuitButton calls NSApp.terminate.
+    /// Pin the app to the run loop until the user explicitly quits.
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
     }

@@ -10,3 +10,7 @@ dist/
 xcuserdata/
 .swiftpm/
 .superpowers/
+
+# Marketing landing page lives in its own git repo.
+landing/
+landing.zip

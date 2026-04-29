@@ -30,7 +30,7 @@ struct LiveDot: View {
         // Two-phase bump on each fresh sync: snap up to 1.18, then settle
         // back to 1.0 over strongEaseOut. Reads as "data just arrived" —
         // the breath continues underneath, the bump rides on top.
-        .onChange(of: store.lastUpdated) { _, _ in
+        .onChange(of: store.lastUpdated) { _ in
             withAnimation(.strongEaseOut) { syncBump = 1.18 }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.14) {
                 withAnimation(.strongEaseOut) { syncBump = 1.0 }
