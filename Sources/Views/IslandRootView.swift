@@ -5,7 +5,6 @@ struct IslandRootView: View {
     @ObservedObject var model: IslandModel
     @State private var hovering = false
     @State private var contentVisible = false
-    @State private var pressed = false
 
     static let tabWidth: CGFloat = 38
 
@@ -80,16 +79,13 @@ struct IslandRootView: View {
                     logo(openaiLogo, color: IslandColor.codex, alignment: .trailing)
                 }
                 .contentShape(IslandShape())
-                .scaleEffect(pressed ? 0.97 : 1.0)
-                .animation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.16), value: pressed)
                 .onTapGesture {
-                    // Cmd-click anywhere on the panel cycles chart style.
-                    // Brief scale-down confirms the click registered.
+                    // Cmd-click cycles the chart style. The chart crossfade
+                    // (.id(style) on ChartTile) is the confirmation; no
+                    // panel-wide press scale needed — at this size, scaling
+                    // the whole 720pt panel reads as way too much for what's
+                    // really a 1-character UI change.
                     if NSEvent.modifierFlags.contains(.command) {
-                        pressed = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-                            pressed = false
-                        }
                         StylePref.shared.cycle()
                     }
                 }
