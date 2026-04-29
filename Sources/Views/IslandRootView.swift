@@ -29,29 +29,6 @@ struct IslandRootView: View {
                 let rotation = (t * 100).truncatingRemainder(dividingBy: 360)
 
                 ZStack {
-                    // Frosted halo. ultraThinMaterial is a backdrop blur of
-                    // whatever desktop content is behind the window. Sized
-                    // 18pt larger than the silhouette and softened with an
-                    // 8pt blur, so the inner ~95% is covered by the black
-                    // fill below and only a soft frosted ring around the
-                    // perimeter shows through.
-                    //
-                    // Only when expanded — the compact pill is too small
-                    // for the halo to feel intentional, and the cobalt
-                    // loading sweep already does the visual work there.
-                    if model.state == .expanded {
-                        IslandShape()
-                            .fill(.ultraThinMaterial)
-                            .frame(
-                                width: model.size.width + 18,
-                                height: model.size.height + 18
-                            )
-                            .blur(radius: 8)
-                            .opacity(0.55)
-                            .allowsHitTesting(false)
-                            .transition(.opacity)
-                    }
-
                     // Loading sweep. 3pt blur + 4pt stroke is half the GPU
                     // cost of the original 5/5 — at 120Hz the blur is hot
                     // because the angular gradient re-rasterizes per frame.
@@ -102,6 +79,30 @@ struct IslandRootView: View {
                     }
                 }
                 .frame(width: model.size.width, height: model.size.height)
+                .background {
+                    // Frosted halo. ultraThinMaterial is a backdrop blur of
+                    // whatever desktop content is behind the window. Lives
+                    // in .background AFTER .frame so it doesn't push the
+                    // ZStack's layout box larger than model.size — earlier
+                    // attempts that put the halo as a sibling inside the
+                    // ZStack with its own oversized .frame ended up
+                    // expanding the parent bounds, throwing the logo
+                    // overlays off and breaking the compact pill alignment
+                    // with the physical notch.
+                    //
+                    // .padding(-9) extends only the rendering by 9pt past
+                    // the silhouette on every side, no layout impact.
+                    // Opacity tied to contentVisible so it fades alongside
+                    // the panel content (220ms after hover-in, immediately
+                    // on hover-out) and the .frame here tracks model.size,
+                    // so the halo grows/shrinks with the spring morph.
+                    IslandShape()
+                        .fill(.ultraThinMaterial)
+                        .padding(-9)
+                        .blur(radius: 8)
+                        .opacity(contentVisible ? 0.55 : 0)
+                        .allowsHitTesting(false)
+                }
                 .overlay(alignment: .topLeading) {
                     logo(claudeLogo, color: IslandColor.claude, alignment: .leading)
                 }
@@ -122,13 +123,13 @@ struct IslandRootView: View {
                 .onHover { h in
                     hovering = h
                     if h {
-                        // Subtle trackpad tap on hover-in. .alignment is
-                        // macOS's lightest pattern (designed for snap-to-grid
-                        // feedback) so it reads as a confirmation, not a
-                        // notification. No-op if the user has haptics off
-                        // in System Settings.
+                        // Trackpad tap on hover-in. .levelChange is one step
+                        // up from .alignment — closer to a volume-key tick,
+                        // still well short of the .generic notification
+                        // pattern. No-op if the user has haptics off in
+                        // System Settings.
                         NSHapticFeedbackManager.defaultPerformer.perform(
-                            .alignment, performanceTime: .now
+                            .levelChange, performanceTime: .now
                         )
                         // ENTER: shape morphs first (logos slide outward with
                         // it). Once the shape is mostly grown (~220ms), fade
