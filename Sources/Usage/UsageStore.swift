@@ -13,11 +13,13 @@ final class UsageStore: ObservableObject {
 
     private var refreshTask: Task<Void, Never>?
     private var pollTimer: Timer?
+    private var intervalCancellable: AnyCancellable?
 
     /// Anthropic's /api/oauth/usage is aggressively rate-limited per token.
-    /// 30s polling burns the quota immediately; 5 min is plenty given that
-    /// the data is window-based (5h / 7d) and changes slowly.
-    private let pollInterval: TimeInterval = 300
+    /// `RefreshIntervalStore` enforces a 5-minute floor (300/900/1800).
+    private var pollInterval: TimeInterval {
+        TimeInterval(RefreshIntervalStore.shared.seconds)
+    }
 
     func refresh() {
         if loading { return }
@@ -49,13 +51,28 @@ final class UsageStore: ObservableObject {
     func startAutoRefresh() {
         stopAutoRefresh()
         refresh()
-        pollTimer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.refresh() }
-        }
+        armTimer()
+        // Re-arm whenever the user changes the refresh interval. We
+        // dropFirst() the initial @Published replay so we don't re-fire
+        // refresh() on subscription.
+        intervalCancellable = RefreshIntervalStore.shared.$seconds
+            .dropFirst()
+            .sink { [weak self] _ in
+                Task { @MainActor in self?.armTimer() }
+            }
     }
 
     func stopAutoRefresh() {
         pollTimer?.invalidate()
         pollTimer = nil
+        intervalCancellable?.cancel()
+        intervalCancellable = nil
+    }
+
+    private func armTimer() {
+        pollTimer?.invalidate()
+        pollTimer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.refresh() }
+        }
     }
 }

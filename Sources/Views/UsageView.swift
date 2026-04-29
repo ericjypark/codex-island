@@ -5,6 +5,7 @@ struct UsageView: View {
     let notch: NotchInfo
     @ObservedObject private var store = UsageStore.shared
     @ObservedObject private var pref = StylePref.shared
+    @ObservedObject private var visibility = ProviderVisibilityStore.shared
 
     private var style: ChartStyle { pref.style }
 
@@ -16,9 +17,13 @@ struct UsageView: View {
             HStack(spacing: 0) {
                 providerTitle(name: "Claude", tag: "MAX",
                               color: IslandColor.claude, alignment: .leading)
+                    .opacity(visibility.claudeVisible ? 1 : 0.30)
+                    .saturation(visibility.claudeVisible ? 1 : 0)
                 Color.clear.frame(width: notch.width)
                 providerTitle(name: "Codex", tag: "PLUS",
                               color: IslandColor.codex, alignment: .trailing)
+                    .opacity(visibility.codexVisible ? 1 : 0.30)
+                    .saturation(visibility.codexVisible ? 1 : 0)
             }
             .frame(height: 22)
             .padding(.horizontal, 16)
@@ -29,8 +34,12 @@ struct UsageView: View {
             // hairline divider. .clear → 6% white → .clear so the divider
             // fades at top and bottom.
             HStack(spacing: 0) {
-                ChartsBlock(color: IslandColor.claude, usage: store.claude,
-                            style: style, seed: 1)
+                ChartsBlock(
+                    color: visibility.claudeVisible ? IslandColor.claude : .white.opacity(0.32),
+                    usage: visibility.claudeVisible ? store.claude : .dummy,
+                    style: style, seed: 1
+                )
+                .opacity(visibility.claudeVisible ? 1 : 0.55)
                 Rectangle()
                     .fill(LinearGradient(
                         colors: [.clear, .white.opacity(0.06), .clear],
@@ -38,8 +47,12 @@ struct UsageView: View {
                     ))
                     .frame(width: 1)
                     .padding(.vertical, 8)
-                ChartsBlock(color: IslandColor.codex, usage: store.codex,
-                            style: style, seed: 3)
+                ChartsBlock(
+                    color: visibility.codexVisible ? IslandColor.codex : .white.opacity(0.32),
+                    usage: visibility.codexVisible ? store.codex : .dummy,
+                    style: style, seed: 3
+                )
+                .opacity(visibility.codexVisible ? 1 : 0.55)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.horizontal, 22)

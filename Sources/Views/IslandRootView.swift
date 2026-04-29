@@ -3,6 +3,7 @@ import AppKit
 
 struct IslandRootView: View {
     @ObservedObject var model: IslandModel
+    @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @State private var hovering = false
     @State private var contentVisible = false
 
@@ -105,25 +106,19 @@ struct IslandRootView: View {
                 }
                 .overlay(alignment: .topLeading) {
                     logo(claudeLogo, color: IslandColor.claude, alignment: .leading)
+                        .opacity(visibility.claudeVisible ? 1 : 0.30)
+                        .saturation(visibility.claudeVisible ? 1 : 0)
                 }
                 .overlay(alignment: .topTrailing) {
                     logo(openaiLogo, color: IslandColor.codex, alignment: .trailing)
+                        .opacity(visibility.codexVisible ? 1 : 0.30)
+                        .saturation(visibility.codexVisible ? 1 : 0)
                 }
                 .overlay(alignment: .bottomLeading) {
                     // Utility control, not dashboard status. Keep it in a
                     // quiet corner so the footer remains about live data.
                     if model.state == .expanded {
-                        LaunchAtLoginButton()
-                            .opacity(contentVisible ? 1 : 0)
-                            .padding(6)
-                    }
-                }
-                .overlay(alignment: .bottomTrailing) {
-                    // Literal bottom-right corner. 6pt inset keeps the glyph
-                    // inside the rounded corner curve without crowding the
-                    // edge. Only visible when the panel content is showing.
-                    if model.state == .expanded {
-                        QuitButton()
+                        SettingsButton()
                             .opacity(contentVisible ? 1 : 0)
                             .padding(6)
                     }

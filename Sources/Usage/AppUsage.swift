@@ -15,4 +15,12 @@ struct AppUsage {
     var weekly: WindowUsage
 
     static let empty = AppUsage(fiveHour: .unknown, weekly: .unknown)
+
+    /// Placeholder values shown when a provider is toggled off. Non-zero
+    /// so the chart vocabulary stays visible (a 0% ring reads as broken,
+    /// a 45% ring reads as "data we're choosing not to surface").
+    static let dummy = AppUsage(
+        fiveHour: WindowUsage(usedPercent: 0.45, resetAt: nil, error: nil),
+        weekly: WindowUsage(usedPercent: 0.28, resetAt: nil, error: nil)
+    )
 }
