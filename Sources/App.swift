@@ -10,7 +10,11 @@ struct CodexIslandApp: App {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    var island: IslandWindowController?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        island = IslandWindowController()
+        island?.show()
     }
 }
