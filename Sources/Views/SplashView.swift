@@ -51,18 +51,20 @@ struct SplashView: View {
     }
 
     private var claudeStartCenter: CGPoint {
-        CGPoint(x: screenSize.width / 2 - 110, y: screenSize.height / 2 - 30)
+        CGPoint(x: screenSize.width / 2 - 140, y: screenSize.height / 2 - 50)
     }
 
     private var codexStartCenter: CGPoint {
-        CGPoint(x: screenSize.width / 2 + 110, y: screenSize.height / 2 - 30)
+        CGPoint(x: screenSize.width / 2 + 140, y: screenSize.height / 2 - 50)
     }
 
-    /// Logo size: 100pt frame, scaled by iconScale.
-    /// Start: 0.3 (never animate from scale(0) per Emil), grow to 1.0 (100pt).
-    /// Move-to-notch: 0.20 (20pt, matching island logo size).
+    /// Logo size: 160pt frame, scaled by iconScale.
+    /// Start: 0.3 (never animate from scale(0) per Emil), grow to 1.0 (160pt).
+    /// Move-to-notch: 20/160 ≈ 0.125 (matching the 20pt island logo size).
+    private static let logoFrame: CGFloat = 160
+
     private var iconScale: CGFloat {
-        if iconsAtNotch { return 20.0 / 100.0 }
+        if iconsAtNotch { return 20.0 / Self.logoFrame }
         return iconsRevealed ? 1.0 : 0.3
     }
 
@@ -76,7 +78,7 @@ struct SplashView: View {
 
     var body: some View {
         ZStack {
-            PureBlurBackground(radius: blurRadius)
+            WallpaperBlurBackground(radius: blurRadius)
                 .ignoresSafeArea()
 
             if let claudeLogo {
@@ -85,7 +87,7 @@ struct SplashView: View {
                     .renderingMode(.template)
                     .aspectRatio(contentMode: .fit)
                     .foregroundStyle(IslandColor.claude)
-                    .frame(width: 100, height: 100)
+                    .frame(width: Self.logoFrame, height: Self.logoFrame)
                     .scaleEffect(iconScale)
                     .position(claudePosition)
                     .opacity(iconsRevealed ? 1 : 0)
@@ -97,7 +99,7 @@ struct SplashView: View {
                     .renderingMode(.template)
                     .aspectRatio(contentMode: .fit)
                     .foregroundStyle(IslandColor.codex)
-                    .frame(width: 100, height: 100)
+                    .frame(width: Self.logoFrame, height: Self.logoFrame)
                     .scaleEffect(iconScale)
                     .position(codexPosition)
                     .opacity(iconsRevealed ? 1 : 0)
@@ -109,7 +111,7 @@ struct SplashView: View {
                     .offset(y: ctaVisible ? 0 : 8)
                     .position(
                         x: screenSize.width / 2,
-                        y: screenSize.height / 2 + 100
+                        y: screenSize.height / 2 + 200
                     )
             }
         }
@@ -167,33 +169,45 @@ struct SplashView: View {
     }
 }
 
-/// Pure CIGaussianBlur via CALayer.backgroundFilters. The window must be
-/// transparent (isOpaque=false, backgroundColor=.clear) for the layer's
-/// background filters to read the desktop content underneath. Animatable
-/// via SwiftUI by re-instantiating with a new `radius` each frame —
-/// updateNSView pokes the CIFilter's input.
-private struct PureBlurBackground: NSViewRepresentable {
+/// Loads the user's actual desktop wallpaper via NSWorkspace and blurs it
+/// with SwiftUI's .blur(radius:) — a real CIGaussianBlur with zero tint
+/// or frost. NSWorkspace.desktopImageURL works without any entitlements
+/// or screen-recording permission, so the splash is "plug and play" on
+/// first launch.
+///
+/// Trade-off vs NSVisualEffectView: this only shows the wallpaper, not
+/// other open windows. For a launch splash that covers the whole screen
+/// anyway, that's exactly the right framing — the user's attention is
+/// on our app, not on whatever was behind the splash.
+private struct WallpaperBlurBackground: View {
     var radius: CGFloat
 
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.clear.cgColor
-        applyBlur(to: view)
-        return view
-    }
+    @State private var wallpaper: NSImage?
 
-    func updateNSView(_ nsView: NSView, context: Context) {
-        applyBlur(to: nsView)
-    }
+    var body: some View {
+        ZStack {
+            // Black fallback if the wallpaper can't load (rare — would
+            // mean the user has no wallpaper set, or NSWorkspace is
+            // refusing to vend the URL for some sandboxed reason).
+            Color.black
 
-    private func applyBlur(to view: NSView) {
-        guard let layer = view.layer else { return }
-        if let filter = CIFilter(name: "CIGaussianBlur") {
-            filter.setValue(radius, forKey: kCIInputRadiusKey)
-            layer.backgroundFilters = [filter]
+            if let wallpaper {
+                Image(nsImage: wallpaper)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .blur(radius: radius)
+            }
         }
-        layer.setNeedsDisplay()
+        .clipped()
+        .onAppear { wallpaper = loadWallpaper() }
+    }
+
+    private func loadWallpaper() -> NSImage? {
+        guard let screen = NSScreen.main,
+              let url = NSWorkspace.shared.desktopImageURL(for: screen) else {
+            return nil
+        }
+        return NSImage(contentsOf: url)
     }
 }
 
