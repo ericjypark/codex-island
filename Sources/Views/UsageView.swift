@@ -4,10 +4,9 @@ import AppKit
 struct UsageView: View {
     let notch: NotchInfo
     @ObservedObject private var store = UsageStore.shared
+    @ObservedObject private var pref = StylePref.shared
 
-    /// Hardcoded for this commit; replaced by StylePref.shared.style when
-    /// Cmd-click cycling lands in a later commit.
-    private let style: ChartStyle = .ring
+    private var style: ChartStyle { pref.style }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -72,6 +71,8 @@ struct UsageView: View {
                                     .strokeBorder(.white.opacity(0.10), lineWidth: 0.5)
                             )
                     )
+                    .contentTransition(.opacity)
+                    .animation(.easeInOut(duration: 0.18), value: pref.style)
 
                 HStack(spacing: 5) {
                     Image(systemName: "command")

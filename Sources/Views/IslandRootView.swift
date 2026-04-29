@@ -5,6 +5,7 @@ struct IslandRootView: View {
     @ObservedObject var model: IslandModel
     @State private var hovering = false
     @State private var contentVisible = false
+    @State private var pressed = false
 
     static let tabWidth: CGFloat = 38
 
@@ -79,6 +80,19 @@ struct IslandRootView: View {
                     logo(openaiLogo, color: IslandColor.codex, alignment: .trailing)
                 }
                 .contentShape(IslandShape())
+                .scaleEffect(pressed ? 0.97 : 1.0)
+                .animation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.16), value: pressed)
+                .onTapGesture {
+                    // Cmd-click anywhere on the panel cycles chart style.
+                    // Brief scale-down confirms the click registered.
+                    if NSEvent.modifierFlags.contains(.command) {
+                        pressed = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                            pressed = false
+                        }
+                        StylePref.shared.cycle()
+                    }
+                }
                 .onHover { h in
                     hovering = h
                     if h {
