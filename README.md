@@ -10,8 +10,6 @@ A floating macOS overlay that turns the MacBook notch into a Dynamic-Island-styl
 
 <img width="800" height="450" alt="ezgif-2bf490cee1dd4dc7" src="https://github.com/user-attachments/assets/f00ec519-c1e9-48f9-8d42-adda4d0a2f24" />
 
-<sub>_Screenshots and GIF land with the v0.1.0 release. The reference build is fully working — see the [latest release](https://github.com/ericjypark/codex-island/releases) for binaries._</sub>
-
 ## Why this exists
 
 Claude Pro / Max and ChatGPT Plus / Pro both have hidden 5-hour and weekly token windows. Most people only learn they've hit a limit when they get blocked mid-task — and the warning that does fire usually surfaces deep in a CLI log. CodexIsland turns the notch into a living indicator so you always know where you stand: hover the notch, see both providers, both windows, both reset times.
