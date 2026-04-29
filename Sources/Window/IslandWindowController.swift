@@ -4,7 +4,7 @@ import SwiftUI
 @MainActor
 final class IslandWindowController {
     let window: NSWindow
-    let notch: NotchInfo
+    let model: IslandModel
     private let host: IslandHostingView
     private var mouseMonitor: Any?
     private var trackingTimer: Timer?
@@ -12,7 +12,8 @@ final class IslandWindowController {
     static let windowSize = CGSize(width: 900, height: 280)
 
     init() {
-        self.notch = NotchInfo.detect(from: NSScreen.main)
+        let notch = NotchInfo.detect(from: NSScreen.main)
+        self.model = IslandModel(notch: notch)
 
         window = BorderlessFloatingWindow(
             contentRect: NSRect(origin: .zero, size: Self.windowSize),
@@ -27,13 +28,9 @@ final class IslandWindowController {
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
         window.isMovable = false
 
-        let compact = CGSize(
-            width: notch.width + IslandRootView.tabWidth * 2,
-            height: notch.height
-        )
         host = IslandHostingView(
-            rootView: IslandRootView(notch: notch),
-            initialShapeSize: compact
+            rootView: IslandRootView(model: model),
+            model: model
         )
         host.autoresizingMask = [.width, .height]
         window.contentView = host
@@ -77,7 +74,7 @@ final class IslandWindowController {
         let win = window.frame
         let local = NSPoint(x: cursor.x - win.minX, y: cursor.y - win.minY)
 
-        let size = host.currentShapeSize
+        let size = model.size
         let rect = NSRect(
             x: win.width / 2 - size.width / 2,
             y: win.height - size.height,

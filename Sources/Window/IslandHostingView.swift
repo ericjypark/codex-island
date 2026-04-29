@@ -10,16 +10,15 @@ import SwiftUI
 /// cursor position. Together: hitTest stops focus-steal *during* a click,
 /// the global monitor stops it *before* the click even reaches us.
 final class IslandHostingView: NSHostingView<IslandRootView> {
-    /// Updated by the window controller whenever the visible shape morphs.
-    var currentShapeSize: CGSize = .zero
+    let islandModel: IslandModel
 
-    init(rootView: IslandRootView, initialShapeSize: CGSize) {
-        self.currentShapeSize = initialShapeSize
+    init(rootView: IslandRootView, model: IslandModel) {
+        self.islandModel = model
         super.init(rootView: rootView)
     }
 
     @MainActor required dynamic init(rootView: IslandRootView) {
-        fatalError("Use init(rootView:initialShapeSize:)")
+        fatalError("Use init(rootView:model:)")
     }
 
     @MainActor required dynamic init?(coder: NSCoder) {
@@ -28,7 +27,7 @@ final class IslandHostingView: NSHostingView<IslandRootView> {
 
     override func hitTest(_ point: NSPoint) -> NSView? {
         let b = bounds
-        let size = currentShapeSize
+        let size = islandModel.size
         let rect = NSRect(
             x: b.midX - size.width / 2,
             y: b.maxY - size.height,
