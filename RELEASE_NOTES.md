@@ -7,7 +7,7 @@ CodexIsland turns the MacBook notch into a Dynamic-Island-style live activity fo
 - Two providers (Claude, Codex), four windows (5h + 7d each).
 - Five chart styles (Ring / Bar / Stepped / Numeric / Sparkline) — Cmd-click cycles, persisted across launches.
 - Lives in the notch, no Dock icon, no menu.
-- Launch-at-login toggle in the expanded panel footer.
+- Launch-at-login utility icon in the expanded panel corner.
 - 5-min polling against both providers' usage endpoints.
 - Local only. No telemetry, no analytics, no third-party calls.
 

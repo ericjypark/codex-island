@@ -109,6 +109,15 @@ struct IslandRootView: View {
                 .overlay(alignment: .topTrailing) {
                     logo(openaiLogo, color: IslandColor.codex, alignment: .trailing)
                 }
+                .overlay(alignment: .bottomLeading) {
+                    // Utility control, not dashboard status. Keep it in a
+                    // quiet corner so the footer remains about live data.
+                    if model.state == .expanded {
+                        LaunchAtLoginButton()
+                            .opacity(contentVisible ? 1 : 0)
+                            .padding(6)
+                    }
+                }
                 .overlay(alignment: .bottomTrailing) {
                     // Literal bottom-right corner. 6pt inset keeps the glyph
                     // inside the rounded corner curve without crowding the

@@ -89,8 +89,6 @@ struct UsageView: View {
 
                 Spacer()
 
-                LaunchAtLoginButton()
-
                 HStack(spacing: 6) {
                     LiveDot(active: store.lastUpdated != nil && !store.loading)
                     if store.loading {

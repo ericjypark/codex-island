@@ -23,7 +23,7 @@ Claude Pro / Max and ChatGPT Plus / Pro both have hidden 5-hour and weekly token
 - **Lives in the notch.** Hover-to-expand; a black pill the size of the physical notch with a slow cobalt glow when collapsed.
 - **Click-through everywhere else.** The window only steals focus when the cursor is over the visible silhouette.
 - **No Dock icon, no menu, no preferences window.** It's the notch.
-- **Launch at login.** Toggle it from the expanded panel footer.
+- **Launch at login.** Toggle it from the quiet utility icon in the expanded panel corner.
 - **5-minute polling.** Anthropic's usage endpoint is heavily rate-limited per token; faster polling burns the quota in minutes.
 - **Local only.** No telemetry, no analytics, no third-party API calls. Tokens read from your existing Claude / Codex installs.
 
@@ -82,7 +82,7 @@ There's no Xcode project — just `swiftc` over `Sources/**/*.swift`. To package
 
 **Polling.** 5-minute interval. Faster burns the per-token quota; the data is window-based (5h / 7d) so 30s polling has nothing to show for itself except a 429.
 
-**Launch at login.** The footer toggle uses Apple's modern `SMAppService.mainApp` API. It is off until you enable it from the UI; CodexIsland does not silently register itself on install.
+**Launch at login.** The corner utility control uses Apple's modern `SMAppService.mainApp` API. It is off until you enable it from the UI; CodexIsland does not silently register itself on install.
 
 **Both endpoints are undocumented.** They will break. When that happens, file an issue.
 
