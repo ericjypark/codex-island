@@ -74,13 +74,18 @@ struct UsageView: View {
                     .contentTransition(.opacity)
                     .animation(.easeInOut(duration: 0.18), value: pref.style)
 
-                HStack(spacing: 5) {
-                    Image(systemName: "command")
-                        .font(.system(size: 10, weight: .semibold))
-                    Text("click to cycle")
-                        .font(.system(size: 11))
+                if !pref.hasCycledStyle {
+                    HStack(spacing: 5) {
+                        Image(systemName: "command")
+                            .font(.system(size: 10, weight: .semibold))
+                        Text("click to cycle")
+                            .font(.system(size: 11))
+                    }
+                    .foregroundStyle(.white.opacity(0.42))
+                    // Fade + small scale-from-leading on the way out so the
+                    // hint deflates toward the chip rather than just vanishing.
+                    .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
                 }
-                .foregroundStyle(.white.opacity(0.42))
 
                 Spacer()
 
@@ -107,6 +112,7 @@ struct UsageView: View {
             .padding(.horizontal, 22)
             .padding(.top, 6)
             .padding(.bottom, 10)
+            .animation(.easeInOut(duration: 0.35), value: pref.hasCycledStyle)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

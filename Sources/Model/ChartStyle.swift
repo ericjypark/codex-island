@@ -19,14 +19,19 @@ final class StylePref: ObservableObject {
     static let shared = StylePref()
 
     private static let styleKey = "MacIsland.chartStyle"
+    private static let cycledKey = "MacIsland.hasCycledStyle"
 
     @Published var style: ChartStyle {
         didSet { UserDefaults.standard.set(style.rawValue, forKey: Self.styleKey) }
+    }
+    @Published var hasCycledStyle: Bool {
+        didSet { UserDefaults.standard.set(hasCycledStyle, forKey: Self.cycledKey) }
     }
 
     private init() {
         let raw = UserDefaults.standard.string(forKey: Self.styleKey) ?? ""
         self.style = ChartStyle(rawValue: raw) ?? .ring
+        self.hasCycledStyle = UserDefaults.standard.bool(forKey: Self.cycledKey)
     }
 
     func cycle() {
@@ -34,5 +39,6 @@ final class StylePref: ObservableObject {
         if let i = all.firstIndex(of: style) {
             style = all[(i + 1) % all.count]
         }
+        if !hasCycledStyle { hasCycledStyle = true }
     }
 }
