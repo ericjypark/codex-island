@@ -3,8 +3,9 @@ import AppKit
 
 struct IslandRootView: View {
     @ObservedObject var model: IslandModel
+    @State private var hovering = false
+    @State private var contentVisible = false
 
-    /// Visible side extensions housing the brand logos in compact state.
     static let tabWidth: CGFloat = 38
 
     private var claudeLogo: NSImage? {
@@ -43,17 +44,70 @@ struct IslandRootView: View {
 
                     IslandShape()
                         .fill(.black)
+                        .overlay {
+                            IslandShape()
+                                .strokeBorder(
+                                    .white.opacity(model.state == .expanded ? 0.12 : 0),
+                                    lineWidth: 0.5
+                                )
+                        }
                         .shadow(color: IslandColor.cobalt.opacity(0.35), radius: 14, y: 0)
+                        .shadow(
+                            color: model.state == .expanded ? .black.opacity(0.5) : .clear,
+                            radius: 20, y: 10
+                        )
+
+                    if model.state == .expanded {
+                        ExpandedView(model: model)
+                            .opacity(contentVisible ? 1 : 0)
+                            // Slide down from -8 → 0 on enter pairs with the
+                            // 100ms→180ms opacity delay set in onHover. On
+                            // exit the offset never matters because the
+                            // content fully fades before the shape shrinks.
+                            .offset(y: contentVisible ? 0 : -8)
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 14)
+                            .allowsHitTesting(contentVisible)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
                 }
                 .frame(width: model.size.width, height: model.size.height)
-                // Logos always visible — anchored to the morphing shape edges.
-                // Don't fade them in/out; they slide WITH the shape on
-                // expand/collapse so they appear to flow smoothly.
                 .overlay(alignment: .topLeading) {
                     logo(claudeLogo, color: IslandColor.claude, alignment: .leading)
                 }
                 .overlay(alignment: .topTrailing) {
                     logo(openaiLogo, color: IslandColor.codex, alignment: .trailing)
+                }
+                .contentShape(IslandShape())
+                .onHover { h in
+                    hovering = h
+                    if h {
+                        // ENTER: shape morphs first (logos slide outward with
+                        // it). Once the shape is mostly grown (~220ms), fade
+                        // in the expanded content with a small slide-down.
+                        withAnimation(.openMorph) {
+                            model.setState(.expanded)
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+                            guard model.state == .expanded else { return }
+                            withAnimation(.strongEaseOut) {
+                                contentVisible = true
+                            }
+                        }
+                    } else {
+                        // EXIT: content fades out first (100ms easeOut), then
+                        // the shape shrinks. This way the shape never visibly
+                        // reflows around content mid-collapse.
+                        withAnimation(.easeOut(duration: 0.10)) {
+                            contentVisible = false
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
+                            guard !hovering else { return }
+                            withAnimation(.closeMorph) {
+                                model.setState(.compact)
+                            }
+                        }
+                    }
                 }
             }
             Spacer(minLength: 0)
