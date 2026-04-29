@@ -109,6 +109,16 @@ struct IslandRootView: View {
                 .overlay(alignment: .topTrailing) {
                     logo(openaiLogo, color: IslandColor.codex, alignment: .trailing)
                 }
+                .overlay(alignment: .bottomTrailing) {
+                    // Literal bottom-right corner. 6pt inset keeps the glyph
+                    // inside the rounded corner curve without crowding the
+                    // edge. Only visible when the panel content is showing.
+                    if model.state == .expanded {
+                        QuitButton()
+                            .opacity(contentVisible ? 1 : 0)
+                            .padding(6)
+                    }
+                }
                 .contentShape(IslandShape())
                 .onTapGesture {
                     // Cmd-click cycles the chart style. The chart crossfade

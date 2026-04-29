@@ -108,8 +108,6 @@ struct UsageView: View {
                             .foregroundStyle(.white.opacity(0.4))
                     }
                 }
-
-                QuitButton()
             }
             .padding(.horizontal, 22)
             .padding(.top, 6)
@@ -168,26 +166,6 @@ struct UsageView: View {
             }
             .frame(maxWidth: .infinity)
         }
-    }
-}
-
-/// Bottom-right corner: a small power glyph that terminates the app.
-/// .onTapGesture fires before IslandRootView's cmd-click handler thanks
-/// to SwiftUI's inside-out gesture priority, so a regular click here
-/// quits regardless of modifier keys.
-private struct QuitButton: View {
-    @State private var hovered = false
-
-    var body: some View {
-        Image(systemName: "power")
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(.white.opacity(hovered ? 0.85 : 0.42))
-            .padding(.leading, 6)
-            .contentShape(Rectangle())
-            .onHover { hovered = $0 }
-            .onTapGesture { NSApp.terminate(nil) }
-            .help("Quit CodexIsland")
-            .animation(.strongEaseOut, value: hovered)
     }
 }
 
