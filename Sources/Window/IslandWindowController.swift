@@ -25,6 +25,10 @@ final class IslandWindowController {
         window.level = .popUpMenu
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
         window.isMovable = false
+
+        let host = NSHostingView(rootView: IslandRootView(notch: notch))
+        host.autoresizingMask = [.width, .height]
+        window.contentView = host
     }
 
     func show() {
