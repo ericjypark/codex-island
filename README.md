@@ -4,6 +4,15 @@
   <img src="Assets/codexisland-logo.png" width="160" alt="CodexIsland logo">
 </p>
 
+<p align="center">
+  <a href="https://github.com/ericjypark/codex-island/stargazers">
+    <img src="https://img.shields.io/github/stars/ericjypark/codex-island?style=social" alt="GitHub stars">
+  </a>
+  <a href="https://www.star-history.com/#ericjypark/codex-island&Date">
+    <img src="https://img.shields.io/badge/star_history-view_chart-111827?style=flat" alt="Star history">
+  </a>
+</p>
+
 > Your AI usage limits, living in your notch.
 
 CodexIsland is a native macOS overlay that turns the MacBook notch into a
