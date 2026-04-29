@@ -29,6 +29,29 @@ struct IslandRootView: View {
                 let rotation = (t * 100).truncatingRemainder(dividingBy: 360)
 
                 ZStack {
+                    // Frosted halo. ultraThinMaterial is a backdrop blur of
+                    // whatever desktop content is behind the window. Sized
+                    // 18pt larger than the silhouette and softened with an
+                    // 8pt blur, so the inner ~95% is covered by the black
+                    // fill below and only a soft frosted ring around the
+                    // perimeter shows through.
+                    //
+                    // Only when expanded — the compact pill is too small
+                    // for the halo to feel intentional, and the cobalt
+                    // loading sweep already does the visual work there.
+                    if model.state == .expanded {
+                        IslandShape()
+                            .fill(.ultraThinMaterial)
+                            .frame(
+                                width: model.size.width + 18,
+                                height: model.size.height + 18
+                            )
+                            .blur(radius: 8)
+                            .opacity(0.55)
+                            .allowsHitTesting(false)
+                            .transition(.opacity)
+                    }
+
                     // Loading sweep. 3pt blur + 4pt stroke is half the GPU
                     // cost of the original 5/5 — at 120Hz the blur is hot
                     // because the angular gradient re-rasterizes per frame.
