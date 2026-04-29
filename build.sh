@@ -17,6 +17,8 @@ mkdir -p "$MACOS_DIR" "$RES_DIR"
 
 cp ./Resources/claude_logo.png "$RES_DIR/claude_logo.png"
 cp ./Resources/openai_logo.png "$RES_DIR/openai_logo.png"
+cp ./Resources/codexisland_logo.png "$RES_DIR/codexisland_logo.png"
+cp ./Resources/CodexIsland.icns "$RES_DIR/CodexIsland.icns"
 
 SWIFT_SOURCES=$(find Sources -name '*.swift' | sort)
 
@@ -26,6 +28,7 @@ swiftc \
   -parse-as-library \
   -framework SwiftUI \
   -framework AppKit \
+  -framework ServiceManagement \
   -o "$MACOS_DIR/$APP_NAME" \
   $SWIFT_SOURCES
 
@@ -40,6 +43,7 @@ cat > "$CONTENTS/Info.plist" <<EOF
   <key>CFBundleVersion</key><string>1</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>CFBundleExecutable</key><string>$APP_NAME</string>
+  <key>CFBundleIconFile</key><string>CodexIsland</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>LSMinimumSystemVersion</key><string>26.0</string>
   <key>LSUIElement</key><true/>

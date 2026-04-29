@@ -1,8 +1,8 @@
 #!/bin/bash
 # Builds the .app and packages a DMG for distribution.
-# Requires `brew install create-dmg`. Unsigned — no Apple Developer Program
-# certificates involved. Ad-hoc codesign keeps Apple Silicon Macs from
-# rejecting the binary as "damaged" after re-download.
+# Requires `npm install --global create-dmg` (Node 20+). Unsigned — no Apple
+# Developer Program certificates involved. Ad-hoc codesign keeps Apple Silicon
+# Macs from rejecting the binary as "damaged" after re-download.
 
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -12,6 +12,12 @@ APP_NAME="CodexIsland"
 DIST="dist"
 APP="$DIST/$APP_NAME.app"
 DMG="$DIST/CodexIsland-$VERSION.dmg"
+CREATE_DMG_OUT="$DIST/CodexIsland $VERSION.dmg"
+
+if ! command -v create-dmg >/dev/null 2>&1; then
+  echo "error: create-dmg is required. Install with: npm install --global create-dmg" >&2
+  exit 1
+fi
 
 ./build.sh
 
@@ -20,22 +26,21 @@ mkdir -p "$DIST"
 cp -R "build/$APP_NAME.app" "$DIST/"
 
 # Ad-hoc sign — does NOT satisfy Gatekeeper, but prevents the
-# "MacIsland is damaged and can't be opened" failure mode that
+# "CodexIsland is damaged and can't be opened" failure mode that
 # unsigned Apple Silicon binaries hit after a download round-trip.
 codesign --force --deep --sign - "$APP"
 
-rm -f "$DMG"
+rm -f "$DMG" "$CREATE_DMG_OUT"
 create-dmg \
-  --volname "CodexIsland $VERSION" \
-  --window-pos 200 120 \
-  --window-size 540 380 \
-  --icon-size 96 \
-  --icon "$APP_NAME.app" 140 180 \
-  --hide-extension "$APP_NAME.app" \
-  --app-drop-link 400 180 \
-  --no-internet-enable \
-  "$DMG" \
-  "$APP"
+  --overwrite \
+  --no-code-sign \
+  --dmg-title "CodexIsland $VERSION" \
+  "$APP" \
+  "$DIST"
+
+if [[ -f "$CREATE_DMG_OUT" ]]; then
+  mv "$CREATE_DMG_OUT" "$DMG"
+fi
 
 echo ""
 echo "✓ $DMG"

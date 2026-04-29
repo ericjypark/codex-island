@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install create-dmg
-        run: brew install create-dmg
+        run: npm install --global create-dmg
 
       - name: Build DMG
         run: ./release.sh

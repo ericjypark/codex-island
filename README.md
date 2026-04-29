@@ -1,5 +1,9 @@
 # CodexIsland
 
+<p align="center">
+  <img src="Assets/codexisland-logo.png" width="160" alt="CodexIsland logo">
+</p>
+
 > Your AI usage limits, living in your notch.
 
 A floating macOS overlay that turns the MacBook notch into a Dynamic-Island-style live activity for Claude Code and Codex API rate limits.
@@ -19,6 +23,7 @@ Claude Pro / Max and ChatGPT Plus / Pro both have hidden 5-hour and weekly token
 - **Lives in the notch.** Hover-to-expand; a black pill the size of the physical notch with a slow cobalt glow when collapsed.
 - **Click-through everywhere else.** The window only steals focus when the cursor is over the visible silhouette.
 - **No Dock icon, no menu, no preferences window.** It's the notch.
+- **Launch at login.** Toggle it from the expanded panel footer.
 - **5-minute polling.** Anthropic's usage endpoint is heavily rate-limited per token; faster polling burns the quota in minutes.
 - **Local only.** No telemetry, no analytics, no third-party API calls. Tokens read from your existing Claude / Codex installs.
 
@@ -63,7 +68,7 @@ cd codexisland
 open build/CodexIsland.app
 ```
 
-There's no Xcode project — just `swiftc` over `Sources/**/*.swift`. To package a DMG: `brew install create-dmg && ./release.sh`.
+There's no Xcode project — just `swiftc` over `Sources/**/*.swift`. To package a DMG: `npm install --global create-dmg && ./release.sh`.
 
 ## How it works
 
@@ -76,6 +81,8 @@ There's no Xcode project — just `swiftc` over `Sources/**/*.swift`. To package
 **Auth, the hard part.** Anthropic doesn't expose a usage endpoint for end users; the Claude Code CLI itself talks to `api.anthropic.com/api/oauth/usage` with a `claude-code/2.1.121` User-Agent and an `oauth-2025-04-20` beta header. Three token sources, in freshness order: `CLAUDE_CODE_OAUTH_TOKEN` env var, the `Claude Code-credentials` keychain item, then a refresh against `console.anthropic.com/v1/oauth/token`. Codex is easier — `chatgpt.com/backend-api/wham/usage` with the access token from `~/.codex/auth.json`.
 
 **Polling.** 5-minute interval. Faster burns the per-token quota; the data is window-based (5h / 7d) so 30s polling has nothing to show for itself except a 429.
+
+**Launch at login.** The footer toggle uses Apple's modern `SMAppService.mainApp` API. It is off until you enable it from the UI; CodexIsland does not silently register itself on install.
 
 **Both endpoints are undocumented.** They will break. When that happens, file an issue.
 
@@ -109,6 +116,7 @@ The panel pins to `NSScreen.main` (the one with the active app). Multi-monitor u
 
 - [**codexbar**](https://github.com/steipete/codexbar) by Peter Steinberger — the auth-source archaeology that figured out the env-var → keychain → refresh ladder.
 - [**claudecodeusage**](https://github.com/RchGrav/claudecodeusage) by Rich Hickson — surfaced the `claude-code/2.1.121` User-Agent requirement on `/api/oauth/usage`.
+- [**LaunchAtLogin-Modern**](https://github.com/sindresorhus/LaunchAtLogin-Modern) by Sindre Sorhus — reference API shape for the `SMAppService.mainApp` launch-at-login toggle.
 - [**Emil Kowalski**](https://animations.dev) — the strong ease-out curve, asymmetric morph springs, and the general "less ambient motion" discipline.
 
 ## License
