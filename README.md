@@ -6,7 +6,7 @@ A floating macOS overlay that turns the MacBook notch into a Dynamic-Island-styl
 
 ![CodexIsland expanded](Assets/screenshot-expanded.png)
 
-<sub>_Screenshots and GIF land with the v0.1.0 release. The reference build is fully working — see the [latest release](https://github.com/eric-jy-park/codexisland/releases) for binaries._</sub>
+<sub>_Screenshots and GIF land with the v0.1.0 release. The reference build is fully working — see the [latest release](https://github.com/ericjypark/codex-island/releases) for binaries._</sub>
 
 ## Why this exists
 
@@ -30,7 +30,7 @@ Claude Pro / Max and ChatGPT Plus / Pro both have hidden 5-hour and weekly token
 brew install --cask --no-quarantine codexisland
 ```
 
-**Direct download.** Grab `CodexIsland-X.Y.Z.dmg` from [Releases](https://github.com/eric-jy-park/codexisland/releases), drag the app to /Applications, then run:
+**Direct download.** Grab `CodexIsland-X.Y.Z.dmg` from [Releases](https://github.com/ericjypark/codex-island/releases), drag the app to /Applications, then run:
 
 ```sh
 xattr -d com.apple.quarantine /Applications/CodexIsland.app
@@ -39,7 +39,7 @@ xattr -d com.apple.quarantine /Applications/CodexIsland.app
 <details>
 <summary>Why is the dequarantine command necessary?</summary>
 
-CodexIsland is unsigned because Apple charges $99/year for a Developer ID certificate, and this is a free open-source project. The dequarantine command strips the macOS Gatekeeper attribute that triggers the "cannot be opened because Apple cannot check it for malicious software" warning. The source code is all here — feel free to audit it before running. If a sponsored Apple Developer ID becomes available via [GitHub Sponsors](https://github.com/sponsors/eric-jy-park), signed builds will follow.
+CodexIsland is unsigned because Apple charges $99/year for a Developer ID certificate, and this is a free open-source project. The dequarantine command strips the macOS Gatekeeper attribute that triggers the "cannot be opened because Apple cannot check it for malicious software" warning. The source code is all here — feel free to audit it before running. If a sponsored Apple Developer ID becomes available via [GitHub Sponsors](https://github.com/sponsors/ericjypark), signed builds will follow.
 </details>
 
 <details>
@@ -57,7 +57,7 @@ CodexIsland is unsigned because Apple charges $99/year for a Developer ID certif
 Requires macOS 26+ (Tahoe) and Swift 6.2+ (ships with Xcode 26 / `xcode-select --install` on a fresh macOS 26 system).
 
 ```sh
-git clone https://github.com/eric-jy-park/codexisland
+git clone https://github.com/ericjypark/codex-island
 cd codexisland
 ./build.sh
 open build/CodexIsland.app
@@ -100,7 +100,7 @@ Yes. Both endpoints are undocumented. File an issue and I'll update the User-Age
 Anthropic rate-limits `/api/oauth/usage` aggressively per token. 30-second polling burns the daily quota in an afternoon. The constant is in `Sources/Usage/UsageStore.swift` if you want to experiment locally — please don't lower it in a PR.
 
 **Why is it unsigned?**
-Apple charges $99/year for a Developer ID and CodexIsland is free. The unsigned route is normal for OSS Mac apps (Rectangle, many menu-bar utilities). If you'd like to sponsor a signed build, [GitHub Sponsors](https://github.com/sponsors/eric-jy-park) is open.
+Apple charges $99/year for a Developer ID and CodexIsland is free. The unsigned route is normal for OSS Mac apps (Rectangle, many menu-bar utilities). If you'd like to sponsor a signed build, [GitHub Sponsors](https://github.com/sponsors/ericjypark) is open.
 
 **Does it support multiple monitors?**
 The panel pins to `NSScreen.main` (the one with the active app). Multi-monitor users currently get one notch indicator on the primary display. PRs welcome.

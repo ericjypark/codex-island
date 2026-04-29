@@ -52,7 +52,7 @@ your MacBook notch.
 hover the notch, see all four 5h/weekly windows. cmd-click to cycle 5
 chart styles. no Dock icon, no menu, just the notch.
 
-free + open source: github.com/eric-jy-park/codexisland
+free + open source: github.com/ericjypark/codex-island
 ```
 
 ## Reddit drafts
@@ -65,7 +65,7 @@ free + open source: github.com/eric-jy-park/codexisland
 >
 > No Dock icon, no menu, ~640KB binary, no third-party network calls. Free and open source. Install: `brew install --cask --no-quarantine codexisland`.
 >
-> Source: https://github.com/eric-jy-park/codexisland
+> Source: https://github.com/ericjypark/codex-island
 
 **r/ClaudeAI**
 
@@ -75,7 +75,7 @@ free + open source: github.com/eric-jy-park/codexisland
 >
 > Free, open source, MIT licensed. Same trick works for Codex (chatgpt.com/backend-api/wham/usage). Endpoints are undocumented — will probably need touch-ups when Anthropic ships a real one. PRs welcome.
 >
-> Source: https://github.com/eric-jy-park/codexisland
+> Source: https://github.com/ericjypark/codex-island
 
 **r/OpenAI**
 
@@ -85,7 +85,7 @@ free + open source: github.com/eric-jy-park/codexisland
 >
 > No telemetry, no Dock icon. MIT.
 >
-> Source: https://github.com/eric-jy-park/codexisland
+> Source: https://github.com/ericjypark/codex-island
 
 ---
 

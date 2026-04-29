@@ -38,7 +38,7 @@ No Xcode project, no SwiftPM. Just `swiftc Sources/**/*.swift`.
 - Multi-monitor support. Right now the panel pins to `NSScreen.main`; users with notched secondary displays should ideally see one panel per screen (or at least an option).
 - Real history for the SparkChart. The synthesized noise is honestly decorative. If either Anthropic or OpenAI exposes a usage time-series, we should switch.
 - Accessibility. The panel has no VoiceOver labels and no high-contrast variant.
-- Sponsor an Apple Developer ID via [GitHub Sponsors](https://github.com/sponsors/eric-jy-park) and we'll ship a signed build.
+- Sponsor an Apple Developer ID via [GitHub Sponsors](https://github.com/sponsors/ericjypark) and we'll ship a signed build.
 
 ## Code of conduct
 
