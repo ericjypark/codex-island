@@ -19,7 +19,7 @@ struct RingChart: View {
                         // here fires when polling delivers a new value
                         // (old → new), which makes the trim feel alive
                         // without ever flashing 0%.
-                        .animation(.easeOut(duration: 0.4), value: value)
+                        .animation(.strongEaseOut, value: value)
                 }
                 .frame(width: 56, height: 56)
 
@@ -33,7 +33,7 @@ struct RingChart: View {
                             .font(.system(size: 18, weight: .semibold).monospacedDigit())
                             .foregroundStyle(UrgencyColor.value(value))
                             .contentTransition(.numericText(value: value))
-                            .animation(.easeOut(duration: 0.4), value: value)
+                            .animation(.strongEaseOut, value: value)
                         Text("%")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(.white.opacity(0.5))

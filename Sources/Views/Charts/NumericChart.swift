@@ -25,7 +25,7 @@ struct NumericChart: View {
                     .font(.system(size: 38, weight: .semibold).monospacedDigit())
                     .foregroundStyle(UrgencyColor.value(value))
                     .contentTransition(.numericText(value: value))
-                    .animation(.easeOut(duration: 0.5), value: value)
+                    .animation(.strongEaseOut, value: value)
                 Text("%")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.white.opacity(0.4))
@@ -40,7 +40,7 @@ struct NumericChart: View {
                         .fill(color)
                         .frame(width: geo.size.width * CGFloat(value / 100), height: 3)
                         .shadow(color: color.opacity(0.7), radius: 4)
-                        .animation(.easeOut(duration: 0.5), value: value)
+                        .animation(.strongEaseOut, value: value)
                 }
             }
             .frame(height: 4)

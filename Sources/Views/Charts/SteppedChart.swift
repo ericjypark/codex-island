@@ -20,7 +20,7 @@ struct SteppedChart: View {
                         // 10ms stagger across cells gives a brief "fill"
                         // sweep when a new value arrives. Total animation
                         // is still under 300ms (200ms across all 20).
-                        .animation(.easeOut(duration: 0.3).delay(Double(i) * 0.01), value: value)
+                        .animation(.strongEaseOut.delay(Double(i) * 0.01), value: value)
                 }
             }
             ChartFoot(caption: sub)

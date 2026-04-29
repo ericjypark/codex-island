@@ -12,7 +12,7 @@ struct SparkChart: View {
             ChartHead(value: value, label: label)
             SparkSVG(value: value, color: color, seed: seed)
                 .frame(height: 56)
-                .animation(.easeOut(duration: 0.4), value: value)
+                .animation(.strongEaseOut, value: value)
             ChartFoot(caption: sub)
         }
     }

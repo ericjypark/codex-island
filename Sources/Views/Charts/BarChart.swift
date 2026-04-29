@@ -15,7 +15,7 @@ struct BarChart: View {
                     Capsule()
                         .fill(color)
                         .frame(width: geo.size.width * CGFloat(value / 100), height: 4)
-                        .animation(.easeOut(duration: 0.4), value: value)
+                        .animation(.strongEaseOut, value: value)
                     // Tick marks at quartiles. Subtle (12% white) so they
                     // hint at scale without competing with the fill.
                     ForEach([0.25, 0.5, 0.75], id: \.self) { p in

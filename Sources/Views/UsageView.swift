@@ -72,7 +72,7 @@ struct UsageView: View {
                             )
                     )
                     .contentTransition(.opacity)
-                    .animation(.easeInOut(duration: 0.18), value: pref.style)
+                    .animation(.strongEaseOut, value: pref.style)
 
                 if !pref.hasCycledStyle {
                     HStack(spacing: 5) {
@@ -112,7 +112,7 @@ struct UsageView: View {
             .padding(.horizontal, 22)
             .padding(.top, 6)
             .padding(.bottom, 10)
-            .animation(.easeInOut(duration: 0.35), value: pref.hasCycledStyle)
+            .animation(.strongEaseOut, value: pref.hasCycledStyle)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -212,7 +212,15 @@ struct ChartTile: View {
             }
         }
         .id(style)
-        .transition(.opacity.animation(.easeInOut(duration: 0.18)))
+        // Scale-from-0.96 + opacity + strong ease-out so Ring → Bar settles
+        // into place rather than reading as two distinct objects crossfading.
+        // Slightly faster than .strongEaseOut (220 vs 280ms) — content swap,
+        // not a value change.
+        .transition(
+            .opacity
+            .combined(with: .scale(scale: 0.96))
+            .animation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.22))
+        )
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .frame(height: Self.tileHeight)
     }
