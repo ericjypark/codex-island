@@ -4,10 +4,13 @@ import SwiftUI
 @MainActor
 final class IslandWindowController {
     let window: NSWindow
+    let notch: NotchInfo
 
     static let windowSize = CGSize(width: 900, height: 280)
 
     init() {
+        self.notch = NotchInfo.detect(from: NSScreen.main)
+
         window = BorderlessFloatingWindow(
             contentRect: NSRect(origin: .zero, size: Self.windowSize),
             styleMask: [.borderless, .fullSizeContentView],
