@@ -18,7 +18,8 @@ struct SplashView: View {
     let onComplete: () -> Void
 
     @State private var blurRadius: CGFloat = 0
-    @State private var iconsRevealed = false
+    @State private var claudeRevealed = false
+    @State private var codexRevealed = false
     @State private var ctaVisible = false
     @State private var iconsAtNotch = false
 
@@ -63,9 +64,11 @@ struct SplashView: View {
     /// Move-to-notch: 20/160 ≈ 0.125 (matching the 20pt island logo size).
     private static let logoFrame: CGFloat = 160
 
-    private var iconScale: CGFloat {
+    /// Per-logo scale so Claude and Codex can stagger 70ms apart on reveal.
+    /// During move-to-notch they collapse to the same notch-size scale.
+    private func iconScale(revealed: Bool) -> CGFloat {
         if iconsAtNotch { return 20.0 / Self.logoFrame }
-        return iconsRevealed ? 1.0 : 0.3
+        return revealed ? 1.0 : 0.3
     }
 
     private var claudePosition: CGPoint {
@@ -88,9 +91,9 @@ struct SplashView: View {
                     .aspectRatio(contentMode: .fit)
                     .foregroundStyle(IslandColor.claude)
                     .frame(width: Self.logoFrame, height: Self.logoFrame)
-                    .scaleEffect(iconScale)
+                    .scaleEffect(iconScale(revealed: claudeRevealed))
                     .position(claudePosition)
-                    .opacity(iconsRevealed ? 1 : 0)
+                    .opacity(claudeRevealed ? 1 : 0)
             }
 
             if let openaiLogo {
@@ -100,9 +103,9 @@ struct SplashView: View {
                     .aspectRatio(contentMode: .fit)
                     .foregroundStyle(IslandColor.codex)
                     .frame(width: Self.logoFrame, height: Self.logoFrame)
-                    .scaleEffect(iconScale)
+                    .scaleEffect(iconScale(revealed: codexRevealed))
                     .position(codexPosition)
-                    .opacity(iconsRevealed ? 1 : 0)
+                    .opacity(codexRevealed ? 1 : 0)
             }
 
             if !iconsAtNotch {
@@ -119,18 +122,26 @@ struct SplashView: View {
     }
 
     private func startSequence() {
-        // Phase 1: blur ramps in over 900ms — gradual enough to read
-        // as the desktop "going out of focus" rather than a curtain
-        // dropping. End radius 25pt is heavy but not absolute.
-        withAnimation(.easeOut(duration: 0.90)) {
+        // Phase 1: blur ramps in over 900ms with strong ease-out so the
+        // settle has a more decisive landing than stock easeOut's
+        // imperceptible drift. End radius 25pt is heavy but not absolute.
+        withAnimation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.90)) {
             blurRadius = 25
         }
-        // Phase 2 (t=400): logos grow in. Spring response 0.7 with damping
-        // 0.78 settles slightly under critical so the icons feel like they
-        // emerge into focus rather than snap.
+        // Phase 2 (t=400): Claude logo grows in. Damping 0.82 settles
+        // cleanly without overshoot — "emerge into focus" rather than
+        // "bounce into place".
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.40) {
-            withAnimation(.spring(response: 0.70, dampingFraction: 0.78)) {
-                iconsRevealed = true
+            withAnimation(.spring(response: 0.70, dampingFraction: 0.82)) {
+                claudeRevealed = true
+            }
+        }
+        // Phase 2b (t=470): Codex logo, 70ms after Claude. Stagger inside
+        // Emil's 30-80ms range — paired elements read as related rather
+        // than perfectly synchronized.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.47) {
+            withAnimation(.spring(response: 0.70, dampingFraction: 0.82)) {
+                codexRevealed = true
             }
         }
         // Phase 3 (t=1200): Continue button slides up + fades in.
@@ -146,24 +157,31 @@ struct SplashView: View {
         NSHapticFeedbackManager.defaultPerformer.perform(
             .alignment, performanceTime: .now
         )
-        // CTA fades out instantly so the user's eye follows the icons.
-        withAnimation(.easeOut(duration: 0.18)) {
+        // Sequenced exit. CTA fades out FIRST (150ms strong ease-out —
+        // fast because exits should feel like the system responding to
+        // the user). Only after the eye has a beat to register the click
+        // do the icons start traveling.
+        withAnimation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.15)) {
             ctaVisible = false
         }
-        // Icons travel to the notch + shrink to 20pt. Same spring as the
-        // earlier auto-driven version; user-initiated now.
-        withAnimation(.spring(response: 0.65, dampingFraction: 0.85)) {
-            iconsAtNotch = true
+        // Icons travel after a 100ms gap. The user clicks, sees the CTA
+        // disappear, then the camera pans to the notch. One thing
+        // happening at a time reads as smoother than two simultaneous
+        // motions.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
+            withAnimation(.spring(response: 0.65, dampingFraction: 0.85)) {
+                iconsAtNotch = true
+            }
         }
         // Blur lifts mid-travel so by the time the icons settle the
         // desktop is sharp again.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
-            withAnimation(.easeOut(duration: 0.45)) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.40) {
+            withAnimation(.timingCurve(0.23, 1, 0.32, 1, duration: 0.45)) {
                 blurRadius = 0
             }
         }
         // Hand off to the island window once everything is settled.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.80) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.90) {
             onComplete()
         }
     }
@@ -239,7 +257,7 @@ private struct CTAButton: View {
                             )
                     )
             )
-            .scaleEffect(pressed ? 0.97 : (hovered ? 1.04 : 1.0))
+            .scaleEffect(pressed ? 0.96 : (hovered ? 1.03 : 1.0))
         }
         .buttonStyle(.plain)
         .onHover { hovered = $0 }
