@@ -7,7 +7,7 @@ struct LiveDot: View {
     let active: Bool
 
     var body: some View {
-        TimelineView(.animation) { context in
+        TimelineView(.animation(minimumInterval: 1.0 / 120.0)) { context in
             let phase = context.date.timeIntervalSinceReferenceDate
             // sin(phase * 2.6) ≈ 2.4s breath cycle. Slow enough to feel
             // like a heartbeat at rest, not a strobe.

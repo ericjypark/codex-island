@@ -20,11 +20,18 @@ struct IslandRootView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TimelineView(.animation) { context in
+            // minimumInterval: 1/120 explicitly opts the timeline into the
+            // ProMotion refresh rate. Default `.animation` schedules can
+            // settle at 60Hz even on 120Hz displays, especially in
+            // .accessory background apps.
+            TimelineView(.animation(minimumInterval: 1.0 / 120.0)) { context in
                 let t = context.date.timeIntervalSinceReferenceDate
                 let rotation = (t * 100).truncatingRemainder(dividingBy: 360)
 
                 ZStack {
+                    // Loading sweep. 3pt blur + 4pt stroke is half the GPU
+                    // cost of the original 5/5 — at 120Hz the blur is hot
+                    // because the angular gradient re-rasterizes per frame.
                     IslandShape()
                         .stroke(
                             AngularGradient(
@@ -38,9 +45,9 @@ struct IslandRootView: View {
                                 center: .center,
                                 angle: .degrees(rotation)
                             ),
-                            lineWidth: 5
+                            lineWidth: 4
                         )
-                        .blur(radius: 5)
+                        .blur(radius: 3)
 
                     IslandShape()
                         .fill(.black)
