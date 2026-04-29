@@ -31,7 +31,7 @@ struct RingChart: View {
                     HStack(alignment: .firstTextBaseline, spacing: 1) {
                         Text("\(Int(value))")
                             .font(.system(size: 18, weight: .semibold).monospacedDigit())
-                            .foregroundStyle(.white)
+                            .foregroundStyle(UrgencyColor.value(value))
                             .contentTransition(.numericText(value: value))
                             .animation(.easeOut(duration: 0.4), value: value)
                         Text("%")

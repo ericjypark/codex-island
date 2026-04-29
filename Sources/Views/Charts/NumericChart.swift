@@ -23,7 +23,7 @@ struct NumericChart: View {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text("\(Int(value))")
                     .font(.system(size: 38, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(.white)
+                    .foregroundStyle(UrgencyColor.value(value))
                     .contentTransition(.numericText(value: value))
                     .animation(.easeOut(duration: 0.5), value: value)
                 Text("%")
