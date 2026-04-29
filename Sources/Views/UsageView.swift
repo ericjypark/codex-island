@@ -46,8 +46,74 @@ struct UsageView: View {
             .padding(.horizontal, 22)
             .padding(.top, 12)
             .padding(.bottom, 6)
+
+            // Footer: hairline divider + style chip + cmd-click hint
+            // (always visible here; hidden after first cycle in a later
+            // commit) + live-status indicator on the right.
+            LinearGradient(
+                colors: [.clear, .white.opacity(0.06), .white.opacity(0.06), .clear],
+                startPoint: .leading, endPoint: .trailing
+            )
+            .frame(height: 1)
+            .padding(.horizontal, 22)
+
+            HStack(spacing: 10) {
+                Text(style.label.uppercased())
+                    .font(.system(size: 9, weight: .bold).monospaced())
+                    .tracking(0.8)
+                    .foregroundStyle(.white.opacity(0.78))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2.5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(.white.opacity(0.08))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .strokeBorder(.white.opacity(0.10), lineWidth: 0.5)
+                            )
+                    )
+
+                HStack(spacing: 5) {
+                    Image(systemName: "command")
+                        .font(.system(size: 10, weight: .semibold))
+                    Text("click to cycle")
+                        .font(.system(size: 11))
+                }
+                .foregroundStyle(.white.opacity(0.42))
+
+                Spacer()
+
+                HStack(spacing: 6) {
+                    LiveDot(active: store.lastUpdated != nil && !store.loading)
+                    if store.loading {
+                        Text("syncing…")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.white.opacity(0.55))
+                    } else if let updated = store.lastUpdated {
+                        Text("synced")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.white.opacity(0.55))
+                        Text(relative(updated))
+                            .font(.system(size: 11).monospacedDigit())
+                            .foregroundStyle(.white.opacity(0.72))
+                    } else {
+                        Text("idle")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.white.opacity(0.4))
+                    }
+                }
+            }
+            .padding(.horizontal, 22)
+            .padding(.top, 6)
+            .padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func relative(_ d: Date) -> String {
+        let f = RelativeDateTimeFormatter()
+        f.unitsStyle = .abbreviated
+        return f.localizedString(for: d, relativeTo: Date())
     }
 
     @ViewBuilder
