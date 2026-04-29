@@ -92,6 +92,14 @@ struct IslandRootView: View {
                 .onHover { h in
                     hovering = h
                     if h {
+                        // Subtle trackpad tap on hover-in. .alignment is
+                        // macOS's lightest pattern (designed for snap-to-grid
+                        // feedback) so it reads as a confirmation, not a
+                        // notification. No-op if the user has haptics off
+                        // in System Settings.
+                        NSHapticFeedbackManager.defaultPerformer.perform(
+                            .alignment, performanceTime: .now
+                        )
                         // ENTER: shape morphs first (logos slide outward with
                         // it). Once the shape is mostly grown (~220ms), fade
                         // in the expanded content with a small slide-down.
