@@ -1,23 +1,25 @@
 import SwiftUI
 import AppKit
 
-/// One-shot launch sequence: frost fades in, icons fade in at center, icons
-/// move to the notch position (matching where the island window's logo
-/// overlays will land), frost fades out, sequence calls `onComplete`.
+/// Launch sequence: pure desktop blur ramps in, brand logos grow in at
+/// center, a Continue button appears and waits for the user. On click,
+/// the icons travel to the notch position (matching IslandRootView's
+/// logo overlay coordinates exactly) and the splash hands off to the
+/// island window.
 ///
-/// The trick to seamless handoff: claudeFinalCenter / codexFinalCenter
-/// here compute the EXACT same screen coordinates as IslandRootView's
-/// .overlay(alignment: .topLeading/.topTrailing) logo positioning. When
-/// the island window opens behind this splash and the splash closes, the
-/// two icons are at identical positions and sizes — the user reads it as
-/// one continuous animation across two windows.
+/// "Pure blur, no frost" — the backdrop is CALayer backgroundFilters +
+/// CIGaussianBlur, NOT NSVisualEffectView. NSVisualEffectView always
+/// adds a tint of some kind; CALayer-level CIGaussianBlur on a
+/// transparent layer in a transparent window is the only way to get a
+/// truly tint-free, see-through-to-blurred-desktop effect on macOS.
 struct SplashView: View {
     let screenSize: CGSize
     let notch: NotchInfo
     let onComplete: () -> Void
 
-    @State private var blurOpacity: Double = 0
-    @State private var iconsVisible = false
+    @State private var blurRadius: CGFloat = 0
+    @State private var iconsRevealed = false
+    @State private var ctaVisible = false
     @State private var iconsAtNotch = false
 
     private var claudeLogo: NSImage? {
@@ -31,9 +33,7 @@ struct SplashView: View {
     }
 
     /// Where Claude's icon ends up — the screen-coord center of the island
-    /// window's leading logo. islandWidth = notch.width + 2 × 38pt tabs.
-    /// Logo center sits at (window leading edge + 9pt padding + 10pt half
-    /// logo width) horizontally, and at (notch.height − 20)/2 + 10 vertically.
+    /// window's leading logo.
     private var claudeFinalCenter: CGPoint {
         let islandWidth = notch.width + IslandRootView.tabWidth * 2
         let leftEdge = screenSize.width / 2 - islandWidth / 2
@@ -42,7 +42,6 @@ struct SplashView: View {
         return CGPoint(x: x, y: y)
     }
 
-    /// Mirror image for Codex on the trailing edge.
     private var codexFinalCenter: CGPoint {
         let islandWidth = notch.width + IslandRootView.tabWidth * 2
         let rightEdge = screenSize.width / 2 + islandWidth / 2
@@ -52,28 +51,32 @@ struct SplashView: View {
     }
 
     private var claudeStartCenter: CGPoint {
-        CGPoint(x: screenSize.width / 2 - 90, y: screenSize.height / 2)
+        CGPoint(x: screenSize.width / 2 - 110, y: screenSize.height / 2 - 30)
     }
 
     private var codexStartCenter: CGPoint {
-        CGPoint(x: screenSize.width / 2 + 90, y: screenSize.height / 2)
+        CGPoint(x: screenSize.width / 2 + 110, y: screenSize.height / 2 - 30)
     }
 
-    private var iconSize: CGFloat { iconsAtNotch ? 20 : 80 }
-    private var claudePosition: CGPoint { iconsAtNotch ? claudeFinalCenter : claudeStartCenter }
-    private var codexPosition: CGPoint { iconsAtNotch ? codexFinalCenter : codexStartCenter }
+    /// Logo size: 100pt frame, scaled by iconScale.
+    /// Start: 0.3 (never animate from scale(0) per Emil), grow to 1.0 (100pt).
+    /// Move-to-notch: 0.20 (20pt, matching island logo size).
+    private var iconScale: CGFloat {
+        if iconsAtNotch { return 20.0 / 100.0 }
+        return iconsRevealed ? 1.0 : 0.3
+    }
+
+    private var claudePosition: CGPoint {
+        iconsAtNotch ? claudeFinalCenter : claudeStartCenter
+    }
+
+    private var codexPosition: CGPoint {
+        iconsAtNotch ? codexFinalCenter : codexStartCenter
+    }
 
     var body: some View {
         ZStack {
-            // Full-screen frosted backdrop. SwiftUI's `.fill(.ultraThinMaterial)`
-            // in a borderless transparent NSWindow produces a near-opaque
-            // overlay rather than an actual desktop blur — bypassing it for
-            // a real NSVisualEffectView with .behindWindow blending mode.
-            // .fullScreenUI is the system material designed for overlays
-            // like Mission Control: heavy blur but the desktop content
-            // stays visible.
-            DesktopBlurBackground()
-                .opacity(blurOpacity)
+            PureBlurBackground(radius: blurRadius)
                 .ignoresSafeArea()
 
             if let claudeLogo {
@@ -82,10 +85,10 @@ struct SplashView: View {
                     .renderingMode(.template)
                     .aspectRatio(contentMode: .fit)
                     .foregroundStyle(IslandColor.claude)
-                    .frame(width: iconSize, height: iconSize)
+                    .frame(width: 100, height: 100)
+                    .scaleEffect(iconScale)
                     .position(claudePosition)
-                    .opacity(iconsVisible ? 1 : 0)
-                    .scaleEffect(iconsVisible ? 1 : 0.7)
+                    .opacity(iconsRevealed ? 1 : 0)
             }
 
             if let openaiLogo {
@@ -94,62 +97,140 @@ struct SplashView: View {
                     .renderingMode(.template)
                     .aspectRatio(contentMode: .fit)
                     .foregroundStyle(IslandColor.codex)
-                    .frame(width: iconSize, height: iconSize)
+                    .frame(width: 100, height: 100)
+                    .scaleEffect(iconScale)
                     .position(codexPosition)
-                    .opacity(iconsVisible ? 1 : 0)
-                    .scaleEffect(iconsVisible ? 1 : 0.7)
+                    .opacity(iconsRevealed ? 1 : 0)
+            }
+
+            if !iconsAtNotch {
+                CTAButton(action: handleCTAClick)
+                    .opacity(ctaVisible ? 1 : 0)
+                    .offset(y: ctaVisible ? 0 : 8)
+                    .position(
+                        x: screenSize.width / 2,
+                        y: screenSize.height / 2 + 100
+                    )
             }
         }
-        .onAppear { runSequence() }
+        .onAppear { startSequence() }
     }
 
+    private func startSequence() {
+        // Phase 1: blur ramps in over 900ms — gradual enough to read
+        // as the desktop "going out of focus" rather than a curtain
+        // dropping. End radius 25pt is heavy but not absolute.
+        withAnimation(.easeOut(duration: 0.90)) {
+            blurRadius = 25
+        }
+        // Phase 2 (t=400): logos grow in. Spring response 0.7 with damping
+        // 0.78 settles slightly under critical so the icons feel like they
+        // emerge into focus rather than snap.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.40) {
+            withAnimation(.spring(response: 0.70, dampingFraction: 0.78)) {
+                iconsRevealed = true
+            }
+        }
+        // Phase 3 (t=1200): Continue button slides up + fades in.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.20) {
+            withAnimation(.strongEaseOut) {
+                ctaVisible = true
+            }
+        }
+    }
+
+    private func handleCTAClick() {
+        // Light haptic confirms the click registered.
+        NSHapticFeedbackManager.defaultPerformer.perform(
+            .alignment, performanceTime: .now
+        )
+        // CTA fades out instantly so the user's eye follows the icons.
+        withAnimation(.easeOut(duration: 0.18)) {
+            ctaVisible = false
+        }
+        // Icons travel to the notch + shrink to 20pt. Same spring as the
+        // earlier auto-driven version; user-initiated now.
+        withAnimation(.spring(response: 0.65, dampingFraction: 0.85)) {
+            iconsAtNotch = true
+        }
+        // Blur lifts mid-travel so by the time the icons settle the
+        // desktop is sharp again.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
+            withAnimation(.easeOut(duration: 0.45)) {
+                blurRadius = 0
+            }
+        }
+        // Hand off to the island window once everything is settled.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.80) {
+            onComplete()
+        }
+    }
 }
 
-/// Bridges NSVisualEffectView so the splash actually blurs the desktop.
-/// SwiftUI's Material types in a transparent NSWindow don't reliably
-/// produce .behindWindow blur — going through AppKit gives the proper
-/// "see through to a blurred desktop" effect.
-private struct DesktopBlurBackground: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.material = .fullScreenUI
-        view.blendingMode = .behindWindow
-        view.state = .active
+/// Pure CIGaussianBlur via CALayer.backgroundFilters. The window must be
+/// transparent (isOpaque=false, backgroundColor=.clear) for the layer's
+/// background filters to read the desktop content underneath. Animatable
+/// via SwiftUI by re-instantiating with a new `radius` each frame —
+/// updateNSView pokes the CIFilter's input.
+private struct PureBlurBackground: NSViewRepresentable {
+    var radius: CGFloat
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.backgroundColor = NSColor.clear.cgColor
+        applyBlur(to: view)
         return view
     }
 
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+    func updateNSView(_ nsView: NSView, context: Context) {
+        applyBlur(to: nsView)
+    }
+
+    private func applyBlur(to view: NSView) {
+        guard let layer = view.layer else { return }
+        if let filter = CIFilter(name: "CIGaussianBlur") {
+            filter.setValue(radius, forKey: kCIInputRadiusKey)
+            layer.backgroundFilters = [filter]
+        }
+        layer.setNeedsDisplay()
+    }
 }
 
-extension SplashView {
-    private func runSequence() {
-        // t=0: frost fades in over 300ms.
-        withAnimation(.easeOut(duration: 0.30)) {
-            blurOpacity = 1
-        }
-        // t=350: icons fade + scale in at center via spring.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.72)) {
-                iconsVisible = true
+private struct CTAButton: View {
+    let action: () -> Void
+    @State private var hovered = false
+    @State private var pressed = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Text("continue")
+                    .font(.system(size: 14, weight: .medium))
+                    .tracking(0.4)
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 11, weight: .semibold))
             }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 12)
+            .background(
+                Capsule()
+                    .fill(.black.opacity(hovered ? 0.65 : 0.45))
+                    .overlay(
+                        Capsule()
+                            .strokeBorder(
+                                .white.opacity(hovered ? 0.25 : 0.12),
+                                lineWidth: 0.5
+                            )
+                    )
+            )
+            .scaleEffect(pressed ? 0.97 : (hovered ? 1.04 : 1.0))
         }
-        // t=900: brief 200ms beat at center, then icons travel + shrink to
-        // the notch position. Spring response 0.65 / damping 0.85 makes the
-        // travel feel deliberate without overshoot.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.90) {
-            withAnimation(.spring(response: 0.65, dampingFraction: 0.85)) {
-                iconsAtNotch = true
-            }
-        }
-        // t=1500: frost fades out (icons stay at notch).
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.50) {
-            withAnimation(.easeOut(duration: 0.40)) {
-                blurOpacity = 0
-            }
-        }
-        // t=1950: handoff to the island window.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.95) {
-            onComplete()
-        }
+        .buttonStyle(.plain)
+        .onHover { hovered = $0 }
+        .animation(.strongEaseOut, value: hovered)
+        .animation(.easeOut(duration: 0.12), value: pressed)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressed = $0 }, perform: {})
     }
 }

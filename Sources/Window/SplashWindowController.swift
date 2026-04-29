@@ -30,7 +30,10 @@ final class SplashWindowController {
         // mid-animation.
         window.level = .screenSaver
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
-        window.ignoresMouseEvents = true
+        // ignoresMouseEvents = false so the Continue button is clickable
+        // and hover state works. The splash is intentionally modal during
+        // the intro — the user dismisses it via the CTA.
+        window.ignoresMouseEvents = false
 
         let notch = NotchInfo.detect(from: screen)
         let host = NSHostingView(rootView: SplashView(
