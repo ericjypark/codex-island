@@ -48,7 +48,12 @@ final class SplashWindowController {
         window.orderFrontRegardless()
     }
 
+    /// orderOut(nil) hides the window without sending close — close()
+    /// triggers AppKit's "last window closed" path which can race with
+    /// the freshly-shown island window and terminate the app even with
+    /// applicationShouldTerminateAfterLastWindowClosed returning false.
+    /// orderOut sidesteps the whole close lifecycle.
     func close() {
-        window.close()
+        window.orderOut(nil)
     }
 }

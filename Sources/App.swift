@@ -31,6 +31,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         splash?.show()
     }
 
+    /// .accessory policy alone isn't enough to keep the app alive across
+    /// the splash → island handoff — when the splash window closes there's
+    /// a brief moment that AppKit can interpret as "last window closed",
+    /// triggering termination. Explicit false here pins the app to the
+    /// run loop until QuitButton calls NSApp.terminate.
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
     private func completeSplash() {
         // Bring up the island BEFORE closing splash so there's no empty
         // frame between them. Splash sits at .screenSaver (1000), island

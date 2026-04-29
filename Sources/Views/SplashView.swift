@@ -65,9 +65,14 @@ struct SplashView: View {
 
     var body: some View {
         ZStack {
-            // Full-screen frosted backdrop.
-            Rectangle()
-                .fill(.ultraThinMaterial)
+            // Full-screen frosted backdrop. SwiftUI's `.fill(.ultraThinMaterial)`
+            // in a borderless transparent NSWindow produces a near-opaque
+            // overlay rather than an actual desktop blur — bypassing it for
+            // a real NSVisualEffectView with .behindWindow blending mode.
+            // .fullScreenUI is the system material designed for overlays
+            // like Mission Control: heavy blur but the desktop content
+            // stays visible.
+            DesktopBlurBackground()
                 .opacity(blurOpacity)
                 .ignoresSafeArea()
 
@@ -98,6 +103,25 @@ struct SplashView: View {
         .onAppear { runSequence() }
     }
 
+}
+
+/// Bridges NSVisualEffectView so the splash actually blurs the desktop.
+/// SwiftUI's Material types in a transparent NSWindow don't reliably
+/// produce .behindWindow blur — going through AppKit gives the proper
+/// "see through to a blurred desktop" effect.
+private struct DesktopBlurBackground: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = .fullScreenUI
+        view.blendingMode = .behindWindow
+        view.state = .active
+        return view
+    }
+
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+}
+
+extension SplashView {
     private func runSequence() {
         // t=0: frost fades in over 300ms.
         withAnimation(.easeOut(duration: 0.30)) {
