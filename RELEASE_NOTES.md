@@ -63,7 +63,7 @@ free + open source: github.com/eric-jy-park/codexisland
 >
 > Both Claude Pro/Max and ChatGPT Plus have hidden 5h + weekly token windows. Most people learn they've hit one when they get blocked mid-task. CodexIsland sits in your notch and shows you where you stand — hover to expand, see both providers, both windows, both reset times.
 >
-> No Dock icon, no menu, ~80KB binary. Free and open source. Install: `brew install --cask --no-quarantine codexisland`.
+> No Dock icon, no menu, ~640KB binary, no third-party network calls. Free and open source. Install: `brew install --cask --no-quarantine codexisland`.
 >
 > Source: https://github.com/eric-jy-park/codexisland
 
