@@ -9,3 +9,4 @@ dist/
 *.xcworkspace/
 xcuserdata/
 .swiftpm/
+.superpowers/
