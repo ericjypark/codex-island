@@ -8,11 +8,12 @@ final class IslandWindowController {
     private let host: IslandHostingView
     private var mouseMonitor: Any?
     private var trackingTimer: Timer?
+    private var screenChangeObserver: NSObjectProtocol?
 
     static let windowSize = CGSize(width: 900, height: 280)
 
     init() {
-        let notch = NotchInfo.detect(from: NSScreen.main)
+        let notch = NotchInfo.detect(from: Self.targetScreen())
         self.model = IslandModel(notch: notch)
 
         window = BorderlessFloatingWindow(
@@ -37,10 +38,17 @@ final class IslandWindowController {
     }
 
     func show() {
-        positionAtTop()
+        repositionForCurrentScreen()
         window.orderFrontRegardless()
         NSApp.activate(ignoringOtherApps: true)
         installMouseTracking()
+        observeScreenChanges()
+    }
+
+    deinit {
+        if let observer = screenChangeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     /// Click-through for everything outside the visible shape. We watch cursor
@@ -87,8 +95,26 @@ final class IslandWindowController {
         }
     }
 
-    private func positionAtTop() {
-        guard let screen = NSScreen.main else { return }
+    /// Anchor to the notched display so the island always sits over the
+    /// physical notch — even when an external monitor is the active screen.
+    /// Falls back to `NSScreen.main` on Macs without a notch.
+    private static func targetScreen() -> NSScreen? {
+        NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 }) ?? NSScreen.main
+    }
+
+    private func observeScreenChanges() {
+        screenChangeObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.repositionForCurrentScreen() }
+        }
+    }
+
+    private func repositionForCurrentScreen() {
+        guard let screen = Self.targetScreen() else { return }
+        model.updateNotch(NotchInfo.detect(from: screen))
         let size = Self.windowSize
         let frame = screen.frame
         let x = frame.midX - size.width / 2

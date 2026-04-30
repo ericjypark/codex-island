@@ -9,8 +9,7 @@ final class IslandModel: ObservableObject {
 
     @Published var state: State = .compact
     @Published var size: CGSize = .zero
-
-    let notch: NotchInfo
+    @Published var notch: NotchInfo
 
     /// Side extension that houses each brand logo in compact state.
     let tabWidth: CGFloat = 38
@@ -31,6 +30,12 @@ final class IslandModel: ObservableObject {
     func setState(_ new: State) {
         guard new != state else { return }
         state = new
+        recomputeSize()
+    }
+
+    func updateNotch(_ new: NotchInfo) {
+        guard new.width != notch.width || new.height != notch.height || new.hasNotch != notch.hasNotch else { return }
+        notch = new
         recomputeSize()
     }
 

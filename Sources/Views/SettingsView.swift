@@ -17,6 +17,7 @@ struct SettingsView: View {
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @ObservedObject private var refreshStore = RefreshIntervalStore.shared
     @ObservedObject private var usage = UsageStore.shared
+    @ObservedObject private var updater = UpdaterController.shared
 
     private var version: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
@@ -33,6 +34,7 @@ struct SettingsView: View {
             hairline
 
             generalSection
+            updatesSection
             providersSection
             chartSection
 
@@ -42,7 +44,7 @@ struct SettingsView: View {
 
             SettingsFooter(version: version)
         }
-        .frame(width: 480, height: 580)
+        .frame(width: 480, height: 720)
         .background(Color(red: 0.020, green: 0.020, blue: 0.027))
         .preferredColorScheme(.dark)
     }
@@ -96,6 +98,46 @@ struct SettingsView: View {
         }
         .padding(.horizontal, 14)
         .padding(.top, 18)
+        .padding(.bottom, 6)
+    }
+
+    private var updatesSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionLabel("Updates")
+            SettingsRow(
+                title: "Check for updates automatically",
+                subtitle: "Sparkle checks the appcast in the background and prompts you when a new version ships."
+            ) {
+                SettingsToggle(isOn: updater.automaticallyChecks) {
+                    updater.automaticallyChecks.toggle()
+                }
+            }
+            SettingsRow(
+                title: "Check now",
+                subtitle: "Look for a new version right now."
+            ) {
+                Button {
+                    updater.checkForUpdates()
+                } label: {
+                    Text("Check")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 5)
+                        .background {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(.white.opacity(0.10))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .strokeBorder(.white.opacity(0.08), lineWidth: 0.5)
+                                }
+                        }
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 14)
         .padding(.bottom, 6)
     }
 
