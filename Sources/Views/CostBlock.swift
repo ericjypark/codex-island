@@ -109,7 +109,7 @@ struct CostTile: View {
             )
             barColumn(
                 amount: spend,
-                label: "you",
+                label: "You",
                 fill: color,
                 isYou: true,
                 maxAmount: maxAmount,
@@ -281,12 +281,13 @@ struct CostTile: View {
         return min(0.85, 0.20 + scale * 0.65)
     }
 
-    /// Compact reset hint that mirrors `NumericChart`'s "↻ 3h" treatment so
-    /// the cost screen doesn't introduce a new caption shape.
+    /// Compact "↻ 5h" / "↻ 12d" countdown — computed at render time from
+    /// the current clock so the panel always shows accurate time-remaining
+    /// regardless of how stale the last refresh is. Mirrors `NumericChart`'s
+    /// "↻ 3h" treatment so the cost screen doesn't introduce a new caption
+    /// shape.
     private var resetGlyph: String {
         if let err = window.error { return err }
-        return window.resetCaption
-            .replacingOccurrences(of: "resets at ", with: "↻ ")
-            .replacingOccurrences(of: "resets in ", with: "↻ ")
+        return "↻ " + (isMonth ? CostBucketing.monthResetIn() : CostBucketing.todayResetIn())
     }
 }

@@ -33,9 +33,38 @@ enum CostBucketing {
         return f.string(from: Date())
     }
 
-    /// Caption for the today cell — always "resets at midnight" since the
-    /// reset is uniform.
-    static let todayResetCaption = "resets at midnight"
+    /// Compact "time remaining until next local midnight" — `5h`, `42m`,
+    /// `12s`. Computed on demand so the panel always shows the correct
+    /// countdown regardless of how stale the last refresh is.
+    static func todayResetIn() -> String {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = .current
+        let now = Date()
+        guard let nextMidnight = cal.nextDate(
+            after: now,
+            matching: DateComponents(hour: 0, minute: 0, second: 0),
+            matchingPolicy: .nextTime
+        ) else { return "<1d" }
+        let interval = nextMidnight.timeIntervalSince(now)
+        if interval < 60 { return "\(Int(interval))s" }
+        if interval < 3600 { return "\(Int(interval / 60))m" }
+        return "\(Int(interval / 3600))h"
+    }
+
+    /// Compact days-until-end-of-month: `12d`, `1d`. Always uses the same
+    /// shape regardless of how close to month-end we are, so the cell
+    /// caption never reverts to a phrase like "tomorrow".
+    static func monthResetIn() -> String {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = .current
+        let now = Date()
+        guard let range = cal.range(of: .day, in: .month, for: now),
+              let day = cal.dateComponents([.day], from: now).day else {
+            return "1d"
+        }
+        let remaining = max(1, range.count - day)
+        return "\(remaining)d"
+    }
 
     /// Cumulative dollar spend bucketed by hour from local midnight to now.
     /// Returns one entry per elapsed hour (1–24 entries depending on time
@@ -82,19 +111,4 @@ enum CostBucketing {
         return out
     }
 
-    /// Caption like "resets in 12d" — counts days remaining in the current
-    /// calendar month.
-    static func monthResetCaption() -> String {
-        var cal = Calendar(identifier: .gregorian)
-        cal.timeZone = .current
-        let now = Date()
-        guard let range = cal.range(of: .day, in: .month, for: now),
-              let day = cal.dateComponents([.day], from: now).day else {
-            return "resets next month"
-        }
-        let remaining = max(0, range.count - day)
-        if remaining == 0 { return "resets tomorrow" }
-        if remaining == 1 { return "resets in 1d" }
-        return "resets in \(remaining)d"
-    }
 }

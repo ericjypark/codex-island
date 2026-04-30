@@ -113,7 +113,6 @@ final class CostStore: ObservableObject {
                 tokens: todayTokens,
                 series: todaySeries,
                 label: "Today",
-                resetCaption: CostBucketing.todayResetCaption,
                 error: nil
             ),
             month: CostWindow(
@@ -121,7 +120,6 @@ final class CostStore: ObservableObject {
                 tokens: monthTokens,
                 series: monthSeries,
                 label: CostBucketing.currentMonthLabel(),
-                resetCaption: CostBucketing.monthResetCaption(),
                 error: nil
             )
         )
@@ -176,21 +174,17 @@ final class CostStore: ObservableObject {
 
         self.claude = ProviderCost(
             today: CostWindow(dollars: claudeToday, tokens: claudeTodayTokens,
-                              series: claudeTodaySeries, label: "Today",
-                              resetCaption: CostBucketing.todayResetCaption, error: nil),
+                              series: claudeTodaySeries, label: "Today", error: nil),
             month: CostWindow(dollars: claudeMonth, tokens: claudeMonthTokens,
                               series: claudeMonthSeries,
-                              label: CostBucketing.currentMonthLabel(),
-                              resetCaption: CostBucketing.monthResetCaption(), error: nil)
+                              label: CostBucketing.currentMonthLabel(), error: nil)
         )
         self.codex = ProviderCost(
             today: CostWindow(dollars: codexToday, tokens: codexTodayTokens,
-                              series: codexTodaySeries, label: "Today",
-                              resetCaption: CostBucketing.todayResetCaption, error: nil),
+                              series: codexTodaySeries, label: "Today", error: nil),
             month: CostWindow(dollars: codexMonth, tokens: codexMonthTokens,
                               series: codexMonthSeries,
-                              label: CostBucketing.currentMonthLabel(),
-                              resetCaption: CostBucketing.monthResetCaption(), error: nil)
+                              label: CostBucketing.currentMonthLabel(), error: nil)
         )
         if let ts = snap["lastUpdated"] as? Double, ts > 0 {
             self.lastUpdated = Date(timeIntervalSinceReferenceDate: ts)
