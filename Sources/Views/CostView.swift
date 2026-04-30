@@ -1,27 +1,25 @@
 import SwiftUI
 import AppKit
 
-struct UsageView: View {
+/// Cost screen — second page of the expanded panel. Mirrors `UsageView`'s
+/// chrome (provider titles, hairline divider, footer with style chip + page
+/// dots + sync status) but renders dollar spend instead of subscription %.
+struct CostView: View {
     let notch: NotchInfo
-    @ObservedObject private var store = UsageStore.shared
+    @ObservedObject private var store = CostStore.shared
     @ObservedObject private var pref = StylePref.shared
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @ObservedObject private var screenPref = ScreenPref.shared
 
-    private var style: ChartStyle { pref.style }
-
     var body: some View {
         VStack(spacing: 0) {
-            // Top row: provider titles aligned with the system menu bar
-            // (height = 22, the menu-bar item height). The notch-width
-            // spacer in the middle hides inside the physical notch.
             HStack(spacing: 0) {
-                providerTitle(name: "Claude", tag: store.claude.plan?.uppercased(),
+                providerTitle(name: "Claude", tag: planTag(forClaude: true),
                               color: IslandColor.claude, alignment: .leading)
                     .opacity(visibility.claudeVisible ? 1 : 0.30)
                     .saturation(visibility.claudeVisible ? 1 : 0)
                 Color.clear.frame(width: notch.width)
-                providerTitle(name: "Codex", tag: store.codex.plan?.uppercased(),
+                providerTitle(name: "Codex", tag: planTag(forClaude: false),
                               color: IslandColor.codex, alignment: .trailing)
                     .opacity(visibility.codexVisible ? 1 : 0.30)
                     .saturation(visibility.codexVisible ? 1 : 0)
@@ -31,14 +29,10 @@ struct UsageView: View {
             .padding(.top, 4)
             .padding(.bottom, max(0, notch.height - 22 - 4))
 
-            // Charts row: two ChartsBlocks with a 1pt vertical gradient
-            // hairline divider. .clear → 6% white → .clear so the divider
-            // fades at top and bottom.
             HStack(spacing: 0) {
-                ChartsBlock(
+                CostBlock(
                     color: visibility.claudeVisible ? IslandColor.claude : .white.opacity(0.32),
-                    usage: visibility.claudeVisible ? store.claude : .dummy,
-                    style: style, seed: 1
+                    cost: visibility.claudeVisible ? store.claude : .dummy
                 )
                 .opacity(visibility.claudeVisible ? 1 : 0.55)
                 Rectangle()
@@ -48,10 +42,9 @@ struct UsageView: View {
                     ))
                     .frame(width: 1)
                     .padding(.vertical, 8)
-                ChartsBlock(
+                CostBlock(
                     color: visibility.codexVisible ? IslandColor.codex : .white.opacity(0.32),
-                    usage: visibility.codexVisible ? store.codex : .dummy,
-                    style: style, seed: 3
+                    cost: visibility.codexVisible ? store.codex : .dummy
                 )
                 .opacity(visibility.codexVisible ? 1 : 0.55)
             }
@@ -60,9 +53,6 @@ struct UsageView: View {
             .padding(.top, 12)
             .padding(.bottom, 6)
 
-            // Footer: hairline divider + style chip + cmd-click hint
-            // (always visible here; hidden after first cycle in a later
-            // commit) + live-status indicator on the right.
             LinearGradient(
                 colors: [.clear, .white.opacity(0.06), .white.opacity(0.06), .clear],
                 startPoint: .leading, endPoint: .trailing
@@ -71,7 +61,10 @@ struct UsageView: View {
             .padding(.horizontal, 22)
 
             HStack(spacing: 10) {
-                Text(style.label.uppercased())
+                // Mirror the position of UsageView's STEPPED chip with a USD
+                // chip — the cost screen's bars are always stepped, so a
+                // chart-style chip would mislead.
+                Text("USD")
                     .font(.system(size: 9, weight: .bold).monospaced())
                     .tracking(0.8)
                     .foregroundStyle(.white.opacity(0.78))
@@ -85,21 +78,6 @@ struct UsageView: View {
                                     .strokeBorder(.white.opacity(0.10), lineWidth: 0.5)
                             )
                     )
-                    .contentTransition(.opacity)
-                    .animation(.strongEaseOut, value: pref.style)
-
-                if !pref.hasCycledStyle {
-                    HStack(spacing: 5) {
-                        Image(systemName: "command")
-                            .font(.system(size: 10, weight: .semibold))
-                        Text("click to cycle")
-                            .font(.system(size: 11))
-                    }
-                    .foregroundStyle(.white.opacity(0.42))
-                    // Fade + small scale-from-leading on the way out so the
-                    // hint deflates toward the chip rather than just vanishing.
-                    .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
-                }
 
                 Spacer()
 
@@ -128,9 +106,16 @@ struct UsageView: View {
             .padding(.horizontal, 22)
             .padding(.top, 6)
             .padding(.bottom, 10)
-            .animation(.strongEaseOut, value: pref.hasCycledStyle)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Plan tag pulled from the API-side UsageStore — same source as
+    /// UsageView, since the subscription tier is independent of which page
+    /// the user is on.
+    private func planTag(forClaude: Bool) -> String? {
+        let usage = forClaude ? UsageStore.shared.claude : UsageStore.shared.codex
+        return usage.plan?.uppercased()
     }
 
     private func relative(_ d: Date) -> String {
@@ -146,7 +131,6 @@ struct UsageView: View {
         color: Color,
         alignment: HorizontalAlignment
     ) -> some View {
-        // Push past where the overlay logo lands: 9 leading + 20 logo + 8 gap.
         let logoOffset: CGFloat = 9 + 20 + 8
 
         let content = HStack(spacing: 8) {
@@ -184,71 +168,5 @@ struct UsageView: View {
             }
             .frame(maxWidth: .infinity)
         }
-    }
-}
-
-struct ChartsBlock: View {
-    let color: Color
-    let usage: AppUsage
-    let style: ChartStyle
-    let seed: Int
-
-    var body: some View {
-        HStack(spacing: 18) {
-            ChartTile(style: style, color: color, label: "5h",
-                      window: usage.fiveHour, seed: seed)
-            ChartTile(style: style, color: color, label: "week",
-                      window: usage.weekly, seed: seed + 1)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.horizontal, 12)
-    }
-}
-
-struct ChartTile: View {
-    let style: ChartStyle
-    let color: Color
-    let label: String
-    let window: WindowUsage
-    let seed: Int
-
-    /// Locked tile height across all 5 styles so the panel size is
-    /// identical regardless of what the user picks.
-    private static let tileHeight: CGFloat = 96
-
-    var body: some View {
-        let value = window.usedPercent * 100   // 0-100
-        let sub = subCaption()
-
-        Group {
-            switch style {
-            case .ring:    RingChart(value: value, color: color, label: label, sub: sub)
-            case .bar:     BarChart(value: value, color: color, label: label, sub: sub)
-            case .stepped: SteppedChart(value: value, color: color, label: label, sub: sub)
-            case .numeric: NumericChart(value: value, color: color, label: label, sub: sub)
-            case .spark:   SparkChart(value: value, color: color, label: label, sub: sub, seed: seed)
-            }
-        }
-        .id(style)
-        // Blur + scale + opacity, all on the same strong ease-out at 220ms.
-        // The blur masks the geometric mismatch between Ring and Bar so the
-        // crossfade reads as one morph instead of two stacked objects.
-        .transition(.chartSwap.animation(.chartSwap))
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .frame(height: Self.tileHeight)
-    }
-
-    private func subCaption() -> String {
-        if let err = window.error { return err }
-        guard let r = window.resetAt else { return "" }
-        let delta = max(0, r.timeIntervalSinceNow)
-        return "resets in \(formatDelta(delta))"
-    }
-
-    private func formatDelta(_ s: TimeInterval) -> String {
-        if s < 60 { return "\(Int(s))s" }
-        if s < 3600 { return "\(Int(s/60))m" }
-        if s < 86400 { return "\(Int(s/3600))h" }
-        return "\(Int(s/86400))d"
     }
 }
