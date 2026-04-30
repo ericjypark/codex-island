@@ -49,5 +49,37 @@ jobs:
 
             One-line install:
             ```
-            brew install --cask codexisland
+            brew install --cask ericjypark/tap/codexisland
             ```
+
+      # Mirror the cask to ericjypark/homebrew-tap so users on the tap pick up
+      # the new version without anyone editing two repos. Requires a
+      # fine-grained PAT in HOMEBREW_TAP_TOKEN with `contents: write` on the
+      # homebrew-tap repo (the workflow's GITHUB_TOKEN can't cross repos).
+      - name: Sync cask to homebrew-tap
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          VERSION: ${{ github.ref_name }}
+          SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          if [[ -z "${HOMEBREW_TAP_TOKEN:-}" ]]; then
+            echo "::warning::HOMEBREW_TAP_TOKEN not set — skipping tap sync. Cask in ericjypark/homebrew-tap will be stale until updated manually."
+            exit 0
+          fi
+          # Strip leading "v" from the tag to get the cask version
+          CASK_VERSION="${VERSION#v}"
+          TAP_DIR="$RUNNER_TEMP/tap"
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/ericjypark/homebrew-tap.git" "$TAP_DIR"
+          cp Casks/codexisland.rb "$TAP_DIR/Casks/codexisland.rb"
+          # Drop in the freshly-built version + SHA
+          sed -i '' "s|version \"[0-9.]*\"|version \"$CASK_VERSION\"|" "$TAP_DIR/Casks/codexisland.rb"
+          sed -i '' "s|sha256 \"[a-f0-9]\{64\}\"|sha256 \"$SHA\"|" "$TAP_DIR/Casks/codexisland.rb"
+          cd "$TAP_DIR"
+          if git diff --quiet; then
+            echo "tap already up to date"
+            exit 0
+          fi
+          git config user.email "2019147551@yonsei.ac.kr"
+          git config user.name "ericjypark"
+          git commit -am "chore: bump codexisland to $CASK_VERSION"
+          git push origin main

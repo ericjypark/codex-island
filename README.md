@@ -61,11 +61,12 @@ providers' own usage endpoints.
 ### Homebrew
 
 ```sh
-brew install --cask codexisland
+brew install --cask ericjypark/tap/codexisland
 ```
 
-The cask strips the Gatekeeper quarantine attribute automatically (CodexIsland
-is unsigned by Apple — Sparkle handles update verification independently).
+The first invocation auto-taps `ericjypark/homebrew-tap`. The cask strips the
+Gatekeeper quarantine attribute automatically (CodexIsland is unsigned by
+Apple — Sparkle handles update verification independently).
 
 ### Direct download
 

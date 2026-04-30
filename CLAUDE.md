@@ -22,26 +22,27 @@ git push origin main v0.0.X
 
 # 4. Wait for CI (~1.5 min). It builds the universal DMG, signs it with the
 #    EdDSA key from the SPARKLE_ED_PRIVATE_KEY secret, generates appcast.xml,
-#    and uploads BOTH as release assets.
+#    uploads both as release assets, AND mirrors the cask to
+#    ericjypark/homebrew-tap with the freshly-built version + SHA.
 gh run watch --exit-status
 
-# 5. Grab the published DMG SHA + bump the Homebrew cask in a SEPARATE commit
-DMG_SHA=$(gh release view v0.0.X --json body --jq .body \
-  | grep -oE '`[a-f0-9]{64}`' | tr -d '`' | head -1)
-sed -i '' "s|sha256 \"[a-f0-9]\{64\}\"|sha256 \"$DMG_SHA\"|" Casks/codexisland.rb
-sed -i '' "s|version \"[0-9.]*\"|version \"0.0.X\"|" Casks/codexisland.rb
-git commit -am "chore(cask): bump to 0.0.X"
-git push
+# That's it. No follow-up cask bump needed — CI handles it.
 ```
 
 ### Hard rules
 
-1. **The cask bump is ALWAYS a follow-up commit, never bundled with the tag.** The DMG SHA does not exist until after CI runs. Tagging a commit that already updates the cask means the cask SHA is wrong.
-2. **`VERSION` and `Casks/codexisland.rb`'s `version` field must match.** Easy to forget to bump one. Verify both before tagging.
-3. **Never edit `docs/appcast.xml` by hand.** It's a release asset built by `release.sh` from the signed DMG. Hand-edited entries fail Sparkle's EdDSA check.
-4. **Never commit anything from `Vendor/Sparkle/`.** It's gitignored. The `public-ed-key.txt` lives there too — it must be readable by `build.sh` but never tracked.
-5. **Never rotate the Sparkle keypair without a migration.** If you generate a new keypair, every existing install will reject every future update because the embedded `SUPublicEDKey` no longer matches. The migration path is: ship one final build with the OLD key that also embeds the new one, wait for users to upgrade, then switch. In practice: don't rotate.
-6. **Never push to `main` without `git pull --rebase` first when working from a fresh clone.** History was rewritten 2026-04-30; old clones are stale.
+1. **Don't manually edit `Casks/codexisland.rb` for a version bump.** CI rewrites it on the homebrew-tap side at release time. Manual edits to either copy will be overwritten or drift. (You CAN edit unrelated cask metadata — postflight, zap, livecheck — via a normal commit; CI preserves those.)
+2. **Never edit `docs/appcast.xml` by hand.** It's a release asset built by `release.sh` from the signed DMG. Hand-edited entries fail Sparkle's EdDSA check.
+3. **Never commit anything from `Vendor/Sparkle/`.** It's gitignored. The `public-ed-key.txt` lives there too — it must be readable by `build.sh` but never tracked.
+4. **Never rotate the Sparkle keypair without a migration.** If you generate a new keypair, every existing install will reject every future update because the embedded `SUPublicEDKey` no longer matches. The migration path is: ship one final build with the OLD key that also embeds the new one, wait for users to upgrade, then switch. In practice: don't rotate.
+5. **Never push to `main` without `git pull --rebase` first when working from a fresh clone.** History was rewritten 2026-04-30; old clones are stale.
+
+### CI secrets (one-time setup)
+
+The release workflow needs two GitHub Actions secrets on this repo:
+
+- **`SPARKLE_ED_PRIVATE_KEY`** — the EdDSA private key (export with `Vendor/Sparkle/bin/generate_keys -x <file>`, paste the file contents). Without it the appcast can't be signed.
+- **`HOMEBREW_TAP_TOKEN`** — fine-grained PAT with `contents: write` on `ericjypark/homebrew-tap` only. Without it CI emits a warning and the tap goes stale, but the GitHub Release still ships fine.
 
 ### Local dry-run
 
