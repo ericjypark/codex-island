@@ -13,6 +13,8 @@ struct SettingsFooter: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
+            // 11pt mono regular — no token (caption is 10pt, bodyNumber is 11pt semibold);
+            // version text needs the lighter weight to recede next to the dotted-link row.
             Text(version)
                 .font(.system(size: 11).monospaced())
                 .foregroundStyle(.white.opacity(0.34))
@@ -25,6 +27,7 @@ struct SettingsFooter: View {
             Button {
                 NSApp.terminate(nil)
             } label: {
+                // 11.5pt: matches Settings row subtitle scale.
                 Text("Quit")
                     .font(.system(size: 11.5, weight: .medium))
                     .foregroundStyle(.white.opacity(quitHovered ? 0.92 : 0.55))
@@ -65,6 +68,7 @@ private struct DottedLink: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 4) {
+                // 11.5pt regular + 9pt arrow glyph — paired off-grid sizes for the dotted link.
                 Text(title)
                     .font(.system(size: 11.5))
                     .foregroundStyle(.white.opacity(hovered ? 0.92 : 0.55))

@@ -10,24 +10,24 @@ struct NumericChart: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
                 Text(label)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(Typography.label)
                     .foregroundStyle(.white.opacity(0.55))
                     .textCase(.lowercase)
                 Spacer()
                 // "resets in 3h" → "↻ 3h" — same info, less prose. The
                 // glyph reads at a glance; the words don't.
                 Text(sub.replacingOccurrences(of: "resets in ", with: "↻ "))
-                    .font(.system(size: 10).monospaced())
+                    .font(Typography.caption)
                     .foregroundStyle(.white.opacity(0.4))
             }
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text("\(Int(value))")
-                    .font(.system(size: 38, weight: .semibold).monospacedDigit())
+                    .font(Typography.bigNumber)
                     .foregroundStyle(UrgencyColor.value(value))
                     .numericTransition(value: value)
                     .animation(.strongEaseOut, value: value)
                 Text("%")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(Typography.unit)
                     .foregroundStyle(.white.opacity(0.4))
             }
             .frame(maxWidth: .infinity, alignment: .leading)

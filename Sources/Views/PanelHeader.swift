@@ -42,11 +42,11 @@ struct PanelHeader: View {
 
         let content = HStack(spacing: 8) {
             Text(name)
-                .font(.system(size: 13, weight: .semibold))
+                .font(Typography.providerTitle)
                 .foregroundStyle(.white)
             if let tag {
                 Text(tag)
-                    .font(.system(size: 9, weight: .bold).monospaced())
+                    .font(Typography.chip)
                     .tracking(0.8)
                     .foregroundStyle(.white.opacity(0.6))
                     .padding(.horizontal, 5)

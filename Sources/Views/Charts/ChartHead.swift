@@ -9,18 +9,18 @@ struct ChartHead: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(label)
-                .font(.system(size: 11, weight: .medium))
+                .font(Typography.label)
                 .foregroundStyle(.white.opacity(0.55))
                 .textCase(.lowercase)
             Spacer()
             HStack(alignment: .firstTextBaseline, spacing: 1) {
                 Text("\(Int(value))")
-                    .font(.system(size: 18, weight: .semibold).monospacedDigit())
+                    .font(Typography.chartValue)
                     .foregroundStyle(UrgencyColor.value(value))
                     .numericTransition(value: value)
                     .animation(.strongEaseOut, value: value)
                 Text("%")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(Typography.label)
                     .foregroundStyle(.white.opacity(0.5))
             }
         }
@@ -32,7 +32,7 @@ struct ChartFoot: View {
 
     var body: some View {
         Text(caption)
-            .font(.system(size: 10).monospaced())
+            .font(Typography.caption)
             .foregroundStyle(.white.opacity(0.4))
             .lineLimit(1)
             .truncationMode(.tail)

@@ -33,9 +33,9 @@ struct PanelFooter: View {
                 if screenPref.screen == .usage && !pref.hasCycledStyle {
                     HStack(spacing: 5) {
                         Image(systemName: "command")
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(Typography.micro)
                         Text("click to cycle")
-                            .font(.system(size: 11))
+                            .font(Typography.label)
                     }
                     .foregroundStyle(.white.opacity(0.42))
                     .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
@@ -64,7 +64,7 @@ struct PanelFooter: View {
             }
         }()
         Text(label)
-            .font(.system(size: 9, weight: .bold).monospaced())
+            .font(Typography.chip)
             .tracking(0.8)
             .foregroundStyle(.white.opacity(0.78))
             .padding(.horizontal, 6)
@@ -103,18 +103,18 @@ struct PanelFooter: View {
             LiveDot(active: activeLastUpdated != nil && !activeLoading)
             if activeLoading {
                 Text("syncing…")
-                    .font(.system(size: 11))
+                    .font(Typography.label)
                     .foregroundStyle(.white.opacity(0.55))
             } else if let updated = activeLastUpdated {
                 Text("synced")
-                    .font(.system(size: 11))
+                    .font(Typography.label)
                     .foregroundStyle(.white.opacity(0.55))
                 Text(relative(updated))
-                    .font(.system(size: 11).monospacedDigit())
+                    .font(Typography.bodyNumber)
                     .foregroundStyle(.white.opacity(0.72))
             } else {
                 Text("idle")
-                    .font(.system(size: 11))
+                    .font(Typography.label)
                     .foregroundStyle(.white.opacity(0.4))
             }
         }
