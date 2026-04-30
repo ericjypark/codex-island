@@ -148,7 +148,7 @@ struct SettingsView: View {
                 title: "Claude",
                 subtitle: providerSubtitle(usage.claude),
                 dot: IslandColor.claude,
-                chip: "MAX"
+                chip: usage.claude.plan?.uppercased()
             ) {
                 SettingsToggle(isOn: visibility.claudeVisible) {
                     visibility.claudeVisible.toggle()
@@ -158,7 +158,7 @@ struct SettingsView: View {
                 title: "Codex",
                 subtitle: providerSubtitle(usage.codex),
                 dot: IslandColor.codex,
-                chip: "PLUS"
+                chip: usage.codex.plan?.uppercased()
             ) {
                 SettingsToggle(isOn: visibility.codexVisible) {
                     visibility.codexVisible.toggle()

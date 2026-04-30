@@ -28,7 +28,8 @@ enum UsageFetcher {
             }
             return AppUsage(
                 fiveHour: parseCodexWindow(rl["primary_window"]),
-                weekly: parseCodexWindow(rl["secondary_window"])
+                weekly: parseCodexWindow(rl["secondary_window"]),
+                plan: obj["plan_type"] as? String
             )
         } catch {
             return AppUsage(
@@ -74,10 +75,16 @@ enum UsageFetcher {
     ///      old token.
     static func fetchClaude() async -> AppUsage {
         var lastError = "auth required — run claude"
+        // Plan tier ships in the keychain dict only — Anthropic's usage
+        // endpoint doesn't echo it back. We peek the keychain even on the
+        // env-token path so the chip works for users whose token came from
+        // Claude Desktop's child env rather than from `claude /login`.
+        let cachedCreds = readClaudeCreds()
+        let plan = cachedCreds?.subscriptionType
 
         if let envToken = ProcessInfo.processInfo.environment["CLAUDE_CODE_OAUTH_TOKEN"],
            !envToken.isEmpty {
-            switch await fetchClaudeUsage(token: envToken) {
+            switch await fetchClaudeUsage(token: envToken, plan: plan) {
             case .success(let u):       return u
             case .rateLimited:          lastError = "rate limited"
             case .unauthorized:         break
@@ -85,8 +92,8 @@ enum UsageFetcher {
             }
         }
 
-        if let creds = readClaudeCreds() {
-            switch await fetchClaudeUsage(token: creds.accessToken) {
+        if let creds = cachedCreds {
+            switch await fetchClaudeUsage(token: creds.accessToken, plan: plan) {
             case .success(let u):       return u
             case .rateLimited:          lastError = "rate limited"
             case .unauthorized:         break
@@ -106,7 +113,7 @@ enum UsageFetcher {
                 updated["expiresAt"] = refreshed.expiresAt
                 writeClaudeCreds(account: creds.account, oauth: updated)
 
-                switch await fetchClaudeUsage(token: refreshed.accessToken) {
+                switch await fetchClaudeUsage(token: refreshed.accessToken, plan: plan) {
                 case .success(let u):       return u
                 case .rateLimited:          lastError = "rate limited"
                 case .unauthorized:         break
@@ -133,6 +140,7 @@ enum UsageFetcher {
         let accessToken: String
         let refreshToken: String
         let oauth: [String: Any]
+        let subscriptionType: String?
     }
 
     /// Reads the keychain item Claude Code writes on first login. Returns
@@ -165,7 +173,8 @@ enum UsageFetcher {
                   let oauth = outer["claudeAiOauth"] as? [String: Any],
                   let access = oauth["accessToken"] as? String,
                   let refresh = oauth["refreshToken"] as? String else { return nil }
-            return ClaudeCreds(account: account, accessToken: access, refreshToken: refresh, oauth: oauth)
+            let plan = oauth["subscriptionType"] as? String
+            return ClaudeCreds(account: account, accessToken: access, refreshToken: refresh, oauth: oauth, subscriptionType: plan)
         } catch {
             return nil
         }
@@ -244,7 +253,7 @@ enum UsageFetcher {
         }
     }
 
-    private static func fetchClaudeUsage(token: String) async -> FetchOutcome {
+    private static func fetchClaudeUsage(token: String, plan: String?) async -> FetchOutcome {
         var req = URLRequest(url: URL(string: "https://api.anthropic.com/api/oauth/usage")!)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         req.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
@@ -273,7 +282,8 @@ enum UsageFetcher {
                 }
                 return .success(AppUsage(
                     fiveHour: parseClaudeWindow(obj["five_hour"]),
-                    weekly: parseClaudeWindow(obj["seven_day"])
+                    weekly: parseClaudeWindow(obj["seven_day"]),
+                    plan: plan
                 ))
             }
             return .otherError("parse error")

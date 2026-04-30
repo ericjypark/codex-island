@@ -13,6 +13,15 @@ struct WindowUsage {
 struct AppUsage {
     var fiveHour: WindowUsage
     var weekly: WindowUsage
+    /// Provider-reported plan tier — Claude's `subscriptionType` (free/pro/max)
+    /// or Codex's `plan_type` (free/plus/pro). nil when unknown.
+    var plan: String?
+
+    init(fiveHour: WindowUsage, weekly: WindowUsage, plan: String? = nil) {
+        self.fiveHour = fiveHour
+        self.weekly = weekly
+        self.plan = plan
+    }
 
     static let empty = AppUsage(fiveHour: .unknown, weekly: .unknown)
 

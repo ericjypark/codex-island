@@ -15,12 +15,12 @@ struct UsageView: View {
             // (height = 22, the menu-bar item height). The notch-width
             // spacer in the middle hides inside the physical notch.
             HStack(spacing: 0) {
-                providerTitle(name: "Claude", tag: "MAX",
+                providerTitle(name: "Claude", tag: store.claude.plan?.uppercased(),
                               color: IslandColor.claude, alignment: .leading)
                     .opacity(visibility.claudeVisible ? 1 : 0.30)
                     .saturation(visibility.claudeVisible ? 1 : 0)
                 Color.clear.frame(width: notch.width)
-                providerTitle(name: "Codex", tag: "PLUS",
+                providerTitle(name: "Codex", tag: store.codex.plan?.uppercased(),
                               color: IslandColor.codex, alignment: .trailing)
                     .opacity(visibility.codexVisible ? 1 : 0.30)
                     .saturation(visibility.codexVisible ? 1 : 0)
@@ -139,7 +139,7 @@ struct UsageView: View {
     @ViewBuilder
     private func providerTitle(
         name: String,
-        tag: String,
+        tag: String?,
         color: Color,
         alignment: HorizontalAlignment
     ) -> some View {
@@ -150,20 +150,22 @@ struct UsageView: View {
             Text(name)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
-            Text(tag)
-                .font(.system(size: 9, weight: .bold).monospaced())
-                .tracking(0.8)
-                .foregroundStyle(.white.opacity(0.6))
-                .padding(.horizontal, 5)
-                .padding(.vertical, 2)
-                .background(
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(.white.opacity(0.06))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 3)
-                                .strokeBorder(.white.opacity(0.08), lineWidth: 0.5)
-                        )
-                )
+            if let tag {
+                Text(tag)
+                    .font(.system(size: 9, weight: .bold).monospaced())
+                    .tracking(0.8)
+                    .foregroundStyle(.white.opacity(0.6))
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(.white.opacity(0.06))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 3)
+                                    .strokeBorder(.white.opacity(0.08), lineWidth: 0.5)
+                            )
+                    )
+            }
         }
 
         if alignment == .leading {
