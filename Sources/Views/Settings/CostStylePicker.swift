@@ -27,6 +27,7 @@ struct CostStylePicker: View {
             VStack(spacing: 7) {
                 preview(for: style)
                     .frame(height: 34)
+                    .accessibilityHidden(true)
                 Text(style.label)
                     .font(Typography.micro)
                     .foregroundStyle(isOn
@@ -54,6 +55,8 @@ struct CostStylePicker: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(style.label)
+        .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
     }
 
     @ViewBuilder

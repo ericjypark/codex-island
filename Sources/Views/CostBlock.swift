@@ -51,6 +51,7 @@ struct CostTile: View {
                 Text(resetGlyph)
                     .font(Typography.caption)
                     .foregroundStyle(.white.opacity(window.unknownModels.isEmpty ? 0.4 : 0.5))
+                    .accessibilityLabel(resetGlyphSpoken)
             }
 
             Spacer(minLength: 0)
@@ -70,6 +71,24 @@ struct CostTile: View {
         .frame(height: Self.tileHeight)
         .opacity(loading ? 0.7 : 1.0)
         .animation(.easeOut(duration: 0.18), value: loading)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(window.label)
+        .accessibilityValue(spokenValue)
+    }
+
+    private var spokenValue: String {
+        switch stylePref.style {
+        case .dollar:
+            return "$\(formattedDollarsCompact)"
+        case .multi:
+            let plan = formatBarDollars(planAmount)
+            let you = formatBarDollars(window.dollars)
+            return "\(planLabel ?? "Plan") \(plan) versus you \(you)"
+        case .tokens:
+            return "\(tokensValue)\(tokensUnit) tokens"
+        case .spark:
+            return "$\(formattedDollarsCompact) cumulative"
+        }
     }
 
     // MARK: - Heroes
@@ -295,5 +314,14 @@ struct CostTile: View {
             return "⚠ \(window.unknownModels.count) unpriced"
         }
         return "↻ " + (isMonth ? CostBucketing.monthResetIn() : CostBucketing.todayResetIn())
+    }
+
+    private var resetGlyphSpoken: String {
+        if let err = window.error { return err }
+        if !window.unknownModels.isEmpty {
+            return "Warning: \(window.unknownModels.count) unpriced models — totals may be incomplete."
+        }
+        let countdown = isMonth ? CostBucketing.monthResetIn() : CostBucketing.todayResetIn()
+        return "Resets in \(countdown)"
     }
 }

@@ -90,6 +90,9 @@ struct ChartTile: View {
         .transition(.chartSwap.animation(.chartSwap))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .frame(height: Self.tileHeight)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label), \(Int(value))%")
+        .accessibilityValue(subCaption())
     }
 
     private func subCaption() -> String {

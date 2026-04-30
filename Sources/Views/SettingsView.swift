@@ -112,6 +112,8 @@ struct SettingsView: View {
         }
         .buttonStyle(.plain)
         .animation(.easeOut(duration: 0.12), value: isOn)
+        .accessibilityLabel("\(tab.label) tab")
+        .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
     }
 
     // MARK: - Tab content
@@ -377,6 +379,8 @@ struct SettingsView: View {
                         }
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Refresh interval, \(label(for: value))")
+                .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
             }
         }
         .padding(2)

@@ -112,11 +112,13 @@ struct IslandRootView: View {
                     logo(claudeLogo, color: IslandColor.claude, alignment: .leading)
                         .opacity(visibility.claudeVisible ? 1 : 0.30)
                         .saturation(visibility.claudeVisible ? 1 : 0)
+                        .accessibilityLabel(visibility.claudeVisible ? "Claude" : "Claude (hidden)")
                 }
                 .overlay(alignment: .topTrailing) {
                     logo(openaiLogo, color: IslandColor.codex, alignment: .trailing)
                         .opacity(visibility.codexVisible ? 1 : 0.30)
                         .saturation(visibility.codexVisible ? 1 : 0)
+                        .accessibilityLabel(visibility.codexVisible ? "OpenAI" : "OpenAI (hidden)")
                 }
                 .overlay(alignment: .bottomLeading) {
                     // Utility control, not dashboard status. Keep it in a
@@ -183,6 +185,11 @@ struct IslandRootView: View {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("CodexIsland panel")
+        .accessibilityHint(model.state == .compact
+            ? "Hover to expand. Command-click to cycle visualization."
+            : "Command-click to cycle visualization.")
     }
 
     @ViewBuilder

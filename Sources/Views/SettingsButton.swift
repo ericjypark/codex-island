@@ -27,5 +27,6 @@ struct SettingsButton: View {
         .onHover { hovered = $0 }
         .help("Settings")
         .animation(.strongEaseOut, value: hovered)
+        .accessibilityLabel("Settings")
     }
 }

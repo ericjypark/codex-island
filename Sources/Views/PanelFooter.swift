@@ -39,6 +39,8 @@ struct PanelFooter: View {
                     }
                     .foregroundStyle(.white.opacity(0.42))
                     .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Tip: Command-click to cycle visualization")
                 }
 
                 Spacer()
@@ -126,6 +128,14 @@ struct PanelFooter: View {
                     .foregroundStyle(.white.opacity(0.4))
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(liveStatusSpoken)
+    }
+
+    private var liveStatusSpoken: String {
+        if activeLoading { return "Syncing" }
+        if let updated = activeLastUpdated { return "Synced \(relative(updated))" }
+        return "Idle"
     }
 
     private func relative(_ d: Date) -> String {

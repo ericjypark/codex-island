@@ -11,6 +11,9 @@ struct PageIndicator: View {
             dot(active: active == .cost)
         }
         .animation(.strongEaseOut, value: active)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Page indicator")
+        .accessibilityValue(active == .usage ? "Usage page, 1 of 2" : "Cost page, 2 of 2")
     }
 
     private func dot(active: Bool) -> some View {

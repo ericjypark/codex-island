@@ -37,6 +37,7 @@ struct SettingsRow<Trailing: View>: View {
                             .frame(width: 7, height: 7)
                             .shadow(color: dot.opacity(0.7), radius: 4)
                             .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 4 }
+                            .accessibilityHidden(true)
                     }
                     Text(title)
                         // 13.5pt sits between providerTitle (13) and unit (15) — Settings rows
@@ -55,6 +56,7 @@ struct SettingsRow<Trailing: View>: View {
                                 RoundedRectangle(cornerRadius: 3)
                                     .fill(.white.opacity(0.06))
                             )
+                            .accessibilityLabel("Plan: \(chip)")
                     }
                 }
                 if let subtitle {
@@ -64,6 +66,7 @@ struct SettingsRow<Trailing: View>: View {
                         .foregroundStyle(.white.opacity(0.55))
                 }
             }
+            .accessibilityElement(children: .combine)
 
             Spacer(minLength: 8)
 
