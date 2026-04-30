@@ -15,7 +15,20 @@ jobs:
       - name: Install create-dmg
         run: npm install --global create-dmg
 
-      - name: Build DMG
+      - name: Stage Sparkle private key
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: |
+          if [[ -z "${SPARKLE_ED_PRIVATE_KEY:-}" ]]; then
+            echo "::error::SPARKLE_ED_PRIVATE_KEY secret is not set — see docs/SPARKLE.md"
+            exit 1
+          fi
+          KEY_FILE="$RUNNER_TEMP/sparkle_ed_priv"
+          umask 077
+          printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$KEY_FILE"
+          echo "SPARKLE_PRIVATE_KEY_PATH=$KEY_FILE" >> "$GITHUB_ENV"
+
+      - name: Build DMG + sign appcast
         run: ./release.sh
 
       - name: Compute checksum
@@ -25,7 +38,9 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/CodexIsland-*.dmg
+          files: |
+            dist/CodexIsland-*.dmg
+            dist/appcast.xml
           generate_release_notes: true
           body: |
             **SHA-256:** `${{ steps.sha.outputs.sha }}`

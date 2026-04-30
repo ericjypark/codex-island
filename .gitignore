@@ -14,3 +14,6 @@ xcuserdata/
 # Marketing landing page lives in its own git repo.
 landing/
 landing.zip
+
+# Sparkle framework + tools — fetched on demand by scripts/setup-sparkle.sh.
+Vendor/
