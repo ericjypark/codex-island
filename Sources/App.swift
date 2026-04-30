@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // already has cached values the first time the user hovers, instead
         // of flashing "0%" while the first request lands.
         UsageStore.shared.startAutoRefresh()
+        CostStore.shared.startAutoRefresh()
 
         // Touch the shared updater so Sparkle starts its background scheduler.
         _ = UpdaterController.shared
