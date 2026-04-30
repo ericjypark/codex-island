@@ -13,7 +13,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private init() {
         let hosting = NSHostingController(rootView: SettingsView())
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 540),
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 620),
             styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -26,7 +26,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window.backgroundColor = NSColor(
             calibratedRed: 0.075, green: 0.077, blue: 0.090, alpha: 1
         )
-        window.minSize = NSSize(width: 440, height: 460)
+        window.minSize = NSSize(width: 440, height: 420)
         // Hide the dock-stow button (we have no dock icon) but keep zoom
         // alongside resize handles so the user controls size.
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true

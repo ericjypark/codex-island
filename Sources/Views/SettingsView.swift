@@ -34,20 +34,26 @@ struct SettingsView: View {
 
             hairline
 
-            Group {
-                switch activeTab {
-                case .general:   generalTab
-                case .display:   displayTab
-                case .providers: providersTab
+            // ScrollView guarantees the footer stays at the bottom of the
+            // window regardless of how much content the active tab has —
+            // overflow scrolls instead of pushing chrome off-screen.
+            ScrollView(.vertical, showsIndicators: false) {
+                Group {
+                    switch activeTab {
+                    case .general:   generalTab
+                    case .display:   displayTab
+                    case .providers: providersTab
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .top)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             hairline
 
             SettingsFooter(version: version)
         }
-        .frame(minWidth: 440, minHeight: 460)
+        .frame(minWidth: 440, minHeight: 420)
         .background(Color(red: 0.020, green: 0.020, blue: 0.027))
         .preferredColorScheme(.dark)
     }
