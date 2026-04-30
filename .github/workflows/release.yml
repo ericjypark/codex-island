@@ -49,5 +49,5 @@ jobs:
 
             One-line install:
             ```
-            brew install --cask --no-quarantine codexisland
+            brew install --cask codexisland
             ```

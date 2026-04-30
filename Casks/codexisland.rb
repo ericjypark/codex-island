@@ -14,6 +14,16 @@ cask "codexisland" do
 
   app "CodexIsland.app"
 
+  # Homebrew removed --no-quarantine in late 2025. CodexIsland is unsigned by
+  # Apple (Sparkle handles update verification independently), so without this
+  # the first launch hits a "damaged or unidentified developer" Gatekeeper
+  # block. Strip the quarantine xattr post-install so users can just open it.
+  postflight do
+    system_command "/usr/bin/xattr",
+                   args: ["-d", "com.apple.quarantine", "#{appdir}/CodexIsland.app"],
+                   sudo: false
+  end
+
   zap trash: [
     "~/Library/Preferences/dev.codexisland.CodexIsland.plist",
     "~/Library/Application Support/CodexIsland",

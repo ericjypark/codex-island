@@ -61,8 +61,11 @@ providers' own usage endpoints.
 ### Homebrew
 
 ```sh
-brew install --cask --no-quarantine codexisland
+brew install --cask codexisland
 ```
+
+The cask strips the Gatekeeper quarantine attribute automatically (CodexIsland
+is unsigned by Apple — Sparkle handles update verification independently).
 
 ### Direct download
 
