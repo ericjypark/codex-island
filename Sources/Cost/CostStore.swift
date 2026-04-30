@@ -102,21 +102,33 @@ final class CostStore: ObservableObject {
 
         let todaySum = todayEvents.reduce(0.0) { $0 + Pricing.cost(for: $1) }
         let monthSum = monthEvents.reduce(0.0) { $0 + Pricing.cost(for: $1) }
+        let todayTokens = todayEvents.reduce(0) { $0 + tokenCount(of: $1) }
+        let monthTokens = monthEvents.reduce(0) { $0 + tokenCount(of: $1) }
 
         return ProviderCost(
             today: CostWindow(
                 dollars: todaySum,
+                tokens: todayTokens,
                 label: "today",
                 resetCaption: CostBucketing.todayResetCaption,
                 error: nil
             ),
             month: CostWindow(
                 dollars: monthSum,
+                tokens: monthTokens,
                 label: CostBucketing.currentMonthLabel(),
                 resetCaption: CostBucketing.monthResetCaption(),
                 error: nil
             )
         )
+    }
+
+    /// Sum of every token bucket in a single event. Cache reads are usually
+    /// the dominant slice of any heavy Claude Code session and the user
+    /// chose to surface raw activity, so they're included.
+    nonisolated private static func tokenCount(of event: TokenEvent) -> Int {
+        event.inputTokens + event.outputTokens
+            + event.cacheCreationTokens + event.cacheReadTokens
     }
 
     // MARK: - Cache
@@ -130,6 +142,10 @@ final class CostStore: ObservableObject {
             "claudeMonth": claude.month.dollars,
             "codexToday": codex.today.dollars,
             "codexMonth": codex.month.dollars,
+            "claudeTodayTokens": claude.today.tokens,
+            "claudeMonthTokens": claude.month.tokens,
+            "codexTodayTokens": codex.today.tokens,
+            "codexMonthTokens": codex.month.tokens,
             "lastUpdated": lastUpdated?.timeIntervalSinceReferenceDate ?? 0,
         ]
         UserDefaults.standard.set(snap, forKey: Self.cacheKey)
@@ -141,17 +157,23 @@ final class CostStore: ObservableObject {
         let claudeMonth = snap["claudeMonth"] as? Double ?? 0
         let codexToday = snap["codexToday"] as? Double ?? 0
         let codexMonth = snap["codexMonth"] as? Double ?? 0
+        let claudeTodayTokens = snap["claudeTodayTokens"] as? Int ?? 0
+        let claudeMonthTokens = snap["claudeMonthTokens"] as? Int ?? 0
+        let codexTodayTokens = snap["codexTodayTokens"] as? Int ?? 0
+        let codexMonthTokens = snap["codexMonthTokens"] as? Int ?? 0
 
         self.claude = ProviderCost(
-            today: CostWindow(dollars: claudeToday, label: "today",
+            today: CostWindow(dollars: claudeToday, tokens: claudeTodayTokens, label: "today",
                               resetCaption: CostBucketing.todayResetCaption, error: nil),
-            month: CostWindow(dollars: claudeMonth, label: CostBucketing.currentMonthLabel(),
+            month: CostWindow(dollars: claudeMonth, tokens: claudeMonthTokens,
+                              label: CostBucketing.currentMonthLabel(),
                               resetCaption: CostBucketing.monthResetCaption(), error: nil)
         )
         self.codex = ProviderCost(
-            today: CostWindow(dollars: codexToday, label: "today",
+            today: CostWindow(dollars: codexToday, tokens: codexTodayTokens, label: "today",
                               resetCaption: CostBucketing.todayResetCaption, error: nil),
-            month: CostWindow(dollars: codexMonth, label: CostBucketing.currentMonthLabel(),
+            month: CostWindow(dollars: codexMonth, tokens: codexMonthTokens,
+                              label: CostBucketing.currentMonthLabel(),
                               resetCaption: CostBucketing.monthResetCaption(), error: nil)
         )
         if let ts = snap["lastUpdated"] as? Double, ts > 0 {

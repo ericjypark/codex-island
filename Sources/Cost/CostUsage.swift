@@ -7,12 +7,13 @@ import Foundation
 /// like an achievement rather than a burned-through budget.
 struct CostWindow {
     let dollars: Double
+    let tokens: Int
     let label: String
     let resetCaption: String
     let error: String?
 
     static let unknown = CostWindow(
-        dollars: 0, label: "—",
+        dollars: 0, tokens: 0, label: "—",
         resetCaption: "no data", error: "no data"
     )
 }
@@ -24,11 +25,11 @@ struct ProviderCost {
 
     static let empty = ProviderCost(
         today: CostWindow(
-            dollars: 0, label: "today",
+            dollars: 0, tokens: 0, label: "today",
             resetCaption: CostBucketing.todayResetCaption, error: nil
         ),
         month: CostWindow(
-            dollars: 0,
+            dollars: 0, tokens: 0,
             label: CostBucketing.currentMonthLabel(),
             resetCaption: CostBucketing.monthResetCaption(), error: nil
         )
@@ -39,11 +40,11 @@ struct ProviderCost {
     /// `AppUsage.dummy` pattern used by UsageView).
     static let dummy = ProviderCost(
         today: CostWindow(
-            dollars: 11.25, label: "today",
+            dollars: 11.25, tokens: 1_240_000, label: "today",
             resetCaption: CostBucketing.todayResetCaption, error: nil
         ),
         month: CostWindow(
-            dollars: 142.0,
+            dollars: 142.0, tokens: 18_500_000,
             label: CostBucketing.currentMonthLabel(),
             resetCaption: CostBucketing.monthResetCaption(), error: nil
         )

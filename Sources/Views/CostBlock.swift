@@ -6,11 +6,21 @@ struct CostBlock: View {
     let color: Color
     let cost: ProviderCost
     let loading: Bool
+    /// Monthly cost of the user's subscription in USD, used to compute the
+    /// ROI multiplier on each cell. Nil when the plan is unknown or free —
+    /// the cell then shows just the token brag without the "X.Xx" prefix.
+    let subscriptionMonthlyUSD: Double?
 
     var body: some View {
         HStack(spacing: 18) {
-            CostTile(color: color, window: cost.today, loading: loading)
-            CostTile(color: color, window: cost.month, loading: loading)
+            CostTile(
+                color: color, window: cost.today, loading: loading,
+                subscriptionMonthlyUSD: subscriptionMonthlyUSD, isMonth: false
+            )
+            CostTile(
+                color: color, window: cost.month, loading: loading,
+                subscriptionMonthlyUSD: subscriptionMonthlyUSD, isMonth: true
+            )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, 12)
@@ -19,14 +29,17 @@ struct CostBlock: View {
 
 /// One cost cell. The dollar number is the hero — 38pt brand-colored
 /// monospace digits with a soft glow whose intensity grows with the
-/// amount, so heavier spend feels rewarding rather than punitive. No bar,
-/// no cap, no fill metaphor. Mirrors `NumericChart`'s layout (label +
-/// reset glyph row on top, big value in the middle) for design-system
-/// continuity with the usage screen.
+/// amount, plus a count-up reveal on first appearance and a smooth
+/// interpolation on refresh. Below it: a single small caption with the
+/// ROI multiplier vs the user's subscription and the period's raw token
+/// count, so heavy use reads as "look how much value I extracted" rather
+/// than "look how much I burned."
 struct CostTile: View {
     let color: Color
     let window: CostWindow
     let loading: Bool
+    let subscriptionMonthlyUSD: Double?
+    let isMonth: Bool
 
     /// Locked to match `ChartTile.tileHeight` so swipe transitions don't
     /// reflow the panel.
@@ -51,15 +64,15 @@ struct CostTile: View {
                 Text("$")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.white.opacity(0.4))
-                Text(formatted)
-                    .font(.system(size: 38, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(color)
-                    .shadow(color: color.opacity(glowOpacity), radius: 6)
-                    .shadow(color: color.opacity(glowOpacity * 0.5), radius: 14)
-                    .numericTransition(value: window.dollars)
-                    .animation(.strongEaseOut, value: window.dollars)
+                CountUpDollar(target: window.dollars, color: color, glowOpacity: glowOpacity)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text(captionText)
+                .font(.system(size: 10).monospaced())
+                .foregroundStyle(.white.opacity(0.55))
+                .lineLimit(1)
+                .truncationMode(.tail)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .frame(height: Self.tileHeight)
@@ -87,12 +100,35 @@ struct CostTile: View {
             .replacingOccurrences(of: "resets in ", with: "↻ ")
     }
 
-    /// Drop cents above $100 so 7-digit month totals (e.g. $1432.89) don't
-    /// overflow the 38pt slot. Codex stays sub-$100 typically and keeps
-    /// cents; Claude month rolls over to the no-cents format naturally.
-    private var formatted: String {
-        let v = window.dollars
-        if v < 100 { return String(format: "%.2f", v) }
-        return String(format: "%.0f", v)
+    /// "X.Xx · Y.YM tok" combined caption. The ROI half drops cleanly when
+    /// no subscription is known (Free plan, missing plan tag), leaving
+    /// just the token brag so the cell is never empty.
+    private var captionText: String {
+        let tokens = formatTokens(window.tokens)
+        guard let roi = roiText else { return tokens }
+        return "\(roi) · \(tokens)"
+    }
+
+    /// "16.6x" when the multiplier is meaningful. Today divides by the
+    /// daily portion of the subscription (sub/30) so a heavy day shows as
+    /// 10x+; month divides by the full subscription so power users see
+    /// 5-10x. Both feel like "I extracted way more value than I paid."
+    private var roiText: String? {
+        guard let sub = subscriptionMonthlyUSD, sub > 0 else { return nil }
+        let denom = isMonth ? sub : (sub / 30.0)
+        guard denom > 0 else { return nil }
+        let mult = window.dollars / denom
+        if mult < 0.1 { return "<0.1x" }
+        if mult < 10 { return String(format: "%.1fx", mult) }
+        return String(format: "%.0fx", mult)
+    }
+
+    private func formatTokens(_ n: Int) -> String {
+        let v = Double(n)
+        if n < 1_000 { return "\(n) tok" }
+        if n < 10_000 { return String(format: "%.1fk tok", v / 1_000) }
+        if n < 1_000_000 { return String(format: "%.0fk tok", v / 1_000) }
+        if n < 1_000_000_000 { return String(format: "%.1fM tok", v / 1_000_000) }
+        return String(format: "%.1fB tok", v / 1_000_000_000)
     }
 }
