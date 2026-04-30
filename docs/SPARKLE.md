@@ -24,8 +24,10 @@ the asset on the most recent non-prerelease release.
    ```sh
    ./Vendor/Sparkle/bin/generate_keys
    ```
-3. Save the **public** key (one base64 line) to `Vendor/Sparkle/public-ed-key.txt`
-   so `build.sh` can inject it into Info.plist as `SUPublicEDKey`.
+3. The **public** key is hardcoded in `build.sh` as `SU_PUBLIC_KEY`. Public
+   keys are not secrets — they're meant to ship inside distributed apps so
+   Sparkle can verify update signatures. If you generate a new keypair,
+   replace the constant in `build.sh` and read the rotation warning below.
 4. Export the **private** key for CI use:
    ```sh
    ./Vendor/Sparkle/bin/generate_keys -x sparkle_ed_priv

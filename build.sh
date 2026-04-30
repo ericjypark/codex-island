@@ -19,17 +19,14 @@ FRAMEWORKS_DIR="$CONTENTS/Frameworks"
 SPARKLE_DIR="Vendor/Sparkle"
 SPARKLE_FW="$SPARKLE_DIR/Sparkle.framework"
 
-# Public EdDSA key embedded in Info.plist as SUPublicEDKey. Generate once with
-# `Vendor/Sparkle/bin/generate_keys` and paste the printed key into this file.
-# Builds without it succeed but Sparkle will refuse every update — see
-# docs/SPARKLE.md.
-SU_PUBLIC_KEY_FILE="$SPARKLE_DIR/public-ed-key.txt"
-SU_PUBLIC_KEY=""
-if [[ -f "$SU_PUBLIC_KEY_FILE" ]]; then
-  SU_PUBLIC_KEY="$(tr -d '[:space:]' < "$SU_PUBLIC_KEY_FILE")"
-else
-  echo "⚠ no Sparkle public key at $SU_PUBLIC_KEY_FILE — updates will not verify"
-fi
+# Public EdDSA key embedded in Info.plist as SUPublicEDKey. The PUBLIC half
+# of the keypair is safe to commit — it's meant to ship inside distributed
+# apps so Sparkle can verify update signatures. The matching PRIVATE key is
+# in the maintainer's Keychain (and the SPARKLE_ED_PRIVATE_KEY GitHub Secret
+# for CI). To rotate, see docs/SPARKLE.md — DO NOT change this lightly:
+# every existing install verifies updates against this exact public key, and
+# changing it strands them.
+SU_PUBLIC_KEY="bz1gwLBKgIL/Y7OO23o3gaMNIeTpvv/C90F9inr9Quo="
 
 SU_FEED_URL="${SU_FEED_URL:-https://github.com/ericjypark/codex-island/releases/latest/download/appcast.xml}"
 
