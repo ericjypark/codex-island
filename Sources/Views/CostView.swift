@@ -13,7 +13,8 @@ struct CostView: View {
             CostBlock(
                 color: visibility.claudeVisible ? IslandColor.claude : .white.opacity(0.32),
                 cost: visibility.claudeVisible ? store.claude : .dummy,
-                loading: store.claudeLoading
+                loading: store.claudeLoading,
+                provider: .claude
             )
             .opacity(visibility.claudeVisible ? 1 : 0.55)
             Rectangle()
@@ -26,7 +27,8 @@ struct CostView: View {
             CostBlock(
                 color: visibility.codexVisible ? IslandColor.codex : .white.opacity(0.32),
                 cost: visibility.codexVisible ? store.codex : .dummy,
-                loading: store.codexLoading
+                loading: store.codexLoading,
+                provider: .codex
             )
             .opacity(visibility.codexVisible ? 1 : 0.55)
         }

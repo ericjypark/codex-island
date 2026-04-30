@@ -6,11 +6,17 @@ struct CostBlock: View {
     let color: Color
     let cost: ProviderCost
     let loading: Bool
+    /// Identifies which provider this column is for so the VALUE multiplier
+    /// can pick the right per-plan baseline (Claude Pro $20 vs Max $200,
+    /// Codex Plus $20 vs Pro $200) and the caption can name the plan.
+    let provider: TokenEvent.Provider
 
     var body: some View {
         HStack(spacing: 18) {
-            CostTile(color: color, window: cost.today, loading: loading, isMonth: false)
-            CostTile(color: color, window: cost.month, loading: loading, isMonth: true)
+            CostTile(color: color, window: cost.today, loading: loading,
+                     isMonth: false, provider: provider)
+            CostTile(color: color, window: cost.month, loading: loading,
+                     isMonth: true, provider: provider)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, 12)
@@ -26,15 +32,10 @@ struct CostTile: View {
     let window: CostWindow
     let loading: Bool
     let isMonth: Bool
+    let provider: TokenEvent.Provider
 
     @ObservedObject private var stylePref = CostStylePref.shared
-
-    /// Max-tier subscription value — the implicit baseline the value
-    /// multiplier compares against. $200/mo is the high end of either
-    /// provider's plan ladder (Claude Max-20, Codex Pro), so the multiplier
-    /// reads as "this many times the most expensive plan I could be on"
-    /// rather than the inflated 100×+ figures a $20 baseline produced.
-    private static let baselineMonthlyUSD: Double = 200
+    @ObservedObject private var usageStore = UsageStore.shared
 
     /// Locked to match `ChartTile.tileHeight` so swipe transitions don't
     /// reflow the panel.
@@ -83,21 +84,74 @@ struct CostTile: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// Side-by-side bar chart: left bar is the plan price (white, subtle),
+    /// right bar is what the user actually spent (brand-colored, glowing).
+    /// Heights are normalized to whichever bar is larger so the contrast
+    /// reads at a glance — heavy use towers over the plan baseline, light
+    /// use sits below it. Labels under each bar name what's being compared
+    /// (the actual plan tier from UsageStore vs "you") so the user always
+    /// knows the reference point.
     private var multiplierHero: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 2) {
-            Text(formattedMultiplier)
-                .font(.system(size: 38, weight: .semibold).monospacedDigit())
-                .foregroundStyle(color)
-                .shadow(color: color.opacity(glowOpacity), radius: 6)
-                .shadow(color: color.opacity(glowOpacity * 0.5), radius: 14)
-                .numericTransition(value: multiplier)
-                .animation(.strongEaseOut, value: multiplier)
-            Text("×")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(color.opacity(0.85))
-                .shadow(color: color.opacity(glowOpacity * 0.6), radius: 4)
+        let plan = planAmount
+        let spend = window.dollars
+        let maxAmount = max(plan, spend, 0.0001)
+        let maxBarHeight: CGFloat = 40
+
+        return HStack(alignment: .bottom, spacing: 14) {
+            Spacer(minLength: 0)
+            barColumn(
+                amount: plan,
+                label: planLabel ?? "Plan",
+                fill: .white.opacity(0.20),
+                isYou: false,
+                maxAmount: maxAmount,
+                maxBarHeight: maxBarHeight
+            )
+            barColumn(
+                amount: spend,
+                label: "you",
+                fill: color,
+                isYou: true,
+                maxAmount: maxAmount,
+                maxBarHeight: maxBarHeight
+            )
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func barColumn(
+        amount: Double,
+        label: String,
+        fill: Color,
+        isYou: Bool,
+        maxAmount: Double,
+        maxBarHeight: CGFloat
+    ) -> some View {
+        let normalized = max(0, amount / maxAmount)
+        let height = max(3, CGFloat(normalized) * maxBarHeight)
+
+        return VStack(spacing: 3) {
+            Text(formatBarDollars(amount))
+                .font(.system(size: 11, weight: .semibold).monospacedDigit())
+                .foregroundStyle(isYou ? color : .white.opacity(0.78))
+                .lineLimit(1)
+            ZStack(alignment: .bottom) {
+                Color.clear.frame(width: 24, height: maxBarHeight)
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(fill)
+                    .frame(width: 24, height: height)
+                    .shadow(
+                        color: isYou ? color.opacity(glowOpacity) : .clear,
+                        radius: 5
+                    )
+                    .animation(.strongEaseOut, value: amount)
+            }
+            Text(label)
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(.white.opacity(0.5))
+                .lineLimit(1)
+        }
     }
 
     private var tokensHero: some View {
@@ -135,17 +189,61 @@ struct CostTile: View {
 
     // MARK: - Derived values
 
-    private var multiplier: Double {
-        let denom = isMonth ? Self.baselineMonthlyUSD : (Self.baselineMonthlyUSD / 30.0)
-        guard denom > 0 else { return 0 }
-        return window.dollars / denom
+    /// Monthly subscription cost in USD for this provider's currently
+    /// detected plan tier. Auto-mapped from Anthropic's "subscriptionType"
+    /// or OpenAI's "plan_type" so each provider's bar reflects its actual
+    /// plan: Claude Pro $20 / Max $200, Codex Plus $20 / Pro $200.
+    private var subscriptionUSD: Double? {
+        let plan: String? = {
+            switch provider {
+            case .claude: return usageStore.claude.plan?.lowercased()
+            case .codex:  return usageStore.codex.plan?.lowercased()
+            }
+        }()
+        guard let plan else { return nil }
+        switch (provider, plan) {
+        case (.claude, "pro"): return 20
+        case (.claude, "max"): return 200
+        case (.codex, "plus"): return 20
+        case (.codex, "pro"):  return 200
+        default: return nil
+        }
     }
 
-    private var formattedMultiplier: String {
-        let m = multiplier
-        if m < 0.1 { return "0" }
-        if m < 10 { return String(format: "%.1f", m) }
-        return String(format: "%.0f", m)
+    /// Display name of the active plan (Pro / Max / Plus). Used as the
+    /// label under the plan bar so the user always knows what the
+    /// comparison is anchored to.
+    private var planLabel: String? {
+        let plan: String? = {
+            switch provider {
+            case .claude: return usageStore.claude.plan?.lowercased()
+            case .codex:  return usageStore.codex.plan?.lowercased()
+            }
+        }()
+        guard let plan else { return nil }
+        switch (provider, plan) {
+        case (.claude, "pro"): return "Pro"
+        case (.claude, "max"): return "Max"
+        case (.codex, "plus"): return "Plus"
+        case (.codex, "pro"):  return "Pro"
+        default: return nil
+        }
+    }
+
+    /// Plan reference for the bar chart — always the FULL monthly plan
+    /// price, regardless of which cell. Subscriptions are monthly, so
+    /// comparing today's spend against a daily portion would muddy the
+    /// reference; comparing today's spend against the full month plan
+    /// shows "you've already spent X% of a month's plan in one day"
+    /// which is the more striking framing.
+    private var planAmount: Double {
+        subscriptionUSD ?? 0
+    }
+
+    private func formatBarDollars(_ v: Double) -> String {
+        if v < 10 { return String(format: "$%.2f", v) }
+        if v < 1000 { return String(format: "$%.0f", v) }
+        return String(format: "$%.0f", v)
     }
 
     private var tokensValue: String {
