@@ -22,7 +22,7 @@ final class CostStore: ObservableObject {
 
     var loading: Bool { claudeLoading || codexLoading }
 
-    private static let cacheKey = "MacIsland.costCache.v1"
+    private static let cacheKey = "MacIsland.costCache.v2"
     private var pollTimer: Timer?
     private var intervalCancellable: AnyCancellable?
 
@@ -94,100 +94,154 @@ final class CostStore: ObservableObject {
         }
     }
 
-    /// Pure aggregation. Lives as a static so the detached refresh task can
-    /// call it without touching @MainActor-isolated state.
+    /// Pure aggregation — single pass over events. Lives as a static so the
+    /// detached refresh task can call it without touching @MainActor state.
     nonisolated private static func summarize(events: [TokenEvent]) -> ProviderCost {
-        let todayEvents = CostBucketing.eventsForToday(events)
-        let monthEvents = CostBucketing.eventsForMonthToDate(events)
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = .current
+        let now = Date()
+        let startOfDay = cal.startOfDay(for: now)
+        let monthStart = cal.date(from: cal.dateComponents([.year, .month], from: now)) ?? startOfDay
+        let currentHour = cal.dateComponents([.hour], from: now).hour ?? 0
+        let currentDay = (cal.dateComponents([.day], from: now).day ?? 1) - 1
 
-        let todaySum = todayEvents.reduce(0.0) { $0 + Pricing.cost(for: $1) }
-        let monthSum = monthEvents.reduce(0.0) { $0 + Pricing.cost(for: $1) }
-        let todayTokens = todayEvents.reduce(0) { $0 + tokenCount(of: $1) }
-        let monthTokens = monthEvents.reduce(0) { $0 + tokenCount(of: $1) }
-        let todaySeries = CostBucketing.cumulativeHourly(todayEvents)
-        let monthSeries = CostBucketing.cumulativeDaily(monthEvents)
+        var todayDollars = 0.0, todayTokens = 0
+        var monthDollars = 0.0, monthTokens = 0
+        var hourlyBuckets = Array(repeating: 0.0, count: currentHour + 1)
+        var dailyBuckets = Array(repeating: 0.0, count: currentDay + 1)
+        // Filtered to non-zero token events so handshake/stub rows don't
+        // show up as "unpriced" warnings — the user only cares about
+        // models that actually moved tokens.
+        var todayUnknown: Set<String> = []
+        var monthUnknown: Set<String> = []
+
+        for event in events {
+            guard event.timestamp >= monthStart else { continue }
+            let cost = Pricing.cost(for: event)
+            let tokens = event.inputTokens + event.outputTokens
+                + event.cacheCreationTokens + event.cacheReadTokens
+            let isUnpriced = tokens > 0 && !Pricing.isKnown(event.model)
+
+            monthDollars += cost
+            monthTokens += tokens
+            let day = (cal.dateComponents([.day], from: event.timestamp).day ?? 1) - 1
+            if day < dailyBuckets.count { dailyBuckets[day] += cost }
+            if isUnpriced { monthUnknown.insert(event.model) }
+
+            // Today is a strict subset of month
+            if event.timestamp >= startOfDay {
+                todayDollars += cost
+                todayTokens += tokens
+                let hour = cal.dateComponents([.hour], from: event.timestamp).hour ?? 0
+                if hour < hourlyBuckets.count { hourlyBuckets[hour] += cost }
+                if isUnpriced { todayUnknown.insert(event.model) }
+            }
+        }
 
         return ProviderCost(
             today: CostWindow(
-                dollars: todaySum,
+                dollars: todayDollars,
                 tokens: todayTokens,
-                series: todaySeries,
+                series: runningSum(hourlyBuckets),
                 label: "Today",
-                error: nil
+                error: nil,
+                unknownModels: todayUnknown.sorted()
             ),
             month: CostWindow(
-                dollars: monthSum,
+                dollars: monthDollars,
                 tokens: monthTokens,
-                series: monthSeries,
+                series: runningSum(dailyBuckets),
                 label: CostBucketing.currentMonthLabel(),
-                error: nil
+                error: nil,
+                unknownModels: monthUnknown.sorted()
             )
         )
     }
 
-    /// Sum of every token bucket in a single event. Cache reads are usually
-    /// the dominant slice of any heavy Claude Code session and the user
-    /// chose to surface raw activity, so they're included.
-    nonisolated private static func tokenCount(of event: TokenEvent) -> Int {
-        event.inputTokens + event.outputTokens
-            + event.cacheCreationTokens + event.cacheReadTokens
+    nonisolated private static func runningSum(_ values: [Double]) -> [Double] {
+        var out = [Double]()
+        out.reserveCapacity(values.count)
+        var sum = 0.0
+        for v in values { sum += v; out.append(sum) }
+        return out
     }
 
     // MARK: - Cache
 
-    /// Snapshot the four key totals + the last refresh time. Labels and
-    /// reset captions are recomputed at restore time (current month, current
-    /// reset countdown) so the cached numbers always sit under fresh chrome.
+    /// Full snapshot of both providers encoded as JSON in a single key.
+    /// `unknownModels` arrays default to empty when decoding a snapshot that
+    /// pre-dates the field, so the cache survives the schema change without
+    /// a key bump or a forced rescan.
+    private struct CacheSnapshot: Codable {
+        var claudeToday: Double
+        var claudeMonth: Double
+        var codexToday: Double
+        var codexMonth: Double
+        var claudeTodayTokens: Int
+        var claudeMonthTokens: Int
+        var codexTodayTokens: Int
+        var codexMonthTokens: Int
+        var claudeTodaySeries: [Double]
+        var claudeMonthSeries: [Double]
+        var codexTodaySeries: [Double]
+        var codexMonthSeries: [Double]
+        var claudeTodayUnknown: [String] = []
+        var claudeMonthUnknown: [String] = []
+        var codexTodayUnknown: [String] = []
+        var codexMonthUnknown: [String] = []
+        var lastUpdated: Date?
+    }
+
+    /// Encodes the full snapshot as a single Data value — 1 write vs. the
+    /// previous 12-key dict, halving UserDefaults churn per refresh cycle.
     private func persist() {
-        let snap: [String: Any] = [
-            "claudeToday": claude.today.dollars,
-            "claudeMonth": claude.month.dollars,
-            "codexToday": codex.today.dollars,
-            "codexMonth": codex.month.dollars,
-            "claudeTodayTokens": claude.today.tokens,
-            "claudeMonthTokens": claude.month.tokens,
-            "codexTodayTokens": codex.today.tokens,
-            "codexMonthTokens": codex.month.tokens,
-            "claudeTodaySeries": claude.today.series,
-            "claudeMonthSeries": claude.month.series,
-            "codexTodaySeries": codex.today.series,
-            "codexMonthSeries": codex.month.series,
-            "lastUpdated": lastUpdated?.timeIntervalSinceReferenceDate ?? 0,
-        ]
-        UserDefaults.standard.set(snap, forKey: Self.cacheKey)
+        let snap = CacheSnapshot(
+            claudeToday: claude.today.dollars,
+            claudeMonth: claude.month.dollars,
+            codexToday: codex.today.dollars,
+            codexMonth: codex.month.dollars,
+            claudeTodayTokens: claude.today.tokens,
+            claudeMonthTokens: claude.month.tokens,
+            codexTodayTokens: codex.today.tokens,
+            codexMonthTokens: codex.month.tokens,
+            claudeTodaySeries: claude.today.series,
+            claudeMonthSeries: claude.month.series,
+            codexTodaySeries: codex.today.series,
+            codexMonthSeries: codex.month.series,
+            claudeTodayUnknown: claude.today.unknownModels,
+            claudeMonthUnknown: claude.month.unknownModels,
+            codexTodayUnknown: codex.today.unknownModels,
+            codexMonthUnknown: codex.month.unknownModels,
+            lastUpdated: lastUpdated
+        )
+        if let data = try? JSONEncoder().encode(snap) {
+            UserDefaults.standard.set(data, forKey: Self.cacheKey)
+        }
     }
 
     private func restoreFromCache() {
-        guard let snap = UserDefaults.standard.dictionary(forKey: Self.cacheKey) else { return }
-        let claudeToday = snap["claudeToday"] as? Double ?? 0
-        let claudeMonth = snap["claudeMonth"] as? Double ?? 0
-        let codexToday = snap["codexToday"] as? Double ?? 0
-        let codexMonth = snap["codexMonth"] as? Double ?? 0
-        let claudeTodayTokens = snap["claudeTodayTokens"] as? Int ?? 0
-        let claudeMonthTokens = snap["claudeMonthTokens"] as? Int ?? 0
-        let codexTodayTokens = snap["codexTodayTokens"] as? Int ?? 0
-        let codexMonthTokens = snap["codexMonthTokens"] as? Int ?? 0
-        let claudeTodaySeries = snap["claudeTodaySeries"] as? [Double] ?? []
-        let claudeMonthSeries = snap["claudeMonthSeries"] as? [Double] ?? []
-        let codexTodaySeries = snap["codexTodaySeries"] as? [Double] ?? []
-        let codexMonthSeries = snap["codexMonthSeries"] as? [Double] ?? []
+        guard let data = UserDefaults.standard.data(forKey: Self.cacheKey),
+              let snap = try? JSONDecoder().decode(CacheSnapshot.self, from: data)
+        else { return }
 
         self.claude = ProviderCost(
-            today: CostWindow(dollars: claudeToday, tokens: claudeTodayTokens,
-                              series: claudeTodaySeries, label: "Today", error: nil),
-            month: CostWindow(dollars: claudeMonth, tokens: claudeMonthTokens,
-                              series: claudeMonthSeries,
-                              label: CostBucketing.currentMonthLabel(), error: nil)
+            today: CostWindow(dollars: snap.claudeToday, tokens: snap.claudeTodayTokens,
+                              series: snap.claudeTodaySeries, label: "Today", error: nil,
+                              unknownModels: snap.claudeTodayUnknown),
+            month: CostWindow(dollars: snap.claudeMonth, tokens: snap.claudeMonthTokens,
+                              series: snap.claudeMonthSeries,
+                              label: CostBucketing.currentMonthLabel(), error: nil,
+                              unknownModels: snap.claudeMonthUnknown)
         )
         self.codex = ProviderCost(
-            today: CostWindow(dollars: codexToday, tokens: codexTodayTokens,
-                              series: codexTodaySeries, label: "Today", error: nil),
-            month: CostWindow(dollars: codexMonth, tokens: codexMonthTokens,
-                              series: codexMonthSeries,
-                              label: CostBucketing.currentMonthLabel(), error: nil)
+            today: CostWindow(dollars: snap.codexToday, tokens: snap.codexTodayTokens,
+                              series: snap.codexTodaySeries, label: "Today", error: nil,
+                              unknownModels: snap.codexTodayUnknown),
+            month: CostWindow(dollars: snap.codexMonth, tokens: snap.codexMonthTokens,
+                              series: snap.codexMonthSeries,
+                              label: CostBucketing.currentMonthLabel(), error: nil,
+                              unknownModels: snap.codexMonthUnknown)
         )
-        if let ts = snap["lastUpdated"] as? Double, ts > 0 {
-            self.lastUpdated = Date(timeIntervalSinceReferenceDate: ts)
-        }
+        self.lastUpdated = snap.lastUpdated
     }
 }
