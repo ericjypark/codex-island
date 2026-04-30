@@ -30,7 +30,7 @@ struct PanelFooter: View {
             HStack(spacing: 10) {
                 chip
 
-                if screenPref.screen == .usage && !pref.hasCycledStyle {
+                if !activeStyleCycled {
                     HStack(spacing: 5) {
                         Image(systemName: "command")
                             .font(Typography.micro)
@@ -51,7 +51,15 @@ struct PanelFooter: View {
             .padding(.top, 6)
             .padding(.bottom, 10)
             .animation(.strongEaseOut, value: pref.hasCycledStyle)
+            .animation(.strongEaseOut, value: costPref.hasCycledStyle)
             .animation(.strongEaseOut, value: screenPref.screen)
+        }
+    }
+
+    private var activeStyleCycled: Bool {
+        switch screenPref.screen {
+        case .usage: return pref.hasCycledStyle
+        case .cost:  return costPref.hasCycledStyle
         }
     }
 

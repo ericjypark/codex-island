@@ -20,6 +20,9 @@ struct CostStylePicker: View {
         let isOn = (style == selected)
         Button {
             selected = style
+            if !CostStylePref.shared.hasCycledStyle {
+                CostStylePref.shared.hasCycledStyle = true
+            }
         } label: {
             VStack(spacing: 7) {
                 preview(for: style)

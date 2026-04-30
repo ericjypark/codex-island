@@ -25,15 +25,20 @@ enum CostStyle: String, CaseIterable {
 final class CostStylePref: ObservableObject {
     static let shared = CostStylePref()
 
-    private static let key = "MacIsland.costStyle"
+    private static let styleKey = "MacIsland.costStyle"
+    private static let cycledKey = "MacIsland.costStyleCycled"
 
     @Published var style: CostStyle {
-        didSet { UserDefaults.standard.set(style.rawValue, forKey: Self.key) }
+        didSet { UserDefaults.standard.set(style.rawValue, forKey: Self.styleKey) }
+    }
+    @Published var hasCycledStyle: Bool {
+        didSet { UserDefaults.standard.set(hasCycledStyle, forKey: Self.cycledKey) }
     }
 
     private init() {
-        let raw = UserDefaults.standard.string(forKey: Self.key) ?? ""
+        let raw = UserDefaults.standard.string(forKey: Self.styleKey) ?? ""
         self.style = CostStyle(rawValue: raw) ?? .dollar
+        self.hasCycledStyle = UserDefaults.standard.bool(forKey: Self.cycledKey)
     }
 
     func cycle() {
@@ -41,5 +46,6 @@ final class CostStylePref: ObservableObject {
         if let i = all.firstIndex(of: style) {
             style = all[(i + 1) % all.count]
         }
+        if !hasCycledStyle { hasCycledStyle = true }
     }
 }
