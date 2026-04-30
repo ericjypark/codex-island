@@ -4,6 +4,8 @@ import AppKit
 struct IslandRootView: View {
     @ObservedObject var model: IslandModel
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
+    @ObservedObject private var usageStore = UsageStore.shared
+    @ObservedObject private var costStore = CostStore.shared
     @State private var hovering = false
     @State private var contentVisible = false
 
@@ -33,22 +35,24 @@ struct IslandRootView: View {
                     // Loading sweep. 3pt blur + 4pt stroke is half the GPU
                     // cost of the original 5/5 — at 120Hz the blur is hot
                     // because the angular gradient re-rasterizes per frame.
-                    IslandShape()
-                        .stroke(
-                            AngularGradient(
-                                gradient: Gradient(stops: [
-                                    .init(color: .clear, location: 0.00),
-                                    .init(color: IslandColor.cobalt.opacity(0.0), location: 0.55),
-                                    .init(color: IslandColor.cobalt, location: 0.78),
-                                    .init(color: .white.opacity(0.95), location: 0.92),
-                                    .init(color: IslandColor.cobalt.opacity(0.0), location: 1.00),
-                                ]),
-                                center: .center,
-                                angle: .degrees(rotation)
-                            ),
-                            lineWidth: 4
-                        )
-                        .blur(radius: 3)
+                    if usageStore.loading || costStore.loading {
+                        IslandShape()
+                            .stroke(
+                                AngularGradient(
+                                    gradient: Gradient(stops: [
+                                        .init(color: .clear, location: 0.00),
+                                        .init(color: IslandColor.cobalt.opacity(0.0), location: 0.55),
+                                        .init(color: IslandColor.cobalt, location: 0.78),
+                                        .init(color: .white.opacity(0.95), location: 0.92),
+                                        .init(color: IslandColor.cobalt.opacity(0.0), location: 1.00),
+                                    ]),
+                                    center: .center,
+                                    angle: .degrees(rotation)
+                                ),
+                                lineWidth: 4
+                            )
+                            .blur(radius: 3)
+                    }
 
                     IslandShape()
                         .fill(.black)
