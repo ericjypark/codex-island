@@ -1,20 +1,23 @@
 import SwiftUI
 
-/// Two-page horizontal carousel: UsageView (page 0) and CostView (page 1).
-/// Both pages render at the full content width; the HStack is twice that
-/// width and slides via .offset based on `ScreenPref.screen`. Animation uses
-/// the same spring as the expanded-state shape morph for cohesion.
+/// Two-page horizontal carousel: the usage data row (page 0) and the cost
+/// data row (page 1). Both pages render at the full content width; the
+/// HStack is twice that width and slides via `.offset` based on
+/// `ScreenPref.screen`. Animation uses the same spring as the expanded-
+/// state shape morph for cohesion.
+///
+/// Only the data row swipes — `PanelHeader` and `PanelFooter` are mounted
+/// outside this view so they stay fixed across page changes.
 struct PagedContent: View {
-    @ObservedObject var model: IslandModel
     @ObservedObject private var screenPref = ScreenPref.shared
 
     var body: some View {
         GeometryReader { geo in
             let pageWidth = geo.size.width
             HStack(spacing: 0) {
-                UsageView(notch: model.notch)
+                UsageView()
                     .frame(width: pageWidth)
-                CostView(notch: model.notch)
+                CostView()
                     .frame(width: pageWidth)
             }
             .frame(width: pageWidth, alignment: .leading)

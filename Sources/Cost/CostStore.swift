@@ -5,20 +5,24 @@ import Combine
 /// session logs (Claude Code + Codex CLI), aggregates today + month-to-date
 /// spend per provider, and publishes the result for SwiftUI consumers.
 ///
-/// File IO lives on a background queue; only the published assignment hops
-/// back to the main actor. Refresh cadence is the same `RefreshIntervalStore`
-/// that gates the API-side `UsageStore`, since they share the same UI panel.
+/// Per-provider loading flags drive parallel scans that commit independently
+/// — Codex (small) appears within ~50ms while Claude (often 20k+ events)
+/// continues to scan in the background. Last-known totals are cached to
+/// UserDefaults so the first hover after launch shows yesterday's snapshot
+/// instantly rather than zeros.
 @MainActor
 final class CostStore: ObservableObject {
     static let shared = CostStore()
-    private init() {}
 
     @Published var claude: ProviderCost = .empty
     @Published var codex: ProviderCost = .empty
+    @Published var claudeLoading = false
+    @Published var codexLoading = false
     @Published var lastUpdated: Date?
-    @Published var loading = false
 
-    private var refreshTask: Task<Void, Never>?
+    var loading: Bool { claudeLoading || codexLoading }
+
+    private static let cacheKey = "MacIsland.costCache.v1"
     private var pollTimer: Timer?
     private var intervalCancellable: AnyCancellable?
 
@@ -26,24 +30,43 @@ final class CostStore: ObservableObject {
         TimeInterval(RefreshIntervalStore.shared.seconds)
     }
 
+    private init() {
+        restoreFromCache()
+    }
+
     func refresh() {
-        if loading { return }
-        loading = true
-        refreshTask?.cancel()
-        refreshTask = Task.detached(priority: .userInitiated) { [weak self] in
-            let claudeEvents = ClaudeLogReader.scan()
-            let codexEvents = CodexLogReader.scan()
-            let claudeCost = Self.summarize(events: claudeEvents)
-            let codexCost = Self.summarize(events: codexEvents)
-            await self?.commit(claude: claudeCost, codex: codexCost)
+        // Per-provider gate so a slow Claude scan doesn't block a fast
+        // Codex one (and vice versa) on the next tick.
+        if !claudeLoading {
+            claudeLoading = true
+            Task.detached(priority: .userInitiated) { [weak self] in
+                let events = ClaudeLogReader.scan()
+                let cost = Self.summarize(events: events)
+                await self?.commitClaude(cost)
+            }
+        }
+        if !codexLoading {
+            codexLoading = true
+            Task.detached(priority: .userInitiated) { [weak self] in
+                let events = CodexLogReader.scan()
+                let cost = Self.summarize(events: events)
+                await self?.commitCodex(cost)
+            }
         }
     }
 
-    private func commit(claude claudeCost: ProviderCost, codex codexCost: ProviderCost) {
-        self.claude = claudeCost
-        self.codex = codexCost
+    private func commitClaude(_ cost: ProviderCost) {
+        self.claude = cost
+        self.claudeLoading = false
         self.lastUpdated = Date()
-        self.loading = false
+        persist()
+    }
+
+    private func commitCodex(_ cost: ProviderCost) {
+        self.codex = cost
+        self.codexLoading = false
+        self.lastUpdated = Date()
+        persist()
     }
 
     func startAutoRefresh() {
@@ -83,18 +106,56 @@ final class CostStore: ObservableObject {
         return ProviderCost(
             today: CostWindow(
                 dollars: todaySum,
-                cap: CostBucketing.todayCap,
                 label: "today",
                 resetCaption: CostBucketing.todayResetCaption,
                 error: nil
             ),
             month: CostWindow(
                 dollars: monthSum,
-                cap: CostBucketing.monthCap,
                 label: CostBucketing.currentMonthLabel(),
                 resetCaption: CostBucketing.monthResetCaption(),
                 error: nil
             )
         )
+    }
+
+    // MARK: - Cache
+
+    /// Snapshot the four key totals + the last refresh time. Labels and
+    /// reset captions are recomputed at restore time (current month, current
+    /// reset countdown) so the cached numbers always sit under fresh chrome.
+    private func persist() {
+        let snap: [String: Any] = [
+            "claudeToday": claude.today.dollars,
+            "claudeMonth": claude.month.dollars,
+            "codexToday": codex.today.dollars,
+            "codexMonth": codex.month.dollars,
+            "lastUpdated": lastUpdated?.timeIntervalSinceReferenceDate ?? 0,
+        ]
+        UserDefaults.standard.set(snap, forKey: Self.cacheKey)
+    }
+
+    private func restoreFromCache() {
+        guard let snap = UserDefaults.standard.dictionary(forKey: Self.cacheKey) else { return }
+        let claudeToday = snap["claudeToday"] as? Double ?? 0
+        let claudeMonth = snap["claudeMonth"] as? Double ?? 0
+        let codexToday = snap["codexToday"] as? Double ?? 0
+        let codexMonth = snap["codexMonth"] as? Double ?? 0
+
+        self.claude = ProviderCost(
+            today: CostWindow(dollars: claudeToday, label: "today",
+                              resetCaption: CostBucketing.todayResetCaption, error: nil),
+            month: CostWindow(dollars: claudeMonth, label: CostBucketing.currentMonthLabel(),
+                              resetCaption: CostBucketing.monthResetCaption(), error: nil)
+        )
+        self.codex = ProviderCost(
+            today: CostWindow(dollars: codexToday, label: "today",
+                              resetCaption: CostBucketing.todayResetCaption, error: nil),
+            month: CostWindow(dollars: codexMonth, label: CostBucketing.currentMonthLabel(),
+                              resetCaption: CostBucketing.monthResetCaption(), error: nil)
+        )
+        if let ts = snap["lastUpdated"] as? Double, ts > 0 {
+            self.lastUpdated = Date(timeIntervalSinceReferenceDate: ts)
+        }
     }
 }

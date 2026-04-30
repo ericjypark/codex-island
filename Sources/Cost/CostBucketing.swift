@@ -4,17 +4,6 @@ import Foundation
 /// "today" and "month-to-date" line up with what the user expects from a
 /// glance at the wall clock.
 enum CostBucketing {
-    /// Fixed-scale ceiling for the today bar. v1: shared between providers
-    /// for visual symmetry. Sized so a heavy Claude Code day (~$50-100 of
-    /// API-equivalent spend) lands in the upper half of the bar without
-    /// saturating immediately.
-    static let todayCap: Double = 100
-
-    /// Fixed-scale ceiling for the month-to-date bar. Sized to roughly match
-    /// 20-25 working days × todayCap so a power user's monthly spend stays
-    /// readable as a fill fraction.
-    static let monthCap: Double = 2000
-
     /// Filter to events whose timestamp falls between local midnight today
     /// and now.
     static func eventsForToday(_ events: [TokenEvent], in tz: TimeZone = .current) -> [TokenEvent] {
