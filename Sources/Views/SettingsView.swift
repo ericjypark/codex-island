@@ -172,48 +172,59 @@ struct SettingsView: View {
         .padding(.bottom, 6)
     }
 
+    /// Single-row Cost section. Re-uses the section-label typography on the
+    /// left so it visually rhymes with the other section headers, but
+    /// inlines the freshness caption + refresh button on the right instead
+    /// of stacking a SettingsRow underneath. Saves ~70pt vs the expanded
+    /// section pattern, which keeps SettingsFooter on screen at 720pt.
     private var costSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Cost", hint: "swipe panel to view")
-            SettingsRow(
-                title: "Refresh now",
-                subtitle: costSubtitle()
-            ) {
-                Button {
-                    cost.refresh()
-                } label: {
-                    Text("Refresh")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 5)
-                        .background {
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(.white.opacity(0.10))
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .strokeBorder(.white.opacity(0.08), lineWidth: 0.5)
-                                }
-                        }
-                }
-                .buttonStyle(.plain)
-                .disabled(cost.loading)
-                .opacity(cost.loading ? 0.55 : 1)
+        HStack(alignment: .center, spacing: 10) {
+            Text("Cost")
+                .font(.system(size: 10.5, weight: .semibold))
+                .tracking(1.05)
+                .textCase(.uppercase)
+                .foregroundStyle(.white.opacity(0.34))
+
+            Text(costSubtitle())
+                .font(.system(size: 11))
+                .foregroundStyle(.white.opacity(0.42))
+                .lineLimit(1)
+                .truncationMode(.tail)
+
+            Spacer(minLength: 8)
+
+            Button {
+                cost.refresh()
+            } label: {
+                Text(cost.loading ? "Refreshing…" : "Refresh")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(.white.opacity(0.10))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 6)
+                                    .strokeBorder(.white.opacity(0.08), lineWidth: 0.5)
+                            }
+                    }
             }
+            .buttonStyle(.plain)
+            .disabled(cost.loading)
+            .opacity(cost.loading ? 0.55 : 1)
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 24)
         .padding(.top, 14)
         .padding(.bottom, 6)
     }
 
     private func costSubtitle() -> String {
-        if cost.loading { return "syncing local logs…" }
-        guard let updated = cost.lastUpdated else {
-            return "Re-scan ~/.claude/projects and ~/.codex/sessions."
-        }
+        if cost.loading { return "scanning local logs…" }
+        guard let updated = cost.lastUpdated else { return "swipe panel to view" }
         let f = RelativeDateTimeFormatter()
         f.unitsStyle = .abbreviated
-        return "Last scan \(f.localizedString(for: updated, relativeTo: Date()))."
+        return "Last scan \(f.localizedString(for: updated, relativeTo: Date()))"
     }
 
     private var chartSection: some View {
