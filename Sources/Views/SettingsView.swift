@@ -303,12 +303,28 @@ struct SettingsView: View {
         .padding(.bottom, 14)
     }
 
+    /// Days past the embedded pricing snapshot before the Cost section
+    /// admits the data may be stale. Anthropic re-tiered Opus once already,
+    /// so two months without a refresh is the point where dollar totals
+    /// could meaningfully drift from reality.
+    private static let pricingFreshnessThreshold = 60
+
     private func costSubtitle() -> String {
-        if cost.loading { return "scanning local logs…" }
-        guard let updated = cost.lastUpdated else { return "swipe panel to view" }
-        let f = RelativeDateTimeFormatter()
-        f.unitsStyle = .abbreviated
-        return "last scan \(f.localizedString(for: updated, relativeTo: Date()))"
+        let base: String
+        if cost.loading {
+            base = "scanning local logs…"
+        } else if let updated = cost.lastUpdated {
+            let f = RelativeDateTimeFormatter()
+            f.unitsStyle = .abbreviated
+            base = "last scan \(f.localizedString(for: updated, relativeTo: Date()))"
+        } else {
+            base = "swipe panel to view"
+        }
+        let days = Pricing.daysSinceSnapshot
+        if days > Self.pricingFreshnessThreshold {
+            return base + " · pricing data \(days)d old"
+        }
+        return base
     }
 
     private var chartSection: some View {

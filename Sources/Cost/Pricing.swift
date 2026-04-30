@@ -88,6 +88,28 @@ enum Pricing {
         return input + output + cacheCreate + cacheRead
     }
 
+    /// Whether the embedded snapshot has a price entry for this model.
+    /// Lets callers warn the user about unpriced spend without re-implementing
+    /// the canonical-name stripping logic.
+    static func isKnown(_ rawModel: String) -> Bool {
+        table[canonicalModel(rawModel)] != nil
+    }
+
+    /// Calendar days between `snapshotDate` and now (UTC). Returns 0 if the
+    /// snapshot string fails to parse, so a malformed constant is treated as
+    /// fresh rather than triggering a permanent staleness warning.
+    static var daysSinceSnapshot: Int {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        guard let snapshot = formatter.date(from: snapshotDate) else { return 0 }
+        var calendar = Calendar(identifier: .gregorian)
+        if let utc = TimeZone(identifier: "UTC") { calendar.timeZone = utc }
+        let components = calendar.dateComponents([.day], from: snapshot, to: Date())
+        return max(0, components.day ?? 0)
+    }
+
     /// Strip Anthropic-style date suffixes (e.g. "claude-haiku-4-5-20251001"
     /// → "claude-haiku-4-5") so the snapshot table doesn't need an entry per
     /// pinned release.

@@ -50,7 +50,7 @@ struct CostTile: View {
                 Spacer()
                 Text(resetGlyph)
                     .font(Typography.caption)
-                    .foregroundStyle(.white.opacity(0.4))
+                    .foregroundStyle(.white.opacity(window.unknownModels.isEmpty ? 0.4 : 0.5))
             }
 
             Spacer(minLength: 0)
@@ -285,9 +285,15 @@ struct CostTile: View {
     /// the current clock so the panel always shows accurate time-remaining
     /// regardless of how stale the last refresh is. Mirrors `NumericChart`'s
     /// "↻ 3h" treatment so the cost screen doesn't introduce a new caption
-    /// shape.
+    /// shape. When the embedded pricing snapshot is missing models that
+    /// produced real spend in this window, the countdown is replaced with
+    /// an "⚠ N unpriced" warning so the user knows the dollar total is an
+    /// undercount rather than a clean zero.
     private var resetGlyph: String {
         if let err = window.error { return err }
+        if !window.unknownModels.isEmpty {
+            return "⚠ \(window.unknownModels.count) unpriced"
+        }
         return "↻ " + (isMonth ? CostBucketing.monthResetIn() : CostBucketing.todayResetIn())
     }
 }

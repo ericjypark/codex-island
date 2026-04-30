@@ -14,10 +14,15 @@ struct CostWindow {
     let series: [Double]
     let label: String
     let error: String?
+    /// Sorted unique model names that contributed real (non-zero) token
+    /// activity in this window but had no entry in the embedded pricing
+    /// snapshot. Surfaced as a warning glyph so a freshly released model
+    /// doesn't silently read as $0.
+    let unknownModels: [String]
 
     static let unknown = CostWindow(
         dollars: 0, tokens: 0, series: [], label: "—",
-        error: "no data"
+        error: "no data", unknownModels: []
     )
 }
 
@@ -28,11 +33,13 @@ struct ProviderCost {
 
     static let empty = ProviderCost(
         today: CostWindow(
-            dollars: 0, tokens: 0, series: [], label: "Today", error: nil
+            dollars: 0, tokens: 0, series: [], label: "Today", error: nil,
+            unknownModels: []
         ),
         month: CostWindow(
             dollars: 0, tokens: 0, series: [],
-            label: CostBucketing.currentMonthLabel(), error: nil
+            label: CostBucketing.currentMonthLabel(), error: nil,
+            unknownModels: []
         )
     )
 
@@ -43,12 +50,13 @@ struct ProviderCost {
         today: CostWindow(
             dollars: 11.25, tokens: 1_240_000,
             series: [0.5, 1.2, 2.4, 3.6, 5.1, 7.0, 9.2, 11.25],
-            label: "Today", error: nil
+            label: "Today", error: nil, unknownModels: []
         ),
         month: CostWindow(
             dollars: 142.0, tokens: 18_500_000,
             series: [3, 8, 15, 22, 31, 40, 52, 65, 78, 90, 105, 120, 135, 142],
-            label: CostBucketing.currentMonthLabel(), error: nil
+            label: CostBucketing.currentMonthLabel(), error: nil,
+            unknownModels: []
         )
     )
 }
