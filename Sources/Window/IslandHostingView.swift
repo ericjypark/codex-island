@@ -12,6 +12,11 @@ import SwiftUI
 final class IslandHostingView: NSHostingView<IslandRootView> {
     let islandModel: IslandModel
 
+    /// Accumulated horizontal scroll delta for the in-flight two-finger swipe.
+    /// Reset on `.began`, evaluated on `.ended`.
+    private var swipeAccumX: CGFloat = 0
+    private var swipeAccumY: CGFloat = 0
+
     init(rootView: IslandRootView, model: IslandModel) {
         self.islandModel = model
         super.init(rootView: rootView)
@@ -35,5 +40,43 @@ final class IslandHostingView: NSHostingView<IslandRootView> {
             height: size.height
         )
         return rect.contains(point) ? super.hitTest(point) : nil
+    }
+
+    /// Two-finger trackpad swipe → page change. Only fires when the panel is
+    /// expanded and the gesture is horizontal-dominant. Uses
+    /// `hasPreciseScrollingDeltas` to filter out mouse-wheel ticks (which
+    /// shouldn't be page-changers — only gestures should).
+    override func scrollWheel(with event: NSEvent) {
+        guard event.hasPreciseScrollingDeltas,
+              islandModel.state == .expanded else {
+            super.scrollWheel(with: event)
+            return
+        }
+
+        if event.phase == .began {
+            swipeAccumX = 0
+            swipeAccumY = 0
+        }
+        swipeAccumX += event.scrollingDeltaX
+        swipeAccumY += event.scrollingDeltaY
+
+        guard event.phase == .ended else { return }
+
+        // Threshold tuned to feel like a single deliberate swipe (~1/4 inch
+        // of finger travel) without firing on a small horizontal nudge that
+        // crept into a vertical scroll.
+        let threshold: CGFloat = 60
+        defer { swipeAccumX = 0; swipeAccumY = 0 }
+        guard abs(swipeAccumX) > abs(swipeAccumY),
+              abs(swipeAccumX) > threshold else { return }
+
+        // Natural-scrolling convention: physical swipe-left → negative
+        // deltaX → advance to next page (cost screen sits "to the right" of
+        // the usage screen, like an iOS Home Screen page 2).
+        if swipeAccumX < 0 {
+            ScreenPref.shared.advance()
+        } else {
+            ScreenPref.shared.rewind()
+        }
     }
 }
