@@ -17,6 +17,7 @@ struct SettingsView: View {
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @ObservedObject private var refreshStore = RefreshIntervalStore.shared
     @ObservedObject private var usage = UsageStore.shared
+    @ObservedObject private var cost = CostStore.shared
     @ObservedObject private var updater = UpdaterController.shared
 
     private var version: String {
@@ -36,6 +37,7 @@ struct SettingsView: View {
             generalSection
             updatesSection
             providersSection
+            costSection
             chartSection
 
             Spacer(minLength: 0)
@@ -168,6 +170,50 @@ struct SettingsView: View {
         .padding(.horizontal, 14)
         .padding(.top, 14)
         .padding(.bottom, 6)
+    }
+
+    private var costSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionLabel("Cost", hint: "swipe panel to view")
+            SettingsRow(
+                title: "Refresh now",
+                subtitle: costSubtitle()
+            ) {
+                Button {
+                    cost.refresh()
+                } label: {
+                    Text("Refresh")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 5)
+                        .background {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(.white.opacity(0.10))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .strokeBorder(.white.opacity(0.08), lineWidth: 0.5)
+                                }
+                        }
+                }
+                .buttonStyle(.plain)
+                .disabled(cost.loading)
+                .opacity(cost.loading ? 0.55 : 1)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 14)
+        .padding(.bottom, 6)
+    }
+
+    private func costSubtitle() -> String {
+        if cost.loading { return "syncing local logs…" }
+        guard let updated = cost.lastUpdated else {
+            return "Re-scan ~/.claude/projects and ~/.codex/sessions."
+        }
+        let f = RelativeDateTimeFormatter()
+        f.unitsStyle = .abbreviated
+        return "Last scan \(f.localizedString(for: updated, relativeTo: Date()))."
     }
 
     private var chartSection: some View {
