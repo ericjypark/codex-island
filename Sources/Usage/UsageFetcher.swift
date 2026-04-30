@@ -64,10 +64,14 @@ enum UsageFetcher {
     ///   1. CLAUDE_CODE_OAUTH_TOKEN — set by Claude Desktop for child
     ///      processes; always fresh while Desktop is running.
     ///   2. macOS Keychain item "Claude Code-credentials" — stable across
-    ///      relaunches but the CLI rotates the in-memory refresh token
-    ///      without writing back, so this often goes stale within ~8h.
-    ///   3. console.anthropic.com/v1/oauth/token refresh — most reliable
-    ///      but heavily rate-limited because the CLI also rotates here.
+    ///      relaunches; the access token expires after ~8h, after which
+    ///      we fall through to refresh.
+    ///   3. console.anthropic.com/v1/oauth/token refresh — Anthropic
+    ///      rotates the refresh_token on every call (the response carries
+    ///      a new pair). We must persist that new pair back to the keychain
+    ///      via writeClaudeCreds, otherwise Claude Code itself 401s on its
+    ///      next refresh because the keychain still holds the now-revoked
+    ///      old token.
     static func fetchClaude() async -> AppUsage {
         var lastError = "auth required — run claude"
 
@@ -90,7 +94,19 @@ enum UsageFetcher {
             }
 
             if let refreshed = await refreshClaudeToken(refreshToken: creds.refreshToken) {
-                switch await fetchClaudeUsage(token: refreshed) {
+                // Anthropic's OAuth token endpoint rotates the refresh token,
+                // so the one we just used is now invalidated server-side. If we
+                // do not write the new pair back, Claude Code's next refresh
+                // attempt 401s and forces the user to re-run /login. Persist
+                // the rotated tokens so the keychain stays in sync with what
+                // the server considers valid.
+                var updated = creds.oauth
+                updated["accessToken"] = refreshed.accessToken
+                updated["refreshToken"] = refreshed.refreshToken
+                updated["expiresAt"] = refreshed.expiresAt
+                writeClaudeCreds(account: creds.account, oauth: updated)
+
+                switch await fetchClaudeUsage(token: refreshed.accessToken) {
                 case .success(let u):       return u
                 case .rateLimited:          lastError = "rate limited"
                 case .unauthorized:         break
@@ -113,17 +129,28 @@ enum UsageFetcher {
     }
 
     private struct ClaudeCreds {
+        let account: String
         let accessToken: String
         let refreshToken: String
+        let oauth: [String: Any]
     }
 
     /// Reads the keychain item Claude Code writes on first login. Returns
     /// nil silently on any error — the caller falls through to the next
-    /// token source.
+    /// token source. Captures the account name and the full claudeAiOauth
+    /// dict so a refresh can be written back via writeClaudeCreds without
+    /// dropping unrelated fields (scopes, subscriptionType, rateLimitTier).
     private static func readClaudeCreds() -> ClaudeCreds? {
+        guard let account = readClaudeKeychainAccount() else { return nil }
+
         let task = Process()
         task.launchPath = "/usr/bin/security"
-        task.arguments = ["find-generic-password", "-s", "Claude Code-credentials", "-w"]
+        task.arguments = [
+            "find-generic-password",
+            "-s", "Claude Code-credentials",
+            "-a", account,
+            "-w",
+        ]
         let pipe = Pipe()
         task.standardOutput = pipe
         task.standardError = Pipe()
@@ -138,9 +165,82 @@ enum UsageFetcher {
                   let oauth = outer["claudeAiOauth"] as? [String: Any],
                   let access = oauth["accessToken"] as? String,
                   let refresh = oauth["refreshToken"] as? String else { return nil }
-            return ClaudeCreds(accessToken: access, refreshToken: refresh)
+            return ClaudeCreds(account: account, accessToken: access, refreshToken: refresh, oauth: oauth)
         } catch {
             return nil
+        }
+    }
+
+    /// `security add-generic-password -U` requires the original account name
+    /// to find and update the existing item. The metadata listing puts it on
+    /// a line shaped like: `    "acct"<blob>="ericpark"` — pull the value
+    /// from inside the trailing quotes. Returns nil if the line is missing
+    /// or the value is `<NULL>`.
+    private static func readClaudeKeychainAccount() -> String? {
+        let task = Process()
+        task.launchPath = "/usr/bin/security"
+        task.arguments = ["find-generic-password", "-s", "Claude Code-credentials"]
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = Pipe()
+        do {
+            try task.run()
+            task.waitUntilExit()
+            let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+            for line in output.split(separator: "\n") {
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                guard trimmed.hasPrefix("\"acct\"") else { continue }
+                guard let eq = trimmed.firstIndex(of: "=") else { return nil }
+                let value = trimmed[trimmed.index(after: eq)...]
+                guard value.hasPrefix("\""), value.hasSuffix("\""), value.count >= 2 else { return nil }
+                let inner = value.dropFirst().dropLast()
+                return inner.isEmpty ? nil : String(inner)
+            }
+            return nil
+        } catch {
+            return nil
+        }
+    }
+
+    /// Updates the existing `Claude Code-credentials` keychain item in place
+    /// (`-U` flag) so the rotated OAuth tokens persist. Best-effort: a
+    /// failure here means the next CodexIsland refresh will pay the same
+    /// rotation cost again, but Claude Code itself recovers because the
+    /// fresh refresh_token we wrote — if the write actually landed — works.
+    /// Note: passing the JSON via `-w` makes it briefly visible in `ps` to
+    /// processes owned by the same user. The keychain itself is gated by
+    /// the same trust boundary, so this is not a meaningful regression.
+    @discardableResult
+    private static func writeClaudeCreds(account: String, oauth: [String: Any]) -> Bool {
+        let payload: [String: Any] = ["claudeAiOauth": oauth]
+        guard let data = try? JSONSerialization.data(withJSONObject: payload, options: []),
+              let json = String(data: data, encoding: .utf8) else {
+            NSLog("CodexIsland: failed to serialize rotated Claude tokens for keychain write")
+            return false
+        }
+
+        let task = Process()
+        task.launchPath = "/usr/bin/security"
+        task.arguments = [
+            "add-generic-password",
+            "-U",
+            "-s", "Claude Code-credentials",
+            "-a", account,
+            "-w", json,
+        ]
+        task.standardOutput = Pipe()
+        task.standardError = Pipe()
+        do {
+            try task.run()
+            task.waitUntilExit()
+            if task.terminationStatus != 0 {
+                NSLog("CodexIsland: failed to write rotated Claude tokens to keychain (security exit %d)", task.terminationStatus)
+                return false
+            }
+            return true
+        } catch {
+            NSLog("CodexIsland: failed to spawn security for keychain write: %@", error.localizedDescription)
+            return false
         }
     }
 
@@ -197,7 +297,19 @@ enum UsageFetcher {
         return WindowUsage(usedPercent: min(1, max(0, normalized)), resetAt: resetAt, error: nil)
     }
 
-    private static func refreshClaudeToken(refreshToken: String) async -> String? {
+    private struct RefreshedTokens {
+        let accessToken: String
+        let refreshToken: String
+        /// Milliseconds since epoch — matches Claude Code's keychain shape.
+        let expiresAt: Int64
+    }
+
+    /// Anthropic's token endpoint rotates the refresh_token on every call,
+    /// so the response always carries a new pair. Caller is responsible for
+    /// persisting them; otherwise the keychain falls out of sync with the
+    /// server and any downstream consumer (Claude Code, Claude Desktop)
+    /// 401s on its next refresh.
+    private static func refreshClaudeToken(refreshToken: String) async -> RefreshedTokens? {
         var req = URLRequest(url: URL(string: "https://console.anthropic.com/v1/oauth/token")!)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -212,8 +324,12 @@ enum UsageFetcher {
             let (data, response) = try await URLSession.shared.data(for: req)
             guard (response as? HTTPURLResponse)?.statusCode == 200,
                   let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let access = obj["access_token"] as? String else { return nil }
-            return access
+                  let access = obj["access_token"] as? String,
+                  let refresh = obj["refresh_token"] as? String else { return nil }
+            // expires_in is seconds; Claude Code stores absolute ms.
+            let expiresIn = (obj["expires_in"] as? Double) ?? 28_800
+            let expiresAt = Int64((Date().timeIntervalSince1970 + expiresIn) * 1000)
+            return RefreshedTokens(accessToken: access, refreshToken: refresh, expiresAt: expiresAt)
         } catch {
             return nil
         }
