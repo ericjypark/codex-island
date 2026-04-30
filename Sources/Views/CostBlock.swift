@@ -29,12 +29,12 @@ struct CostTile: View {
 
     @ObservedObject private var stylePref = CostStylePref.shared
 
-    /// "Pro/Plus" subscription value — the implicit baseline the value
-    /// multiplier compares against. Hardcoded because asking the user to
-    /// configure their plan in Settings adds friction; $20/mo is the
-    /// most common tier across both providers and serves as a relatable
-    /// "subscription dollar" yardstick.
-    private static let baselineMonthlyUSD: Double = 20
+    /// Max-tier subscription value — the implicit baseline the value
+    /// multiplier compares against. $200/mo is the high end of either
+    /// provider's plan ladder (Claude Max-20, Codex Pro), so the multiplier
+    /// reads as "this many times the most expensive plan I could be on"
+    /// rather than the inflated 100×+ figures a $20 baseline produced.
+    private static let baselineMonthlyUSD: Double = 200
 
     /// Locked to match `ChartTile.tileHeight` so swipe transitions don't
     /// reflow the panel.
