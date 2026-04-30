@@ -1,24 +1,22 @@
 import SwiftUI
 import AppKit
 
-/// Settings window content. Composed of six zones:
-///   1. Brand header — notch silhouette + name + tagline + version pill
-///   2. General — Launch at Login, Refresh interval
-///   3. Providers — Claude / Codex per-provider visibility
-///   4. Default chart — 5-tile picker (replaces the buried ⌘-click cycle)
-///   5. Footer — version + GitHub + License + Quit
-///
-/// All sections sit on the same near-black surface (#050507) and are
-/// separated by hairline gradient dividers. No bordered cards — rows lift
-/// to a faint white wash on hover instead.
+/// Settings window — three tabs (General / Display / Providers) sandwiched
+/// between a fixed brand header on top and the version/links/Quit footer
+/// on the bottom. Tabs let each topical group stay short enough to fit a
+/// modest window without scrolling, and the window itself is now resizable
+/// rather than locked at 480×720, so the user controls the visible space.
 struct SettingsView: View {
     @ObservedObject private var launchStore = LaunchAtLoginStore.shared
     @ObservedObject private var stylePref = StylePref.shared
+    @ObservedObject private var costStylePref = CostStylePref.shared
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @ObservedObject private var refreshStore = RefreshIntervalStore.shared
     @ObservedObject private var usage = UsageStore.shared
     @ObservedObject private var cost = CostStore.shared
     @ObservedObject private var updater = UpdaterController.shared
+
+    @State private var activeTab: SettingsTab = .general
 
     private var version: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
@@ -32,23 +30,100 @@ struct SettingsView: View {
 
             BrandHeader(version: version)
 
+            tabBar
+
             hairline
 
-            generalSection
-            updatesSection
-            providersSection
-            costSection
-            chartSection
-
-            Spacer(minLength: 0)
+            Group {
+                switch activeTab {
+                case .general:   generalTab
+                case .display:   displayTab
+                case .providers: providersTab
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
             hairline
 
             SettingsFooter(version: version)
         }
-        .frame(width: 480, height: 720)
+        .frame(minWidth: 440, minHeight: 460)
         .background(Color(red: 0.020, green: 0.020, blue: 0.027))
         .preferredColorScheme(.dark)
+    }
+
+    // MARK: - Tabs
+
+    enum SettingsTab: String, CaseIterable {
+        case general, display, providers
+
+        var label: String {
+            switch self {
+            case .general:   "General"
+            case .display:   "Display"
+            case .providers: "Providers"
+            }
+        }
+    }
+
+    private var tabBar: some View {
+        HStack(spacing: 4) {
+            ForEach(SettingsTab.allCases, id: \.self) { tab in
+                tabButton(tab)
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 4)
+        .padding(.bottom, 10)
+    }
+
+    @ViewBuilder
+    private func tabButton(_ tab: SettingsTab) -> some View {
+        let isOn = (activeTab == tab)
+        Button {
+            activeTab = tab
+        } label: {
+            Text(tab.label)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(isOn
+                    ? .white.opacity(0.95)
+                    : .white.opacity(0.50))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(isOn ? .white.opacity(0.08) : .clear)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 6)
+                                .strokeBorder(.white.opacity(isOn ? 0.08 : 0), lineWidth: 0.5)
+                        }
+                }
+        }
+        .buttonStyle(.plain)
+        .animation(.easeOut(duration: 0.12), value: isOn)
+    }
+
+    // MARK: - Tab content
+
+    private var generalTab: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            generalSection
+            updatesSection
+        }
+    }
+
+    private var displayTab: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            chartSection
+            costStyleSection
+        }
+    }
+
+    private var providersTab: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            providersSection
+            costSection
+        }
     }
 
     // MARK: - Pieces
@@ -168,15 +243,13 @@ struct SettingsView: View {
             }
         }
         .padding(.horizontal, 14)
-        .padding(.top, 14)
+        .padding(.top, 18)
         .padding(.bottom, 6)
     }
 
     /// Single-row Cost section. Re-uses the section-label typography on the
-    /// left so it visually rhymes with the other section headers, but
-    /// inlines the freshness caption + refresh button on the right instead
-    /// of stacking a SettingsRow underneath. Saves ~70pt vs the expanded
-    /// section pattern, which keeps SettingsFooter on screen at 720pt.
+    /// left and inlines the freshness caption + refresh button on the right
+    /// — compact so it sits cleanly under the Providers list.
     private var costSection: some View {
         HStack(alignment: .center, spacing: 10) {
             Text("Cost")
@@ -216,7 +289,7 @@ struct SettingsView: View {
         }
         .padding(.horizontal, 24)
         .padding(.top, 14)
-        .padding(.bottom, 6)
+        .padding(.bottom, 14)
     }
 
     private func costSubtitle() -> String {
@@ -231,6 +304,18 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 0) {
             sectionLabel("Default chart", hint: "⌘-click in panel to cycle")
             ChartStylePicker(selected: $stylePref.style)
+                .padding(.top, 4)
+                .padding(.horizontal, 10)
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 18)
+        .padding(.bottom, 14)
+    }
+
+    private var costStyleSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionLabel("Default cost view", hint: "⌘-click in panel to cycle")
+            CostStylePicker(selected: $costStylePref.style)
                 .padding(.top, 4)
                 .padding(.horizontal, 10)
         }
