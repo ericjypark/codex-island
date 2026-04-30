@@ -16,7 +16,12 @@ struct SettingsView: View {
     @ObservedObject private var cost = CostStore.shared
     @ObservedObject private var updater = UpdaterController.shared
 
-    @State private var activeTab: SettingsTab = .general
+    @AppStorage("Settings.activeTab") private var activeTabRaw: String = SettingsTab.general.rawValue
+
+    private var activeTab: SettingsTab {
+        get { SettingsTab(rawValue: activeTabRaw) ?? .general }
+        nonmutating set { activeTabRaw = newValue.rawValue }
+    }
 
     private var version: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
