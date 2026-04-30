@@ -48,6 +48,11 @@ providers' own usage endpoints.
   aggressively.
 - **Universal binary.** `build.sh` compiles arm64 and x86_64 slices and merges
   them with `lipo`, targeting macOS 13+.
+- **Auto-updates via Sparkle.** The app checks the appcast attached to the
+  latest GitHub Release on launch and once a day thereafter, then prompts
+  before installing. Updates are signed with an EdDSA key — verifiable
+  without involving Apple's signing infrastructure. Toggle off in Settings
+  if you'd rather pin a version.
 - **Native app privacy.** No app telemetry, no crash reporting, no third-party
   app analytics, and no proxy service.
 

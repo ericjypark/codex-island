@@ -1,5 +1,5 @@
 cask "codexisland" do
-  version "0.1.0"
+  version "0.0.1"
   sha256 "REPLACE_AT_RELEASE_TIME"
 
   url "https://github.com/ericjypark/codex-island/releases/download/v#{version}/CodexIsland-#{version}.dmg"
