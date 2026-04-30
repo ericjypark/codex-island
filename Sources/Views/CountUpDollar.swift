@@ -25,7 +25,7 @@ struct CountUpDollar: View {
             let elapsed = context.date.timeIntervalSince(animationStart)
             let displayed = interpolatedValue(elapsed: elapsed)
             Text(formatted(displayed))
-                .font(.system(size: 38, weight: .semibold).monospacedDigit())
+                .font(Typography.bigNumber)
                 .foregroundStyle(color)
                 .shadow(color: color.opacity(glowOpacity), radius: 6)
                 .shadow(color: color.opacity(glowOpacity * 0.5), radius: 14)

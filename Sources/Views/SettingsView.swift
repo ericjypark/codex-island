@@ -90,7 +90,7 @@ struct SettingsView: View {
             activeTab = tab
         } label: {
             Text(tab.label)
-                .font(.system(size: 12, weight: .medium))
+                .font(Typography.tabLabel)
                 .foregroundStyle(isOn
                     ? .white.opacity(0.95)
                     : .white.opacity(0.50))
@@ -146,14 +146,14 @@ struct SettingsView: View {
     private func sectionLabel(_ text: String, hint: String? = nil) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(text)
-                .font(.system(size: 10.5, weight: .semibold))
+                .font(Typography.sectionLabel)
                 .tracking(1.05)
                 .textCase(.uppercase)
                 .foregroundStyle(.white.opacity(0.34))
             Spacer(minLength: 8)
             if let hint {
                 Text(hint)
-                    .font(.system(size: 9.5, weight: .medium))
+                    .font(Typography.micro)
                     .foregroundStyle(.white.opacity(0.18))
             }
         }
@@ -174,7 +174,7 @@ struct SettingsView: View {
             }
             SettingsRow(
                 title: "Refresh interval",
-                subtitle: "How often to re-check usage."
+                subtitle: "How often to refresh."
             ) {
                 refreshSegmented
             }
@@ -189,7 +189,7 @@ struct SettingsView: View {
             sectionLabel("Updates")
             SettingsRow(
                 title: "Check for updates automatically",
-                subtitle: "Sparkle checks the appcast in the background and prompts you when a new version ships."
+                subtitle: "Check for new versions in the background and notify you when one's available."
             ) {
                 SettingsToggle(isOn: updater.automaticallyChecks) {
                     updater.automaticallyChecks.toggle()
@@ -197,13 +197,13 @@ struct SettingsView: View {
             }
             SettingsRow(
                 title: "Check now",
-                subtitle: "Look for a new version right now."
+                subtitle: "Look for a new version immediately."
             ) {
                 Button {
                     updater.checkForUpdates()
                 } label: {
                     Text("Check")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(Typography.button)
                         .foregroundStyle(.white.opacity(0.9))
                         .padding(.horizontal, 12)
                         .padding(.vertical, 5)
@@ -259,13 +259,13 @@ struct SettingsView: View {
     private var costSection: some View {
         HStack(alignment: .center, spacing: 10) {
             Text("Cost")
-                .font(.system(size: 10.5, weight: .semibold))
+                .font(Typography.sectionLabel)
                 .tracking(1.05)
                 .textCase(.uppercase)
                 .foregroundStyle(.white.opacity(0.34))
 
             Text(costSubtitle())
-                .font(.system(size: 11))
+                .font(Typography.label)
                 .foregroundStyle(.white.opacity(0.42))
                 .lineLimit(1)
                 .truncationMode(.tail)
@@ -276,7 +276,7 @@ struct SettingsView: View {
                 cost.refresh()
             } label: {
                 Text(cost.loading ? "Refreshing…" : "Refresh")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(Typography.button)
                     .foregroundStyle(.white.opacity(0.9))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 5)
@@ -303,12 +303,12 @@ struct SettingsView: View {
         guard let updated = cost.lastUpdated else { return "swipe panel to view" }
         let f = RelativeDateTimeFormatter()
         f.unitsStyle = .abbreviated
-        return "Last scan \(f.localizedString(for: updated, relativeTo: Date()))"
+        return "last scan \(f.localizedString(for: updated, relativeTo: Date()))"
     }
 
     private var chartSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Default chart", hint: "⌘-click in panel to cycle")
+            sectionLabel("Chart style", hint: "⌘-click to cycle")
             ChartStylePicker(selected: $stylePref.style)
                 .padding(.top, 4)
                 .padding(.horizontal, 10)
@@ -320,7 +320,7 @@ struct SettingsView: View {
 
     private var costStyleSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Default cost view", hint: "⌘-click in panel to cycle")
+            sectionLabel("Cost view", hint: "⌘-click to cycle")
             CostStylePicker(selected: $costStylePref.style)
                 .padding(.top, 4)
                 .padding(.horizontal, 10)
@@ -340,7 +340,7 @@ struct SettingsView: View {
                     refreshStore.seconds = value
                 } label: {
                     Text(label(for: value))
-                        .font(.system(size: 11, weight: .semibold).monospaced())
+                        .font(Typography.bodyNumber)
                         .foregroundStyle(isOn
                             ? Color.white.opacity(0.95)
                             : .white.opacity(0.55))

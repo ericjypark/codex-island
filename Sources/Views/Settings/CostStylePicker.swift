@@ -25,7 +25,7 @@ struct CostStylePicker: View {
                 preview(for: style)
                     .frame(height: 34)
                 Text(style.label)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(Typography.micro)
                     .foregroundStyle(isOn
                         ? Color(red: 0.58, green: 0.75, blue: 1.0)
                         : .white.opacity(0.55))
@@ -60,10 +60,10 @@ struct CostStylePicker: View {
         case .dollar:
             HStack(alignment: .firstTextBaseline, spacing: 1) {
                 Text("$")
-                    .font(.system(size: 8, weight: .medium))
+                    .font(Typography.micro)
                     .foregroundStyle(.white.opacity(0.5))
                 Text("87")
-                    .font(.system(size: 16, weight: .semibold).monospacedDigit())
+                    .font(Typography.previewNumber)
                     .foregroundStyle(claude)
             }
         case .multi:
@@ -77,10 +77,10 @@ struct CostStylePicker: View {
         case .tokens:
             HStack(alignment: .firstTextBaseline, spacing: 1) {
                 Text("2.4")
-                    .font(.system(size: 16, weight: .semibold).monospacedDigit())
+                    .font(Typography.previewNumber)
                     .foregroundStyle(claude)
                 Text("M")
-                    .font(.system(size: 8, weight: .medium))
+                    .font(Typography.micro)
                     .foregroundStyle(.white.opacity(0.5))
             }
         case .spark:

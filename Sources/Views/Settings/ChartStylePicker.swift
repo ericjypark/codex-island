@@ -29,7 +29,7 @@ struct ChartStylePicker: View {
                 preview(for: style)
                     .frame(height: 34)
                 Text(style.label)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(Typography.micro)
                     .foregroundStyle(isOn
                         ? Color(red: 0.58, green: 0.75, blue: 1.0)
                         : .white.opacity(0.55))
@@ -90,10 +90,10 @@ struct ChartStylePicker: View {
         case .numeric:
             HStack(alignment: .firstTextBaseline, spacing: 1) {
                 Text("35")
-                    .font(.system(size: 16, weight: .bold).monospacedDigit())
+                    .font(Typography.previewNumber)
                     .foregroundStyle(claude)
                 Text("%")
-                    .font(.system(size: 8, weight: .medium))
+                    .font(Typography.micro)
                     .foregroundStyle(.white.opacity(0.5))
             }
         case .spark:

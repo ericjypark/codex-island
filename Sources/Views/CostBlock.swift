@@ -45,11 +45,11 @@ struct CostTile: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
                 Text(window.label)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(Typography.label)
                     .foregroundStyle(.white.opacity(0.55))
                 Spacer()
                 Text(resetGlyph)
-                    .font(.system(size: 10).monospaced())
+                    .font(Typography.caption)
                     .foregroundStyle(.white.opacity(0.4))
             }
 
@@ -77,7 +77,7 @@ struct CostTile: View {
     private var dollarHero: some View {
         HStack(alignment: .firstTextBaseline, spacing: 1) {
             Text("$")
-                .font(.system(size: 15, weight: .medium))
+                .font(Typography.unit)
                 .foregroundStyle(.white.opacity(0.4))
             CountUpDollar(target: window.dollars, color: color, glowOpacity: glowOpacity)
         }
@@ -133,7 +133,7 @@ struct CostTile: View {
 
         return VStack(spacing: 3) {
             Text(formatBarDollars(amount))
-                .font(.system(size: 11, weight: .semibold).monospacedDigit())
+                .font(Typography.bodyNumber)
                 .foregroundStyle(isYou ? color : .white.opacity(0.78))
                 .lineLimit(1)
             ZStack(alignment: .bottom) {
@@ -148,7 +148,7 @@ struct CostTile: View {
                     .animation(.strongEaseOut, value: amount)
             }
             Text(label)
-                .font(.system(size: 9, weight: .medium))
+                .font(Typography.micro)
                 .foregroundStyle(.white.opacity(0.5))
                 .lineLimit(1)
         }
@@ -157,12 +157,12 @@ struct CostTile: View {
     private var tokensHero: some View {
         HStack(alignment: .firstTextBaseline, spacing: 3) {
             Text(tokensValue)
-                .font(.system(size: 38, weight: .semibold).monospacedDigit())
+                .font(Typography.bigNumber)
                 .foregroundStyle(color)
                 .shadow(color: color.opacity(glowOpacity), radius: 6)
                 .shadow(color: color.opacity(glowOpacity * 0.5), radius: 14)
             Text(tokensUnit)
-                .font(.system(size: 15, weight: .medium))
+                .font(Typography.unit)
                 .foregroundStyle(.white.opacity(0.4))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -177,10 +177,10 @@ struct CostTile: View {
             // numeric anchor they can read at a glance.
             HStack(alignment: .firstTextBaseline, spacing: 1) {
                 Text("$")
-                    .font(.system(size: 9, weight: .medium))
+                    .font(Typography.micro)
                     .foregroundStyle(.white.opacity(0.5))
                 Text(formattedDollarsCompact)
-                    .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                    .font(Typography.bodyNumber)
                     .foregroundStyle(color)
                     .shadow(color: color.opacity(0.7), radius: 3)
             }
