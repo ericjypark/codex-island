@@ -104,18 +104,22 @@ final class CostStore: ObservableObject {
         let monthSum = monthEvents.reduce(0.0) { $0 + Pricing.cost(for: $1) }
         let todayTokens = todayEvents.reduce(0) { $0 + tokenCount(of: $1) }
         let monthTokens = monthEvents.reduce(0) { $0 + tokenCount(of: $1) }
+        let todaySeries = CostBucketing.cumulativeHourly(todayEvents)
+        let monthSeries = CostBucketing.cumulativeDaily(monthEvents)
 
         return ProviderCost(
             today: CostWindow(
                 dollars: todaySum,
                 tokens: todayTokens,
-                label: "today",
+                series: todaySeries,
+                label: "Today",
                 resetCaption: CostBucketing.todayResetCaption,
                 error: nil
             ),
             month: CostWindow(
                 dollars: monthSum,
                 tokens: monthTokens,
+                series: monthSeries,
                 label: CostBucketing.currentMonthLabel(),
                 resetCaption: CostBucketing.monthResetCaption(),
                 error: nil
@@ -146,6 +150,10 @@ final class CostStore: ObservableObject {
             "claudeMonthTokens": claude.month.tokens,
             "codexTodayTokens": codex.today.tokens,
             "codexMonthTokens": codex.month.tokens,
+            "claudeTodaySeries": claude.today.series,
+            "claudeMonthSeries": claude.month.series,
+            "codexTodaySeries": codex.today.series,
+            "codexMonthSeries": codex.month.series,
             "lastUpdated": lastUpdated?.timeIntervalSinceReferenceDate ?? 0,
         ]
         UserDefaults.standard.set(snap, forKey: Self.cacheKey)
@@ -161,18 +169,26 @@ final class CostStore: ObservableObject {
         let claudeMonthTokens = snap["claudeMonthTokens"] as? Int ?? 0
         let codexTodayTokens = snap["codexTodayTokens"] as? Int ?? 0
         let codexMonthTokens = snap["codexMonthTokens"] as? Int ?? 0
+        let claudeTodaySeries = snap["claudeTodaySeries"] as? [Double] ?? []
+        let claudeMonthSeries = snap["claudeMonthSeries"] as? [Double] ?? []
+        let codexTodaySeries = snap["codexTodaySeries"] as? [Double] ?? []
+        let codexMonthSeries = snap["codexMonthSeries"] as? [Double] ?? []
 
         self.claude = ProviderCost(
-            today: CostWindow(dollars: claudeToday, tokens: claudeTodayTokens, label: "today",
+            today: CostWindow(dollars: claudeToday, tokens: claudeTodayTokens,
+                              series: claudeTodaySeries, label: "Today",
                               resetCaption: CostBucketing.todayResetCaption, error: nil),
             month: CostWindow(dollars: claudeMonth, tokens: claudeMonthTokens,
+                              series: claudeMonthSeries,
                               label: CostBucketing.currentMonthLabel(),
                               resetCaption: CostBucketing.monthResetCaption(), error: nil)
         )
         self.codex = ProviderCost(
-            today: CostWindow(dollars: codexToday, tokens: codexTodayTokens, label: "today",
+            today: CostWindow(dollars: codexToday, tokens: codexTodayTokens,
+                              series: codexTodaySeries, label: "Today",
                               resetCaption: CostBucketing.todayResetCaption, error: nil),
             month: CostWindow(dollars: codexMonth, tokens: codexMonthTokens,
+                              series: codexMonthSeries,
                               label: CostBucketing.currentMonthLabel(),
                               resetCaption: CostBucketing.monthResetCaption(), error: nil)
         )

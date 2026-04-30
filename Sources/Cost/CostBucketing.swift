@@ -37,6 +37,51 @@ enum CostBucketing {
     /// reset is uniform.
     static let todayResetCaption = "resets at midnight"
 
+    /// Cumulative dollar spend bucketed by hour from local midnight to now.
+    /// Returns one entry per elapsed hour (1–24 entries depending on time
+    /// of day). Always monotonically non-decreasing — feeds the sparkline
+    /// in the cost cell, which ascends as more spend accumulates.
+    static func cumulativeHourly(_ events: [TokenEvent], in tz: TimeZone = .current) -> [Double] {
+        var cal = Calendar(identifier: .gregorian); cal.timeZone = tz
+        let now = Date()
+        let startOfDay = cal.startOfDay(for: now)
+        let currentHour = cal.dateComponents([.hour], from: now).hour ?? 0
+        let buckets = currentHour + 1
+
+        var spend = Array(repeating: 0.0, count: buckets)
+        for event in events where event.timestamp >= startOfDay {
+            let h = cal.dateComponents([.hour], from: event.timestamp).hour ?? 0
+            if h < buckets { spend[h] += Pricing.cost(for: event) }
+        }
+        return runningSum(spend)
+    }
+
+    /// Cumulative dollar spend bucketed by day from the first of the month
+    /// to today. Returns one entry per elapsed day.
+    static func cumulativeDaily(_ events: [TokenEvent], in tz: TimeZone = .current) -> [Double] {
+        var cal = Calendar(identifier: .gregorian); cal.timeZone = tz
+        let now = Date()
+        let comps = cal.dateComponents([.year, .month], from: now)
+        guard let monthStart = cal.date(from: comps) else { return [] }
+        let currentDay = (cal.dateComponents([.day], from: now).day ?? 1) - 1
+        let buckets = currentDay + 1
+
+        var spend = Array(repeating: 0.0, count: buckets)
+        for event in events where event.timestamp >= monthStart {
+            let d = (cal.dateComponents([.day], from: event.timestamp).day ?? 1) - 1
+            if d < buckets { spend[d] += Pricing.cost(for: event) }
+        }
+        return runningSum(spend)
+    }
+
+    private static func runningSum(_ values: [Double]) -> [Double] {
+        var out: [Double] = []
+        out.reserveCapacity(values.count)
+        var sum = 0.0
+        for v in values { sum += v; out.append(sum) }
+        return out
+    }
+
     /// Caption like "resets in 12d" — counts days remaining in the current
     /// calendar month.
     static func monthResetCaption() -> String {

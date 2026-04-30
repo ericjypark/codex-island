@@ -125,13 +125,16 @@ struct IslandRootView: View {
                 }
                 .contentShape(IslandShape())
                 .onTapGesture {
-                    // Cmd-click cycles the chart style. The chart crossfade
-                    // (.id(style) on ChartTile) is the confirmation; no
-                    // panel-wide press scale needed — at this size, scaling
-                    // the whole 720pt panel reads as way too much for what's
-                    // really a 1-character UI change.
+                    // Cmd-click cycles the visualization style of whichever
+                    // page is active. Usage rotates Ring/Bar/Stepped/Numeric/
+                    // Spark; cost rotates USD/VALUE/TOKENS/TREND. The cell
+                    // crossfade is the confirmation — no panel-wide press
+                    // scale needed.
                     if NSEvent.modifierFlags.contains(.command) {
-                        StylePref.shared.cycle()
+                        switch ScreenPref.shared.screen {
+                        case .usage: StylePref.shared.cycle()
+                        case .cost:  CostStylePref.shared.cycle()
+                        }
                     }
                 }
                 .onHover { h in

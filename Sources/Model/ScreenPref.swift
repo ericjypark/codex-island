@@ -22,13 +22,15 @@ final class ScreenPref: ObservableObject {
         self.screen = Screen(rawValue: raw) ?? .usage
     }
 
-    /// Two-page carousel — swipe left advances forward, swipe right rewinds.
-    /// Wraps trivially since there are only two pages.
+    /// Edge-clamped carousel — swiping past the rightmost page does
+    /// nothing (no wrap to page 1), and likewise for the leftmost page.
+    /// Matches the iOS Home Screen rubber-band feel where the user
+    /// understands they've hit a boundary instead of teleporting around.
     func advance() {
-        screen = (screen == .usage) ? .cost : .usage
+        if screen == .usage { screen = .cost }
     }
 
     func rewind() {
-        screen = (screen == .cost) ? .usage : .cost
+        if screen == .cost { screen = .usage }
     }
 }

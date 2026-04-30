@@ -13,6 +13,7 @@ import SwiftUI
 ///      so "syncing…" / "synced 5s ago" describes the data the user sees.
 struct PanelFooter: View {
     @ObservedObject private var pref = StylePref.shared
+    @ObservedObject private var costPref = CostStylePref.shared
     @ObservedObject private var screenPref = ScreenPref.shared
     @ObservedObject private var usageStore = UsageStore.shared
     @ObservedObject private var costStore = CostStore.shared
@@ -59,7 +60,7 @@ struct PanelFooter: View {
         let label: String = {
             switch screenPref.screen {
             case .usage: return pref.style.label.uppercased()
-            case .cost:  return "USD"
+            case .cost:  return costPref.style.label
             }
         }()
         Text(label)
@@ -78,6 +79,7 @@ struct PanelFooter: View {
             )
             .contentTransition(.opacity)
             .animation(.strongEaseOut, value: pref.style)
+            .animation(.strongEaseOut, value: costPref.style)
             .animation(.strongEaseOut, value: screenPref.screen)
     }
 
