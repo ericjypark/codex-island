@@ -12,14 +12,25 @@ final class ScreenPref: ObservableObject {
     }
 
     private static let key = "MacIsland.screen"
+    private static let swipedKey = "MacIsland.hasSwipedScreen"
 
     @Published var screen: Screen {
-        didSet { UserDefaults.standard.set(screen.rawValue, forKey: Self.key) }
+        didSet {
+            UserDefaults.standard.set(screen.rawValue, forKey: Self.key)
+            // Once the user has swiped between pages even once, we've made
+            // our point — kill the discoverability peek in `PagedContent`.
+            if oldValue != screen, !hasSwipedScreen { hasSwipedScreen = true }
+        }
+    }
+
+    @Published var hasSwipedScreen: Bool {
+        didSet { UserDefaults.standard.set(hasSwipedScreen, forKey: Self.swipedKey) }
     }
 
     private init() {
         let raw = UserDefaults.standard.string(forKey: Self.key) ?? ""
         self.screen = Screen(rawValue: raw) ?? .usage
+        self.hasSwipedScreen = UserDefaults.standard.bool(forKey: Self.swipedKey)
     }
 
     /// Edge-clamped carousel — swiping past the rightmost page does
