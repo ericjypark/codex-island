@@ -79,12 +79,11 @@ struct ChartStylePicker: View {
             }
             .frame(width: 28, height: 6)
         case .stepped:
-            HStack(alignment: .bottom, spacing: 2) {
-                ForEach(0..<5) { i in
-                    Rectangle()
-                        .fill(i < 2 ? claude : .white.opacity(0.10))
-                        .frame(width: 4, height: CGFloat(7 + i * 2))
-                        .cornerRadius(0.5)
+            HStack(spacing: 1.5) {
+                ForEach(0..<8) { i in
+                    RoundedRectangle(cornerRadius: 0.75)
+                        .fill(i < 3 ? claude : .white.opacity(0.10))
+                        .frame(width: 2, height: 12)
                 }
             }
             .frame(width: 28, height: 14)
