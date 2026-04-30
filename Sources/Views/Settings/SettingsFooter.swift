@@ -14,7 +14,7 @@ struct SettingsFooter: View {
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
             Text(version)
-                .font(.system(size: 11).monospaced())
+                .font(Typography.bodyNumber)
                 .foregroundStyle(.white.opacity(0.34))
 
             link("GitHub", url: Self.githubURL)
@@ -26,7 +26,7 @@ struct SettingsFooter: View {
                 NSApp.terminate(nil)
             } label: {
                 Text("Quit")
-                    .font(.system(size: 11.5, weight: .medium))
+                    .font(Typography.label)
                     .foregroundStyle(.white.opacity(quitHovered ? 0.92 : 0.55))
                     .padding(.horizontal, 11)
                     .padding(.vertical, 5)
@@ -66,10 +66,10 @@ private struct DottedLink: View {
         Button(action: action) {
             HStack(spacing: 4) {
                 Text(title)
-                    .font(.system(size: 11.5))
+                    .font(Typography.label)
                     .foregroundStyle(.white.opacity(hovered ? 0.92 : 0.55))
                 Text("↗")
-                    .font(.system(size: 9))
+                    .font(Typography.micro)
                     .foregroundStyle(.white.opacity(hovered ? 0.6 : 0.3))
             }
             .overlay(alignment: .bottom) {

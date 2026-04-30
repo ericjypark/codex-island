@@ -13,7 +13,7 @@ struct SettingsButton: View {
             SettingsWindowController.shared.show()
         } label: {
             Image(systemName: "gearshape")
-                .font(.system(size: 11, weight: .semibold))
+                .font(Typography.button)
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.white.opacity(hovered ? 0.64 : 0.34))
                 .frame(width: 26, height: 26)
@@ -27,5 +27,6 @@ struct SettingsButton: View {
         .onHover { hovered = $0 }
         .help("Settings")
         .animation(.strongEaseOut, value: hovered)
+        .accessibilityLabel("Settings")
     }
 }

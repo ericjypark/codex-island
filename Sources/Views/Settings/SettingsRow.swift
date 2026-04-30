@@ -37,14 +37,15 @@ struct SettingsRow<Trailing: View>: View {
                             .frame(width: 7, height: 7)
                             .shadow(color: dot.opacity(0.7), radius: 4)
                             .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 4 }
+                            .accessibilityHidden(true)
                     }
                     Text(title)
-                        .font(.system(size: 13.5, weight: .medium))
+                        .font(Typography.rowTitle)
                         .tracking(-0.07)
                         .foregroundStyle(.white.opacity(0.92))
                     if let chip {
                         Text(chip)
-                            .font(.system(size: 9, weight: .bold).monospaced())
+                            .font(Typography.chip)
                             .tracking(0.8)
                             .foregroundStyle(.white.opacity(0.6))
                             .padding(.horizontal, 5)
@@ -53,14 +54,16 @@ struct SettingsRow<Trailing: View>: View {
                                 RoundedRectangle(cornerRadius: 3)
                                     .fill(.white.opacity(0.06))
                             )
+                            .accessibilityLabel("Plan: \(chip)")
                     }
                 }
                 if let subtitle {
                     Text(subtitle)
-                        .font(.system(size: 11.5))
+                        .font(Typography.label)
                         .foregroundStyle(.white.opacity(0.55))
                 }
             }
+            .accessibilityElement(children: .combine)
 
             Spacer(minLength: 8)
 

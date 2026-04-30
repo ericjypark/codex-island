@@ -1,23 +1,27 @@
 import SwiftUI
 import AppKit
 
-/// Settings window content. Composed of six zones:
-///   1. Brand header — notch silhouette + name + tagline + version pill
-///   2. General — Launch at Login, Refresh interval
-///   3. Providers — Claude / Codex per-provider visibility
-///   4. Default chart — 5-tile picker (replaces the buried ⌘-click cycle)
-///   5. Footer — version + GitHub + License + Quit
-///
-/// All sections sit on the same near-black surface (#050507) and are
-/// separated by hairline gradient dividers. No bordered cards — rows lift
-/// to a faint white wash on hover instead.
+/// Settings window — three tabs (General / Display / Providers) sandwiched
+/// between a fixed brand header on top and the version/links/Quit footer
+/// on the bottom. Tabs let each topical group stay short enough to fit a
+/// modest window without scrolling, and the window itself is now resizable
+/// rather than locked at 480×720, so the user controls the visible space.
 struct SettingsView: View {
     @ObservedObject private var launchStore = LaunchAtLoginStore.shared
     @ObservedObject private var stylePref = StylePref.shared
+    @ObservedObject private var costStylePref = CostStylePref.shared
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @ObservedObject private var refreshStore = RefreshIntervalStore.shared
     @ObservedObject private var usage = UsageStore.shared
+    @ObservedObject private var cost = CostStore.shared
     @ObservedObject private var updater = UpdaterController.shared
+
+    @AppStorage("Settings.activeTab") private var activeTabRaw: String = SettingsTab.general.rawValue
+
+    private var activeTab: SettingsTab {
+        get { SettingsTab(rawValue: activeTabRaw) ?? .general }
+        nonmutating set { activeTabRaw = newValue.rawValue }
+    }
 
     private var version: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
@@ -31,22 +35,108 @@ struct SettingsView: View {
 
             BrandHeader(version: version)
 
+            tabBar
+
             hairline
 
-            generalSection
-            updatesSection
-            providersSection
-            chartSection
-
-            Spacer(minLength: 0)
+            // ScrollView guarantees the footer stays at the bottom of the
+            // window regardless of how much content the active tab has —
+            // overflow scrolls instead of pushing chrome off-screen.
+            ScrollView(.vertical, showsIndicators: false) {
+                Group {
+                    switch activeTab {
+                    case .general:   generalTab
+                    case .display:   displayTab
+                    case .providers: providersTab
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .top)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             hairline
 
             SettingsFooter(version: version)
         }
-        .frame(width: 480, height: 720)
+        .frame(minWidth: 440, minHeight: 420)
         .background(Color(red: 0.020, green: 0.020, blue: 0.027))
         .preferredColorScheme(.dark)
+    }
+
+    // MARK: - Tabs
+
+    enum SettingsTab: String, CaseIterable {
+        case general, display, providers
+
+        var label: String {
+            switch self {
+            case .general:   "General"
+            case .display:   "Display"
+            case .providers: "Providers"
+            }
+        }
+    }
+
+    private var tabBar: some View {
+        HStack(spacing: 4) {
+            ForEach(SettingsTab.allCases, id: \.self) { tab in
+                tabButton(tab)
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 4)
+        .padding(.bottom, 10)
+    }
+
+    @ViewBuilder
+    private func tabButton(_ tab: SettingsTab) -> some View {
+        let isOn = (activeTab == tab)
+        Button {
+            activeTab = tab
+        } label: {
+            Text(tab.label)
+                .font(Typography.tabLabel)
+                .foregroundStyle(isOn
+                    ? .white.opacity(0.95)
+                    : .white.opacity(0.50))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(isOn ? .white.opacity(0.08) : .clear)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 6)
+                                .strokeBorder(.white.opacity(isOn ? 0.08 : 0), lineWidth: 0.5)
+                        }
+                }
+        }
+        .buttonStyle(.plain)
+        .animation(.easeOut(duration: 0.12), value: isOn)
+        .accessibilityLabel("\(tab.label) tab")
+        .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
+    }
+
+    // MARK: - Tab content
+
+    private var generalTab: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            generalSection
+            updatesSection
+        }
+    }
+
+    private var displayTab: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            chartSection
+            costStyleSection
+        }
+    }
+
+    private var providersTab: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            providersSection
+            costSection
+        }
     }
 
     // MARK: - Pieces
@@ -63,14 +153,14 @@ struct SettingsView: View {
     private func sectionLabel(_ text: String, hint: String? = nil) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(text)
-                .font(.system(size: 10.5, weight: .semibold))
+                .font(Typography.sectionLabel)
                 .tracking(1.05)
                 .textCase(.uppercase)
                 .foregroundStyle(.white.opacity(0.34))
             Spacer(minLength: 8)
             if let hint {
                 Text(hint)
-                    .font(.system(size: 9.5, weight: .medium))
+                    .font(Typography.micro)
                     .foregroundStyle(.white.opacity(0.18))
             }
         }
@@ -91,7 +181,7 @@ struct SettingsView: View {
             }
             SettingsRow(
                 title: "Refresh interval",
-                subtitle: "How often to re-check usage."
+                subtitle: "How often to refresh."
             ) {
                 refreshSegmented
             }
@@ -106,7 +196,7 @@ struct SettingsView: View {
             sectionLabel("Updates")
             SettingsRow(
                 title: "Check for updates automatically",
-                subtitle: "Sparkle checks the appcast in the background and prompts you when a new version ships."
+                subtitle: "Check for new versions in the background and notify you when one's available."
             ) {
                 SettingsToggle(isOn: updater.automaticallyChecks) {
                     updater.automaticallyChecks.toggle()
@@ -114,13 +204,13 @@ struct SettingsView: View {
             }
             SettingsRow(
                 title: "Check now",
-                subtitle: "Look for a new version right now."
+                subtitle: "Look for a new version immediately."
             ) {
                 Button {
                     updater.checkForUpdates()
                 } label: {
                     Text("Check")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(Typography.button)
                         .foregroundStyle(.white.opacity(0.9))
                         .padding(.horizontal, 12)
                         .padding(.vertical, 5)
@@ -166,14 +256,95 @@ struct SettingsView: View {
             }
         }
         .padding(.horizontal, 14)
-        .padding(.top, 14)
+        .padding(.top, 18)
         .padding(.bottom, 6)
+    }
+
+    /// Single-row Cost section. Re-uses the section-label typography on the
+    /// left and inlines the freshness caption + refresh button on the right
+    /// — compact so it sits cleanly under the Providers list.
+    private var costSection: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Text("Cost")
+                .font(Typography.sectionLabel)
+                .tracking(1.05)
+                .textCase(.uppercase)
+                .foregroundStyle(.white.opacity(0.34))
+
+            Text(costSubtitle())
+                .font(Typography.label)
+                .foregroundStyle(.white.opacity(0.42))
+                .lineLimit(1)
+                .truncationMode(.tail)
+
+            Spacer(minLength: 8)
+
+            Button {
+                cost.refresh()
+            } label: {
+                Text(cost.loading ? "Refreshing…" : "Refresh")
+                    .font(Typography.button)
+                    .foregroundStyle(.white.opacity(0.9))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(.white.opacity(0.10))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 6)
+                                    .strokeBorder(.white.opacity(0.08), lineWidth: 0.5)
+                            }
+                    }
+            }
+            .buttonStyle(.plain)
+            .disabled(cost.loading)
+            .opacity(cost.loading ? 0.55 : 1)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 14)
+        .padding(.bottom, 14)
+    }
+
+    /// Days past the embedded pricing snapshot before the Cost section
+    /// admits the data may be stale. Anthropic re-tiered Opus once already,
+    /// so two months without a refresh is the point where dollar totals
+    /// could meaningfully drift from reality.
+    private static let pricingFreshnessThreshold = 60
+
+    private func costSubtitle() -> String {
+        let base: String
+        if cost.loading {
+            base = "scanning local logs…"
+        } else if let updated = cost.lastUpdated {
+            let f = RelativeDateTimeFormatter()
+            f.unitsStyle = .abbreviated
+            base = "last scan \(f.localizedString(for: updated, relativeTo: Date()))"
+        } else {
+            base = "swipe panel to view"
+        }
+        let days = Pricing.daysSinceSnapshot
+        if days > Self.pricingFreshnessThreshold {
+            return base + " · pricing data \(days)d old"
+        }
+        return base
     }
 
     private var chartSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Default chart", hint: "⌘-click in panel to cycle")
+            sectionLabel("Chart style", hint: "⌘-click to cycle")
             ChartStylePicker(selected: $stylePref.style)
+                .padding(.top, 4)
+                .padding(.horizontal, 10)
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 18)
+        .padding(.bottom, 14)
+    }
+
+    private var costStyleSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionLabel("Cost view", hint: "⌘-click to cycle")
+            CostStylePicker(selected: $costStylePref.style)
                 .padding(.top, 4)
                 .padding(.horizontal, 10)
         }
@@ -192,7 +363,7 @@ struct SettingsView: View {
                     refreshStore.seconds = value
                 } label: {
                     Text(label(for: value))
-                        .font(.system(size: 11, weight: .semibold).monospaced())
+                        .font(Typography.bodyNumber)
                         .foregroundStyle(isOn
                             ? Color.white.opacity(0.95)
                             : .white.opacity(0.55))
@@ -208,6 +379,8 @@ struct SettingsView: View {
                         }
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Refresh interval, \(label(for: value))")
+                .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
             }
         }
         .padding(2)

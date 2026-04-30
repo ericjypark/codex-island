@@ -36,5 +36,6 @@ struct LiveDot: View {
                 withAnimation(.strongEaseOut) { syncBump = 1.0 }
             }
         }
+        .accessibilityHidden(true)
     }
 }

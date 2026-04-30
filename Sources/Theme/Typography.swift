@@ -1,27 +1,59 @@
 import SwiftUI
 
-/// The locked type scale for CodexIsland. SF Pro everywhere, monospacedDigit
-/// on every percentage so digits don't jiggle as values change.
+/// Locked type scale for CodexIsland. Eight tokens across six visual tiers,
+/// no half-points. Hero numerics use SF Mono so the display digits — which
+/// are the product's brand — have a developer-tool character that SF Pro
+/// with `monospacedDigit()` can't deliver.
 ///
-/// Sizes (top-to-bottom in visual prominence):
-///   38pt semibold mono — NumericChart big number
-///   18pt semibold mono — chart values (ring / bar / stepped / spark)
-///   13pt semibold      — provider titles ("Claude", "Codex")
-///   11pt               — chart labels ("5h", "week"), live-status text
-///   10pt mono          — footer captions ("resets in 3h", "synced 5s ago")
-///   9pt bold mono      — chips (MAX / PLUS / style label), tracking 0.8
+/// Tiers (largest to smallest):
+///   38pt SF Mono semibold  — hero numerics (count-up dollar, big tokens)
+///   18pt SF Mono semibold  — sub-hero (chart values)
+///   15pt SF Mono semibold  — picker preview numerics
+///   15pt SF Pro medium     — unit suffixes adjacent to hero ($, k, M, B)
+///   14pt SF Pro semibold   — Settings brand wordmark
+///   13pt SF Pro semibold   — provider titles ("Claude", "Codex")
+///   13pt SF Pro medium     — Settings row titles
+///   12pt SF Pro medium     — tab labels (a hair larger so they feel clickable)
+///   11pt — body row
+///       SF Mono semibold for inline numerics (bar dollars, sparkline overlay)
+///       SF Pro medium for window labels ("Today", "Apr")
+///       SF Pro semibold for buttons ("Refresh", "Check")
+///   10pt — micro row
+///       SF Mono regular for caption (reset glyph "↻ 5h", "synced 2m ago")
+///       SF Pro medium for sub-bar labels and picker tile labels
+///       SF Pro semibold for tracked-uppercase section labels
+///   9pt SF Mono bold tracked — chips (MAX / PRO / PLUS)
 ///
-/// White-text ladder (foregroundStyle.opacity) for emphasis tiers:
-///   1.0   — primary value text
-///   0.78  — chip text
-///   0.55  — labels / "synced" caption
-///   0.42  — secondary hints
-///   0.06  — hairline strokes / divider gradients
+/// White-text opacity ladder (combine freely with any tier):
+///   1.00  primary value
+///   0.78  chip text
+///   0.55  labels
+///   0.40  secondary captions
+///   0.32  tertiary
+///   0.18  hints
+///   0.06  hairlines
 enum Typography {
-    static let bigNumber = Font.system(size: 38, weight: .semibold).monospacedDigit()
-    static let chartValue = Font.system(size: 18, weight: .semibold).monospacedDigit()
+    // MARK: - Numerics (SF Mono)
+
+    static let bigNumber     = Font.system(size: 38, weight: .semibold, design: .monospaced)
+    static let chartValue    = Font.system(size: 18, weight: .semibold, design: .monospaced)
+    static let previewNumber = Font.system(size: 15, weight: .semibold, design: .monospaced)
+    static let bodyNumber    = Font.system(size: 11, weight: .semibold, design: .monospaced)
+
+    // MARK: - Display text (SF Pro)
+
+    static let brand         = Font.system(size: 14, weight: .semibold)
+    static let unit          = Font.system(size: 15, weight: .medium)
     static let providerTitle = Font.system(size: 13, weight: .semibold)
-    static let label = Font.system(size: 11, weight: .medium)
-    static let caption = Font.system(size: 10).monospaced()
-    static let chip = Font.system(size: 9, weight: .bold).monospaced()
+    static let rowTitle      = Font.system(size: 13, weight: .medium)
+    static let tabLabel      = Font.system(size: 12, weight: .medium)
+    static let label         = Font.system(size: 11, weight: .medium)
+    static let button        = Font.system(size: 11, weight: .semibold)
+    static let micro         = Font.system(size: 10, weight: .medium)
+    static let sectionLabel  = Font.system(size: 10, weight: .semibold)
+
+    // MARK: - Specialty
+
+    static let caption = Font.system(size: 10, design: .monospaced)
+    static let chip    = Font.system(size: 9, weight: .bold).monospaced()
 }

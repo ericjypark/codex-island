@@ -22,18 +22,18 @@ struct BrandHeader: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("CodexIsland")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(Typography.brand)
                     .tracking(-0.15)
                     .foregroundStyle(.white.opacity(0.92))
                 Text("Your AI usage limits, living in your notch.")
-                    .font(.system(size: 11))
+                    .font(Typography.label)
                     .foregroundStyle(.white.opacity(0.55))
             }
 
             Spacer(minLength: 8)
 
             Text("v\(version)")
-                .font(.system(size: 11, weight: .medium).monospaced())
+                .font(Typography.bodyNumber)
                 .foregroundStyle(.white.opacity(0.34))
                 .padding(.horizontal, 9)
                 .padding(.vertical, 4)
