@@ -10,7 +10,9 @@ import SwiftUI
 ///   18pt SF Mono semibold  — sub-hero (chart values)
 ///   15pt SF Mono semibold  — picker preview numerics
 ///   15pt SF Pro medium     — unit suffixes adjacent to hero ($, k, M, B)
+///   14pt SF Pro semibold   — Settings brand wordmark
 ///   13pt SF Pro semibold   — provider titles ("Claude", "Codex")
+///   13pt SF Pro medium     — Settings row titles
 ///   12pt SF Pro medium     — tab labels (a hair larger so they feel clickable)
 ///   11pt — body row
 ///       SF Mono semibold for inline numerics (bar dollars, sparkline overlay)
@@ -40,8 +42,10 @@ enum Typography {
 
     // MARK: - Display text (SF Pro)
 
+    static let brand         = Font.system(size: 14, weight: .semibold)
     static let unit          = Font.system(size: 15, weight: .medium)
     static let providerTitle = Font.system(size: 13, weight: .semibold)
+    static let rowTitle      = Font.system(size: 13, weight: .medium)
     static let tabLabel      = Font.system(size: 12, weight: .medium)
     static let label         = Font.system(size: 11, weight: .medium)
     static let button        = Font.system(size: 11, weight: .semibold)

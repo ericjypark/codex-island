@@ -40,9 +40,7 @@ struct SettingsRow<Trailing: View>: View {
                             .accessibilityHidden(true)
                     }
                     Text(title)
-                        // 13.5pt sits between providerTitle (13) and unit (15) — Settings rows
-                        // need a touch more presence than provider titles without the unit's weight.
-                        .font(.system(size: 13.5, weight: .medium))
+                        .font(Typography.rowTitle)
                         .tracking(-0.07)
                         .foregroundStyle(.white.opacity(0.92))
                     if let chip {
@@ -60,9 +58,8 @@ struct SettingsRow<Trailing: View>: View {
                     }
                 }
                 if let subtitle {
-                    // 11.5pt: half-step above label (11) for Settings subtitle hierarchy.
                     Text(subtitle)
-                        .font(.system(size: 11.5))
+                        .font(Typography.label)
                         .foregroundStyle(.white.opacity(0.55))
                 }
             }

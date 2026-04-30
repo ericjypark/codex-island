@@ -21,23 +21,19 @@ struct BrandHeader: View {
             mark
 
             VStack(alignment: .leading, spacing: 2) {
-                // 14pt semibold — brand wordmark, intentionally one step above providerTitle (13).
                 Text("CodexIsland")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(Typography.brand)
                     .tracking(-0.15)
                     .foregroundStyle(.white.opacity(0.92))
-                // 11pt regular — tagline reads quieter than label (11 medium).
                 Text("Your AI usage limits, living in your notch.")
-                    .font(.system(size: 11))
+                    .font(Typography.label)
                     .foregroundStyle(.white.opacity(0.55))
             }
 
             Spacer(minLength: 8)
 
-            // 11pt medium mono — no token (bodyNumber is semibold); version pill keeps medium
-            // weight to balance the wordmark without competing.
             Text("v\(version)")
-                .font(.system(size: 11, weight: .medium).monospaced())
+                .font(Typography.bodyNumber)
                 .foregroundStyle(.white.opacity(0.34))
                 .padding(.horizontal, 9)
                 .padding(.vertical, 4)
