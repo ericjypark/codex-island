@@ -16,7 +16,6 @@ import SwiftUI
 struct PagedContent: View {
     @ObservedObject private var screenPref = ScreenPref.shared
     @State private var peekOffset: CGFloat = 0
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         GeometryReader { geo in
@@ -32,8 +31,12 @@ struct PagedContent: View {
             .animation(.openMorph, value: screenPref.screen)
             .clipped()
             .onAppear {
-                guard !reduceMotion,
-                      !screenPref.hasSwipedScreen,
+                // Discoverability cue, not decorative motion — fires even
+                // when @Environment(\.accessibilityReduceMotion) is on,
+                // because without it reduce-motion users have no path to
+                // learn the second screen exists. The motion is brief
+                // (~1s total) and slow-eased.
+                guard !screenPref.hasSwipedScreen,
                       screenPref.screen == .usage
                 else { return }
                 schedulePeek()
@@ -50,14 +53,22 @@ struct PagedContent: View {
     }
 
     private func schedulePeek() {
-        // 0.30s wait lets the open-morph spring settle before the peek
-        // starts — peeking during the initial expand would feel chaotic.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
+        // 0.40s lets the panel's openMorph + content fade-in settle
+        // (~0.42s + ~0.28s) before the peek begins, so the discoverability
+        // beat is its own gesture instead of competing with the entrance.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.40) {
             guard !screenPref.hasSwipedScreen else { return }
-            withAnimation(.easeOut(duration: 0.50)) { peekOffset = -28 }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.58) {
+            // Reuse the panel-open spring so the peek inherits the same
+            // motion identity that brought the panel into view. Springs
+            // also hand off cleanly to a real swipe if the user grabs
+            // mid-peek (both gestures animate via the same physics).
+            withAnimation(.openMorph) { peekOffset = -46 }
+            // Out spring settles ~0.42s; hold ~0.20s past settle, then
+            // return with closeMorph — snappier, matching the asymmetric
+            // open/close pace already established for the panel itself.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.62) {
                 guard !screenPref.hasSwipedScreen else { return }
-                withAnimation(.easeIn(duration: 0.40)) { peekOffset = 0 }
+                withAnimation(.closeMorph) { peekOffset = 0 }
             }
         }
     }
