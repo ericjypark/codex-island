@@ -11,29 +11,31 @@ struct IslandShape: InsettableShape {
 
     func path(in rect: CGRect) -> Path {
         let r = rect.insetBy(dx: inset, dy: inset)
-        let topRadius: CGFloat = 8
+        // Decoupled so the curve can start bending earlier on the vertical
+        // wall (verticalDrop) without growing too much horizontally
+        // (horizontalExtend) — feels like a longer, gentler flare instead
+        // of a tight quarter circle.
+        let topVerticalDrop: CGFloat = 13
+        let topHorizontalExtend: CGFloat = 10
         let bottomRadius: CGFloat = 14
         var p = Path()
 
-        // Top edge — extends past the rect's left/right by `topRadius` so
-        // the corners can flare outward into the menu bar.
-        p.move(to: CGPoint(x: r.minX - topRadius, y: r.minY))
-        p.addLine(to: CGPoint(x: r.maxX + topRadius, y: r.minY))
+        // Top edge — extends past the rect by `topHorizontalExtend` on
+        // each side so the corners can flare outward into the menu bar.
+        p.move(to: CGPoint(x: r.minX - topHorizontalExtend, y: r.minY))
+        p.addLine(to: CGPoint(x: r.maxX + topHorizontalExtend, y: r.minY))
 
-        // Top-right outward flare: smooth quad curve from the extended
-        // top-right point inward and down to the right vertical wall.
-        // Control point sits at the corner where the extended top edge
-        // would meet a square corner — pulls the curve into a clean
-        // concave-from-outside / convex-from-inside arc.
+        // Top-right outward flare. Control point at the rect corner
+        // gives a clean concave-from-outside (convex-from-inside) curve.
         p.addQuadCurve(
-            to: CGPoint(x: r.maxX, y: r.minY + topRadius),
+            to: CGPoint(x: r.maxX, y: r.minY + topVerticalDrop),
             control: CGPoint(x: r.maxX, y: r.minY)
         )
 
         // Right vertical wall down to the bottom-right curve.
         p.addLine(to: CGPoint(x: r.maxX, y: r.maxY - bottomRadius))
 
-        // Bottom-right convex (existing).
+        // Bottom-right convex.
         p.addArc(
             center: CGPoint(x: r.maxX - bottomRadius, y: r.maxY - bottomRadius),
             radius: bottomRadius,
@@ -45,7 +47,7 @@ struct IslandShape: InsettableShape {
         // Bottom edge.
         p.addLine(to: CGPoint(x: r.minX + bottomRadius, y: r.maxY))
 
-        // Bottom-left convex (existing).
+        // Bottom-left convex.
         p.addArc(
             center: CGPoint(x: r.minX + bottomRadius, y: r.maxY - bottomRadius),
             radius: bottomRadius,
@@ -55,11 +57,11 @@ struct IslandShape: InsettableShape {
         )
 
         // Left vertical wall up to where the top-left flare begins.
-        p.addLine(to: CGPoint(x: r.minX, y: r.minY + topRadius))
+        p.addLine(to: CGPoint(x: r.minX, y: r.minY + topVerticalDrop))
 
         // Top-left outward flare: mirror of top-right.
         p.addQuadCurve(
-            to: CGPoint(x: r.minX - topRadius, y: r.minY),
+            to: CGPoint(x: r.minX - topHorizontalExtend, y: r.minY),
             control: CGPoint(x: r.minX, y: r.minY)
         )
 
