@@ -6,7 +6,7 @@ import AppKit
 ///
 /// Three elements left to right: the CodexIsland brand mark (the curly-
 /// brace island glyph that ships in `Resources/codexisland_logo.png`,
-/// rendered as a template image so it picks up the cobalt accent), the
+/// rendered from a transparent template image), the
 /// app name + tagline, and a version pill on the right.
 struct BrandHeader: View {
     let version: String
@@ -49,21 +49,13 @@ struct BrandHeader: View {
     @ViewBuilder
     private var mark: some View {
         if let logo {
-            // The shipped PNG is opaque RGB (no alpha channel) — black
-            // glyph on a white background. `.template` renders a solid
-            // rectangle because there's nothing transparent to mask.
-            // Invert so the glyph becomes white and the background black,
-            // then blend `.lighten` over the dark settings surface so the
-            // inverted-black background drops out and only the white glyph
-            // remains.
             Image(nsImage: logo)
+                .renderingMode(.template)
                 .resizable()
                 .interpolation(.high)
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 26, height: 26)
-                .colorInvert()
-                .blendMode(.lighten)
-                .opacity(0.92)
+                .foregroundStyle(.white.opacity(0.92))
                 .shadow(color: IslandColor.cobalt.opacity(0.35), radius: 6)
         } else {
             // Fallback if the resource is missing in the bundle: a plain
