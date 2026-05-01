@@ -26,14 +26,25 @@ private struct SparkSVG: View {
     /// Synthesize 36 plausible-looking historical points around the current
     /// value. Real history would need a usage time-series API neither
     /// provider exposes — this is decorative and clearly so.
+    ///
+    /// Demo mode uses a less conservative shape: history clusters around
+    /// the current value (not 70% of it) with larger noise, so screen
+    /// recordings actually look like a heavy user instead of a quiet one.
     private func generatePoints(width: CGFloat, height: CGFloat) -> [CGPoint] {
         let n = 36
+        let demo = ProcessInfo.processInfo.environment["CODEXISLAND_DEMO"] == "1"
+        let startFactor: Double = demo ? 0.85 : 0.4
+        let targetFactor: Double = demo ? 1.0 : 0.7
+        let noiseAmpA: Double = demo ? 14 : 7
+        let noiseAmpB: Double = demo ? 8 : 4
+        let floor: Double = demo ? 18 : 2
+
         var pts: [Double] = []
-        var acc = value * 0.4
+        var acc = value * startFactor
         for i in 0..<n {
-            let noise = sin(Double(i + seed) * 1.3) * 7 + cos(Double(i + seed) * 0.7) * 4
-            acc = acc * 0.65 + (value * 0.7 + noise) * 0.35
-            pts.append(min(98, max(2, acc)))
+            let noise = sin(Double(i + seed) * 1.3) * noiseAmpA + cos(Double(i + seed) * 0.7) * noiseAmpB
+            acc = acc * 0.65 + (value * targetFactor + noise) * 0.35
+            pts.append(min(95, max(floor, acc)))
         }
         if !pts.isEmpty { pts[pts.count - 1] = value }
         return pts.enumerated().map { (i, p) in

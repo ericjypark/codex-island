@@ -30,7 +30,12 @@ final class ScreenPref: ObservableObject {
     private init() {
         let raw = UserDefaults.standard.string(forKey: Self.key) ?? ""
         self.screen = Screen(rawValue: raw) ?? .usage
-        self.hasSwipedScreen = UserDefaults.standard.bool(forKey: Self.swipedKey)
+        // Demo mode forces the discoverability peek to fire on every
+        // launch so screen recordings always capture it. didSet does not
+        // run for init assignments, so this never persists back to
+        // UserDefaults — the real app's onboarding state is preserved.
+        let demo = ProcessInfo.processInfo.environment["CODEXISLAND_DEMO"] == "1"
+        self.hasSwipedScreen = demo ? false : UserDefaults.standard.bool(forKey: Self.swipedKey)
     }
 
     /// Edge-clamped carousel — swiping past the rightmost page does

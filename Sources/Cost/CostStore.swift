@@ -31,10 +31,21 @@ final class CostStore: ObservableObject {
     }
 
     private init() {
+        if ProcessInfo.processInfo.environment["CODEXISLAND_DEMO"] == "1" {
+            loadDemoData()
+            return
+        }
         restoreFromCache()
     }
 
     func refresh() {
+        // Demo mode: skip log scanning, inject hand-tuned numbers that
+        // tell a "user extracts more value than the $200 subscription"
+        // story. Never persists, so real cache is preserved.
+        if ProcessInfo.processInfo.environment["CODEXISLAND_DEMO"] == "1" {
+            loadDemoData()
+            return
+        }
         // Per-provider gate so a slow Claude scan doesn't block a fast
         // Codex one (and vice versa) on the next tick.
         if !claudeLoading {
@@ -92,6 +103,47 @@ final class CostStore: ObservableObject {
         pollTimer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
         }
+    }
+
+    /// Demo data for screen recordings, derived from the maintainer's real
+    /// April 2026 logs aggregated via /tmp/april_dump.py. "Today" mirrors
+    /// April 29 (a balanced active day across both providers); monthly
+    /// totals + cumulative series are the actual full-April aggregates.
+    /// Month label hardcoded to "April" so the data and the header agree
+    /// even when the real system clock has rolled into May.
+    private func loadDemoData() {
+        // Claude: morning-warrior pattern — early start, big morning push,
+        // lunch plateau, afternoon resurge, tapering evening. Multi-peak.
+        // Monthly is the real April aggregate (already bursty/stepped).
+        self.claude = ProviderCost(
+            today: CostWindow(
+                dollars: 146.61, tokens: 211_240_000,
+                series: [0, 0, 0, 0, 0, 0, 0.8, 4.5, 18.2, 38.7, 58.3, 71.4, 73.8, 76.5, 87.2, 102.8, 117.4, 128.6, 135.2, 140.7, 144.5, 146.0, 146.4, 146.61],
+                label: "Today", error: nil, unknownModels: []
+            ),
+            month: CostWindow(
+                dollars: 1510.80, tokens: 2_170_970_947,
+                series: [4.32, 11.52, 41.47, 47.80, 67.99, 88.68, 208.14, 249.74, 327.76, 406.09, 438.15, 462.90, 477.83, 576.16, 618.03, 689.91, 710.34, 805.93, 851.29, 866.94, 866.94, 902.46, 951.91, 1010.17, 1073.80, 1128.92, 1182.69, 1219.69, 1366.31, 1510.80],
+                label: "April", error: nil, unknownModels: []
+            )
+        )
+        // Codex: evening-person pattern — flat all morning, light midday,
+        // explodes 6pm-11pm. Single big surge contrasts Claude's two-peak day.
+        // Monthly is a smooth accelerating curve (linearly-rising daily
+        // deltas, $12 → $77/day) — visually opposite to Claude's stepped jumps.
+        self.codex = ProviderCost(
+            today: CostWindow(
+                dollars: 136.50, tokens: 164_120_000,
+                series: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.4, 6.8, 11.5, 17.2, 22.8, 28.4, 38.5, 51.7, 67.4, 84.6, 102.3, 118.8, 130.4, 136.50],
+                label: "Today", error: nil, unknownModels: []
+            ),
+            month: CostWindow(
+                dollars: 1342.60, tokens: 1_614_300_000,
+                series: [12.20, 26.70, 43.50, 62.40, 83.70, 107.10, 132.80, 160.70, 190.90, 223.30, 257.90, 294.80, 333.90, 375.30, 418.90, 464.70, 512.80, 563.10, 615.70, 670.50, 727.50, 786.80, 848.30, 912.00, 978.00, 1046.20, 1116.70, 1189.40, 1264.30, 1342.60],
+                label: "April", error: nil, unknownModels: []
+            )
+        )
+        self.lastUpdated = Date()
     }
 
     /// Pure aggregation — single pass over events. Lives as a static so the

@@ -31,7 +31,9 @@ final class StylePref: ObservableObject {
     private init() {
         let raw = UserDefaults.standard.string(forKey: Self.styleKey) ?? ""
         self.style = ChartStyle(rawValue: raw) ?? .ring
-        self.hasCycledStyle = UserDefaults.standard.bool(forKey: Self.cycledKey)
+        // See ScreenPref: demo mode keeps the ⌘-click hint visible.
+        let demo = ProcessInfo.processInfo.environment["CODEXISLAND_DEMO"] == "1"
+        self.hasCycledStyle = demo ? false : UserDefaults.standard.bool(forKey: Self.cycledKey)
     }
 
     func cycle() {

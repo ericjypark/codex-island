@@ -23,6 +23,43 @@ final class UsageStore: ObservableObject {
 
     func refresh() {
         if loading { return }
+        // Demo mode for screen recordings: skip the network entirely and
+        // inject hand-tuned values that read as "real, healthy heavy-user
+        // data". Reset times are recomputed each refresh so the countdowns
+        // tick down naturally on camera. Off by default — only fires when
+        // CODEXISLAND_DEMO=1 is set in the launching env.
+        if ProcessInfo.processInfo.environment["CODEXISLAND_DEMO"] == "1" {
+            let now = Date()
+            self.claude = AppUsage(
+                fiveHour: WindowUsage(
+                    usedPercent: 0.73,
+                    resetAt: now.addingTimeInterval(1 * 3600 + 47 * 60),
+                    error: nil
+                ),
+                weekly: WindowUsage(
+                    usedPercent: 0.81,
+                    resetAt: now.addingTimeInterval(4 * 86400 + 11 * 3600),
+                    error: nil
+                ),
+                plan: "max"
+            )
+            self.codex = AppUsage(
+                fiveHour: WindowUsage(
+                    usedPercent: 0.67,
+                    resetAt: now.addingTimeInterval(2 * 3600 + 23 * 60),
+                    error: nil
+                ),
+                weekly: WindowUsage(
+                    usedPercent: 0.76,
+                    resetAt: now.addingTimeInterval(4 * 86400 + 18 * 3600),
+                    error: nil
+                ),
+                plan: "pro"
+            )
+            self.lastUpdated = now
+            return
+        }
+
         loading = true
         refreshTask?.cancel()
         refreshTask = Task {
