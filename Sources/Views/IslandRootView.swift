@@ -10,82 +10,57 @@ struct IslandRootView: View {
     @State private var contentVisible = false
     @State private var pillsVisible = false
 
+    /// PNG-from-disk decode is ~150µs per call. Computed properties
+    /// re-decoded both logos every render — inside a 120Hz TimelineView
+    /// that's 240 main-thread decodes/sec. Cache once on appear.
+    @State private var claudeLogo: NSImage?
+    @State private var openaiLogo: NSImage?
+
     static let tabWidth: CGFloat = 38
-
-    private var claudeLogo: NSImage? {
-        Bundle.main.url(forResource: "claude_logo", withExtension: "png")
-            .flatMap { NSImage(contentsOf: $0) }
-    }
-
-    private var openaiLogo: NSImage? {
-        Bundle.main.url(forResource: "openai_logo", withExtension: "png")
-            .flatMap { NSImage(contentsOf: $0) }
-    }
 
     var body: some View {
         VStack(spacing: 0) {
-            // minimumInterval: 1/120 explicitly opts the timeline into the
-            // ProMotion refresh rate. Default `.animation` schedules can
-            // settle at 60Hz even on 120Hz displays, especially in
-            // .accessory background apps.
-            TimelineView(.animation(minimumInterval: 1.0 / 120.0)) { context in
-                let t = context.date.timeIntervalSinceReferenceDate
-                let rotation = (t * 100).truncatingRemainder(dividingBy: 360)
+            // Only the rotating loading sweep needs per-frame re-renders
+            // (its angle is a function of time). Everything else animates
+            // via withAnimation springs paced by display sync, so wrapping
+            // the whole tree in TimelineView would re-build every overlay
+            // and every gesture closure 120 times per second — competing
+            // with the spring for main-thread budget and showing up as
+            // hover-spring jank.
+            ZStack {
+                LoadingSweep(active: usageStore.loading || costStore.loading)
 
-                ZStack {
-                    // Loading sweep. 3pt blur + 4pt stroke is half the GPU
-                    // cost of the original 5/5 — at 120Hz the blur is hot
-                    // because the angular gradient re-rasterizes per frame.
-                    if usageStore.loading || costStore.loading {
+                IslandShape()
+                    .fill(.black)
+                    .overlay {
                         IslandShape()
-                            .stroke(
-                                AngularGradient(
-                                    gradient: Gradient(stops: [
-                                        .init(color: .clear, location: 0.00),
-                                        .init(color: IslandColor.cobalt.opacity(0.0), location: 0.55),
-                                        .init(color: IslandColor.cobalt, location: 0.78),
-                                        .init(color: .white.opacity(0.95), location: 0.92),
-                                        .init(color: IslandColor.cobalt.opacity(0.0), location: 1.00),
-                                    ]),
-                                    center: .center,
-                                    angle: .degrees(rotation)
-                                ),
-                                lineWidth: 4
+                            .strokeBorder(
+                                .white.opacity(model.state == .expanded ? 0.12 : 0),
+                                lineWidth: 0.5
                             )
-                            .blur(radius: 3)
                     }
+                    .shadow(color: IslandColor.cobalt.opacity(0.35), radius: 14, y: 0)
+                    .shadow(
+                        color: model.state == .expanded ? .black.opacity(0.5) : .clear,
+                        radius: 20, y: 10
+                    )
 
-                    IslandShape()
-                        .fill(.black)
-                        .overlay {
-                            IslandShape()
-                                .strokeBorder(
-                                    .white.opacity(model.state == .expanded ? 0.12 : 0),
-                                    lineWidth: 0.5
-                                )
-                        }
-                        .shadow(color: IslandColor.cobalt.opacity(0.35), radius: 14, y: 0)
-                        .shadow(
-                            color: model.state == .expanded ? .black.opacity(0.5) : .clear,
-                            radius: 20, y: 10
-                        )
-
-                    if model.state == .expanded {
-                        ExpandedView(model: model)
-                            .opacity(contentVisible ? 1 : 0)
-                            // Slide down from -8 → 0 on enter pairs with the
-                            // 100ms→180ms opacity delay set in onHover. On
-                            // exit the offset never matters because the
-                            // content fully fades before the shape shrinks.
-                            .offset(y: contentVisible ? 0 : -8)
-                            .padding(.horizontal, 18)
-                            .padding(.vertical, 14)
-                            .allowsHitTesting(contentVisible)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
+                if model.state == .expanded {
+                    ExpandedView(model: model)
+                        .opacity(contentVisible ? 1 : 0)
+                        // Slide down from -8 → 0 on enter pairs with the
+                        // 100ms→180ms opacity delay set in onHover. On
+                        // exit the offset never matters because the
+                        // content fully fades before the shape shrinks.
+                        .offset(y: contentVisible ? 0 : -8)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 14)
+                        .allowsHitTesting(contentVisible)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(width: model.size.width, height: model.size.height)
-                .background {
+            }
+            .frame(width: model.size.width, height: model.size.height)
+            .background {
                     // Frosted halo. ultraThinMaterial is a backdrop blur of
                     // whatever desktop content is behind the window. Lives
                     // in .background AFTER .frame so it doesn't push the
@@ -241,13 +216,22 @@ struct IslandRootView: View {
                         }
                     }
                 }
-            }
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("CodexIsland panel")
         .accessibilityHint(accessibilityHintForState)
+        .onAppear {
+            if claudeLogo == nil {
+                claudeLogo = Bundle.main.url(forResource: "claude_logo", withExtension: "png")
+                    .flatMap { NSImage(contentsOf: $0) }
+            }
+            if openaiLogo == nil {
+                openaiLogo = Bundle.main.url(forResource: "openai_logo", withExtension: "png")
+                    .flatMap { NSImage(contentsOf: $0) }
+            }
+        }
     }
 
     private var accessibilityHintForState: String {
@@ -297,6 +281,41 @@ struct IslandRootView: View {
                 .frame(width: 20, height: 20)
                 .padding(alignment == .leading ? .leading : .trailing, logoEdgePadding)
                 .padding(.top, max(0, (model.notch.height - 20) / 2))
+        }
+    }
+}
+
+/// Cobalt angular-gradient sweep that orbits the silhouette while data is
+/// fetching. Owns its own TimelineView so the parent (IslandRootView) doesn't
+/// re-render every overlay at 120Hz — that was competing with the hover spring
+/// for main-thread budget. The minimumInterval pin is what guarantees
+/// ProMotion 120Hz refresh inside the .accessory background app context;
+/// without it the sweep settles to ~60Hz.
+private struct LoadingSweep: View {
+    let active: Bool
+
+    var body: some View {
+        if active {
+            TimelineView(.animation(minimumInterval: 1.0 / 120.0)) { context in
+                let t = context.date.timeIntervalSinceReferenceDate
+                let rotation = (t * 100).truncatingRemainder(dividingBy: 360)
+                IslandShape()
+                    .stroke(
+                        AngularGradient(
+                            gradient: Gradient(stops: [
+                                .init(color: .clear, location: 0.00),
+                                .init(color: IslandColor.cobalt.opacity(0.0), location: 0.55),
+                                .init(color: IslandColor.cobalt, location: 0.78),
+                                .init(color: .white.opacity(0.95), location: 0.92),
+                                .init(color: IslandColor.cobalt.opacity(0.0), location: 1.00),
+                            ]),
+                            center: .center,
+                            angle: .degrees(rotation)
+                        ),
+                        lineWidth: 4
+                    )
+                    .blur(radius: 3)
+            }
         }
     }
 }
