@@ -57,7 +57,7 @@ struct SettingsView: View {
 
             hairline
 
-            SettingsFooter(version: version)
+            SettingsFooter()
         }
         .frame(minWidth: 440, minHeight: 420)
         .background(Color(red: 0.020, green: 0.020, blue: 0.027))

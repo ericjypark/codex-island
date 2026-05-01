@@ -1,11 +1,10 @@
 import SwiftUI
 import AppKit
 
-/// Bottom footer for the Settings window. Version flush left, GitHub /
-/// License as dotted-underline links, Quit pill flush right.
+/// Bottom footer for the Settings window. GitHub / License as dotted-
+/// underline links, Quit pill flush right. Version lives in the brand
+/// header at the top of the window.
 struct SettingsFooter: View {
-    let version: String
-
     @State private var quitHovered = false
 
     private static let githubURL = URL(string: "https://github.com/ericjypark/codex-island")!
@@ -13,10 +12,6 @@ struct SettingsFooter: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
-            Text(version)
-                .font(Typography.bodyNumber)
-                .foregroundStyle(.white.opacity(0.34))
-
             link("GitHub", url: Self.githubURL)
             link("License", url: Self.licenseURL)
 
