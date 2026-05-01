@@ -1,9 +1,11 @@
 import SwiftUI
 
-/// The notch silhouette. The bottom corners curve outward generously to
-/// mirror the physical notch's inner curves; the top corners get a smaller
-/// rounding so the silhouette flows smoothly into the menu bar / screen
-/// edge instead of cutting off at a hard 90°.
+/// The notch silhouette. Bottom corners curve outward (convex) into the
+/// menu bar to mirror the physical notch's inner curves. Top corners
+/// flare outward via concave-from-outside curves: the path extends past
+/// the silhouette's vertical walls and meets the screen edge with a smooth
+/// transition — same shape that joins the real MacBook notch's vertical
+/// walls to the screen top.
 struct IslandShape: InsettableShape {
     var inset: CGFloat = 0
 
@@ -13,23 +15,25 @@ struct IslandShape: InsettableShape {
         let bottomRadius: CGFloat = 14
         var p = Path()
 
-        // Top edge — start just past the top-left corner curve.
-        p.move(to: CGPoint(x: r.minX + topRadius, y: r.minY))
-        p.addLine(to: CGPoint(x: r.maxX - topRadius, y: r.minY))
+        // Top edge — extends past the rect's left/right by `topRadius` so
+        // the corners can flare outward into the menu bar.
+        p.move(to: CGPoint(x: r.minX - topRadius, y: r.minY))
+        p.addLine(to: CGPoint(x: r.maxX + topRadius, y: r.minY))
 
-        // Top-right rounded corner.
-        p.addArc(
-            center: CGPoint(x: r.maxX - topRadius, y: r.minY + topRadius),
-            radius: topRadius,
-            startAngle: .degrees(-90),
-            endAngle: .degrees(0),
-            clockwise: false
+        // Top-right outward flare: smooth quad curve from the extended
+        // top-right point inward and down to the right vertical wall.
+        // Control point sits at the corner where the extended top edge
+        // would meet a square corner — pulls the curve into a clean
+        // concave-from-outside / convex-from-inside arc.
+        p.addQuadCurve(
+            to: CGPoint(x: r.maxX, y: r.minY + topRadius),
+            control: CGPoint(x: r.maxX, y: r.minY)
         )
 
-        // Right side down to the bottom-right curve.
+        // Right vertical wall down to the bottom-right curve.
         p.addLine(to: CGPoint(x: r.maxX, y: r.maxY - bottomRadius))
 
-        // Bottom-right rounded corner.
+        // Bottom-right convex (existing).
         p.addArc(
             center: CGPoint(x: r.maxX - bottomRadius, y: r.maxY - bottomRadius),
             radius: bottomRadius,
@@ -41,7 +45,7 @@ struct IslandShape: InsettableShape {
         // Bottom edge.
         p.addLine(to: CGPoint(x: r.minX + bottomRadius, y: r.maxY))
 
-        // Bottom-left rounded corner.
+        // Bottom-left convex (existing).
         p.addArc(
             center: CGPoint(x: r.minX + bottomRadius, y: r.maxY - bottomRadius),
             radius: bottomRadius,
@@ -50,16 +54,13 @@ struct IslandShape: InsettableShape {
             clockwise: false
         )
 
-        // Left side up to the top-left curve.
+        // Left vertical wall up to where the top-left flare begins.
         p.addLine(to: CGPoint(x: r.minX, y: r.minY + topRadius))
 
-        // Top-left rounded corner.
-        p.addArc(
-            center: CGPoint(x: r.minX + topRadius, y: r.minY + topRadius),
-            radius: topRadius,
-            startAngle: .degrees(180),
-            endAngle: .degrees(270),
-            clockwise: false
+        // Top-left outward flare: mirror of top-right.
+        p.addQuadCurve(
+            to: CGPoint(x: r.minX - topRadius, y: r.minY),
+            control: CGPoint(x: r.minX, y: r.minY)
         )
 
         p.closeSubpath()
