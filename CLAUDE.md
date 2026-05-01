@@ -15,6 +15,11 @@ git commit -am "chore(release): bump VERSION to X.Y.Z" \
 git push origin main vX.Y.Z                           # 3. Push (fires CI)
 ```
 
+The marketing landing site at `ericjypark/codex-island-landing` has its own
+`VERSION` file (the hero chip + footer read it at build time). Bump it in
+that repo too, in the same release sweep, or the public site keeps showing
+the prior version even after `brew install` ships the new one.
+
 That's it. CI does **everything else** in ~1.5 min:
 
 - Builds the universal DMG
@@ -71,6 +76,7 @@ History — read before re-stepping on these rakes:
 | `--no-quarantine` in install docs | `brew install` fails with "switch is disabled" | Homebrew removed the flag in late 2025 | Cask postflight strips the attr; flag removed from docs |
 | `…` after `$VAR` in shell scripts | CI fails with `unbound variable` | Non-UTF-8 locale on runners makes bash include trailing bytes in identifier | Use `${VAR}…` braces, or stick to ASCII in echo strings |
 | Old yonsei email in commits | Vercel rejected landing deploys | Local git config used unverified email | Set `git config user.email` to a GitHub-verified address before committing |
+| Landing tried to read `../VERSION` | Vercel build ENOENT'd at `/vercel/VERSION` | Landing is its own repo; Vercel only checks out `codex-island-landing`, so `..` escapes the build root | Landing has its own `VERSION` file, read with `path.join(process.cwd(), "VERSION")` — sync it on every release |
 
 ## Architecture pointers
 
