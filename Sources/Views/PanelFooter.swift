@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Hairline divider + chip + cmd-click hint + page indicator + live-status
 /// group. Lives outside `PagedContent` so it stays fixed while the data
@@ -17,6 +18,7 @@ struct PanelFooter: View {
     @ObservedObject private var screenPref = ScreenPref.shared
     @ObservedObject private var usageStore = UsageStore.shared
     @ObservedObject private var costStore = CostStore.shared
+    @State private var liveStatusHovered = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -109,27 +111,61 @@ struct PanelFooter: View {
 
     @ViewBuilder
     private var liveStatus: some View {
-        HStack(spacing: 6) {
-            LiveDot(active: activeLastUpdated != nil && !activeLoading)
-            if activeLoading {
-                Text("syncing…")
-                    .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.55))
-            } else if let updated = activeLastUpdated {
-                Text("synced")
-                    .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.55))
-                Text(relative(updated))
-                    .font(Typography.bodyNumber)
-                    .foregroundStyle(.white.opacity(0.72))
+        // Click anywhere on the group → trigger a refetch of whichever
+        // store powers the active page. Existing `if loading` guards inside
+        // each store's refresh() prevent click-spam from stacking fetches.
+        Button(action: triggerRefresh) {
+            HStack(spacing: 6) {
+                LiveDot(active: activeLastUpdated != nil && !activeLoading)
+                if activeLoading {
+                    Text("syncing…")
+                        .font(Typography.label)
+                        .foregroundStyle(.white.opacity(0.55))
+                } else if let updated = activeLastUpdated {
+                    Text("synced")
+                        .font(Typography.label)
+                        .foregroundStyle(.white.opacity(liveStatusHovered ? 0.85 : 0.55))
+                    Text(relative(updated))
+                        .font(Typography.bodyNumber)
+                        .foregroundStyle(.white.opacity(liveStatusHovered ? 0.95 : 0.72))
+                } else {
+                    Text("idle")
+                        .font(Typography.label)
+                        .foregroundStyle(.white.opacity(liveStatusHovered ? 0.7 : 0.4))
+                }
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(.white.opacity(liveStatusHovered && !activeLoading ? 0.05 : 0))
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 5))
+        }
+        .buttonStyle(.plain)
+        .disabled(activeLoading)
+        .onHover { h in
+            liveStatusHovered = h
+            if h && !activeLoading {
+                NSCursor.pointingHand.push()
             } else {
-                Text("idle")
-                    .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.4))
+                NSCursor.pop()
             }
         }
+        .help("Refresh now")
+        .animation(.easeOut(duration: 0.12), value: liveStatusHovered)
+        .animation(.easeOut(duration: 0.12), value: activeLoading)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(liveStatusSpoken)
+        .accessibilityHint("Click to refresh now")
+        .accessibilityAddTraits(.isButton)
+    }
+
+    private func triggerRefresh() {
+        switch screenPref.screen {
+        case .usage: usageStore.refresh()
+        case .cost:  costStore.refresh()
+        }
     }
 
     private var liveStatusSpoken: String {
