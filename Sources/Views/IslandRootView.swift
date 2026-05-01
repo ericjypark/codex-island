@@ -8,6 +8,7 @@ struct IslandRootView: View {
     @ObservedObject private var costStore = CostStore.shared
     @State private var hovering = false
     @State private var contentVisible = false
+    @State private var pillsVisible = false
 
     static let tabWidth: CGFloat = 38
 
@@ -120,6 +121,42 @@ struct IslandRootView: View {
                         .saturation(visibility.codexVisible ? 1 : 0)
                         .accessibilityLabel(visibility.codexVisible ? "OpenAI" : "OpenAI (hidden)")
                 }
+                .overlay(alignment: .topLeading) {
+                    // Pill lives in the new outboard slot (the 78pt the
+                    // silhouette grew on entering peek). 14pt inset from the
+                    // silhouette's new leading edge keeps it visually
+                    // breathing inside the rounded corner.
+                    if model.state != .compact && visibility.claudeVisible {
+                        NotchPeekPill(
+                            usage: usageStore.claude.fiveHour,
+                            loading: usageStore.loading,
+                            tint: IslandColor.claude,
+                            alignment: .leading
+                        )
+                        .padding(.leading, 14)
+                        .padding(.top, max(0, (model.notch.height - 14) / 2))
+                        .opacity(pillsVisible ? 1 : 0)
+                        .offset(x: pillsVisible ? 0 : -6)
+                        .allowsHitTesting(false)
+                        .accessibilityLabel(peekLabel(for: usageStore.claude.fiveHour, provider: "Claude"))
+                    }
+                }
+                .overlay(alignment: .topTrailing) {
+                    if model.state != .compact && visibility.codexVisible {
+                        NotchPeekPill(
+                            usage: usageStore.codex.fiveHour,
+                            loading: usageStore.loading,
+                            tint: IslandColor.codex,
+                            alignment: .trailing
+                        )
+                        .padding(.trailing, 14)
+                        .padding(.top, max(0, (model.notch.height - 14) / 2))
+                        .opacity(pillsVisible ? 1 : 0)
+                        .offset(x: pillsVisible ? 0 : 6)
+                        .allowsHitTesting(false)
+                        .accessibilityLabel(peekLabel(for: usageStore.codex.fiveHour, provider: "Codex"))
+                    }
+                }
                 .overlay(alignment: .bottomLeading) {
                     // Utility control, not dashboard status. Keep it in a
                     // quiet corner so the footer remains about live data.
@@ -133,43 +170,66 @@ struct IslandRootView: View {
                 .onTapGesture {
                     // Cmd-click cycles the visualization style of whichever
                     // page is active. Usage rotates Ring/Bar/Stepped/Numeric/
-                    // Spark; cost rotates USD/VALUE/TOKENS/TREND. The cell
-                    // crossfade is the confirmation — no panel-wide press
-                    // scale needed.
+                    // Spark; cost rotates USD/VALUE/TOKENS/TREND.
                     if NSEvent.modifierFlags.contains(.command) {
                         switch ScreenPref.shared.screen {
                         case .usage: StylePref.shared.cycle()
                         case .cost:  CostStylePref.shared.cycle()
+                        }
+                        return
+                    }
+                    // Plain click: enter the full panel. Works from .peek
+                    // (the common case after hover) or .compact (cold click).
+                    // Pills travel outward with the growing shape under the
+                    // single openMorph spring, then quietly retire after the
+                    // expanded content has settled.
+                    guard model.state == .peek || model.state == .compact else { return }
+                    withAnimation(.openMorph) {
+                        model.setState(.expanded)
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+                        guard model.state == .expanded else { return }
+                        withAnimation(.strongEaseOut) {
+                            contentVisible = true
+                        }
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        withAnimation(.easeIn(duration: 0.18)) {
+                            pillsVisible = false
                         }
                     }
                 }
                 .onHover { h in
                     hovering = h
                     if h {
-                        // Trackpad tap on hover-in. .levelChange is one step
-                        // up from .alignment — closer to a volume-key tick,
-                        // still well short of the .generic notification
-                        // pattern. No-op if the user has haptics off in
-                        // System Settings.
+                        // Trackpad tap on hover-in. .levelChange is closer to
+                        // a volume-key tick than the .generic notification
+                        // pattern. No-op if haptics are off.
                         NSHapticFeedbackManager.defaultPerformer.perform(
                             .levelChange, performanceTime: .now
                         )
-                        // ENTER: shape morphs first (logos slide outward with
-                        // it). Once the shape is mostly grown (~220ms), fade
-                        // in the expanded content with a small slide-down.
-                        withAnimation(.openMorph) {
-                            model.setState(.expanded)
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
-                            guard model.state == .expanded else { return }
-                            withAnimation(.strongEaseOut) {
-                                contentVisible = true
+                        // PEEK ENTER: shape morphs out to peek width. Pills
+                        // fade in 60ms later so the eye sees the shape commit
+                        // first, then content arrives. Hover does NOT open
+                        // the full panel — that requires a click.
+                        if model.state == .compact {
+                            withAnimation(.openMorph) {
+                                model.setState(.peek)
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
+                                guard model.state == .peek else { return }
+                                withAnimation(.easeOut(duration: 0.18)) {
+                                    pillsVisible = true
+                                }
                             }
                         }
                     } else {
-                        // EXIT: content fades out first (100ms easeOut), then
-                        // the shape shrinks. This way the shape never visibly
-                        // reflows around content mid-collapse.
+                        // EXIT: pills fade first, then shape collapses.
+                        // Branches by state so peek-out shrinks to compact
+                        // and expanded-out collapses the panel content too.
+                        withAnimation(.easeOut(duration: 0.08)) {
+                            pillsVisible = false
+                        }
                         withAnimation(.easeOut(duration: 0.10)) {
                             contentVisible = false
                         }
@@ -187,9 +247,43 @@ struct IslandRootView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("CodexIsland panel")
-        .accessibilityHint(model.state == .compact
-            ? "Hover to expand. Command-click to cycle visualization."
-            : "Command-click to cycle visualization.")
+        .accessibilityHint(accessibilityHintForState)
+    }
+
+    private var accessibilityHintForState: String {
+        switch model.state {
+        case .compact:  return "Hover to peek usage. Click to expand. Command-click to cycle visualization."
+        case .peek:     return "Click to expand. Command-click to cycle visualization."
+        case .expanded: return "Command-click to cycle visualization."
+        }
+    }
+
+    private func peekLabel(for window: WindowUsage, provider: String) -> String {
+        if window.error != nil && window.usedPercent == 0 {
+            return "\(provider): no data for 5-hour window"
+        }
+        let pct = Int((window.usedPercent * 100).rounded())
+        guard let resetAt = window.resetAt else {
+            return "\(provider): \(pct) percent of 5-hour window used"
+        }
+        let remaining = max(0, resetAt.timeIntervalSinceNow)
+        let resetPhrase: String = remaining >= 3600
+            ? "resets in \(Int((remaining / 3600).rounded(.down))) hours"
+            : "resets in \(max(1, Int((remaining / 60).rounded(.down)))) minutes"
+        return "\(provider): \(pct) percent of 5-hour window used, \(resetPhrase)"
+    }
+
+    /// Logo's distance from the silhouette's leading/trailing edge. In
+    /// `.peek` we offset the logo inward by `pillSlotWidth` so it stays
+    /// physically pinned to its compact position while the silhouette grows
+    /// outward — leaving the new outboard space for the percentage pill.
+    /// Compact and expanded keep the logo at the silhouette edge (existing
+    /// behavior; expanded panel layout depends on it).
+    private var logoEdgePadding: CGFloat {
+        switch model.state {
+        case .compact, .expanded: return 9
+        case .peek:               return model.pillSlotWidth + 9
+        }
     }
 
     @ViewBuilder
@@ -201,7 +295,7 @@ struct IslandRootView: View {
                 .aspectRatio(contentMode: .fit)
                 .foregroundStyle(color)
                 .frame(width: 20, height: 20)
-                .padding(alignment == .leading ? .leading : .trailing, 9)
+                .padding(alignment == .leading ? .leading : .trailing, logoEdgePadding)
                 .padding(.top, max(0, (model.notch.height - 20) / 2))
         }
     }
