@@ -42,6 +42,13 @@ final class IslandHostingView: NSHostingView<IslandRootView> {
         return rect.contains(point) ? super.hitTest(point) : nil
     }
 
+    /// Default macOS behavior on a non-key window: the first click is
+    /// swallowed to activate/focus the window, the second click triggers the
+    /// actual gesture. With our overlay model, the user is hovering over the
+    /// notch from a different focused app (Terminal, Xcode) and expects the
+    /// first click to expand the panel — not just bring the window to focus.
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
     /// Two-finger trackpad swipe → page change. Only fires when the panel is
     /// expanded and the gesture is horizontal-dominant. Uses
     /// `hasPreciseScrollingDeltas` to filter out mouse-wheel ticks (which
