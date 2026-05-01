@@ -114,7 +114,10 @@ struct CostTile: View {
         let plan = planAmount
         let spend = window.dollars
         let maxAmount = max(plan, spend, 0.0001)
-        let maxBarHeight: CGFloat = 40
+        // Sized so barColumn's natural height (14 dollar text + 3 + bar + 3
+        // + 13 label text) fits inside the cell's hero slot without the bars
+        // overflowing upward into the "Today" header.
+        let maxBarHeight: CGFloat = 36
 
         return HStack(alignment: .bottom, spacing: 14) {
             Spacer(minLength: 0)
@@ -136,7 +139,12 @@ struct CostTile: View {
             )
             Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Intrinsic height + width-only fill: lets the parent VStack's
+        // Spacer push the bars to the bottom of the cell, matching how
+        // dollar/tokens heroes sit. Without this the bar HStack greedily
+        // claims maxHeight: .infinity and top-anchors against the header,
+        // which read as the header shifting on every style swap.
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func barColumn(
