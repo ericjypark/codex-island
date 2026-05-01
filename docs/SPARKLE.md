@@ -46,13 +46,16 @@ fresh public key embedded, which existing installs can't migrate to.
 1. Bump `VERSION`.
 2. Commit + tag + push:
    ```sh
-   git commit -am "release vX.Y.Z" && git tag vX.Y.Z && git push --tags
+   git commit -am "chore(release): bump VERSION to X.Y.Z" && git tag vX.Y.Z
+   git push origin main vX.Y.Z
    ```
 3. The release workflow runs `release.sh` on a macOS runner, which:
    - Builds a universal DMG
    - Signs it with the EdDSA key from the secret
    - Generates `dist/appcast.xml` listing the new version
    - Uploads **both** as release assets
+   - Mirrors `Casks/codexisland.rb` to `ericjypark/homebrew-tap` with the tag
+     version and freshly computed SHA-256, if `HOMEBREW_TAP_TOKEN` is configured
 
 Existing installs pick up the update on their next daily check (or via
 Settings → Updates → Check Now).

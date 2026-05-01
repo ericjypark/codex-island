@@ -9,9 +9,9 @@
 
 CodexIsland is a native macOS overlay that turns the MacBook notch into a
 Dynamic-Island-style live activity for Claude Code and Codex usage limits. It
-sits quietly over the notch, expands on hover, and shows both providers'
-5-hour and weekly windows with reset timing, chart controls, and a small
-settings surface.
+sits quietly over the notch, peeks on hover with the 5-hour headline, and
+expands on click to show both providers' 5-hour and weekly windows with reset
+timing, chart controls, and a small settings surface.
 
 <img width="800" height="450" alt="ezgif-2bf490cee1dd4dc7" src="https://github.com/user-attachments/assets/f00ec519-c1e9-48f9-8d42-adda4d0a2f24" />
 
@@ -26,8 +26,10 @@ providers' own usage endpoints.
 - **Notch-native overlay.** The compact state is a black pill aligned to the
   physical notch. On non-notched Macs it falls back to a 200 x 28 menu-bar
   pill.
-- **Hover to expand.** The panel grows from the notch, shows both provider
-  columns, and then fades in the charts after the shape settles.
+- **Hover to peek.** The silhouette widens just enough to show each visible
+  provider's 5-hour percentage and reset headline.
+- **Click to expand.** Click the island to open the full Usage / Cost panel,
+  provider columns, and chart controls.
 - **Click-through outside the island.** The window ignores mouse events outside
   the visible silhouette so the menu bar and apps underneath still work.
 - **Five chart styles.** Ring, Bar, Stepped, Numeric, and Sparkline. Pick the
@@ -67,7 +69,7 @@ Download `CodexIsland-X.Y.Z.dmg` from
 to `/Applications`, then run:
 
 ```sh
-xattr -d com.apple.quarantine /Applications/CodexIsland.app
+xattr -dr com.apple.quarantine /Applications/CodexIsland.app
 ```
 
 <details>
@@ -115,11 +117,12 @@ For Claude:
 - If none work, the panel shows `auth required — run claude`.
 
 The first fetch starts at app launch so the panel usually has values ready by
-the first hover. Opening Settings also triggers a fresh fetch.
+the first peek. Opening Settings also triggers a fresh fetch.
 
 ## Using the app
 
-- Hover the notch to expand the panel.
+- Hover the notch to peek at the current 5-hour usage.
+- Click the island to expand the full panel.
 - Move away to collapse it.
 - Cmd-click the expanded panel to cycle chart styles.
 - Click the gear in the lower-left corner of the expanded panel to open
@@ -189,10 +192,12 @@ codesigning, creates `dist/CodexIsland-X.Y.Z.dmg`, and prints the file size and
 SHA-256.
 
 Pushing a `v*` tag triggers `.github/workflows/release.yml` on `macos-15`,
-builds the DMG, computes the checksum, and publishes a GitHub Release.
+builds the DMG, computes the checksum, publishes a GitHub Release, and mirrors
+the cask to `ericjypark/homebrew-tap` when `HOMEBREW_TAP_TOKEN` is configured.
 
-`Casks/codexisland.rb` is the Homebrew Cask template. Replace
-`REPLACE_AT_RELEASE_TIME` with the release checksum before submitting it.
+`Casks/codexisland.rb` is the Homebrew Cask template. Do not manually bump its
+version or SHA for normal releases; CI copies it to the tap and rewrites those
+fields from the tag and freshly built DMG.
 
 ## Landing site
 
@@ -239,7 +244,7 @@ send web analytics events when deployed with analytics configured.
 │   ├── Views/
 │   └── Window/
 ├── Resources/              # App-bundled logo PNGs and .icns
-├── Assets/                 # README / release assets
+├── Assets/                 # README logo asset
 ├── landing/                # Next.js marketing site
 ├── docs/superpowers/specs/ # Design specs for recent UI work
 ├── Casks/                  # Homebrew Cask template
@@ -287,8 +292,9 @@ and 30m only.
 Yes. It falls back to a 200 x 28 pill in the menu-bar area.
 
 **Does it support multiple monitors?**
-Not fully. The island pins to `NSScreen.main`, so multi-monitor setups get one
-indicator on the main screen.
+Partially. The app prefers the first display whose safe-area inset indicates a
+notch, then falls back to `NSScreen.main`. Multi-monitor setups still get one
+island, not one island per display.
 
 **Will the usage endpoints break?**
 Probably at some point. Both provider endpoints are undocumented. If the panel
@@ -304,9 +310,9 @@ Settings, and use Settings -> Quit to exit.
 - Unsigned builds require dequarantine / Open Anyway.
 - Claude and Codex usage endpoints are undocumented.
 - Sparkline history is synthesized, not provider-sourced history.
-- Multi-monitor placement is basic.
-- Accessibility work is still needed: VoiceOver labels and a high-contrast
-  variant are not implemented yet.
+- Multi-monitor placement uses a single island.
+- Accessibility is partial: VoiceOver labels exist, but a high-contrast variant
+  is not implemented yet.
 
 ## Acknowledgements
 

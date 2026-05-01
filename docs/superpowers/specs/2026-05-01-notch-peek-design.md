@@ -1,12 +1,12 @@
 # Notch peek: hover for headline, click to enter
 
 **Date:** 2026-05-01
-**Status:** Approved, ready for plan
+**Status:** Implemented, kept as design record
 
 ## Problem
 
-Today, hovering anywhere on the compact island silhouette springs open the full
-expanded panel. This is fast, but two issues:
+Before this change, hovering anywhere on the compact island silhouette sprang
+open the full expanded panel. That was fast, but two issues:
 
 - It opens too eagerly. Bumping the cursor past the notch on the way to a menu
   bar item is enough to trigger a full panel expansion.
@@ -69,7 +69,7 @@ only peeks. Click is required to enter.
 | Provider visible, loading first time, no prior good value | tiny spinner dot in pill slot |
 | Provider visible, errored, no prior value | `"—%"` |
 | Provider visible, prior good value present, refresh in flight | keep showing last good value (don't blank) |
-| Provider toggled off in `ProviderVisibilityStore` | no pill on that side; silhouette only grows on the opposite side |
+| Provider toggled off in `ProviderVisibilityStore` | no pill on that side; silhouette keeps its fixed balanced peek width |
 
 The "keep prior value during refresh" rule mirrors the existing
 `UsageStore.isErrorOnly()` guard — a transient 429 should never blank the
@@ -79,32 +79,30 @@ glance number.
 
 ### `Sources/Model/IslandModel.swift`
 
-Add `case peek` to `State`. Add a `peekWidth` calculation in `recomputeSize()`:
+`State` includes `case peek`. The peek width is fixed and symmetrical:
 
 ```swift
 let pillSlotWidth: CGFloat = 78   // fits "100% · Nh" worst case + ~10pt gap to logo
-let leftSlot  = ProviderVisibilityStore.shared.claudeVisible ? pillSlotWidth : 0
-let rightSlot = ProviderVisibilityStore.shared.codexVisible  ? pillSlotWidth : 0
 size = CGSize(
-    width: notch.width + tabWidth*2 + leftSlot + rightSlot,
+    width: notch.width + tabWidth * 2 + pillSlotWidth * 2,
     height: notch.height
 )
 ```
 
-Implementation should validate the 78pt against rendered text width with the
-chosen `Typography` style and adjust if needed (within ±15pt). The slot width
-is fixed so percentage updates (32%→33%) don't jitter the silhouette width.
+The 78pt slot should be rechecked if the pill typography changes. The slot
+width is fixed so percentage updates (32%→33%) don't jitter the silhouette
+width.
 
 The fixed slot width avoids per-frame width jitter as percentages change
 (e.g. 32% → 33% during refresh). Pill text right-aligns on the leading side and
 left-aligns on the trailing side, hugging the logos.
 
-Hidden providers contribute zero to the slot width on their side (asymmetric
-peek shape — only one side grows).
+Hidden providers do not render a pill, but the slot still contributes to the
+peek width. That keeps the silhouette balanced over the physical notch.
 
 ### `Sources/Views/IslandRootView.swift`
 
-Replace the current `onHover` body with a state machine:
+The root view uses a state machine:
 
 ```swift
 .onHover { h in
@@ -140,7 +138,7 @@ in (delayed 60ms with `.easeOut(0.18)` so the eye sees the shape commit
 first). On entering `.expanded` from `.peek`, pills stay mounted until the
 +250ms cross-fade.
 
-### New view: `Sources/Views/NotchPeekPill.swift`
+### `Sources/Views/NotchPeekPill.swift`
 
 ```swift
 struct NotchPeekPill: View {
@@ -158,7 +156,7 @@ its inputs.
 
 ### Wiring in `IslandRootView`
 
-Add two new overlays alongside the existing logo overlays:
+The root view mounts two overlays alongside the existing logo overlays:
 
 ```swift
 .overlay(alignment: .topLeading) {
@@ -210,15 +208,15 @@ intermediate snap.
   (we picked just `5h% · reset` for the glance read).
 - Changes to the existing expanded panel layout, Cost view, or settings.
 - Telemetry / analytics on hover-vs-click.
-- Animating between asymmetric peek widths when a provider is toggled
-  on/off mid-hover (rare; settle on next hover-in is fine).
+- Animating provider visibility changes mid-hover (rare; settle on next
+  hover-in is fine).
 
-## Files touched
+## Implementation files
 
-- `Sources/Model/IslandModel.swift` — add `peek` state, `peekWidth` math.
-- `Sources/Views/IslandRootView.swift` — replace `onHover` body, add tap →
-  expand logic, mount `NotchPeekPill` overlays, add `pillsVisible` state.
-- `Sources/Views/NotchPeekPill.swift` — new file, ~50 lines.
+- `Sources/Model/IslandModel.swift` — `peek` state and fixed peek-width math.
+- `Sources/Views/IslandRootView.swift` — hover → peek, tap → expanded,
+  `NotchPeekPill` overlays, and `pillsVisible` state.
+- `Sources/Views/NotchPeekPill.swift` — glance pill rendering.
 
 No changes to:
 - `UsageStore`, `UsageFetcher`, `AppUsage` — existing data flows untouched.
