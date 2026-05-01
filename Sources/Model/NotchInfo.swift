@@ -5,17 +5,17 @@ struct NotchInfo {
     let height: CGFloat
     let hasNotch: Bool
 
-    /// On notched MacBooks (M1 Pro / Max / Air 2022+) safeAreaInsets.top
-    /// reports the *physical notch* height, while
-    /// `screen.frame.maxY - screen.visibleFrame.maxY` reports the *visual
-    /// menu bar* height. They normally match, but in "Scaled to avoid the
-    /// notch" display mode (or with apps/scripts that shrink the menu bar)
-    /// the menu bar is shorter than the notch and the silhouette would
-    /// extend past the menu bar's bottom edge into app content.
+    /// `screen.frame.maxY - screen.visibleFrame.maxY` reports the actual
+    /// pixel distance between the top of the screen and the top of the app
+    /// content area — i.e., where the menu bar visually ends. Use that as
+    /// the silhouette height so the dark pill's bottom edge always sits
+    /// flush with the menu bar's bottom, in both default notched mode
+    /// (≈37pt) and "Scaled to avoid the notch" mode (≈24pt, menu bar sits
+    /// below the dead notch area).
     ///
-    /// We size the silhouette to whichever is *smaller* so the bottom edge
-    /// of the dark pill always lines up flush with the menu bar's bottom,
-    /// regardless of display mode.
+    /// `safeAreaInsets.top` reports the *physical notch* and can disagree
+    /// with the visible menu bar in scaled modes — use it only as a
+    /// fallback when visibleFrame is unmeasurable (auto-hide menu bar).
     ///
     /// auxiliaryTopLeftArea / auxiliaryTopRightArea give the menu-bar regions
     /// on either side of the notch; the notch's own width is
@@ -25,8 +25,7 @@ struct NotchInfo {
             return NotchInfo(width: 200, height: menuBarFallback(), hasNotch: false)
         }
         let safeTop = screen.safeAreaInsets.top
-        let menuBarHeight = max(0, screen.frame.maxY - screen.visibleFrame.maxY)
-        let visualHeight = chooseHeight(safeTop: safeTop, menuBarHeight: menuBarHeight)
+        let visualHeight = visibleMenuBarHeight(of: screen)
 
         if safeTop > 0 {
             let leftW = screen.auxiliaryTopLeftArea?.width ?? 0
@@ -39,14 +38,15 @@ struct NotchInfo {
         return NotchInfo(width: 200, height: visualHeight, hasNotch: false)
     }
 
-    /// Pick the smallest non-zero candidate so we never overhang.
-    private static func chooseHeight(safeTop: CGFloat, menuBarHeight: CGFloat) -> CGFloat {
-        let candidates = [safeTop, menuBarHeight, NSStatusBar.system.thickness].filter { $0 > 0 }
-        return candidates.min() ?? menuBarFallback()
+    private static func visibleMenuBarHeight(of screen: NSScreen) -> CGFloat {
+        let fromVisibleFrame = screen.frame.maxY - screen.visibleFrame.maxY
+        if fromVisibleFrame > 0 { return fromVisibleFrame }
+        // Auto-hide menu bar — visibleFrame == frame, so derive from the
+        // physical notch (if present) or the system status bar thickness.
+        if screen.safeAreaInsets.top > 0 { return screen.safeAreaInsets.top }
+        return menuBarFallback()
     }
 
-    /// Last-resort default when no screen / menu bar is available
-    /// (auto-hide menu bar mode + no NSScreen, basically).
     private static func menuBarFallback() -> CGFloat {
         let t = NSStatusBar.system.thickness
         return t > 0 ? t : 24
