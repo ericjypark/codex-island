@@ -200,39 +200,6 @@ the cask to `ericjypark/homebrew-tap` when `HOMEBREW_TAP_TOKEN` is configured.
 version or SHA for normal releases; CI copies it to the tap and rewrites those
 fields from the tag and freshly built DMG.
 
-## Landing site
-
-The `landing/` directory contains a separate Next.js marketing site for
-`codexisland.app`.
-
-Stack:
-
-- Next.js 16
-- React 19
-- Tailwind CSS 4
-- Vercel Analytics
-- optional PostHog tracking via `NEXT_PUBLIC_POSTHOG_KEY`
-
-Run it locally:
-
-```sh
-cd landing
-npm install
-npm run dev
-```
-
-Useful files:
-
-- `landing/app/page.tsx` - page sections and inline product visuals.
-- `landing/app/globals.css` - landing design system and responsive layout.
-- `landing/components/` - nav, CTA buttons, install command block, FAQ,
-  reveal-on-scroll, and video showcase.
-- `landing/public/` - logo, screenshots, and showcase video.
-- `landing/.env.local.example` - optional PostHog configuration.
-
-The privacy claims in this README apply to the native app. The landing site may
-send web analytics events when deployed with analytics configured.
-
 ## Repository layout
 
 ```text
