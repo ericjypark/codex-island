@@ -6,6 +6,7 @@ struct IslandRootView: View {
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @ObservedObject private var usageStore = UsageStore.shared
     @ObservedObject private var costStore = CostStore.shared
+    @ObservedObject private var lowPower = LowPowerModeStore.shared
     @State private var hovering = false
     @State private var contentVisible = false
     @State private var pillsVisible = false
@@ -28,7 +29,12 @@ struct IslandRootView: View {
             // with the spring for main-thread budget and showing up as
             // hover-spring jank.
             ZStack {
-                LoadingSweep(active: usageStore.loading || costStore.loading)
+                // Default: ambient orbit runs continuously. Low-power mode
+                // restricts it to active fetches only — same behavior as
+                // before this preference existed.
+                LoadingSweep(active: lowPower.enabled
+                    ? (usageStore.loading || costStore.loading)
+                    : true)
 
                 IslandShape()
                     .fill(.black)

@@ -12,6 +12,7 @@ struct SettingsView: View {
     @ObservedObject private var costStylePref = CostStylePref.shared
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @ObservedObject private var refreshStore = RefreshIntervalStore.shared
+    @ObservedObject private var lowPower = LowPowerModeStore.shared
     @ObservedObject private var usage = UsageStore.shared
     @ObservedObject private var cost = CostStore.shared
     @ObservedObject private var updater = UpdaterController.shared
@@ -184,6 +185,14 @@ struct SettingsView: View {
                 subtitle: "How often to refresh."
             ) {
                 refreshSegmented
+            }
+            SettingsRow(
+                title: "Low Power Mode",
+                subtitle: "Only show the cobalt glow during active refreshes."
+            ) {
+                SettingsToggle(isOn: lowPower.enabled) {
+                    lowPower.enabled.toggle()
+                }
             }
         }
         .padding(.horizontal, 14)
