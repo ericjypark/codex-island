@@ -42,7 +42,7 @@ final class IslandModel: ObservableObject {
 
     init(notch: NotchInfo) {
         self.rawNotch = notch
-        self.notch = Self.applyOverride(to: notch)
+        self.notch = Self.applyOverride(to: notch, width: IslandSpacingStore.shared.width)
         recomputeSize()
         subscribeToSpacingStore()
     }
@@ -58,7 +58,7 @@ final class IslandModel: ObservableObject {
             || raw.height != rawNotch.height
             || raw.hasNotch != rawNotch.hasNotch else { return }
         rawNotch = raw
-        notch = Self.applyOverride(to: raw)
+        notch = Self.applyOverride(to: raw, width: IslandSpacingStore.shared.width)
         recomputeSize()
     }
 
@@ -66,25 +66,30 @@ final class IslandModel: ObservableObject {
     /// fallback. On notched screens the raw notch is returned untouched —
     /// the override is meaningless there (you can't shrink a physical
     /// notch).
-    private static func applyOverride(to raw: NotchInfo) -> NotchInfo {
+    private static func applyOverride(to raw: NotchInfo, width: CGFloat) -> NotchInfo {
         if raw.hasNotch { return raw }
-        return NotchInfo(
-            width: IslandSpacingStore.shared.width,
-            height: raw.height,
-            hasNotch: false
-        )
+        return NotchInfo(width: width, height: raw.height, hasNotch: false)
     }
 
     /// Re-applies the override and re-computes size whenever the user
     /// changes spacing mode. Wrapped in `withAnimation(.openMorph)` so
     /// the silhouette springs to its new width with the same feel as a
     /// state morph (compact ↔ peek ↔ expanded).
+    /// Re-applies the override and re-computes size whenever the user
+    /// changes spacing mode. The `mode` value here is the *new* value from
+    /// the closure parameter — `IslandSpacingStore.shared.mode` would be
+    /// the *old* value at this point because `@Published` emits during
+    /// willSet, before the property assignment lands. Reading `mode.width`
+    /// off the closure parameter sidesteps the race.
+    ///
+    /// Wrapped in `withAnimation(.openMorph)` so the silhouette springs to
+    /// its new width with the same feel as a state morph.
     private func subscribeToSpacingStore() {
         IslandSpacingStore.shared.$mode
             .dropFirst()
-            .sink { [weak self] _ in
+            .sink { [weak self] mode in
                 guard let self else { return }
-                let new = Self.applyOverride(to: self.rawNotch)
+                let new = Self.applyOverride(to: self.rawNotch, width: mode.width)
                 guard new.width != self.notch.width else { return }
                 withAnimation(.openMorph) {
                     self.notch = new

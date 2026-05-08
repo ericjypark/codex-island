@@ -15,6 +15,21 @@ final class IslandSpacingStore: ObservableObject {
     enum Mode: String {
         case compact
         case notchStyle
+
+        /// Per-mode width, exposed on `Mode` (not on the store) so consumers
+        /// can compute width from a known mode value without round-tripping
+        /// through `IslandSpacingStore.shared.mode`. Critical for the
+        /// `@Published` sink path: subscribers receive the new mode value
+        /// *during* willSet, before the store's own property has been
+        /// assigned — reading `shared.mode` there returns the *old* value
+        /// and produces inverted widths. Using `mode.width` on the closure
+        /// parameter avoids the race entirely.
+        var width: CGFloat {
+            switch self {
+            case .compact:    return IslandSpacingStore.compactWidth
+            case .notchStyle: return IslandSpacingStore.notchStyleWidth
+            }
+        }
     }
 
     /// Compact preset width — the new default for non-notch hardware.
@@ -33,12 +48,7 @@ final class IslandSpacingStore: ObservableObject {
         didSet { UserDefaults.standard.set(mode.rawValue, forKey: Self.key) }
     }
 
-    var width: CGFloat {
-        switch mode {
-        case .compact:    return Self.compactWidth
-        case .notchStyle: return Self.notchStyleWidth
-        }
-    }
+    var width: CGFloat { mode.width }
 
     private init() {
         let raw = UserDefaults.standard.string(forKey: Self.key)
