@@ -389,14 +389,15 @@ struct IslandRootView: View {
 /// re-render every overlay alongside the sweep — that was competing with the
 /// hover spring for main-thread budget.
 ///
-/// Tick rate is 30Hz: a 3.6s revolution at 30Hz = 12° per frame, which is
-/// indistinguishable from 60/120Hz to the eye for a continuous orbit at this
-/// speed but cuts main-thread CPU 4× vs the original 120Hz pin. Earlier
-/// attempts to push the rotation into Core Animation via a CAGradientLayer
-/// gave up the soft "glow" feel of SwiftUI's AngularGradient — the renderers
-/// blend transparent→tint→white differently, and the result reads as a hard
-/// rotating bar instead of an atmospheric aura. Lowering the SwiftUI tick
-/// rate keeps the original look exactly while still cutting CPU substantially.
+/// Tick rate is 15Hz: a 3.6s revolution at 15Hz = ~6.7° per frame, which
+/// reads smooth for a slow continuous orbit (≈ second-hand-of-a-clock step
+/// size, where the eye doesn't perceive ticks). Cuts main-thread CPU 8× vs
+/// the original 120Hz pin. Earlier attempts to push the rotation into Core
+/// Animation via a CAGradientLayer gave up the soft "glow" feel of SwiftUI's
+/// AngularGradient — the renderers blend transparent→tint→white differently,
+/// and the CALayer result reads as a hard rotating bar instead of an
+/// atmospheric aura. Lowering the SwiftUI tick rate keeps the original look
+/// exactly while still cutting CPU substantially.
 private struct LoadingSweep: View {
     let active: Bool
     /// Color of the orbiting trail. Cobalt by default; switches to amber
@@ -406,7 +407,7 @@ private struct LoadingSweep: View {
 
     var body: some View {
         if active {
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
+            TimelineView(.animation(minimumInterval: 1.0 / 15.0)) { context in
                 let t = context.date.timeIntervalSinceReferenceDate
                 let rotation = (t * 100).truncatingRemainder(dividingBy: 360)
                 IslandShape()
