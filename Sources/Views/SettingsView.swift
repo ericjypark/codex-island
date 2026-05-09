@@ -695,7 +695,12 @@ struct SettingsView: View {
             guard let updated = usage.lastUpdated else { return "idle" }
             return "synced \(Self.relativeFormatter.localizedString(for: updated, relativeTo: Date()))"
         }()
-        let nums = "\(u.fiveHour.percentInt)% / \(u.weekly.percentInt)%"
+        let nums = "\(Self.windowCaption(u.fiveHour)) / \(Self.windowCaption(u.weekly))"
         return "\(synced) · \(nums)"
+    }
+
+    private static func windowCaption(_ w: WindowUsage) -> String {
+        if let err = w.error, w.percentInt == 0 { return "⚠ \(err)" }
+        return "\(w.percentInt)%"
     }
 }
