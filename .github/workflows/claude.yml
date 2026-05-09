@@ -9,6 +9,39 @@ on:
     types: [submitted]
   issues:
     types: [opened, assigned]
+  pull_request:
+    types: [opened, ready_for_review]
+
+env:
+  REVIEW_PROMPT: |
+    You are reviewing a PR in Codex Island, a public Swift macOS menu-bar app
+    that ships to users via Sparkle auto-update. Read CLAUDE.md first — it
+    documents hard rules that have already broken auto-update once.
+
+    Review priorities (highest first):
+      1. Auto-update breakage. Flag any change to SU_PUBLIC_KEY, VERSION
+         format/parsing, CFBundleVersion, appcast generation, the EdDSA
+         signing flow, the homebrew-tap sync, or release.yml. A wrong move
+         here bricks updates for every existing install silently.
+      2. Correctness bugs. Force-unwraps without justification, race
+         conditions, retain cycles, missing keychain refresh-token rotation
+         (Anthropic rotates on every call — must persist or downstream 401s),
+         polling intervals dropping below 5m (rate-limit risk), wrong
+         User-Agent on Claude OAuth endpoints.
+      3. Regressions in core flows. Notched-display window placement,
+         window-occlusion/Low-Power-Mode pause behavior, refresh cadence,
+         provider error surfacing in Settings.
+      4. Security. Token handling, network request scope, code-signing,
+         entitlement changes.
+
+    Skip: style preferences, naming bikeshed, comment density, refactors
+    that aren't broken. Match the project's terse, surgical voice.
+
+    Output format:
+      - Lead with a one-line verdict: SHIP / SHIP WITH NITS / NEEDS WORK / BLOCKED.
+      - Group findings by priority bucket above. Use `path/to/file.swift:NN`
+        references so they're clickable.
+      - If the PR is small and clean, say so in one sentence and stop.
 
 jobs:
   claude:
@@ -34,3 +67,28 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: ${{ env.REVIEW_PROMPT }}
+
+  claude-auto-review:
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude Code review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Review pull request #${{ github.event.pull_request.number }}
+            ("${{ github.event.pull_request.title }}") and post review comments.
+
+            ${{ env.REVIEW_PROMPT }}
