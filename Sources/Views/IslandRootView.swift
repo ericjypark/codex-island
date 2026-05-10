@@ -44,12 +44,6 @@ struct IslandRootView: View {
                 }
             }
             .frame(width: model.size.width, height: model.size.height)
-            // Asymmetric shift to keep the notch visually pinned to the
-            // physical notch when the silhouette shrinks on one side
-            // (single-provider mode in compact / peek). Always 0 when
-            // both providers are visible or in expanded state — see
-            // `IslandModel.recomputeSize`.
-            .offset(x: model.silhouetteOffsetX)
             .background {
                     // Frosted halo. ultraThinMaterial is a backdrop blur of
                     // whatever desktop content is behind the window. Lives

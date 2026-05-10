@@ -109,10 +109,8 @@ final class IslandWindowController {
         let local = NSPoint(x: cursor.x - win.minX, y: cursor.y - win.minY)
 
         let size = model.size
-        // Same offset the silhouette uses inside the host view — see
-        // `IslandHostingView.hitTest` for why this matters.
         let rect = NSRect(
-            x: win.width / 2 - size.width / 2 + model.silhouetteOffsetX,
+            x: win.width / 2 - size.width / 2,
             y: win.height - size.height,
             width: size.width,
             height: size.height

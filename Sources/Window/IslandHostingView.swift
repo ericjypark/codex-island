@@ -33,14 +33,8 @@ final class IslandHostingView: NSHostingView<IslandRootView> {
     override func hitTest(_ point: NSPoint) -> NSView? {
         let b = bounds
         let size = islandModel.size
-        // Track the silhouette's horizontal offset within the host. In
-        // single-provider mode (compact / peek) the silhouette shrinks
-        // asymmetrically and shifts so its notch portion stays under the
-        // physical notch — the hit-rect must move with it, otherwise we
-        // get a phantom click-capture strip on the empty side and a dead
-        // strip on the visible side.
         let rect = NSRect(
-            x: b.midX - size.width / 2 + islandModel.silhouetteOffsetX,
+            x: b.midX - size.width / 2,
             y: b.maxY - size.height,
             width: size.width,
             height: size.height
