@@ -69,61 +69,68 @@ struct IslandRootView: View {
                         .opacity(contentVisible ? 0.55 : 0)
                         .allowsHitTesting(false)
                 }
-                .overlay(alignment: .topLeading) {
-                    LogoOverlay(
-                        image: claudeLogo,
-                        color: IslandColor.claude,
-                        provider: .claude,
-                        edgePadding: logoEdgePadding,
-                        topPadding: max(0, (model.notch.height - 20) / 2)
-                    )
-                }
-                .overlay(alignment: .topTrailing) {
-                    HStack(spacing: 8) {
-                        LogoOverlay(
-                            image: geminiLogo,
-                            color: IslandColor.gemini,
-                            provider: .gemini,
-                            edgePadding: 0,
-                            topPadding: max(0, (model.notch.height - 20) / 2)
-                        )
-                        LogoOverlay(
-                            image: openaiLogo,
-                            color: IslandColor.codex,
-                            provider: .codex,
-                            edgePadding: 0,
-                            topPadding: max(0, (model.notch.height - 20) / 2)
-                        )
+                .overlay(alignment: .top) {
+                    // Provider icons row. Spans the notch width and distributes
+                    // visible providers evenly. Correct order: Claude, Codex, Gemini.
+                    HStack(spacing: 0) {
+                        let visible = visibleProviders()
+                        
+                        // Leading edge padding matches the silhouette corner.
+                        Color.clear.frame(width: logoEdgePadding)
+
+                        if !visible.isEmpty {
+                            ForEach(visible, id: \.provider) { p in
+                                LogoOverlay(
+                                    image: p.logo,
+                                    color: p.color,
+                                    provider: p.provider,
+                                    edgePadding: 0,
+                                    topPadding: max(0, (model.notch.height - 20) / 2)
+                                )
+                                if p.provider != visible.last?.provider {
+                                    Spacer(minLength: 0)
+                                }
+                            }
+                        }
+
+                        // Trailing edge padding.
+                        Color.clear.frame(width: logoEdgePadding)
                     }
-                    .padding(.trailing, logoEdgePadding)
+                    .frame(width: model.notch.width)
+                    .frame(height: model.notch.height)
                 }
                 .overlay(alignment: .topLeading) {
-                    // Pill lives in the new outboard slot (the 78pt the
-                    // silhouette grew on entering peek). 14pt inset from the
-                    // silhouette's new leading edge keeps it visually
-                    // breathing inside the rounded corner.
+                    // Percentage pills. In .peek state we have extra space
+                    // outside the notch area (78pt each side).
                     if model.state != .compact {
-                        PeekPillOverlay(
-                            provider: .claude,
-                            topPadding: max(0, (model.notch.height - 14) / 2),
-                            pillsVisible: pillsVisible
-                        )
-                    }
-                }
-                .overlay(alignment: .topTrailing) {
-                    if model.state != .compact {
-                        VStack(alignment: .trailing, spacing: 2) {
+                        HStack(spacing: 0) {
                             PeekPillOverlay(
-                                provider: .gemini,
+                                provider: .claude,
                                 topPadding: max(0, (model.notch.height - 14) / 2),
                                 pillsVisible: pillsVisible
                             )
-                            PeekPillOverlay(
-                                provider: .codex,
-                                topPadding: 0,
-                                pillsVisible: pillsVisible
-                            )
+                            .opacity(ProviderVisibilityStore.shared.claudeVisible ? 1 : 0)
+                            
+                            Spacer(minLength: 0)
+                            
+                            VStack(alignment: .trailing, spacing: 2) {
+                                PeekPillOverlay(
+                                    provider: .codex,
+                                    topPadding: max(0, (model.notch.height - 14) / 2),
+                                    pillsVisible: pillsVisible
+                                )
+                                .opacity(ProviderVisibilityStore.shared.codexVisible ? 1 : 0)
+                                PeekPillOverlay(
+                                    provider: .gemini,
+                                    topPadding: 0,
+                                    pillsVisible: pillsVisible
+                                )
+                                .opacity(ProviderVisibilityStore.shared.geminiVisible ? 1 : 0)
+                            }
                         }
+                        .padding(.horizontal, 14) // Breathe inside the expanded silhouette
+                        .frame(width: model.size.width)
+                        .frame(height: model.notch.height)
                     }
                 }
                 .overlay(alignment: .bottomLeading) {
@@ -283,6 +290,26 @@ struct IslandRootView: View {
         case .peek:     return "Click to expand. Command-click to cycle visualization."
         case .expanded: return "Command-click to cycle visualization."
         }
+    }
+
+    private struct VisibleLogoProvider {
+        let provider: AlertEngine.Provider
+        let logo: NSImage?
+        let color: Color
+    }
+
+    private func visibleProviders() -> [VisibleLogoProvider] {
+        var out: [VisibleLogoProvider] = []
+        if ProviderVisibilityStore.shared.claudeVisible {
+            out.append(VisibleLogoProvider(provider: .claude, logo: claudeLogo, color: IslandColor.claude))
+        }
+        if ProviderVisibilityStore.shared.codexVisible {
+            out.append(VisibleLogoProvider(provider: .codex, logo: openaiLogo, color: IslandColor.codex))
+        }
+        if ProviderVisibilityStore.shared.geminiVisible {
+            out.append(VisibleLogoProvider(provider: .gemini, logo: geminiLogo, color: IslandColor.gemini))
+        }
+        return out
     }
 
     /// Logo's distance from the silhouette's leading/trailing edge. In

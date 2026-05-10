@@ -32,16 +32,16 @@ struct PanelHeader: View {
 
             HStack(spacing: 12) {
                 Spacer(minLength: 0)
-                providerTitle(name: "Gemini", tag: usageStore.gemini.plan?.uppercased(),
-                              color: IslandColor.gemini, alignment: .trailing)
-                    .opacity(geminiOn ? 1 : 0)
-                    .animation(.openMorph, value: geminiOn)
-                    .accessibilityHidden(!geminiOn)
                 providerTitle(name: "Codex", tag: usageStore.codex.plan?.uppercased(),
                               color: IslandColor.codex, alignment: .trailing)
                     .opacity(codexOn ? 1 : 0)
                     .animation(.openMorph, value: codexOn)
                     .accessibilityHidden(!codexOn)
+                providerTitle(name: "Gemini", tag: usageStore.gemini.plan?.uppercased(),
+                              color: IslandColor.gemini, alignment: .trailing)
+                    .opacity(geminiOn ? 1 : 0)
+                    .animation(.openMorph, value: geminiOn)
+                    .accessibilityHidden(!geminiOn)
             }
             .frame(maxWidth: .infinity)
         }
