@@ -1,10 +1,15 @@
 import SwiftUI
 import AppKit
 
-/// Usage data row — two ChartsBlocks (Claude / Codex) with a hairline
-/// vertical divider. The chrome (provider titles, footer chip + page dots
-/// + sync status) lives in `PanelHeader` / `PanelFooter` so it stays fixed
+/// Usage data row. The chrome (provider titles, footer chip + page dots +
+/// sync status) lives in `PanelHeader` / `PanelFooter` so it stays fixed
 /// while this row swipes between usage and cost screens.
+///
+/// Branches on `(claudeOn, codexOn)` from `ProviderVisibilityStore`:
+///   - both on:  two `ChartsBlock`s with a hairline divider (default).
+///   - one on:   the live block on its native side, hairline, then a
+///               per-model token breakdown filling the freed half.
+///   - both off: a centered `BothHiddenPlaceholder`.
 struct UsageView: View {
     @ObservedObject private var store = UsageStore.shared
     @ObservedObject private var pref = StylePref.shared
@@ -13,31 +18,62 @@ struct UsageView: View {
     private var style: ChartStyle { pref.style }
 
     var body: some View {
+        let claudeOn = visibility.claudeVisible
+        let codexOn = visibility.codexVisible
+
         HStack(spacing: 0) {
-            ChartsBlock(
-                color: visibility.claudeVisible ? IslandColor.claude : .white.opacity(0.32),
-                usage: visibility.claudeVisible ? store.claude : .dummy,
-                style: style, seed: 1
-            )
-            .opacity(visibility.claudeVisible ? 1 : 0.55)
-            Rectangle()
-                .fill(LinearGradient(
-                    colors: [.clear, .white.opacity(0.06), .clear],
-                    startPoint: .top, endPoint: .bottom
-                ))
-                .frame(width: 1)
-                .padding(.vertical, 8)
-            ChartsBlock(
-                color: visibility.codexVisible ? IslandColor.codex : .white.opacity(0.32),
-                usage: visibility.codexVisible ? store.codex : .dummy,
-                style: style, seed: 3
-            )
-            .opacity(visibility.codexVisible ? 1 : 0.55)
+            switch (claudeOn, codexOn) {
+            case (true, true):
+                ChartsBlock(color: IslandColor.claude, usage: store.claude,
+                            style: style, seed: 1)
+                hairline
+                ChartsBlock(color: IslandColor.codex, usage: store.codex,
+                            style: style, seed: 3)
+            case (true, false):
+                ChartsBlock(color: IslandColor.claude, usage: store.claude,
+                            style: style, seed: 1)
+                hairline
+                PerModelTokenBreakdown(provider: .claude,
+                                       window: store.claude.fiveHour)
+                    .frame(maxWidth: .infinity, alignment: .top)
+                    .padding(.horizontal, 12)
+                    .transition(breakdownTransition)
+            case (false, true):
+                PerModelTokenBreakdown(provider: .codex,
+                                       window: store.codex.fiveHour)
+                    .frame(maxWidth: .infinity, alignment: .top)
+                    .padding(.horizontal, 12)
+                    .transition(breakdownTransition)
+                hairline
+                ChartsBlock(color: IslandColor.codex, usage: store.codex,
+                            style: style, seed: 3)
+            case (false, false):
+                BothHiddenPlaceholder()
+                    .transition(.opacity)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, 22)
         .padding(.top, 12)
         .padding(.bottom, 6)
+    }
+
+    /// Slight scale + opacity gives the breakdown half a sense of "expanding
+    /// into the freed space" rather than a hard crossfade. Same curve the
+    /// chart-style swap uses; reads as a single morph paired with the
+    /// `withAnimation(.openMorph)` on the Settings toggle.
+    private var breakdownTransition: AnyTransition {
+        .opacity.combined(with: .scale(scale: 0.97))
+    }
+
+    private var hairline: some View {
+        Rectangle()
+            .fill(LinearGradient(
+                colors: [.clear, .white.opacity(0.06), .clear],
+                startPoint: .top, endPoint: .bottom
+            ))
+            .frame(width: 1)
+            .padding(.vertical, 8)
     }
 }
 

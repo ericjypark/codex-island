@@ -14,15 +14,19 @@ struct PanelHeader: View {
 
     var body: some View {
         HStack(spacing: 0) {
+            let claudeOn = visibility.claudeVisible
+            let codexOn = visibility.codexVisible
             providerTitle(name: "Claude", tag: usageStore.claude.plan?.uppercased(),
                           color: IslandColor.claude, alignment: .leading)
-                .opacity(visibility.claudeVisible ? 1 : 0.30)
-                .saturation(visibility.claudeVisible ? 1 : 0)
+                .opacity(claudeOn ? 1 : 0)
+                .animation(.openMorph, value: claudeOn)
+                .accessibilityHidden(!claudeOn)
             Color.clear.frame(width: notch.width)
             providerTitle(name: "Codex", tag: usageStore.codex.plan?.uppercased(),
                           color: IslandColor.codex, alignment: .trailing)
-                .opacity(visibility.codexVisible ? 1 : 0.30)
-                .saturation(visibility.codexVisible ? 1 : 0)
+                .opacity(codexOn ? 1 : 0)
+                .animation(.openMorph, value: codexOn)
+                .accessibilityHidden(!codexOn)
         }
         .frame(height: 22)
         .padding(.horizontal, 16)

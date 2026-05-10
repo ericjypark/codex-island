@@ -112,7 +112,12 @@ enum Pricing {
 
     /// Strip Anthropic-style date suffixes (e.g. "claude-haiku-4-5-20251001"
     /// → "claude-haiku-4-5") so the snapshot table doesn't need an entry per
-    /// pinned release.
+    /// pinned release. Exposed for downstream consumers (e.g. per-model
+    /// breakdown views) so date-pinned variants group with their base model.
+    static func canonicalModelName(_ raw: String) -> String {
+        canonicalModel(raw)
+    }
+
     private static func canonicalModel(_ raw: String) -> String {
         guard raw.count > 9 else { return raw }
         let suffixStart = raw.index(raw.endIndex, offsetBy: -9)

@@ -160,6 +160,10 @@ final class CostStore: ObservableObject {
         let monthStart = cal.date(from: cal.dateComponents([.year, .month], from: now)) ?? startOfDay
         let currentHour = cal.dateComponents([.hour], from: now).hour ?? 0
         let currentDay = (cal.dateComponents([.day], from: now).day ?? 1) - 1
+        // Rolling window for per-model breakdown — approximates Anthropic's
+        // 5h rate-limit window. We don't know the server's exact window
+        // alignment, so "last 5 hours" is the practical proxy.
+        let recentStart = now.addingTimeInterval(-5 * 3600)
 
         var todayDollars = 0.0, todayTokens = 0, todayBillable = 0
         var monthDollars = 0.0, monthTokens = 0, monthBillable = 0
@@ -170,6 +174,13 @@ final class CostStore: ObservableObject {
         // models that actually moved tokens.
         var todayUnknown: Set<String> = []
         var monthUnknown: Set<String> = []
+        // Per-canonical-model billable tokens + dollars within the recent
+        // window. Cache reads excluded from `tokens` (they don't pressure
+        // the rate-limit counter), included in `dollars` (they cost real
+        // money). Two metrics, two consumers: usage-page shows tokens,
+        // cost-page shows dollars.
+        var recentTokensByModel: [String: Int] = [:]
+        var recentDollarsByModel: [String: Double] = [:]
 
         for event in events {
             guard event.timestamp >= monthStart else { continue }
@@ -199,6 +210,38 @@ final class CostStore: ObservableObject {
                 if hour < hourlyBuckets.count { hourlyBuckets[hour] += cost }
                 if isUnpriced { todayUnknown.insert(event.model) }
             }
+
+            // 5h rolling window slice — strict subset of today.
+            if event.timestamp >= recentStart {
+                let canon = Pricing.canonicalModelName(event.model)
+                if billable > 0 {
+                    recentTokensByModel[canon, default: 0] += billable
+                }
+                if cost > 0 {
+                    recentDollarsByModel[canon, default: 0] += cost
+                }
+            }
+        }
+
+        let recentTotalTokens = recentTokensByModel.values.reduce(0, +)
+        let allCanonicalModels = Set(recentTokensByModel.keys).union(recentDollarsByModel.keys)
+        let recentRows: [ModelUsageRow] = allCanonicalModels.map { canon in
+            let tokens = recentTokensByModel[canon] ?? 0
+            let dollars = recentDollarsByModel[canon] ?? 0
+            return ModelUsageRow(
+                model: canon,
+                displayName: prettyModelName(canon),
+                tokens: tokens,
+                dollars: dollars,
+                percent: recentTotalTokens > 0 ? Double(tokens) / Double(recentTotalTokens) : 0
+            )
+        }
+        .sorted {
+            // Tokens primary, dollars secondary — handles cache-read-only
+            // rows (zero billable tokens, non-zero dollars) by sinking
+            // them to the bottom but not disappearing.
+            if $0.tokens != $1.tokens { return $0.tokens > $1.tokens }
+            return $0.dollars > $1.dollars
         }
 
         return ProviderCost(
@@ -219,8 +262,39 @@ final class CostStore: ObservableObject {
                 label: CostBucketing.currentMonthLabel(),
                 error: nil,
                 unknownModels: monthUnknown.sorted()
-            )
+            ),
+            recentByModel: recentRows
         )
+    }
+
+    /// Pretty-print the canonical model id for UI rows. Falls back to the
+    /// raw id if no friendlier name is wired up yet — better than a blank.
+    nonisolated private static func prettyModelName(_ canonical: String) -> String {
+        // Anthropic: "claude-opus-4-7" → "Opus 4.7"
+        if canonical.hasPrefix("claude-") {
+            let trimmed = String(canonical.dropFirst("claude-".count))
+            // Split at first dash, then collapse remaining dashes into dots
+            // so "opus-4-7" → "opus.4.7" → "Opus 4.7".
+            guard let dash = trimmed.firstIndex(of: "-") else {
+                return trimmed.capitalized
+            }
+            let family = String(trimmed[..<dash]).capitalized
+            let version = trimmed[trimmed.index(after: dash)...]
+                .replacingOccurrences(of: "-", with: ".")
+            return "\(family) \(version)"
+        }
+        // OpenAI: keep as-is, just uppercase the GPT prefix.
+        if canonical.hasPrefix("gpt-") {
+            return canonical.replacingOccurrences(of: "gpt-", with: "GPT-")
+        }
+        // OpenAI reasoning family ("o3-pro", "o4-mini-high", etc.) — already
+        // short and conventional, capitalize only the leading letter so it
+        // matches the typographic weight of "GPT-..." / "Opus 4.7".
+        if let first = canonical.first, first == "o", canonical.count > 1,
+           canonical.dropFirst().first?.isNumber == true {
+            return canonical.prefix(1).uppercased() + canonical.dropFirst()
+        }
+        return canonical
     }
 
     nonisolated private static func runningSum(_ values: [Double]) -> [Double] {

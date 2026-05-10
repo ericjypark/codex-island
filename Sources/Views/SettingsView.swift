@@ -446,7 +446,9 @@ struct SettingsView: View {
                 chip: usage.claude.plan?.uppercased()
             ) {
                 SettingsToggle(isOn: visibility.claudeVisible) {
-                    visibility.claudeVisible.toggle()
+                    withAnimation(.openMorph) {
+                        visibility.claudeVisible.toggle()
+                    }
                 }
             }
             SettingsRow(
@@ -456,7 +458,9 @@ struct SettingsView: View {
                 chip: usage.codex.plan?.uppercased()
             ) {
                 SettingsToggle(isOn: visibility.codexVisible) {
-                    visibility.codexVisible.toggle()
+                    withAnimation(.openMorph) {
+                        visibility.codexVisible.toggle()
+                    }
                 }
             }
         }

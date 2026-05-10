@@ -33,10 +33,37 @@ struct CostWindow {
     )
 }
 
+/// Per-model breakdown of token activity over a recent rolling window —
+/// derived from local session logs, not the OAuth usage endpoint (Anthropic
+/// doesn't expose this slice). Currently used by the prototype Repurpose
+/// variant to surface "what's burning my quota right now".
+struct ModelUsageRow {
+    /// Canonical model identifier (date suffix stripped via Pricing).
+    let model: String
+    /// Pretty name for UI ("Opus 4.7", "Sonnet 4.6", etc.).
+    let displayName: String
+    /// Billable tokens (input + output) attributed to this model in the
+    /// window. Cache reads are excluded so bars track what actually
+    /// pressures the rate-limit counter.
+    let tokens: Int
+    /// Dollar cost attributed to this model in the window — full
+    /// `Pricing.cost(for:)` total including cache rates so the row
+    /// reads "what this model is actually costing me", not "what hit
+    /// the rate-limit". Cost-page consumers display this directly.
+    let dollars: Double
+    /// Share of the window's total billable tokens, 0...1. Used as
+    /// the bar-fill metric on both the usage page (token share) and
+    /// the cost page (so the bar visualization stays consistent).
+    let percent: Double
+}
+
 /// Per-provider cost summary: today + month-to-date in calendar-local time.
 struct ProviderCost {
     var today: CostWindow
     var month: CostWindow
+    /// Per-model breakdown over the last ~5 hours, sorted by tokens
+    /// descending. Empty when the provider has no recent events.
+    var recentByModel: [ModelUsageRow] = []
 
     static let empty = ProviderCost(
         today: CostWindow(
@@ -47,7 +74,8 @@ struct ProviderCost {
             dollars: 0, tokens: 0, billableTokens: 0, series: [],
             label: CostBucketing.currentMonthLabel(), error: nil,
             unknownModels: []
-        )
+        ),
+        recentByModel: []
     )
 
     /// Placeholder values shown when a provider is toggled off in Settings.
@@ -64,6 +92,7 @@ struct ProviderCost {
             series: [3, 8, 15, 22, 31, 40, 52, 65, 78, 90, 105, 120, 135, 142],
             label: CostBucketing.currentMonthLabel(), error: nil,
             unknownModels: []
-        )
+        ),
+        recentByModel: []
     )
 }

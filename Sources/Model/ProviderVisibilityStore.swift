@@ -31,4 +31,15 @@ final class ProviderVisibilityStore: ObservableObject {
         self.claudeVisible = defaults.bool(forKey: Self.claudeKey)
         self.codexVisible = defaults.bool(forKey: Self.codexKey)
     }
+
+    /// Single accessor for call sites that have an `AlertEngine.Provider`
+    /// in hand. Equivalent to reading `claudeVisible` / `codexVisible`
+    /// directly; centralizes the lookup so the few provider-keyed call
+    /// sites read uniformly.
+    func effectiveVisible(provider: AlertEngine.Provider) -> Bool {
+        switch provider {
+        case .claude: return claudeVisible
+        case .codex:  return codexVisible
+        }
+    }
 }

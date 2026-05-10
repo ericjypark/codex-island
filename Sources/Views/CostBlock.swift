@@ -10,13 +10,21 @@ struct CostBlock: View {
     /// can pick the right per-plan baseline (Claude Pro $20 vs Max $200,
     /// Codex Plus $20 vs Pro $200) and the caption can name the plan.
     let provider: TokenEvent.Provider
+    /// When the panel is in single-provider mode (the other provider is
+    /// hidden, freeing the right half for the per-model breakdown), the
+    /// visible cost column claims ~340pt instead of ~165pt. Centering the
+    /// pair lets it read as a balanced duet rather than two cells pushed
+    /// to one side with empty trailing whitespace.
+    var centerWhenSingle: Bool = false
 
     var body: some View {
         HStack(spacing: 18) {
             CostTile(color: color, window: cost.today, loading: loading,
-                     isMonth: false, provider: provider)
+                     isMonth: false, provider: provider,
+                     centered: centerWhenSingle)
             CostTile(color: color, window: cost.month, loading: loading,
-                     isMonth: true, provider: provider)
+                     isMonth: true, provider: provider,
+                     centered: centerWhenSingle)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, 12)
@@ -33,6 +41,10 @@ struct CostTile: View {
     let loading: Bool
     let isMonth: Bool
     let provider: TokenEvent.Provider
+    /// True when the panel is in single-provider mode — see CostBlock.
+    /// Centering keeps the Today / month pair visually balanced when the
+    /// column doubles in width.
+    let centered: Bool
 
     @ObservedObject private var stylePref = CostStylePref.shared
     @ObservedObject private var usageStore = UsageStore.shared
@@ -43,7 +55,7 @@ struct CostTile: View {
     private static let tileHeight: CGFloat = 96
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: centered ? .center : .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
                 Text(window.label)
                     .font(Typography.label)
@@ -54,6 +66,7 @@ struct CostTile: View {
                     .foregroundStyle(.white.opacity(window.unknownModels.isEmpty ? 0.4 : 0.5))
                     .accessibilityLabel(resetGlyphSpoken)
             }
+            .frame(maxWidth: centered ? 240 : .infinity)
 
             Spacer(minLength: 0)
 
@@ -67,8 +80,9 @@ struct CostTile: View {
             }
             .id(stylePref.style)
             .transition(.chartSwap.animation(.chartSwap))
+            .frame(maxWidth: centered ? 240 : .infinity, alignment: centered ? .center : .leading)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: centered ? .top : .topLeading)
         .frame(height: Self.tileHeight)
         .opacity(loading ? 0.7 : 1.0)
         .animation(.easeOut(duration: 0.18), value: loading)

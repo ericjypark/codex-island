@@ -369,6 +369,12 @@ private struct LogoOverlay: View {
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
 
     var body: some View {
+        // Hidden providers fully drop out — header / peek pill / chrome
+        // are gated identically. `.opacity(isVisible ? 1 : 0)` keeps the
+        // view in the layout (so other overlays don't reflow) but makes
+        // it invisible, and the explicit `.animation(.openMorph, value:)`
+        // pairs the chrome fade with the panel layout swap when the user
+        // toggles a provider in Settings.
         if let image {
             Image(nsImage: image)
                 .resizable()
@@ -378,17 +384,15 @@ private struct LogoOverlay: View {
                 .frame(width: 20, height: 20)
                 .padding(provider == .claude ? .leading : .trailing, edgePadding)
                 .padding(.top, topPadding)
-                .opacity(isVisible ? 1 : 0.30)
-                .saturation(isVisible ? 1 : 0)
+                .opacity(isVisible ? 1 : 0)
+                .animation(.openMorph, value: isVisible)
                 .accessibilityLabel(isVisible ? providerLabel : "\(providerLabel) (hidden)")
+                .accessibilityHidden(!isVisible)
         }
     }
 
     private var isVisible: Bool {
-        switch provider {
-        case .claude: return visibility.claudeVisible
-        case .codex:  return visibility.codexVisible
-        }
+        visibility.effectiveVisible(provider: provider)
     }
 
     private var providerLabel: String {
@@ -413,29 +417,32 @@ private struct PeekPillOverlay: View {
     @ObservedObject private var alerts = AlertEngine.shared
 
     var body: some View {
-        if isVisible {
-            let window = currentWindow
-            NotchPeekPill(
-                usage: window,
-                loading: usageStore.loading,
-                tint: tint,
-                alignment: provider == .claude ? .leading : .trailing,
-                severity: severity
-            )
-            .padding(provider == .claude ? .leading : .trailing, 14)
-            .padding(.top, topPadding)
-            .opacity(pillsVisible ? 1 : 0)
-            .offset(x: pillsVisible ? 0 : (provider == .claude ? -6 : 6))
-            .allowsHitTesting(false)
-            .accessibilityLabel(peekLabel(for: window, provider: providerLabel))
-        }
+        let window = currentWindow
+        NotchPeekPill(
+            usage: window,
+            loading: usageStore.loading,
+            tint: tint,
+            alignment: provider == .claude ? .leading : .trailing,
+            severity: severity
+        )
+        .padding(provider == .claude ? .leading : .trailing, 14)
+        .padding(.top, topPadding)
+        // Two opacity bindings stack:
+        //   - `pillsVisible` is the peek lifecycle (hover-in / hover-out).
+        //   - `isVisible` is the user's settings toggle.
+        // Both must be 1 to render. Animating `isVisible` with the same
+        // openMorph spring as the panel layout keeps the toggle fade in
+        // lockstep with the rest of the chrome.
+        .opacity((pillsVisible && isVisible) ? 1 : 0)
+        .animation(.openMorph, value: isVisible)
+        .offset(x: pillsVisible ? 0 : (provider == .claude ? -6 : 6))
+        .allowsHitTesting(false)
+        .accessibilityLabel(peekLabel(for: window, provider: providerLabel))
+        .accessibilityHidden(!isVisible)
     }
 
     private var isVisible: Bool {
-        switch provider {
-        case .claude: return visibility.claudeVisible
-        case .codex:  return visibility.codexVisible
-        }
+        visibility.effectiveVisible(provider: provider)
     }
 
     private var currentWindow: WindowUsage {

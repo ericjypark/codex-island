@@ -29,3 +29,4 @@ marketing/
 # Maintainer-only notes (launch playbooks, analytics ops, internal dashboards).
 # See CLAUDE.md → "docs/ vs notes/" for what belongs here vs in public docs/.
 notes/
+.claude/
