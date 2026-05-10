@@ -5,8 +5,8 @@ import Foundation
 enum GeminiLogReader {
     static func scan(lookbackDays: Int = 30) -> [TokenEvent] {
         let cutoff = Date().addingTimeInterval(-Double(lookbackDays) * 86400)
-        var seen = Set<String>()
-        var out: [TokenEvent] = []
+        var latestById: [String: TokenEvent] = [:]
+        var withoutId: [TokenEvent] = []
 
         let home = FileManager.default.homeDirectoryForCurrentUser
         let geminiDir = home.appendingPathComponent(".gemini", isDirectory: true)
@@ -24,11 +24,7 @@ enum GeminiLogReader {
             parse: parseFile(at:),
             emit: { (ev: CachedEvent) in
                 guard ev.timestamp >= cutoff else { return }
-                if !ev.dedupKey.isEmpty {
-                    if seen.contains(ev.dedupKey) { return }
-                    seen.insert(ev.dedupKey)
-                }
-                out.append(TokenEvent(
+                let event = TokenEvent(
                     provider: .gemini,
                     timestamp: ev.timestamp,
                     model: ev.model,
@@ -36,10 +32,19 @@ enum GeminiLogReader {
                     outputTokens: ev.outputTokens,
                     cacheCreationTokens: ev.cacheCreationTokens,
                     cacheReadTokens: ev.cacheReadTokens
-                ))
+                )
+                if !ev.dedupKey.isEmpty {
+                    // Overwrite earlier events for the same ID to capture the
+                    // final turn state (which has the complete output tokens).
+                    latestById[ev.dedupKey] = event
+                } else {
+                    withoutId.append(event)
+                }
             }
         )
-        return out
+        
+        let allEvents = Array(latestById.values) + withoutId
+        return allEvents.sorted { $0.timestamp < $1.timestamp }
     }
 
     private static func parseFile(at url: URL) -> [CachedEvent] {
@@ -65,12 +70,16 @@ enum GeminiLogReader {
             let output = (tokens["output"] as? Int) ?? 0
             let cached = (tokens["cached"] as? Int) ?? 0
 
-            if input == 0 && output == 0 && cached == 0 { return }
+            // Gemini API reports 'input' as the TOTAL input tokens (including cached).
+            // The cost pipeline expects inputTokens to be the UNCACHED portion.
+            let billableInput = max(0, input - cached)
+
+            if billableInput == 0 && output == 0 && cached == 0 { return }
 
             out.append(CachedEvent(
                 timestamp: timestamp,
                 model: model,
-                inputTokens: input,
+                inputTokens: billableInput,
                 outputTokens: output,
                 cacheCreationTokens: 0,
                 cacheReadTokens: cached,
@@ -82,7 +91,7 @@ enum GeminiLogReader {
 
     // MARK: - Per-file cache
 
-    private static let cacheVersion = 3
+    private static let cacheVersion = 4
 
     private struct CachedEvent: Codable {
         let timestamp: Date
