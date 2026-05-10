@@ -16,46 +16,56 @@ struct CostView: View {
     @ObservedObject private var stylePref = CostStylePref.shared
 
     var body: some View {
-        let claudeOn = visibility.claudeVisible
-        let codexOn = visibility.codexVisible
+        let visible = visibleProviders()
 
         HStack(spacing: 0) {
-            switch (claudeOn, codexOn) {
-            case (true, true):
-                CostBlock(color: IslandColor.claude, cost: store.claude,
-                          loading: store.claudeLoading, provider: .claude,
-                          centerWhenSingle: false)
-                hairline
-                CostBlock(color: IslandColor.codex, cost: store.codex,
-                          loading: store.codexLoading, provider: .codex,
-                          centerWhenSingle: false)
-            case (true, false):
-                CostBlock(color: IslandColor.claude, cost: store.claude,
-                          loading: store.claudeLoading, provider: .claude,
-                          centerWhenSingle: true)
-                hairline
-                breakdown(for: .claude)
-                    .frame(maxWidth: .infinity, alignment: .top)
-                    .padding(.horizontal, 12)
-                    .transition(breakdownTransition)
-            case (false, true):
-                breakdown(for: .codex)
-                    .frame(maxWidth: .infinity, alignment: .top)
-                    .padding(.horizontal, 12)
-                    .transition(breakdownTransition)
-                hairline
-                CostBlock(color: IslandColor.codex, cost: store.codex,
-                          loading: store.codexLoading, provider: .codex,
-                          centerWhenSingle: true)
-            case (false, false):
+            if visible.isEmpty {
                 BothHiddenPlaceholder()
                     .transition(.opacity)
+            } else if visible.count == 1 {
+                let p = visible[0]
+                CostBlock(color: p.color, cost: p.cost, loading: p.loading,
+                          provider: p.provider, centerWhenSingle: true)
+                hairline
+                breakdown(for: p.provider)
+                    .frame(maxWidth: .infinity, alignment: .top)
+                    .padding(.horizontal, 12)
+                    .transition(breakdownTransition)
+            } else {
+                ForEach(visible, id: \.provider) { p in
+                    if p.provider != visible.first?.provider {
+                        hairline
+                    }
+                    CostBlock(color: p.color, cost: p.cost, loading: p.loading,
+                              provider: p.provider, centerWhenSingle: false)
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, 22)
         .padding(.top, 12)
         .padding(.bottom, 6)
+    }
+
+    private struct VisibleProvider {
+        let provider: AlertEngine.Provider
+        let color: Color
+        let cost: ProviderCost
+        let loading: Bool
+    }
+
+    private func visibleProviders() -> [VisibleProvider] {
+        var out: [VisibleProvider] = []
+        if visibility.claudeVisible {
+            out.append(VisibleProvider(provider: .claude, color: IslandColor.claude, cost: store.claude, loading: store.claudeLoading))
+        }
+        if visibility.codexVisible {
+            out.append(VisibleProvider(provider: .codex, color: IslandColor.codex, cost: store.codex, loading: store.codexLoading))
+        }
+        if visibility.geminiVisible {
+            out.append(VisibleProvider(provider: .gemini, color: IslandColor.gemini, cost: store.gemini, loading: store.geminiLoading))
+        }
+        return out
     }
 
     /// Cost-page breakdown swaps metric to follow the visible tile: when

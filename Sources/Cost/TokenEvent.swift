@@ -7,6 +7,7 @@ struct TokenEvent {
     enum Provider {
         case claude
         case codex
+        case gemini
     }
 
     let provider: Provider

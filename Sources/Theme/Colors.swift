@@ -11,6 +11,9 @@ enum IslandColor {
     /// #5AA8F0 — OpenAI sky blue. Codex logo + ring/bar fills.
     static let codex = Color(red: 90/255, green: 168/255, blue: 240/255)
 
+    /// #8E75FF — Google Gemini purple-blue. Gemini logo + ring/bar fills.
+    static let gemini = Color(red: 142/255, green: 117/255, blue: 255/255)
+
     /// #3DD68C — live status dot. Sits next to cobalt without clashing.
     static let liveTeal = Color(red: 61/255, green: 214/255, blue: 140/255)
 

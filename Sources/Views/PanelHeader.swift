@@ -16,17 +16,34 @@ struct PanelHeader: View {
         HStack(spacing: 0) {
             let claudeOn = visibility.claudeVisible
             let codexOn = visibility.codexVisible
-            providerTitle(name: "Claude", tag: usageStore.claude.plan?.uppercased(),
-                          color: IslandColor.claude, alignment: .leading)
-                .opacity(claudeOn ? 1 : 0)
-                .animation(.openMorph, value: claudeOn)
-                .accessibilityHidden(!claudeOn)
+            let geminiOn = visibility.geminiVisible
+
+            HStack(spacing: 0) {
+                providerTitle(name: "Claude", tag: usageStore.claude.plan?.uppercased(),
+                              color: IslandColor.claude, alignment: .leading)
+                    .opacity(claudeOn ? 1 : 0)
+                    .animation(.openMorph, value: claudeOn)
+                    .accessibilityHidden(!claudeOn)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity)
+
             Color.clear.frame(width: notch.width)
-            providerTitle(name: "Codex", tag: usageStore.codex.plan?.uppercased(),
-                          color: IslandColor.codex, alignment: .trailing)
-                .opacity(codexOn ? 1 : 0)
-                .animation(.openMorph, value: codexOn)
-                .accessibilityHidden(!codexOn)
+
+            HStack(spacing: 12) {
+                Spacer(minLength: 0)
+                providerTitle(name: "Gemini", tag: usageStore.gemini.plan?.uppercased(),
+                              color: IslandColor.gemini, alignment: .trailing)
+                    .opacity(geminiOn ? 1 : 0)
+                    .animation(.openMorph, value: geminiOn)
+                    .accessibilityHidden(!geminiOn)
+                providerTitle(name: "Codex", tag: usageStore.codex.plan?.uppercased(),
+                              color: IslandColor.codex, alignment: .trailing)
+                    .opacity(codexOn ? 1 : 0)
+                    .animation(.openMorph, value: codexOn)
+                    .accessibilityHidden(!codexOn)
+            }
+            .frame(maxWidth: .infinity)
         }
         .frame(height: 22)
         .padding(.horizontal, 16)
@@ -42,9 +59,11 @@ struct PanelHeader: View {
         alignment: HorizontalAlignment
     ) -> some View {
         // Push past where the overlay logo lands: 9 leading + 20 logo + 8 gap.
-        let logoOffset: CGFloat = 9 + 20 + 8
+        // For Gemini, we don't have a logo overlay in the root view yet,
+        // so we don't need the offset (or we'll add it later).
+        let logoOffset: CGFloat = (name == "Claude" || name == "Codex") ? 9 + 20 + 8 : 0
 
-        let content = HStack(spacing: 8) {
+        HStack(spacing: 8) {
             Text(name)
                 .font(Typography.providerTitle)
                 .foregroundStyle(.white)
@@ -65,19 +84,6 @@ struct PanelHeader: View {
                     )
             }
         }
-
-        if alignment == .leading {
-            HStack {
-                content.padding(.leading, logoOffset)
-                Spacer(minLength: 0)
-            }
-            .frame(maxWidth: .infinity)
-        } else {
-            HStack {
-                Spacer(minLength: 0)
-                content.padding(.trailing, logoOffset)
-            }
-            .frame(maxWidth: .infinity)
-        }
+        .padding(alignment == .leading ? .leading : .trailing, logoOffset)
     }
 }

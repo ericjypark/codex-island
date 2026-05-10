@@ -13,6 +13,7 @@ struct IslandRootView: View {
     /// that's 240 main-thread decodes/sec. Cache once on appear.
     @State private var claudeLogo: NSImage?
     @State private var openaiLogo: NSImage?
+    @State private var geminiLogo: NSImage?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -78,13 +79,23 @@ struct IslandRootView: View {
                     )
                 }
                 .overlay(alignment: .topTrailing) {
-                    LogoOverlay(
-                        image: openaiLogo,
-                        color: IslandColor.codex,
-                        provider: .codex,
-                        edgePadding: logoEdgePadding,
-                        topPadding: max(0, (model.notch.height - 20) / 2)
-                    )
+                    HStack(spacing: 8) {
+                        LogoOverlay(
+                            image: geminiLogo,
+                            color: IslandColor.gemini,
+                            provider: .gemini,
+                            edgePadding: 0,
+                            topPadding: max(0, (model.notch.height - 20) / 2)
+                        )
+                        LogoOverlay(
+                            image: openaiLogo,
+                            color: IslandColor.codex,
+                            provider: .codex,
+                            edgePadding: 0,
+                            topPadding: max(0, (model.notch.height - 20) / 2)
+                        )
+                    }
+                    .padding(.trailing, logoEdgePadding)
                 }
                 .overlay(alignment: .topLeading) {
                     // Pill lives in the new outboard slot (the 78pt the
@@ -101,11 +112,18 @@ struct IslandRootView: View {
                 }
                 .overlay(alignment: .topTrailing) {
                     if model.state != .compact {
-                        PeekPillOverlay(
-                            provider: .codex,
-                            topPadding: max(0, (model.notch.height - 14) / 2),
-                            pillsVisible: pillsVisible
-                        )
+                        VStack(alignment: .trailing, spacing: 2) {
+                            PeekPillOverlay(
+                                provider: .gemini,
+                                topPadding: max(0, (model.notch.height - 14) / 2),
+                                pillsVisible: pillsVisible
+                            )
+                            PeekPillOverlay(
+                                provider: .codex,
+                                topPadding: 0,
+                                pillsVisible: pillsVisible
+                            )
+                        }
                     }
                 }
                 .overlay(alignment: .bottomLeading) {
@@ -206,6 +224,9 @@ struct IslandRootView: View {
             if openaiLogo == nil {
                 openaiLogo = Bundle.main.url(forResource: "openai_logo", withExtension: "png")
                     .flatMap { NSImage(contentsOf: $0) }
+            }
+            if geminiLogo == nil {
+                geminiLogo = NSImage(systemSymbolName: "sparkles", accessibilityDescription: "Gemini")
             }
         }
         .onReceive(AlertEngine.shared.$pulseEvent) { event in
@@ -399,6 +420,7 @@ private struct LogoOverlay: View {
         switch provider {
         case .claude: return "Claude"
         case .codex:  return "OpenAI"
+        case .gemini: return "Gemini"
         }
     }
 }
@@ -453,6 +475,7 @@ private struct PeekPillOverlay: View {
         switch provider {
         case .claude: return usageStore.claude.fiveHour
         case .codex:  return usageStore.codex.fiveHour
+        case .gemini: return usageStore.gemini.fiveHour
         }
     }
 
@@ -460,6 +483,7 @@ private struct PeekPillOverlay: View {
         switch provider {
         case .claude: return alerts.claudeSeverity
         case .codex:  return alerts.codexSeverity
+        case .gemini: return alerts.geminiSeverity
         }
     }
 
@@ -467,6 +491,7 @@ private struct PeekPillOverlay: View {
         switch provider {
         case .claude: return IslandColor.claude
         case .codex:  return IslandColor.codex
+        case .gemini: return IslandColor.gemini
         }
     }
 
@@ -474,6 +499,7 @@ private struct PeekPillOverlay: View {
         switch provider {
         case .claude: return "Claude"
         case .codex:  return "Codex"
+        case .gemini: return "Gemini"
         }
     }
 

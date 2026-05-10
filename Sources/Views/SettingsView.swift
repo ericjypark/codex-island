@@ -261,15 +261,15 @@ struct SettingsView: View {
             previewButton("Live") { usage.refresh() }
                 .keyboardShortcut("1", modifiers: .command)
                 .help("⌘1 — pull real provider data")
-            previewButton("Warn") { runPreview(claude: 0.85, codex: 0.55) }
+            previewButton("Warn") { runPreview(claude: 0.85, codex: 0.55, gemini: 0.40) }
                 .keyboardShortcut("2", modifiers: .command)
-                .help("⌘2 — Claude 85%, Codex 55%")
-            previewButton("Crit") { runPreview(claude: 0.96, codex: 0.55) }
+                .help("⌘2 — Claude 85%, Codex 55%, Gemini 40%")
+            previewButton("Crit") { runPreview(claude: 0.96, codex: 0.55, gemini: 0.85) }
                 .keyboardShortcut("3", modifiers: .command)
-                .help("⌘3 — Claude 96%, Codex 55%")
-            previewButton("Both") { runPreview(claude: 0.86, codex: 0.97) }
+                .help("⌘3 — Claude 96%, Codex 55%, Gemini 85%")
+            previewButton("Both") { runPreview(claude: 0.86, codex: 0.97, gemini: 0.98) }
                 .keyboardShortcut("4", modifiers: .command)
-                .help("⌘4 — Claude 86%, Codex 97%")
+                .help("⌘4 — Claude 86%, Codex 97%, Gemini 98%")
         }
     }
 
@@ -302,9 +302,9 @@ struct SettingsView: View {
     /// Resets the engine's crossing memory before injecting so each click
     /// fires a fresh pulse — otherwise the second "Warn" click would be a
     /// no-op (key already in memory from the first click).
-    private func runPreview(claude: Double, codex: Double) {
+    private func runPreview(claude: Double, codex: Double, gemini: Double) {
         AlertEngine.shared.prepareForPreview()
-        usage.injectPreviewUsage(claudeFiveHour: claude, codexFiveHour: codex)
+        usage.injectPreviewUsage(claudeFiveHour: claude, codexFiveHour: codex, geminiFiveHour: gemini)
     }
 
     /// Single paired block listing both thresholds inline, each tagged
@@ -460,6 +460,18 @@ struct SettingsView: View {
                 SettingsToggle(isOn: visibility.codexVisible) {
                     withAnimation(.openMorph) {
                         visibility.codexVisible.toggle()
+                    }
+                }
+            }
+            SettingsRow(
+                title: "Gemini",
+                subtitle: providerSubtitle(usage.gemini),
+                dot: IslandColor.gemini,
+                chip: usage.gemini.plan?.uppercased()
+            ) {
+                SettingsToggle(isOn: visibility.geminiVisible) {
+                    withAnimation(.openMorph) {
+                        visibility.geminiVisible.toggle()
                     }
                 }
             }

@@ -341,6 +341,61 @@ enum UsageFetcher {
         return WindowUsage(usedPercent: min(1, max(0, normalized)), resetAt: resetAt, error: nil)
     }
 
+    // MARK: - Gemini
+
+    /// Gemini usage lives at api.gemini.google.com/v1/usage and accepts
+    /// the access_token from ~/.gemini/auth.json.
+    static func fetchGemini() async -> AppUsage {
+        guard let token = readGeminiAccessToken() else {
+            return errorPair("auth required — run gemini")
+        }
+
+        var req = URLRequest(url: URL(string: "https://api.gemini.google.com/v1/usage")!)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+
+            if status == 401 {
+                return errorPair("auth expired — gemini login")
+            }
+            if status != 200 {
+                return errorPair("http \(status)")
+            }
+
+            guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                return errorPair("parse error")
+            }
+            return AppUsage(
+                fiveHour: parseGeminiWindow(obj["five_hour"]),
+                weekly: parseGeminiWindow(obj["seven_day"]),
+                plan: obj["plan_type"] as? String
+            )
+        } catch {
+            return errorPair(error.localizedDescription)
+        }
+    }
+
+    private static func readGeminiAccessToken() -> String? {
+        let path = NSString("~/.gemini/auth.json").expandingTildeInPath
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let token = json["access_token"] as? String else { return nil }
+        return token
+    }
+
+    private static func parseGeminiWindow(_ obj: Any?) -> WindowUsage {
+        guard let d = obj as? [String: Any] else { return .unknown }
+        let raw = (d["utilization"] as? Double) ?? (d["used_percent"] as? Double) ?? 0
+        let normalized = raw / 100.0
+        var resetAt: Date?
+        if let r = d["resets_at"] as? Double {
+            resetAt = Date(timeIntervalSince1970: r)
+        }
+        return WindowUsage(usedPercent: min(1, max(0, normalized)), resetAt: resetAt, error: nil)
+    }
+
     private struct RefreshedTokens {
         let accessToken: String
         let refreshToken: String

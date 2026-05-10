@@ -27,6 +27,7 @@ final class AlertEngine: ObservableObject {
     enum Provider: String, Hashable {
         case claude
         case codex
+        case gemini
     }
 
     enum Threshold: Int, Hashable {
@@ -55,6 +56,7 @@ final class AlertEngine: ObservableObject {
     /// Per-side severity for the peek pill content swap. Read by the pill.
     @Published private(set) var claudeSeverity: Severity = .none
     @Published private(set) var codexSeverity: Severity = .none
+    @Published private(set) var geminiSeverity: Severity = .none
 
     // MARK: - Internal state
 
@@ -120,6 +122,11 @@ final class AlertEngine: ObservableObject {
                 visible: visibility.codexVisible,
                 window: usage.codex.fiveHour
             ),
+            WindowInput(
+                provider: .gemini,
+                visible: visibility.geminiVisible,
+                window: usage.gemini.fiveHour
+            ),
         ]
 
         // Severity drives the silhouette tint and is always computed: a
@@ -135,10 +142,12 @@ final class AlertEngine: ObservableObject {
 
         let claudeSev = perWindowSeverity[.claude] ?? .none
         let codexSev = perWindowSeverity[.codex] ?? .none
-        let combined = max(claudeSev, codexSev)
+        let geminiSev = perWindowSeverity[.gemini] ?? .none
+        let combined = max(claudeSev, max(codexSev, geminiSev))
 
         if claudeSev != self.claudeSeverity { self.claudeSeverity = claudeSev }
         if codexSev != self.codexSeverity { self.codexSeverity = codexSev }
+        if geminiSev != self.geminiSeverity { self.geminiSeverity = geminiSev }
         if combined != self.severity { self.severity = combined }
 
         guard enabled, validThresholds else {

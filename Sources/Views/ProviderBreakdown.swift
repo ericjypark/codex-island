@@ -57,6 +57,7 @@ private func providerBrandColor(_ provider: AlertEngine.Provider) -> Color {
     switch provider {
     case .claude: return IslandColor.claude
     case .codex:  return IslandColor.codex
+    case .gemini: return IslandColor.gemini
     }
 }
 
@@ -64,6 +65,7 @@ private func providerLowerLabel(_ provider: AlertEngine.Provider) -> String {
     switch provider {
     case .claude: return "claude"
     case .codex:  return "codex"
+    case .gemini: return "gemini"
     }
 }
 
@@ -72,6 +74,7 @@ private func recentRows(for provider: AlertEngine.Provider, store: CostStore) ->
     switch provider {
     case .claude: return store.claude.recentByModel
     case .codex:  return store.codex.recentByModel
+    case .gemini: return store.gemini.recentByModel
     }
 }
 
@@ -80,6 +83,7 @@ private func weekRowsList(for provider: AlertEngine.Provider, store: CostStore) 
     switch provider {
     case .claude: return store.claude.weekByModel
     case .codex:  return store.codex.weekByModel
+    case .gemini: return store.gemini.weekByModel
     }
 }
 

@@ -10,12 +10,16 @@ final class ProviderVisibilityStore: ObservableObject {
 
     private static let claudeKey = "MacIsland.claudeVisible"
     private static let codexKey = "MacIsland.codexVisible"
+    private static let geminiKey = "MacIsland.geminiVisible"
 
     @Published var claudeVisible: Bool {
         didSet { UserDefaults.standard.set(claudeVisible, forKey: Self.claudeKey) }
     }
     @Published var codexVisible: Bool {
         didSet { UserDefaults.standard.set(codexVisible, forKey: Self.codexKey) }
+    }
+    @Published var geminiVisible: Bool {
+        didSet { UserDefaults.standard.set(geminiVisible, forKey: Self.geminiKey) }
     }
 
     private init() {
@@ -28,8 +32,12 @@ final class ProviderVisibilityStore: ObservableObject {
         if defaults.object(forKey: Self.codexKey) == nil {
             defaults.set(true, forKey: Self.codexKey)
         }
+        if defaults.object(forKey: Self.geminiKey) == nil {
+            defaults.set(true, forKey: Self.geminiKey)
+        }
         self.claudeVisible = defaults.bool(forKey: Self.claudeKey)
         self.codexVisible = defaults.bool(forKey: Self.codexKey)
+        self.geminiVisible = defaults.bool(forKey: Self.geminiKey)
     }
 
     /// Single accessor for call sites that have an `AlertEngine.Provider`
@@ -40,6 +48,7 @@ final class ProviderVisibilityStore: ObservableObject {
         switch provider {
         case .claude: return claudeVisible
         case .codex:  return codexVisible
+        case .gemini: return geminiVisible
         }
     }
 }

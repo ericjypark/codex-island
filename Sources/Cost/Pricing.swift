@@ -67,6 +67,24 @@ enum Pricing {
             inputPerMillion: 1.25, outputPerMillion: 10,
             cacheCreationPerMillion: 1.25, cacheReadPerMillion: 0.125
         ),
+
+        // Google — Gemini 3 series (May 2026).
+        "gemini-3.1-pro": Rates(
+            inputPerMillion: 3.00, outputPerMillion: 9.00,
+            cacheCreationPerMillion: 3.00, cacheReadPerMillion: 0.30
+        ),
+        "gemini-3-flash": Rates(
+            inputPerMillion: 0.10, outputPerMillion: 0.40,
+            cacheCreationPerMillion: 0.10, cacheReadPerMillion: 0.01
+        ),
+        "gemini-3.1-flash-lite": Rates(
+            inputPerMillion: 0.05, outputPerMillion: 0.15,
+            cacheCreationPerMillion: 0.05, cacheReadPerMillion: 0.005
+        ),
+        "gemini-3-deep-think": Rates(
+            inputPerMillion: 5.00, outputPerMillion: 15.00,
+            cacheCreationPerMillion: 5.00, cacheReadPerMillion: 0.50
+        ),
     ]
 
     /// Compute the dollar cost of a single TokenEvent. Returns 0 for unknown
