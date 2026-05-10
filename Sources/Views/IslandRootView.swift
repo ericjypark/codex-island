@@ -28,110 +28,6 @@ struct IslandRootView: View {
             // on @Published triggers (hover, data refresh, alert engine).
             ZStack {
                 GlowLayer(isExpanded: model.state == .expanded, hovering: hovering)
-                    .overlay {
-                        // Material background for the expanded panel content.
-                        // Lives outside the silhouette so it can bleed past
-                        // the silhouette on every side, no layout impact.
-                        // Opacity tied to contentVisible so it fades alongside
-                        // the panel content (220ms after hover-in, immediately
-                        // on hover-out) and the .frame here tracks model.size,
-                        // so the halo grows/shrinks with the spring morph.
-                        IslandShape()
-                            .fill(.ultraThinMaterial)
-                            .padding(-9)
-                            .blur(radius: 8)
-                            .opacity(contentVisible ? 0.55 : 0)
-                            .allowsHitTesting(false)
-                    }
-                    .overlay(alignment: .top) {
-                        // Unified Provider Units with "space-around" distribution.
-                        // Fixed edge padding (14) and growing Spacers (min 12) between
-                        // every unit. SwiftUI automatically distributes them evenly.
-                        HStack(spacing: 0) {
-                            let visible = visibleProviders()
-                            let count = visible.count
-                            let leadingCount = count / 2
-                            
-                            Color.clear.frame(width: 14) // Fixed space before first element
-
-                            ForEach(Array(visible.enumerated()), id: \.offset) { idx, p in
-                                if idx > 0 {
-                                    Spacer(minLength: 12) // Spacer that grows
-                                }
-                                
-                                unit(for: p, alignment: idx < leadingCount ? .leading : .trailing)
-                            }
-
-                            Color.clear.frame(width: 14) // Fixed space after last element
-                        }
-                        .frame(width: model.size.width)
-                        .frame(height: model.notch.height)
-                    }
-                    .overlay(alignment: .bottomLeading) {
-                        // Utility control, not dashboard status. Keep it in a
-                        // quiet corner so the footer remains about live data.
-                        if model.state == .expanded {
-                            SettingsButton()
-                                .opacity(contentVisible ? 1 : 0)
-                                .padding(6)
-                        }
-                    }
-                    .contentShape(IslandShape())
-                    .onTapGesture {
-                        // Cmd-click cycles the visualization style of whichever
-                        // page is active. Usage rotates Ring/Bar/Stepped/Numeric/
-                        // Spark; cost rotates USD/VALUE/TOKENS/TREND.
-                        if NSEvent.modifierFlags.contains(.command) {
-                            switch ScreenPref.shared.screen {
-                            case .usage: StylePref.shared.cycle()
-                            case .cost:  CostStylePref.shared.cycle()
-                            }
-                            return
-                        }
-                        // Plain click: enter the full panel. Works from .peek
-                        // (auto-crossing) or .compact (manual).
-                        guard model.state != .expanded else { return }
-                        withAnimation(.openMorph) {
-                            model.setState(.expanded)
-                            contentVisible = true
-                            pillsVisible = false // Chrome fades out
-                        }
-                    }
-                    .onContinuousHover { phase in
-                        switch phase {
-                        case .active:
-                            hovering = true
-                            guard model.state == .compact else { return }
-                            withAnimation(.openMorph) {
-                                model.setState(.peek)
-                            }
-                            // Text/dots fade in slightly behind the shape expand.
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
-                                guard hovering, model.state == .peek else { return }
-                                withAnimation(.easeIn(duration: 0.18)) {
-                                    pillsVisible = true
-                                }
-                            }
-                        case .ended:
-                            hovering = false
-                            guard model.state != .compact else { return }
-                            withAnimation(.closeMorph) {
-                                model.setState(.compact)
-                            }
-                            withAnimation(.easeOut(duration: 0.08)) {
-                                pillsVisible = false
-                            }
-                            withAnimation(.easeOut(duration: 0.10)) {
-                                contentVisible = false
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
-                                guard !hovering else { return }
-                                withAnimation(.closeMorph) {
-                                    model.setState(.compact)
-                                }
-                            }
-                        }
-                    }
                 
                 // Expanded content area.
                 if model.state == .expanded {
@@ -165,6 +61,110 @@ struct IslandRootView: View {
                 }
             }
             .frame(width: model.size.width, height: model.size.height)
+            .background {
+                // Material background for the expanded panel content.
+                // Lives outside the silhouette so it can bleed past
+                // the silhouette on every side, no layout impact.
+                // Opacity tied to contentVisible so it fades alongside
+                // the panel content (220ms after hover-in, immediately
+                // on hover-out) and the .frame here tracks model.size,
+                // so the halo grows/shrinks with the spring morph.
+                IslandShape()
+                    .fill(.ultraThinMaterial)
+                    .padding(-9)
+                    .blur(radius: 8)
+                    .opacity(contentVisible ? 0.55 : 0)
+                    .allowsHitTesting(false)
+            }
+            .overlay(alignment: .top) {
+                // Unified Provider Units with "space-around" distribution.
+                // Fixed edge padding (14) and growing Spacers (min 12) between
+                // every unit. SwiftUI automatically distributes them evenly.
+                HStack(spacing: 0) {
+                    let visible = visibleProviders()
+                    let count = visible.count
+                    let leadingCount = count / 2
+                    
+                    Color.clear.frame(width: 14) // Fixed space before first element
+
+                    ForEach(Array(visible.enumerated()), id: \.offset) { idx, p in
+                        if idx > 0 {
+                            Spacer(minLength: 12) // Spacer that grows
+                        }
+                        
+                        unit(for: p, alignment: idx < leadingCount ? .leading : .trailing)
+                    }
+
+                    Color.clear.frame(width: 14) // Fixed space after last element
+                }
+                .frame(width: model.size.width)
+                .frame(height: model.notch.height)
+            }
+            .overlay(alignment: .bottomLeading) {
+                // Utility control, not dashboard status. Keep it in a
+                // quiet corner so the footer remains about live data.
+                if model.state == .expanded {
+                    SettingsButton()
+                        .opacity(contentVisible ? 1 : 0)
+                        .padding(6)
+                }
+            }
+            .contentShape(IslandShape())
+            .onTapGesture {
+                // Cmd-click cycles the visualization style of whichever
+                // page is active. Usage rotates Ring/Bar/Stepped/Numeric/
+                // Spark; cost rotates USD/VALUE/TOKENS/TREND.
+                if NSEvent.modifierFlags.contains(.command) {
+                    switch ScreenPref.shared.screen {
+                    case .usage: StylePref.shared.cycle()
+                    case .cost:  CostStylePref.shared.cycle()
+                    }
+                    return
+                }
+                // Plain click: enter the full panel. Works from .peek
+                // (auto-crossing) or .compact (manual).
+                guard model.state != .expanded else { return }
+                withAnimation(.openMorph) {
+                    model.setState(.expanded)
+                    contentVisible = true
+                    pillsVisible = false // Chrome fades out
+                }
+            }
+            .onContinuousHover { phase in
+                switch phase {
+                case .active:
+                    hovering = true
+                    guard model.state == .compact else { return }
+                    withAnimation(.openMorph) {
+                        model.setState(.peek)
+                    }
+                    // Text/dots fade in slightly behind the shape expand.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                        guard hovering, model.state == .peek else { return }
+                        withAnimation(.easeIn(duration: 0.18)) {
+                            pillsVisible = true
+                        }
+                    }
+                case .ended:
+                    hovering = false
+                    guard model.state != .compact else { return }
+                    withAnimation(.closeMorph) {
+                        model.setState(.compact)
+                    }
+                    withAnimation(.easeOut(duration: 0.08)) {
+                        pillsVisible = false
+                    }
+                    withAnimation(.easeOut(duration: 0.10)) {
+                        contentVisible = false
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
+                        guard !hovering else { return }
+                        withAnimation(.closeMorph) {
+                            model.setState(.compact)
+                        }
+                    }
+                }
+            }
             
             Spacer(minLength: 0)
         }
