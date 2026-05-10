@@ -13,15 +13,39 @@ struct IslandShape: InsettableShape {
     func path(in rect: CGRect) -> Path {
         let r = rect.insetBy(dx: inset, dy: inset)
         let radius: CGFloat = 14
-        return UnevenRoundedRectangle(
-            cornerRadii: .init(
-                topLeading: 0,
-                bottomLeading: radius,
-                bottomTrailing: radius,
-                topTrailing: 0
-            ),
-            style: .continuous
-        ).path(in: r)
+
+        #if compiler(>=5.9)
+        if #available(macOS 14.0, *) {
+            return UnevenRoundedRectangle(
+                cornerRadii: .init(
+                    topLeading: 0,
+                    bottomLeading: radius,
+                    bottomTrailing: radius,
+                    topTrailing: 0
+                ),
+                style: .continuous
+            ).path(in: r)
+        }
+        #endif
+
+        // Fallback for Ventura / Swift < 5.9
+        var path = Path()
+        path.move(to: CGPoint(x: r.minX, y: r.minY))
+        path.addLine(to: CGPoint(x: r.maxX, y: r.minY))
+        path.addLine(to: CGPoint(x: r.maxX, y: r.maxY - radius))
+        path.addArc(center: CGPoint(x: r.maxX - radius, y: r.maxY - radius),
+                    radius: radius,
+                    startAngle: .degrees(0),
+                    endAngle: .degrees(90),
+                    clockwise: false)
+        path.addLine(to: CGPoint(x: r.minX + radius, y: r.maxY))
+        path.addArc(center: CGPoint(x: r.minX + radius, y: r.maxY - radius),
+                    radius: radius,
+                    startAngle: .degrees(90),
+                    endAngle: .degrees(180),
+                    clockwise: false)
+        path.closeSubpath()
+        return path
     }
 
     func inset(by amount: CGFloat) -> IslandShape {

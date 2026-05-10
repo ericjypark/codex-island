@@ -24,8 +24,15 @@ struct CostView: View {
                     .transition(.opacity)
             } else if visible.count == 1 {
                 let p = visible[0]
+                let costProvider: TokenEvent.Provider = {
+                    switch p.provider {
+                    case .claude: return .claude
+                    case .codex:  return .codex
+                    case .gemini: return .gemini
+                    }
+                }()
                 CostBlock(color: p.color, cost: p.cost, loading: p.loading,
-                          provider: p.provider, centerWhenSingle: true)
+                          provider: costProvider, centerWhenSingle: true)
                 hairline
                 breakdown(for: p.provider)
                     .frame(maxWidth: .infinity, alignment: .top)
@@ -36,8 +43,15 @@ struct CostView: View {
                     if p.provider != visible.first?.provider {
                         hairline
                     }
+                    let costProvider: TokenEvent.Provider = {
+                        switch p.provider {
+                        case .claude: return .claude
+                        case .codex:  return .codex
+                        case .gemini: return .gemini
+                        }
+                    }()
                     CostBlock(color: p.color, cost: p.cost, loading: p.loading,
-                              provider: p.provider, centerWhenSingle: false)
+                              provider: costProvider, centerWhenSingle: false)
                 }
             }
         }

@@ -5,11 +5,11 @@ enum ChartStyle: String, CaseIterable {
 
     var label: String {
         switch self {
-        case .ring: "Ring"
-        case .bar: "Bar"
-        case .stepped: "Stepped"
-        case .numeric: "Numeric"
-        case .spark: "Sparkline"
+        case .ring: return "Ring"
+        case .bar: return "Bar"
+        case .stepped: return "Stepped"
+        case .numeric: return "Numeric"
+        case .spark: return "Sparkline"
         }
     }
 }

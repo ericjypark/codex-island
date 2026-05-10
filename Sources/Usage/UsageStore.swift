@@ -215,7 +215,8 @@ final class UsageStore: ObservableObject {
         intervalCancellable = RefreshIntervalStore.shared.$seconds
             .dropFirst()
             .sink { [weak self] _ in
-                Task { @MainActor in self?.armTimer() }
+                guard let self else { return }
+                Task { @MainActor in self.armTimer() }
             }
         startNetworkMonitor()
     }
@@ -233,7 +234,8 @@ final class UsageStore: ObservableObject {
     private func armTimer() {
         pollTimer?.invalidate()
         pollTimer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.refresh() }
+            guard let self else { return }
+            Task { @MainActor in self.refresh() }
         }
     }
 
