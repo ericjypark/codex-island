@@ -240,6 +240,7 @@ struct CostTile: View {
             switch provider {
             case .claude: return usageStore.claude.plan?.lowercased()
             case .codex:  return usageStore.codex.plan?.lowercased()
+            case .gemini: return usageStore.gemini.plan?.lowercased()
             }
         }()
         guard let plan else { return nil }
@@ -248,6 +249,8 @@ struct CostTile: View {
         case (.claude, "max"): return 200
         case (.codex, "plus"): return 20
         case (.codex, "pro"):  return 200
+        case (.gemini, "pro"): return 20
+        case (.gemini, "ultra"): return 200
         default: return nil
         }
     }
@@ -260,6 +263,7 @@ struct CostTile: View {
             switch provider {
             case .claude: return usageStore.claude.plan?.lowercased()
             case .codex:  return usageStore.codex.plan?.lowercased()
+            case .gemini: return usageStore.gemini.plan?.lowercased()
             }
         }()
         guard let plan else { return nil }
@@ -268,6 +272,8 @@ struct CostTile: View {
         case (.claude, "max"): return "Max"
         case (.codex, "plus"): return "Plus"
         case (.codex, "pro"):  return "Pro"
+        case (.gemini, "pro"): return "Pro"
+        case (.gemini, "ultra"): return "Ultra"
         default: return nil
         }
     }

@@ -13,10 +13,10 @@ enum CostStyle: String, CaseIterable {
 
     var label: String {
         switch self {
-        case .dollar: "USD"
-        case .multi:  "VALUE"
-        case .tokens: "TOKENS"
-        case .spark:  "TREND"
+        case .dollar: return "USD"
+        case .multi:  return "VALUE"
+        case .tokens: return "TOKENS"
+        case .spark:  return "TREND"
         }
     }
 }

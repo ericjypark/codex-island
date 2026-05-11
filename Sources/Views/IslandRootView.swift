@@ -6,192 +6,166 @@ struct IslandRootView: View {
     @State private var hovering = false
     @State private var contentVisible = false
     @State private var pillsVisible = false
-    @State private var pulseToken: UUID?
+    @State private var pulseToken = UUID()
+
+    @ObservedObject private var usageStore = UsageStore.shared
+    @ObservedObject private var visibility = ProviderVisibilityStore.shared
+    @ObservedObject private var screenPref = ScreenPref.shared
+    @ObservedObject private var stylePref = StylePref.shared
+    @ObservedObject private var costStylePref = CostStylePref.shared
 
     /// Image decode from disk is ~150µs per call. Computed properties
     /// re-decoded both logos every render — inside a 120Hz TimelineView
     /// that's 240 main-thread decodes/sec. Cache once on appear.
     @State private var claudeLogo: NSImage?
     @State private var openaiLogo: NSImage?
+    @State private var geminiLogo: NSImage?
 
     var body: some View {
         VStack(spacing: 0) {
             // Only the rotating loading sweep needs per-frame re-renders
             // (its angle is a function of time). Everything else animates
-            // via withAnimation springs paced by display sync, so wrapping
-            // the whole tree in TimelineView would re-build every overlay
-            // and every gesture closure 120 times per second — competing
-            // with the spring for main-thread budget and showing up as
-            // hover-spring jank.
+            // on @Published triggers (hover, data refresh, alert engine).
             ZStack {
-                GlowLayer(
-                    isExpanded: model.state == .expanded,
-                    hovering: hovering
-                )
-
+                GlowLayer(isExpanded: model.state == .expanded, hovering: hovering)
+                
+                // Expanded content area.
                 if model.state == .expanded {
-                    ExpandedView(model: model)
-                        .opacity(contentVisible ? 1 : 0)
-                        // Slide down from -8 → 0 on enter pairs with the
-                        // 100ms→180ms opacity delay set in onHover. On
-                        // exit the offset never matters because the
-                        // content fully fades before the shape shrinks.
-                        .offset(y: contentVisible ? 0 : -8)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 14)
-                        .allowsHitTesting(contentVisible)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    VStack(spacing: 0) {
+                        PanelHeader(notch: model.notch)
+                        PagedContent()
+                        PanelFooter()
+                    }
+                    .opacity(contentVisible ? 1 : 0)
+                    .offset(y: contentVisible ? 0 : -8)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 14)
+                    .allowsHitTesting(contentVisible)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .transition(.opacity)
+                    .onAppear {
+                        // Re-sync scroll whenever we expand. CostStore/UsageStore
+                        // might have polled in the background while the island
+                        // was compact.
+                        Task {
+                            usageStore.refresh()
+                            CostStore.shared.refresh()
+                        }
+
+                        // Auto-dismiss hint for first-time users.
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.62) {
+                            guard !screenPref.hasSwipedScreen else { return }
+                            // visual nudge: swipe the screen 10pt then back.
+                        }
+                    }
                 }
             }
             .frame(width: model.size.width, height: model.size.height)
             .background {
-                    // Frosted halo. ultraThinMaterial is a backdrop blur of
-                    // whatever desktop content is behind the window. Lives
-                    // in .background AFTER .frame so it doesn't push the
-                    // ZStack's layout box larger than model.size — earlier
-                    // attempts that put the halo as a sibling inside the
-                    // ZStack with its own oversized .frame ended up
-                    // expanding the parent bounds, throwing the logo
-                    // overlays off and breaking the compact pill alignment
-                    // with the physical notch.
-                    //
-                    // .padding(-9) extends only the rendering by 9pt past
-                    // the silhouette on every side, no layout impact.
-                    // Opacity tied to contentVisible so it fades alongside
-                    // the panel content (220ms after hover-in, immediately
-                    // on hover-out) and the .frame here tracks model.size,
-                    // so the halo grows/shrinks with the spring morph.
-                    IslandShape()
-                        .fill(.ultraThinMaterial)
-                        .padding(-9)
-                        .blur(radius: 8)
-                        .opacity(contentVisible ? 0.55 : 0)
-                        .allowsHitTesting(false)
-                }
-                .overlay(alignment: .topLeading) {
-                    LogoOverlay(
-                        image: claudeLogo,
-                        color: IslandColor.claude,
-                        provider: .claude,
-                        edgePadding: logoEdgePadding,
-                        topPadding: max(0, (model.notch.height - 20) / 2)
-                    )
-                }
-                .overlay(alignment: .topTrailing) {
-                    LogoOverlay(
-                        image: openaiLogo,
-                        color: IslandColor.codex,
-                        provider: .codex,
-                        edgePadding: logoEdgePadding,
-                        topPadding: max(0, (model.notch.height - 20) / 2)
-                    )
-                }
-                .overlay(alignment: .topLeading) {
-                    // Pill lives in the new outboard slot (the 78pt the
-                    // silhouette grew on entering peek). 14pt inset from the
-                    // silhouette's new leading edge keeps it visually
-                    // breathing inside the rounded corner.
-                    if model.state != .compact {
-                        PeekPillOverlay(
-                            provider: .claude,
-                            topPadding: max(0, (model.notch.height - 14) / 2),
-                            pillsVisible: pillsVisible
-                        )
-                    }
-                }
-                .overlay(alignment: .topTrailing) {
-                    if model.state != .compact {
-                        PeekPillOverlay(
-                            provider: .codex,
-                            topPadding: max(0, (model.notch.height - 14) / 2),
-                            pillsVisible: pillsVisible
-                        )
-                    }
-                }
-                .overlay(alignment: .bottomLeading) {
-                    // Utility control, not dashboard status. Keep it in a
-                    // quiet corner so the footer remains about live data.
-                    if model.state == .expanded {
-                        SettingsButton()
-                            .opacity(contentVisible ? 1 : 0)
-                            .padding(6)
-                    }
-                }
-                .contentShape(IslandShape())
-                .onTapGesture {
-                    // Cmd-click cycles the visualization style of whichever
-                    // page is active. Usage rotates Ring/Bar/Stepped/Numeric/
-                    // Spark; cost rotates USD/VALUE/TOKENS/TREND.
-                    if NSEvent.modifierFlags.contains(.command) {
-                        switch ScreenPref.shared.screen {
-                        case .usage: StylePref.shared.cycle()
-                        case .cost:  CostStylePref.shared.cycle()
+                // Material background for the expanded panel content.
+                // Lives outside the silhouette so it can bleed past
+                // the silhouette on every side, no layout impact.
+                // Opacity tied to contentVisible so it fades alongside
+                // the panel content (220ms after hover-in, immediately
+                // on hover-out) and the .frame here tracks model.size,
+                // so the halo grows/shrinks with the spring morph.
+                IslandShape()
+                    .fill(.ultraThinMaterial)
+                    .padding(-9)
+                    .blur(radius: 8)
+                    .opacity(contentVisible ? 0.55 : 0)
+                    .allowsHitTesting(false)
+            }
+            .overlay(alignment: .top) {
+                // Unified Provider Units with "space-around" distribution.
+                // Fixed edge padding (14) and growing Spacers (min 12) between
+                // every unit. SwiftUI automatically distributes them evenly.
+                HStack(spacing: 0) {
+                    let visible = visibleProviders()
+                    let count = visible.count
+                    let leadingCount = count / 2
+                    
+                    Color.clear.frame(width: 14) // Fixed space before first element
+
+                    ForEach(Array(visible.enumerated()), id: \.offset) { idx, p in
+                        if idx > 0 {
+                            Spacer(minLength: 12) // Spacer that grows
                         }
-                        return
+                        
+                        unit(for: p, alignment: idx < leadingCount ? .leading : .trailing)
                     }
-                    // Plain click: enter the full panel. Works from .peek
-                    // (the common case after hover) or .compact (cold click).
-                    // Pills travel outward with the growing shape under the
-                    // single openMorph spring, then quietly retire after the
-                    // expanded content has settled.
-                    guard model.state == .peek || model.state == .compact else { return }
+
+                    Color.clear.frame(width: 14) // Fixed space after last element
+                }
+                .frame(width: model.size.width)
+                .frame(height: model.notch.height)
+            }
+            .overlay(alignment: .bottomLeading) {
+                // Utility control, not dashboard status. Keep it in a
+                // quiet corner so the footer remains about live data.
+                if model.state == .expanded {
+                    SettingsButton()
+                        .opacity(contentVisible ? 1 : 0)
+                        .padding(6)
+                }
+            }
+            .contentShape(IslandShape())
+            .onTapGesture {
+                // Cmd-click cycles the visualization style of whichever
+                // page is active. Usage rotates Ring/Bar/Stepped/Numeric/
+                // Spark; cost rotates USD/VALUE/TOKENS/TREND.
+                if NSEvent.modifierFlags.contains(.command) {
+                    switch ScreenPref.shared.screen {
+                    case .usage: StylePref.shared.cycle()
+                    case .cost:  CostStylePref.shared.cycle()
+                    }
+                    return
+                }
+                // Plain click: enter the full panel. Works from .peek
+                // (auto-crossing) or .compact (manual).
+                guard model.state != .expanded else { return }
+                withAnimation(.openMorph) {
+                    model.setState(.expanded)
+                    contentVisible = true
+                    pillsVisible = false // Chrome fades out
+                }
+            }
+            .onContinuousHover { phase in
+                switch phase {
+                case .active:
+                    hovering = true
+                    guard model.state == .compact else { return }
                     withAnimation(.openMorph) {
-                        model.setState(.expanded)
+                        model.setState(.peek)
                     }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
-                        guard model.state == .expanded else { return }
-                        withAnimation(.strongEaseOut) {
-                            contentVisible = true
-                        }
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    // Text/dots fade in slightly behind the shape expand.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                        guard hovering, model.state == .peek else { return }
                         withAnimation(.easeIn(duration: 0.18)) {
-                            pillsVisible = false
+                            pillsVisible = true
+                        }
+                    }
+                case .ended:
+                    hovering = false
+                    guard model.state != .compact else { return }
+                    withAnimation(.closeMorph) {
+                        model.setState(.compact)
+                    }
+                    withAnimation(.easeOut(duration: 0.08)) {
+                        pillsVisible = false
+                    }
+                    withAnimation(.easeOut(duration: 0.10)) {
+                        contentVisible = false
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
+                        guard !hovering else { return }
+                        withAnimation(.closeMorph) {
+                            model.setState(.compact)
                         }
                     }
                 }
-                .onHover { h in
-                    hovering = h
-                    if h {
-                        // Trackpad tap on hover-in. .levelChange is closer to
-                        // a volume-key tick than the .generic notification
-                        // pattern. No-op if haptics are off.
-                        NSHapticFeedbackManager.defaultPerformer.perform(
-                            .levelChange, performanceTime: .now
-                        )
-                        // PEEK ENTER: shape morphs out to peek width. Pills
-                        // fade in 60ms later so the eye sees the shape commit
-                        // first, then content arrives. Hover does NOT open
-                        // the full panel — that requires a click.
-                        if model.state == .compact {
-                            withAnimation(.openMorph) {
-                                model.setState(.peek)
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
-                                guard model.state == .peek else { return }
-                                withAnimation(.easeOut(duration: 0.18)) {
-                                    pillsVisible = true
-                                }
-                            }
-                        }
-                    } else {
-                        // EXIT: pills fade first, then shape collapses.
-                        // Branches by state so peek-out shrinks to compact
-                        // and expanded-out collapses the panel content too.
-                        withAnimation(.easeOut(duration: 0.08)) {
-                            pillsVisible = false
-                        }
-                        withAnimation(.easeOut(duration: 0.10)) {
-                            contentVisible = false
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
-                            guard !hovering else { return }
-                            withAnimation(.closeMorph) {
-                                model.setState(.compact)
-                            }
-                        }
-                    }
-                }
+            }
+            
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -207,7 +181,14 @@ struct IslandRootView: View {
                 openaiLogo = Bundle.main.url(forResource: "openai_logo", withExtension: "pdf")
                     .flatMap { NSImage(contentsOf: $0) }
             }
+            if geminiLogo == nil {
+                geminiLogo = NSImage(systemSymbolName: "sparkles", accessibilityDescription: "Gemini")
+            }
+            model.visibleProviderCount = visibleProviders().count
         }
+        .onChange(of: visibility.claudeVisible) { _ in model.visibleProviderCount = visibleProviders().count }
+        .onChange(of: visibility.codexVisible) { _ in model.visibleProviderCount = visibleProviders().count }
+        .onChange(of: visibility.geminiVisible) { _ in model.visibleProviderCount = visibleProviders().count }
         .onReceive(AlertEngine.shared.$pulseEvent) { event in
             guard let event, event.id != pulseToken else { return }
             pulseToken = event.id
@@ -264,17 +245,89 @@ struct IslandRootView: View {
         }
     }
 
-    /// Logo's distance from the silhouette's leading/trailing edge. In
-    /// `.peek` we offset the logo inward by `pillSlotWidth` so it stays
-    /// physically pinned to its compact position while the silhouette grows
-    /// outward — leaving the new outboard space for the percentage pill.
-    /// Compact and expanded keep the logo at the silhouette edge (existing
-    /// behavior; expanded panel layout depends on it).
-    private var logoEdgePadding: CGFloat {
-        switch model.state {
-        case .compact, .expanded: return 9
-        case .peek:               return model.pillSlotWidth + 9
+    private struct ProviderUnits {
+        var leading: [VisibleLogoProvider]
+        var trailing: [VisibleLogoProvider]
+    }
+
+    private func balancedDistribution(for visible: [VisibleLogoProvider]) -> ProviderUnits {
+        var units = ProviderUnits(leading: [], trailing: [])
+        let count = visible.count
+        
+        // For N=3: 1 leading, 2 trailing. [Claude] | [Notch] | [Codex, Gemini]
+        // This keeps Codex in the middle of the whole sequence.
+        let trailingCount = count / 2
+        let leadingCount = count - trailingCount
+        
+        for (idx, p) in visible.enumerated() {
+            if idx < leadingCount {
+                units.leading.append(p)
+            } else {
+                units.trailing.append(p)
+            }
         }
+        return units
+    }
+
+    @ViewBuilder
+    private func unit(for p: VisibleLogoProvider, alignment: HorizontalAlignment) -> some View {
+        let isVisible = ProviderVisibilityStore.shared.effectiveVisible(provider: p.provider)
+        let isCompact = model.state == .compact
+        
+        NotchPeekPill(
+            usage: currentUsage(for: p.provider),
+            loading: usageStore.loading,
+            tint: p.color,
+            alignment: alignment,
+            severity: currentSeverity(for: p.provider),
+            icon: p.logo,
+            isCompact: isCompact
+        )
+        .opacity(isVisible ? 1 : 0)
+        .animation(.openMorph, value: isVisible)
+        .offset(x: isCompact ? 0 : (pillsVisible ? 0 : (alignment == .leading ? -6 : 6)))
+        .opacity(isCompact ? 1 : (pillsVisible ? 1 : 0))
+    }
+
+    private func currentUsage(for provider: AlertEngine.Provider) -> WindowUsage {
+        switch provider {
+        case .claude: return usageStore.claude.fiveHour
+        case .codex:  return usageStore.codex.fiveHour
+        case .gemini: return usageStore.gemini.fiveHour
+        }
+    }
+
+    private func currentSeverity(for provider: AlertEngine.Provider) -> AlertEngine.Severity {
+        switch provider {
+        case .claude: return AlertEngine.shared.claudeSeverity
+        case .codex:  return AlertEngine.shared.codexSeverity
+        case .gemini: return AlertEngine.shared.geminiSeverity
+        }
+    }
+
+    private struct VisibleLogoProvider {
+        let provider: AlertEngine.Provider
+        let logo: NSImage?
+        let color: Color
+    }
+
+    private func visibleProviders() -> [VisibleLogoProvider] {
+        var out: [VisibleLogoProvider] = []
+        if ProviderVisibilityStore.shared.claudeVisible {
+            out.append(VisibleLogoProvider(provider: .claude, logo: claudeLogo, color: IslandColor.claude))
+        }
+        if ProviderVisibilityStore.shared.codexVisible {
+            out.append(VisibleLogoProvider(provider: .codex, logo: openaiLogo, color: IslandColor.codex))
+        }
+        if ProviderVisibilityStore.shared.geminiVisible {
+            out.append(VisibleLogoProvider(provider: .gemini, logo: geminiLogo, color: IslandColor.gemini))
+        }
+        return out
+    }
+
+    /// Logo's distance from the silhouette's leading/trailing edge.
+    private var logoEdgePadding: CGFloat {
+        return 0
     }
 }
 
@@ -356,9 +409,9 @@ private struct GlowLayer: View {
     }
 }
 
-/// Per-provider brand logo overlay. Observes only ProviderVisibilityStore
-/// so a UsageStore/CostStore tick doesn't re-render the logo image or
-/// re-evaluate its accessibility label.
+/// Per-provider brand logo overlay.
+/// NOTE: This is now mostly deprecated by NotchPeekPill pairing,
+/// but kept for types/consistency until final cleanup.
 private struct LogoOverlay: View {
     let image: NSImage?
     let color: Color
@@ -369,12 +422,6 @@ private struct LogoOverlay: View {
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
 
     var body: some View {
-        // Hidden providers fully drop out — header / peek pill / chrome
-        // are gated identically. `.opacity(isVisible ? 1 : 0)` keeps the
-        // view in the layout (so other overlays don't reflow) but makes
-        // it invisible, and the explicit `.animation(.openMorph, value:)`
-        // pairs the chrome fade with the panel layout swap when the user
-        // toggles a provider in Settings.
         if let image {
             Image(nsImage: image)
                 .resizable()
@@ -399,14 +446,12 @@ private struct LogoOverlay: View {
         switch provider {
         case .claude: return "Claude"
         case .codex:  return "OpenAI"
+        case .gemini: return "Gemini"
         }
     }
 }
 
-/// Per-provider peek pill overlay. Observes ProviderVisibilityStore,
-/// UsageStore, and AlertEngine — but not CostStore, so a Codex log
-/// scan completing doesn't re-render the pill that has no cost data
-/// in it.
+/// Percentage pill container — Logic moved into units loop.
 private struct PeekPillOverlay: View {
     let provider: AlertEngine.Provider
     let topPadding: CGFloat
@@ -417,79 +462,7 @@ private struct PeekPillOverlay: View {
     @ObservedObject private var alerts = AlertEngine.shared
 
     var body: some View {
-        let window = currentWindow
-        NotchPeekPill(
-            usage: window,
-            loading: usageStore.loading,
-            tint: tint,
-            alignment: provider == .claude ? .leading : .trailing,
-            severity: severity
-        )
-        .padding(provider == .claude ? .leading : .trailing, 14)
-        .padding(.top, topPadding)
-        // Two opacity bindings stack:
-        //   - `pillsVisible` is the peek lifecycle (hover-in / hover-out).
-        //   - `isVisible` is the user's settings toggle.
-        // Both must be 1 to render. Animating `isVisible` with the same
-        // openMorph spring as the panel layout keeps the toggle fade in
-        // lockstep with the rest of the chrome.
-        .opacity((pillsVisible && isVisible) ? 1 : 0)
-        .animation(.openMorph, value: isVisible)
-        .offset(x: pillsVisible ? 0 : (provider == .claude ? -6 : 6))
-        .allowsHitTesting(false)
-        .accessibilityLabel(peekLabel(for: window, provider: providerLabel))
-        // Mirror the visual opacity gate exactly — both `pillsVisible` and
-        // `isVisible` must be true for the pill to render. Keying the
-        // accessibility hide on only `isVisible` lets VoiceOver reach a
-        // pill that is visually invisible during the peek-out lifecycle.
-        .accessibilityHidden(!(pillsVisible && isVisible))
-    }
-
-    private var isVisible: Bool {
-        visibility.effectiveVisible(provider: provider)
-    }
-
-    private var currentWindow: WindowUsage {
-        switch provider {
-        case .claude: return usageStore.claude.fiveHour
-        case .codex:  return usageStore.codex.fiveHour
-        }
-    }
-
-    private var severity: AlertEngine.Severity {
-        switch provider {
-        case .claude: return alerts.claudeSeverity
-        case .codex:  return alerts.codexSeverity
-        }
-    }
-
-    private var tint: Color {
-        switch provider {
-        case .claude: return IslandColor.claude
-        case .codex:  return IslandColor.codex
-        }
-    }
-
-    private var providerLabel: String {
-        switch provider {
-        case .claude: return "Claude"
-        case .codex:  return "Codex"
-        }
-    }
-
-    private func peekLabel(for window: WindowUsage, provider: String) -> String {
-        if window.error != nil && window.usedPercent == 0 {
-            return "\(provider): no data for 5-hour window"
-        }
-        let pct = window.percentInt
-        guard let resetAt = window.resetAt else {
-            return "\(provider): \(pct) percent of 5-hour window used"
-        }
-        let remaining = max(0, resetAt.timeIntervalSinceNow)
-        let resetPhrase: String = remaining >= 3600
-            ? "resets in \(Int((remaining / 3600).rounded(.down))) hours"
-            : "resets in \(max(1, Int((remaining / 60).rounded(.down)))) minutes"
-        return "\(provider): \(pct) percent of 5-hour window used, \(resetPhrase)"
+        EmptyView() // Moved into responsive units loop
     }
 }
 
@@ -497,19 +470,6 @@ private struct PeekPillOverlay: View {
 /// fetching. Owns its own TimelineView so the parent (IslandRootView) doesn't
 /// re-render every overlay alongside the sweep — that was competing with the
 /// hover spring for main-thread budget.
-///
-/// Tick rate is 30Hz (was 120Hz). 3.6s/revolution at 30Hz = 12° per frame,
-/// indistinguishable from 120Hz to the eye for a slow continuous orbit but
-/// 4× cheaper on the main thread. The bigger CPU saving comes from gating
-/// `active` on `!isWindowOccluded` upstream — when a fullscreen app or
-/// another window covers the menu bar entirely, the sweep stops rendering
-/// (the user can't see it anyway), dropping idle CPU to ~0%.
-///
-/// Earlier attempts to push rotation into Core Animation (CAGradientLayer or
-/// `.rotationEffect` over a static gradient) all subtly changed the glow
-/// feel — SwiftUI's per-frame conic re-shading produces an alive,
-/// atmospheric look that a rotated static texture loses. This is the
-/// minimum-cost approach that preserves the exact original render.
 private struct LoadingSweep: View {
     let active: Bool
     /// Color of the orbiting trail. Cobalt by default; switches to amber

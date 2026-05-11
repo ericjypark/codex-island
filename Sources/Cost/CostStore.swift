@@ -16,11 +16,13 @@ final class CostStore: ObservableObject {
 
     @Published var claude: ProviderCost = .empty
     @Published var codex: ProviderCost = .empty
+    @Published var gemini: ProviderCost = .empty
     @Published var claudeLoading = false
     @Published var codexLoading = false
+    @Published var geminiLoading = false
     @Published var lastUpdated: Date?
 
-    var loading: Bool { claudeLoading || codexLoading }
+    var loading: Bool { claudeLoading || codexLoading || geminiLoading }
 
     private static let cacheKey = "MacIsland.costCache.v3"
     private static let cacheEncoder = JSONEncoder()
@@ -66,6 +68,14 @@ final class CostStore: ObservableObject {
                 await self?.commitCodex(cost)
             }
         }
+        if !geminiLoading {
+            geminiLoading = true
+            Task.detached(priority: .userInitiated) { [weak self] in
+                let events = GeminiLogReader.scan()
+                let cost = Self.summarize(events: events)
+                await self?.commitGemini(cost)
+            }
+        }
     }
 
     private func commitClaude(_ cost: ProviderCost) {
@@ -82,6 +92,13 @@ final class CostStore: ObservableObject {
         persist()
     }
 
+    private func commitGemini(_ cost: ProviderCost) {
+        self.gemini = cost
+        self.geminiLoading = false
+        self.lastUpdated = Date()
+        persist()
+    }
+
     func startAutoRefresh() {
         stopAutoRefresh()
         refresh()
@@ -89,7 +106,8 @@ final class CostStore: ObservableObject {
         intervalCancellable = RefreshIntervalStore.shared.$seconds
             .dropFirst()
             .sink { [weak self] _ in
-                Task { @MainActor in self?.armTimer() }
+                guard let self else { return }
+                Task { @MainActor in self.armTimer() }
             }
     }
 
@@ -103,7 +121,8 @@ final class CostStore: ObservableObject {
     private func armTimer() {
         pollTimer?.invalidate()
         pollTimer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.refresh() }
+            guard let self else { return }
+            Task { @MainActor in self.refresh() }
         }
     }
 
@@ -347,6 +366,12 @@ final class CostStore: ObservableObject {
            canonical.dropFirst().first?.isNumber == true {
             return canonical.prefix(1).uppercased() + canonical.dropFirst()
         }
+        // Google: "gemini-3.1-pro" → "Gemini 3.1 Pro"
+        if canonical.hasPrefix("gemini-") {
+            return canonical.replacingOccurrences(of: "gemini-", with: "Gemini ")
+                .replacingOccurrences(of: "flash-lite", with: "Flash-Lite")
+                .capitalized
+        }
         return canonical
     }
 
@@ -369,22 +394,32 @@ final class CostStore: ObservableObject {
         var claudeMonth: Double
         var codexToday: Double
         var codexMonth: Double
+        var geminiToday: Double = 0
+        var geminiMonth: Double = 0
         var claudeTodayTokens: Int
         var claudeMonthTokens: Int
         var codexTodayTokens: Int
         var codexMonthTokens: Int
+        var geminiTodayTokens: Int = 0
+        var geminiMonthTokens: Int = 0
         var claudeTodayBillable: Int = 0
         var claudeMonthBillable: Int = 0
         var codexTodayBillable: Int = 0
         var codexMonthBillable: Int = 0
+        var geminiTodayBillable: Int = 0
+        var geminiMonthBillable: Int = 0
         var claudeTodaySeries: [Double]
         var claudeMonthSeries: [Double]
         var codexTodaySeries: [Double]
         var codexMonthSeries: [Double]
+        var geminiTodaySeries: [Double] = []
+        var geminiMonthSeries: [Double] = []
         var claudeTodayUnknown: [String] = []
         var claudeMonthUnknown: [String] = []
         var codexTodayUnknown: [String] = []
         var codexMonthUnknown: [String] = []
+        var geminiTodayUnknown: [String] = []
+        var geminiMonthUnknown: [String] = []
         var lastUpdated: Date?
     }
 
@@ -396,22 +431,32 @@ final class CostStore: ObservableObject {
             claudeMonth: claude.month.dollars,
             codexToday: codex.today.dollars,
             codexMonth: codex.month.dollars,
+            geminiToday: gemini.today.dollars,
+            geminiMonth: gemini.month.dollars,
             claudeTodayTokens: claude.today.tokens,
             claudeMonthTokens: claude.month.tokens,
             codexTodayTokens: codex.today.tokens,
             codexMonthTokens: codex.month.tokens,
+            geminiTodayTokens: gemini.today.tokens,
+            geminiMonthTokens: gemini.month.tokens,
             claudeTodayBillable: claude.today.billableTokens,
             claudeMonthBillable: claude.month.billableTokens,
             codexTodayBillable: codex.today.billableTokens,
             codexMonthBillable: codex.month.billableTokens,
+            geminiTodayBillable: gemini.today.billableTokens,
+            geminiMonthBillable: gemini.month.billableTokens,
             claudeTodaySeries: claude.today.series,
             claudeMonthSeries: claude.month.series,
             codexTodaySeries: codex.today.series,
             codexMonthSeries: codex.month.series,
+            geminiTodaySeries: gemini.today.series,
+            geminiMonthSeries: gemini.month.series,
             claudeTodayUnknown: claude.today.unknownModels,
             claudeMonthUnknown: claude.month.unknownModels,
             codexTodayUnknown: codex.today.unknownModels,
             codexMonthUnknown: codex.month.unknownModels,
+            geminiTodayUnknown: gemini.today.unknownModels,
+            geminiMonthUnknown: gemini.month.unknownModels,
             lastUpdated: lastUpdated
         )
         if let data = try? Self.cacheEncoder.encode(snap) {
@@ -445,6 +490,17 @@ final class CostStore: ObservableObject {
                               series: snap.codexMonthSeries,
                               label: CostBucketing.currentMonthLabel(), error: nil,
                               unknownModels: snap.codexMonthUnknown)
+        )
+        self.gemini = ProviderCost(
+            today: CostWindow(dollars: snap.geminiToday, tokens: snap.geminiTodayTokens,
+                              billableTokens: snap.geminiTodayBillable,
+                              series: snap.geminiTodaySeries, label: "Today", error: nil,
+                              unknownModels: snap.geminiTodayUnknown),
+            month: CostWindow(dollars: snap.geminiMonth, tokens: snap.geminiMonthTokens,
+                              billableTokens: snap.geminiMonthBillable,
+                              series: snap.geminiMonthSeries,
+                              label: CostBucketing.currentMonthLabel(), error: nil,
+                              unknownModels: snap.geminiMonthUnknown)
         )
         self.lastUpdated = snap.lastUpdated
     }

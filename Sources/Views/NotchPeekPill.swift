@@ -17,10 +17,43 @@ struct NotchPeekPill: View {
     let tint: Color
     let alignment: HorizontalAlignment
     var severity: AlertEngine.Severity = .none
+    var icon: NSImage? = nil
+    var isCompact: Bool = false
 
     var body: some View {
+        HStack(spacing: 8) {
+            if alignment == .leading {
+                statsGroup
+                logoGroup
+            } else {
+                logoGroup
+                statsGroup
+            }
+        }
+        .monospacedDigit()
+        .lineLimit(1)
+        .fixedSize()
+    }
+
+    @ViewBuilder
+    private var logoGroup: some View {
+        if let icon {
+            Image(nsImage: icon)
+                .resizable()
+                .renderingMode(.template)
+                .aspectRatio(contentMode: .fit)
+                .foregroundStyle(effectiveTint)
+                .frame(width: 20, height: 20)
+                .accessibilityLabel(providerLabel)
+        }
+    }
+
+    @ViewBuilder
+    private var statsGroup: some View {
         Group {
-            if showSpinner {
+            if isCompact {
+                EmptyView()
+            } else if showSpinner {
                 LoadingDot()
             } else if showDash {
                 Text("—%")
@@ -46,9 +79,11 @@ struct NotchPeekPill: View {
                 }
             }
         }
-        .monospacedDigit()
-        .lineLimit(1)
-        .fixedSize()
+    }
+
+    private var providerLabel: String {
+        // Accessibility label is handled by the parent stats label
+        "Provider Logo"
     }
 
     private var warningGlyph: some View {

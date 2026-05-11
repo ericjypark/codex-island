@@ -6,10 +6,14 @@ extension View {
     /// the basic opacity crossfade so the build still runs on Ventura.
     @ViewBuilder
     func numericTransition(value: Double) -> some View {
+        #if compiler(>=5.9)
         if #available(macOS 14.0, *) {
             self.contentTransition(.numericText(value: value))
         } else {
             self.contentTransition(.opacity)
         }
+        #else
+        self.contentTransition(.opacity)
+        #endif
     }
 }

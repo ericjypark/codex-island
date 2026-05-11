@@ -18,42 +18,54 @@ struct UsageView: View {
     private var style: ChartStyle { pref.style }
 
     var body: some View {
-        let claudeOn = visibility.claudeVisible
-        let codexOn = visibility.codexVisible
+        let visible = visibleProviders()
 
         HStack(spacing: 0) {
-            switch (claudeOn, codexOn) {
-            case (true, true):
-                ChartsBlock(color: IslandColor.claude, usage: store.claude,
-                            style: style, seed: 1)
-                hairline
-                ChartsBlock(color: IslandColor.codex, usage: store.codex,
-                            style: style, seed: 3)
-            case (true, false):
-                ChartsBlock(color: IslandColor.claude, usage: store.claude,
-                            style: style, seed: 1)
-                hairline
-                PerModelBreakdown(provider: .claude, metric: .tokens)
-                    .frame(maxWidth: .infinity, alignment: .top)
-                    .padding(.horizontal, 12)
-                    .transition(breakdownTransition)
-            case (false, true):
-                PerModelBreakdown(provider: .codex, metric: .tokens)
-                    .frame(maxWidth: .infinity, alignment: .top)
-                    .padding(.horizontal, 12)
-                    .transition(breakdownTransition)
-                hairline
-                ChartsBlock(color: IslandColor.codex, usage: store.codex,
-                            style: style, seed: 3)
-            case (false, false):
+            if visible.isEmpty {
                 BothHiddenPlaceholder()
                     .transition(.opacity)
+            } else if visible.count == 1 {
+                let p = visible[0]
+                ChartsBlock(color: p.color, usage: p.usage, style: style, seed: p.seed)
+                hairline
+                PerModelBreakdown(provider: p.provider, metric: .tokens)
+                    .frame(maxWidth: .infinity, alignment: .top)
+                    .padding(.horizontal, 12)
+                    .transition(breakdownTransition)
+            } else {
+                ForEach(visible, id: \.provider) { p in
+                    if p.provider != visible.first?.provider {
+                        hairline
+                    }
+                    ChartsBlock(color: p.color, usage: p.usage, style: style, seed: p.seed)
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, 22)
         .padding(.top, 12)
         .padding(.bottom, 6)
+    }
+
+    private struct VisibleProvider {
+        let provider: AlertEngine.Provider
+        let color: Color
+        let usage: AppUsage
+        let seed: Int
+    }
+
+    private func visibleProviders() -> [VisibleProvider] {
+        var out: [VisibleProvider] = []
+        if visibility.claudeVisible {
+            out.append(VisibleProvider(provider: .claude, color: IslandColor.claude, usage: store.claude, seed: 1))
+        }
+        if visibility.codexVisible {
+            out.append(VisibleProvider(provider: .codex, color: IslandColor.codex, usage: store.codex, seed: 3))
+        }
+        if visibility.geminiVisible {
+            out.append(VisibleProvider(provider: .gemini, color: IslandColor.gemini, usage: store.gemini, seed: 5))
+        }
+        return out
     }
 
     /// Slight scale + opacity gives the breakdown half a sense of "expanding

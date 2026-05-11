@@ -341,6 +341,84 @@ enum UsageFetcher {
         return WindowUsage(usedPercent: min(1, max(0, normalized)), resetAt: resetAt, error: nil)
     }
 
+    // MARK: - Gemini
+
+    /// Gemini usage lives at cloudcode-pa.googleapis.com and accepts
+    /// the access_token from ~/.gemini/oauth_creds.json.
+    static func fetchGemini() async -> AppUsage {
+        guard let token = readGeminiAccessToken() else {
+            return errorPair("auth required — run gemini")
+        }
+
+        let url = URL(string: "https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota")!
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body = ["project": "-"]
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+
+            if status == 401 {
+                return errorPair("auth expired — gemini login")
+            }
+            if status != 200 {
+                return errorPair("http \(status)")
+            }
+
+            guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let buckets = obj["buckets"] as? [[String: Any]] else {
+                return errorPair("parse error")
+            }
+
+            // Find the most relevant model for the UI (Pro for 5h, Flash for weekly as proxy)
+            let proBucket = buckets.first { ($0["modelId"] as? String)?.contains("pro") == true }
+            let flashBucket = buckets.first { ($0["modelId"] as? String)?.contains("flash") == true }
+
+            return AppUsage(
+                fiveHour: parseGeminiBucket(proBucket),
+                weekly: parseGeminiBucket(flashBucket),
+                plan: "pro"
+            )
+        } catch {
+            return errorPair(error.localizedDescription)
+        }
+    }
+
+    private static func parseGeminiBucket(_ obj: [String: Any]?) -> WindowUsage {
+        guard let d = obj else { return .unknown }
+        // remainingFraction is in [0, 1]. usedPercent = 1 - remainingFraction.
+        let remaining = (d["remainingFraction"] as? Double) ?? 1.0
+        let used = 1.0 - remaining
+        
+        var resetAt: Date?
+        if let s = d["resetTime"] as? String {
+            let f = ISO8601DateFormatter()
+            f.formatOptions = [.withInternetDateTime]
+            resetAt = f.date(from: s)
+        }
+        return WindowUsage(usedPercent: min(1, max(0, used)), resetAt: resetAt, error: nil)
+    }
+
+    private static func readGeminiAccessToken() -> String? {
+        let path = NSString("~/.gemini/oauth_creds.json").expandingTildeInPath
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let token = json["access_token"] as? String else { return nil }
+
+        // Optional: check expiry_date (milliseconds since epoch)
+        if let expiry = json["expiry_date"] as? Double {
+            let now = Date().timeIntervalSince1970 * 1000
+            if now > expiry { return nil }
+        }
+
+        return token
+    }
+
     private struct RefreshedTokens {
         let accessToken: String
         let refreshToken: String

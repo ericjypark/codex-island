@@ -18,25 +18,30 @@ final class IslandModel: ObservableObject {
 
     /// Per-side outboard slot that houses the peek-state percentage pill.
     /// Sized for "100% · Nh" worst case at the chosen pill typography.
-    /// Fixed (not text-measured) so percentage updates don't jitter the
-    /// silhouette width during refresh. Grown symmetrically on both sides
-    /// regardless of which provider is visible — keeps the silhouette
-    /// balanced over the physical notch.
-    let pillSlotWidth: CGFloat = 78
+    /// Dynamic based on visibleProviderCount to support horizontal arrangement.
+    var pillSlotWidth: CGFloat {
+        let maxPerSide = (visibleProviderCount + 1) / 2
+        // 82pt per unit, 12pt spacing.
+        return CGFloat(max(1, maxPerSide)) * 82 + CGFloat(max(0, maxPerSide - 1)) * 12
+    }
 
     /// Visible expanded panel width.
-    private let expandedWidth: CGFloat = 720
+    let expandedWidth: CGFloat = 720
 
     /// Visible expanded panel content height. The shape sits flush with the
     /// top of the screen, so we add notch.height of "filler" so visible
     /// content sits BELOW the notch line.
-    private let expandedContentHeight: CGFloat = 172
+    let expandedContentHeight: CGFloat = 202
 
     /// Detection-pure notch from `NotchInfo.detect`. Kept separate from
     /// `notch` (which has the user's spacing override applied) so
     /// `updateNotch`'s diff guard isn't confused by override-induced
     /// width changes that originate from the store, not the screen.
     private var rawNotch: NotchInfo
+
+    @Published var visibleProviderCount: Int = 2 {
+        didSet { recomputeSize() }
+    }
 
     private var subs: Set<AnyCancellable> = []
 

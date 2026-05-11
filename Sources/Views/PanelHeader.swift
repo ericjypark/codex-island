@@ -13,42 +13,65 @@ struct PanelHeader: View {
     @ObservedObject private var usageStore = UsageStore.shared
 
     var body: some View {
+        let visible = visibleProviders()
+
         HStack(spacing: 0) {
-            let claudeOn = visibility.claudeVisible
-            let codexOn = visibility.codexVisible
-            providerTitle(name: "Claude", tag: usageStore.claude.plan?.uppercased(),
-                          color: IslandColor.claude, alignment: .leading)
-                .opacity(claudeOn ? 1 : 0)
-                .animation(.openMorph, value: claudeOn)
-                .accessibilityHidden(!claudeOn)
-            Color.clear.frame(width: notch.width)
-            providerTitle(name: "Codex", tag: usageStore.codex.plan?.uppercased(),
-                          color: IslandColor.codex, alignment: .trailing)
-                .opacity(codexOn ? 1 : 0)
-                .animation(.openMorph, value: codexOn)
-                .accessibilityHidden(!codexOn)
+            if visible.isEmpty {
+                Spacer()
+            } else if visible.count == 1 {
+                let p = visible[0]
+                providerTitle(name: p.name, tag: p.tag, color: p.color)
+                    .frame(maxWidth: .infinity)
+                // When 1 provider, UsageView shows the chart on the left
+                // and breakdown on the right. We center the title over
+                // the chart half to align with it.
+                Spacer()
+            } else {
+                ForEach(visible, id: \.provider) { p in
+                    providerTitle(name: p.name, tag: p.tag, color: p.color)
+                        .frame(maxWidth: .infinity)
+                }
+            }
         }
         .frame(height: 22)
-        .padding(.horizontal, 16)
-        .padding(.top, 4)
-        .padding(.bottom, max(0, notch.height - 22 - 4))
+        .padding(.horizontal, 22)
+        // Push the entire header below the hardware notch so the center title is visible.
+        .padding(.top, max(0, notch.height) + 4)
+        .padding(.bottom, 8)
+    }
+
+    private struct VisibleHeaderProvider {
+        let provider: AlertEngine.Provider
+        let name: String
+        let tag: String?
+        let color: Color
+    }
+
+    private func visibleProviders() -> [VisibleHeaderProvider] {
+        var out: [VisibleHeaderProvider] = []
+        if visibility.claudeVisible {
+            out.append(VisibleHeaderProvider(provider: .claude, name: "Claude", tag: usageStore.claude.plan?.uppercased(), color: IslandColor.claude))
+        }
+        if visibility.codexVisible {
+            out.append(VisibleHeaderProvider(provider: .codex, name: "Codex", tag: usageStore.codex.plan?.uppercased(), color: IslandColor.codex))
+        }
+        if visibility.geminiVisible {
+            out.append(VisibleHeaderProvider(provider: .gemini, name: "Gemini", tag: usageStore.gemini.plan?.uppercased(), color: IslandColor.gemini))
+        }
+        return out
     }
 
     @ViewBuilder
     private func providerTitle(
         name: String,
         tag: String?,
-        color: Color,
-        alignment: HorizontalAlignment
+        color: Color
     ) -> some View {
-        // Push past where the overlay logo lands: 9 leading + 20 logo + 8 gap.
-        let logoOffset: CGFloat = 9 + 20 + 8
-
-        let content = HStack(spacing: 8) {
+        HStack(spacing: 8) {
             Text(name)
                 .font(Typography.providerTitle)
                 .foregroundStyle(.white)
-            if let tag {
+            if let tag, !tag.isEmpty {
                 Text(tag)
                     .font(Typography.chip)
                     .tracking(0.8)
@@ -64,20 +87,6 @@ struct PanelHeader: View {
                             )
                     )
             }
-        }
-
-        if alignment == .leading {
-            HStack {
-                content.padding(.leading, logoOffset)
-                Spacer(minLength: 0)
-            }
-            .frame(maxWidth: .infinity)
-        } else {
-            HStack {
-                Spacer(minLength: 0)
-                content.padding(.trailing, logoOffset)
-            }
-            .frame(maxWidth: .infinity)
         }
     }
 }

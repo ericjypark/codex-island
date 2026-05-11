@@ -9,6 +9,7 @@ final class UsageStore: ObservableObject {
 
     @Published var claude: AppUsage = .empty
     @Published var codex: AppUsage = .empty
+    @Published var gemini: AppUsage = .empty
     @Published var lastUpdated: Date?
     @Published var loading = false
     /// Set while a `claude auth login` flow is in progress (spawned + still
@@ -76,8 +77,10 @@ final class UsageStore: ObservableObject {
         refreshTask = Task {
             async let codexResult = UsageFetcher.fetchCodex()
             async let claudeResult = UsageFetcher.fetchClaude()
+            async let geminiResult = UsageFetcher.fetchGemini()
             let c = await codexResult
             let cl = await claudeResult
+            let g = await geminiResult
 
             // Cancellation = network monitor saw the path come up while we
             // were mid-flight on a dead one. The fetched values are the
@@ -101,6 +104,9 @@ final class UsageStore: ObservableObject {
             if !UsageStore.isErrorOnly(cl) || UsageStore.isErrorOnly(self.claude) {
                 self.claude = cl
             }
+            if !UsageStore.isErrorOnly(g) || UsageStore.isErrorOnly(self.gemini) {
+                self.gemini = g
+            }
             self.lastUpdated = Date()
             self.loading = false
         }
@@ -119,7 +125,7 @@ final class UsageStore: ObservableObject {
     /// next scheduled poll will overwrite these values with real data.
     /// Each call uses fresh `resetAt` timestamps so the alert engine
     /// treats it as a new reset window and re-evaluates crossings.
-    func injectPreviewUsage(claudeFiveHour: Double, codexFiveHour: Double) {
+    func injectPreviewUsage(claudeFiveHour: Double, codexFiveHour: Double, geminiFiveHour: Double) {
         let now = Date()
         let fiveHourReset = now.addingTimeInterval(2 * 3600 + 14 * 60)
         let weeklyReset = now.addingTimeInterval(4 * 86400 + 6 * 3600)
@@ -148,6 +154,19 @@ final class UsageStore: ObservableObject {
                 error: nil
             ),
             plan: codex.plan ?? "pro"
+        )
+        self.gemini = AppUsage(
+            fiveHour: WindowUsage(
+                usedPercent: geminiFiveHour,
+                resetAt: fiveHourReset,
+                error: nil
+            ),
+            weekly: WindowUsage(
+                usedPercent: 0.15,
+                resetAt: weeklyReset,
+                error: nil
+            ),
+            plan: gemini.plan ?? "ultra"
         )
         self.lastUpdated = now
     }
@@ -196,7 +215,8 @@ final class UsageStore: ObservableObject {
         intervalCancellable = RefreshIntervalStore.shared.$seconds
             .dropFirst()
             .sink { [weak self] _ in
-                Task { @MainActor in self?.armTimer() }
+                guard let self else { return }
+                Task { @MainActor in self.armTimer() }
             }
         startNetworkMonitor()
     }
@@ -214,7 +234,8 @@ final class UsageStore: ObservableObject {
     private func armTimer() {
         pollTimer?.invalidate()
         pollTimer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.refresh() }
+            guard let self else { return }
+            Task { @MainActor in self.refresh() }
         }
     }
 
