@@ -37,8 +37,8 @@ SU_FEED_URL="${SU_FEED_URL:-https://github.com/ericjypark/codex-island/releases/
 rm -rf "$BUILD_DIR"
 mkdir -p "$MACOS_DIR" "$RES_DIR" "$FRAMEWORKS_DIR"
 
-cp ./Resources/claude_logo.png "$RES_DIR/claude_logo.png"
-cp ./Resources/openai_logo.png "$RES_DIR/openai_logo.png"
+cp ./Resources/claude_logo.pdf "$RES_DIR/claude_logo.pdf"
+cp ./Resources/openai_logo.pdf "$RES_DIR/openai_logo.pdf"
 cp ./Resources/codexisland_logo.png "$RES_DIR/codexisland_logo.png"
 cp ./Resources/CodexIsland.icns "$RES_DIR/CodexIsland.icns"
 

@@ -200,11 +200,11 @@ struct IslandRootView: View {
         .accessibilityHint(accessibilityHintForState)
         .onAppear {
             if claudeLogo == nil {
-                claudeLogo = Bundle.main.url(forResource: "claude_logo", withExtension: "png")
+                claudeLogo = Bundle.main.url(forResource: "claude_logo", withExtension: "pdf")
                     .flatMap { NSImage(contentsOf: $0) }
             }
             if openaiLogo == nil {
-                openaiLogo = Bundle.main.url(forResource: "openai_logo", withExtension: "png")
+                openaiLogo = Bundle.main.url(forResource: "openai_logo", withExtension: "pdf")
                     .flatMap { NSImage(contentsOf: $0) }
             }
         }
