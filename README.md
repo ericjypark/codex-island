@@ -1,5 +1,7 @@
 # CodexIsland
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 <p align="center">
   <img src="Assets/codexisland-logo.png" width="160" alt="CodexIsland logo">
 </p>
