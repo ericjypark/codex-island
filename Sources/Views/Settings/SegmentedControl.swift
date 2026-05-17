@@ -14,10 +14,11 @@ struct SegmentedControl<Value: Hashable>: View {
         HStack(spacing: 0) {
             ForEach(items, id: \.self) { item in
                 let isOn = (item == selected)
+                let itemLabel = L10n.tr(label(item))
                 Button {
                     selected = item
                 } label: {
-                    Text(label(item))
+                    Text(itemLabel)
                         .font(Typography.bodyNumber)
                         .foregroundStyle(isOn
                             ? Color.white.opacity(0.95)
@@ -35,8 +36,8 @@ struct SegmentedControl<Value: Hashable>: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(accessibilityPrefix.isEmpty
-                    ? label(item)
-                    : "\(accessibilityPrefix), \(label(item))")
+                    ? itemLabel
+                    : L10n.tr("%@, %@", L10n.tr(accessibilityPrefix), itemLabel))
                 .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
             }
         }
@@ -58,7 +59,7 @@ struct PillButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text(label)
+            Text(L10n.tr(label))
                 .font(Typography.button)
                 .foregroundStyle(.white.opacity(0.9))
                 .padding(.horizontal, 12)

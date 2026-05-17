@@ -99,7 +99,7 @@ struct SettingsView: View {
         Button {
             activeTab = tab
         } label: {
-            Text(tab.label)
+            Text(L10n.tr(tab.label))
                 .font(Typography.tabLabel)
                 .foregroundStyle(isOn
                     ? .white.opacity(0.95)
@@ -117,7 +117,7 @@ struct SettingsView: View {
         }
         .buttonStyle(.plain)
         .animation(.easeOut(duration: 0.12), value: isOn)
-        .accessibilityLabel("\(tab.label) tab")
+        .accessibilityLabel(L10n.tr("%@ tab", L10n.tr(tab.label)))
         .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
     }
 
@@ -171,14 +171,14 @@ struct SettingsView: View {
     @ViewBuilder
     private func sectionLabel(_ text: String, hint: String? = nil) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(text)
+            Text(L10n.tr(text))
                 .font(Typography.sectionLabel)
                 .tracking(1.05)
                 .textCase(.uppercase)
                 .foregroundStyle(.white.opacity(0.34))
             Spacer(minLength: 8)
             if let hint {
-                Text(hint)
+                Text(L10n.tr(hint))
                     .font(Typography.micro)
                     .foregroundStyle(.white.opacity(0.18))
             }
@@ -276,7 +276,7 @@ struct SettingsView: View {
     @ViewBuilder
     private func previewButton(_ label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(label)
+            Text(L10n.tr(label))
                 .font(Typography.bodyNumber)
                 .foregroundStyle(.white.opacity(0.85))
                 .lineLimit(1)
@@ -493,9 +493,9 @@ struct SettingsView: View {
     private var tokenModeSubtitle: String {
         switch tokenMode.mode {
         case .all:
-            return "Counts everything — input, output, and cache. Mirrors ccusage."
+            return L10n.tr("Counts everything — input, output, and cache. Mirrors ccusage.")
         case .billable:
-            return "Input + output only. Matches Anthropic's claude.ai stats."
+            return L10n.tr("Input + output only. Matches Anthropic's claude.ai stats.")
         }
     }
 
@@ -552,15 +552,15 @@ struct SettingsView: View {
     private func costSubtitle() -> String {
         let base: String
         if cost.loading {
-            base = "scanning local logs…"
+            base = L10n.tr("scanning local logs…")
         } else if let updated = cost.lastUpdated {
-            base = "last scan \(Self.relativeFormatter.localizedString(for: updated, relativeTo: Date()))"
+            base = L10n.tr("last scan %@", Self.relativeFormatter.localizedString(for: updated, relativeTo: Date()))
         } else {
-            base = "swipe panel to view"
+            base = L10n.tr("swipe panel to view")
         }
         let days = Pricing.daysSinceSnapshot
         if days > Self.pricingFreshnessThreshold {
-            return base + " · pricing data \(days)d old"
+            return base + L10n.tr(" · pricing data %dd old", days)
         }
         return base
     }
@@ -637,11 +637,11 @@ struct SettingsView: View {
         switch targetDisplay.choice {
         case .auto:
             if let resolved = DisplayInfo.currentTarget() {
-                return "Auto — currently on \(resolved.name)."
+                return L10n.tr("Auto — currently on %@.", resolved.name)
             }
-            return "Auto — picks a notched display when available."
+            return L10n.tr("Auto — picks a notched display when available.")
         case .stable:
-            return "Pinned to a specific display. Falls back to Auto if unplugged."
+            return L10n.tr("Pinned to a specific display. Falls back to Auto if unplugged.")
         }
     }
 
@@ -651,7 +651,7 @@ struct SettingsView: View {
         return Picker("", selection: pickerSelection) {
             Text("Auto").tag(autoTag)
             ForEach(displays, id: \.stableID) { d in
-                Text(d.isBuiltin ? "\(d.name) (built-in)" : d.name)
+                Text(d.isBuiltin ? L10n.tr("%@ (built-in)", d.name) : d.name)
                     .tag(d.stableID)
             }
         }
@@ -696,8 +696,8 @@ struct SettingsView: View {
 
     private func providerSubtitle(_ u: AppUsage) -> String {
         let synced: String = {
-            guard let updated = usage.lastUpdated else { return "idle" }
-            return "synced \(Self.relativeFormatter.localizedString(for: updated, relativeTo: Date()))"
+            guard let updated = usage.lastUpdated else { return L10n.tr("idle") }
+            return L10n.tr("synced %@", Self.relativeFormatter.localizedString(for: updated, relativeTo: Date()))
         }()
         let nums = "\(Self.windowCaption(u.fiveHour)) / \(Self.windowCaption(u.weekly))"
         return "\(synced) · \(nums)"

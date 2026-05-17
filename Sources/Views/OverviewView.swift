@@ -144,25 +144,38 @@ struct OverviewView: View {
     }
 
     private var summaryLabel: String {
-        guard let selectedDay else { return "\(Self.currentYearString) TOKENS" }
+        guard let selectedDay else { return L10n.tr("%@ TOKENS", Self.currentYearString) }
         return Self.dayLabelFormatter.string(from: selectedDay.date).uppercased()
     }
 
     private var summarySubline: String {
-        guard let selectedDay else { return "\(activeDays) Active Days" }
+        guard let selectedDay else { return L10n.tr("%d Active Days", activeDays) }
         switch selectedDay.dominantProvider {
-        case .none:   return "No Activity"
-        case .claude: return "Mostly Claude"
-        case .codex:  return "Mostly Codex"
-        case .mixed:  return "Mixed Use"
+        case .none:   return L10n.tr("No Activity")
+        case .claude: return L10n.tr("Mostly Claude")
+        case .codex:  return L10n.tr("Mostly Codex")
+        case .mixed:  return L10n.tr("Mixed Use")
         }
     }
 
     private var summaryAccessibilityLabel: String {
         if let selectedDay {
-            return "\(Self.dayLabelFormatter.string(from: selectedDay.date)): \(Self.formatTokensSpoken(displayedTokens)). Claude \(Self.formatTokensSpoken(displayedClaudeTokens)), Codex \(Self.formatTokensSpoken(displayedCodexTokens))."
+            return L10n.tr(
+                "%@: %@. Claude %@, Codex %@.",
+                Self.dayLabelFormatter.string(from: selectedDay.date),
+                Self.formatTokensSpoken(displayedTokens),
+                Self.formatTokensSpoken(displayedClaudeTokens),
+                Self.formatTokensSpoken(displayedCodexTokens)
+            )
         }
-        return "\(Self.formatTokensSpoken(totalTokens)) in \(Self.currentYearString). \(activeDays) active days. Claude \(Self.formatTokensSpoken(claudeTokens)), Codex \(Self.formatTokensSpoken(codexTokens))."
+        return L10n.tr(
+            "%@ in %@. %d active days. Claude %@, Codex %@.",
+            Self.formatTokensSpoken(totalTokens),
+            Self.currentYearString,
+            activeDays,
+            Self.formatTokensSpoken(claudeTokens),
+            Self.formatTokensSpoken(codexTokens)
+        )
     }
 
     private static func joinDays(
@@ -222,7 +235,7 @@ struct OverviewView: View {
 
     fileprivate static func formatTokensSpoken(_ n: Int) -> String {
         let formatted = formatTokens(n)
-        return "\(formatted.value) \(formatted.unit) tokens"
+        return L10n.tr("%@ %@ tokens", formatted.value, formatted.unit)
     }
 
     fileprivate static func formatExactTokens(_ n: Int) -> String {
@@ -323,7 +336,7 @@ private struct ContributionGrid: View {
         .frame(maxWidth: .infinity, minHeight: gridHeight + 19, maxHeight: gridHeight + 19, alignment: .leading)
         .clipped()
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Daily token usage in \(OverviewView.currentYearString)")
+        .accessibilityLabel(L10n.tr("Daily token usage in %@", OverviewView.currentYearString))
     }
 
     private var weeks: [ContributionWeek] {
@@ -563,15 +576,20 @@ private struct ContributionCell: View {
     }
 
     private var helpText: String {
-        "\(Self.dayFormatter.string(from: day.date)): \(OverviewView.formatTokensSpoken(day.totalTokens)), \(dominanceLabel)"
+        L10n.tr(
+            "%@: %@, %@",
+            Self.dayFormatter.string(from: day.date),
+            OverviewView.formatTokensSpoken(day.totalTokens),
+            dominanceLabel
+        )
     }
 
     private var dominanceLabel: String {
         switch day.dominantProvider {
-        case .none:   return "No Activity"
-        case .claude: return "Mostly Claude"
-        case .codex:  return "Mostly Codex"
-        case .mixed:  return "Mixed Use"
+        case .none:   return L10n.tr("No Activity")
+        case .claude: return L10n.tr("Mostly Claude")
+        case .codex:  return L10n.tr("Mostly Codex")
+        case .mixed:  return L10n.tr("Mixed Use")
         }
     }
 
@@ -725,11 +743,17 @@ private struct DayDetailStrip: View {
                 .allowsTightening(true)
         }
         .frame(width: 82, alignment: .trailing)
-        .help("\(label.capitalized): \(OverviewView.formatExactTokens(value)) tokens")
+        .help(L10n.tr("%@: %@ tokens", L10n.tr(label.capitalized), OverviewView.formatExactTokens(value)))
     }
 
     private var accessibilityLabel: String {
-        "\(Self.detailFormatter.string(from: day.date)), all tokens. Total \(OverviewView.formatTokensSpoken(day.totalTokens)), Claude \(OverviewView.formatTokensSpoken(day.claudeTokens)), Codex \(OverviewView.formatTokensSpoken(day.codexTokens))."
+        L10n.tr(
+            "%@, all tokens. Total %@, Claude %@, Codex %@.",
+            Self.detailFormatter.string(from: day.date),
+            OverviewView.formatTokensSpoken(day.totalTokens),
+            OverviewView.formatTokensSpoken(day.claudeTokens),
+            OverviewView.formatTokensSpoken(day.codexTokens)
+        )
     }
 
     private static let detailFormatter: DateFormatter = {

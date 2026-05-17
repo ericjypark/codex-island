@@ -89,7 +89,7 @@ struct ProviderCost {
     static let empty = ProviderCost(
         today: CostWindow(
             dollars: 0, tokens: 0, billableTokens: 0, series: [],
-            label: "Today", error: nil, unknownModels: []
+            label: L10n.tr("Today"), error: nil, unknownModels: []
         ),
         month: CostWindow(
             dollars: 0, tokens: 0, billableTokens: 0, series: [],
@@ -108,7 +108,7 @@ struct ProviderCost {
         today: CostWindow(
             dollars: 11.25, tokens: 1_240_000, billableTokens: 124_000,
             series: [0.5, 1.2, 2.4, 3.6, 5.1, 7.0, 9.2, 11.25],
-            label: "Today", error: nil, unknownModels: []
+            label: L10n.tr("Today"), error: nil, unknownModels: []
         ),
         month: CostWindow(
             dollars: 142.0, tokens: 18_500_000, billableTokens: 1_850_000,

@@ -33,6 +33,6 @@ struct PageIndicator: View {
     }
 
     private func accessibilityLabel(for screen: ScreenPref.Screen) -> String {
-        "\(screen.pageLabel) page, \(screen.pageIndex + 1) of \(ScreenPref.Screen.allCases.count)"
+        L10n.tr("%@ page, %d of %d", screen.pageLabel, screen.pageIndex + 1, ScreenPref.Screen.allCases.count)
     }
 }

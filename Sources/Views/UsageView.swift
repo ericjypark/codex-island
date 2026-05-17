@@ -119,7 +119,7 @@ struct ReauthButton: View {
         Button {
             store.reauthenticateClaude()
         } label: {
-            Text(store.claudeReauthInProgress ? "waiting for browser…" : "Re-authenticate")
+            Text(store.claudeReauthInProgress ? L10n.tr("waiting for browser…") : L10n.tr("Re-authenticate"))
                 .font(Typography.label)
                 .foregroundStyle(.white.opacity(hovered && !store.claudeReauthInProgress ? 0.95 : 0.72))
                 .padding(.horizontal, 8)
@@ -168,14 +168,14 @@ struct ChartTile: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .frame(height: Self.tileHeight)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label), \(Int(value))%")
+        .accessibilityLabel(L10n.tr("%@, %d%%", label, Int(value)))
         .accessibilityValue(subCaption())
     }
 
     private func subCaption() -> String {
         if let r = window.resetAt {
             let delta = max(0, r.timeIntervalSinceNow)
-            return "resets in \(Duration.compact(delta))"
+            return L10n.tr("resets in %@", Duration.compact(delta))
         }
         // "no data" is our internal sentinel for "API returned null for this
         // window" — most commonly a brand-new 5h period before the first

@@ -17,9 +17,9 @@ final class ScreenPref: ObservableObject {
 
         var pageLabel: String {
             switch self {
-            case .usage:    return "Usage"
-            case .cost:     return "Cost"
-            case .overview: return "Overview"
+            case .usage:    return L10n.tr("Usage")
+            case .cost:     return L10n.tr("Cost")
+            case .overview: return L10n.tr("Overview")
             }
         }
     }

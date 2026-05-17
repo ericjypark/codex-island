@@ -39,7 +39,7 @@ struct SettingsRow<Trailing: View>: View {
                             .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 4 }
                             .accessibilityHidden(true)
                     }
-                    Text(title)
+                    Text(L10n.tr(title))
                         .font(Typography.rowTitle)
                         .tracking(-0.07)
                         .foregroundStyle(.white.opacity(0.92))
@@ -54,11 +54,11 @@ struct SettingsRow<Trailing: View>: View {
                                 RoundedRectangle(cornerRadius: 3)
                                     .fill(.white.opacity(0.06))
                             )
-                            .accessibilityLabel("Plan: \(chip)")
+                            .accessibilityLabel(L10n.tr("Plan: %@", chip))
                     }
                 }
                 if let subtitle {
-                    Text(subtitle)
+                    Text(L10n.tr(subtitle))
                         .font(Typography.label)
                         .foregroundStyle(.white.opacity(0.55))
                 }

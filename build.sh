@@ -41,6 +41,7 @@ cp ./Resources/claude_logo.pdf "$RES_DIR/claude_logo.pdf"
 cp ./Resources/openai_logo.pdf "$RES_DIR/openai_logo.pdf"
 cp ./Resources/codexisland_logo.png "$RES_DIR/codexisland_logo.png"
 cp ./Resources/CodexIsland.icns "$RES_DIR/CodexIsland.icns"
+find ./Resources -maxdepth 1 -type d -name '*.lproj' -exec cp -R {} "$RES_DIR/" \;
 
 # Embed Sparkle.framework. -a preserves the symlinks inside Versions/.
 cp -a "$SPARKLE_FW" "$FRAMEWORKS_DIR/Sparkle.framework"

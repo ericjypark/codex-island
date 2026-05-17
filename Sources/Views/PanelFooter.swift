@@ -80,8 +80,8 @@ struct PanelFooter: View {
 
     private var cycleHintAccessibilityLabel: String {
         switch screenPref.screen {
-        case .overview: return "Overview shows \(currentYearString) usage history"
-        case .usage, .cost: return "Tip: Command-click to cycle visualization"
+        case .overview: return L10n.tr("Overview shows %@ usage history", currentYearString)
+        case .usage, .cost: return L10n.tr("Tip: Command-click to cycle visualization")
         }
     }
 
@@ -188,9 +188,9 @@ struct PanelFooter: View {
     }
 
     private var liveStatusSpoken: String {
-        if activeLoading { return "Syncing" }
-        if let updated = activeLastUpdated { return "Synced \(relative(updated))" }
-        return "Idle"
+        if activeLoading { return L10n.tr("Syncing") }
+        if let updated = activeLastUpdated { return L10n.tr("Synced %@", relative(updated)) }
+        return L10n.tr("Idle")
     }
 
     private static let relativeFormatter: RelativeDateTimeFormatter = {

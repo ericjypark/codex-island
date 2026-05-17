@@ -260,12 +260,12 @@ struct IslandRootView: View {
 
     private var accessibilityHintForState: String {
         switch model.state {
-        case .compact:  return "Hover to peek usage. Click to expand. Command-click to cycle visualization."
-        case .peek:     return "Click to expand. Command-click to cycle visualization."
+        case .compact:  return L10n.tr("Hover to peek usage. Click to expand. Command-click to cycle visualization.")
+        case .peek:     return L10n.tr("Click to expand. Command-click to cycle visualization.")
         case .expanded:
             return ScreenPref.shared.screen == .overview
-                ? "Swipe to change pages."
-                : "Command-click to cycle visualization."
+                ? L10n.tr("Swipe to change pages.")
+                : L10n.tr("Command-click to cycle visualization.")
         }
     }
 
@@ -391,7 +391,7 @@ private struct LogoOverlay: View {
                 .padding(.top, topPadding)
                 .opacity(isVisible ? 1 : 0)
                 .animation(.openMorph, value: isVisible)
-                .accessibilityLabel(isVisible ? providerLabel : "\(providerLabel) (hidden)")
+                .accessibilityLabel(isVisible ? providerLabel : L10n.tr("%@ (hidden)", providerLabel))
                 .accessibilityHidden(!isVisible)
         }
     }
@@ -484,17 +484,17 @@ private struct PeekPillOverlay: View {
 
     private func peekLabel(for window: WindowUsage, provider: String) -> String {
         if window.error != nil && window.usedPercent == 0 {
-            return "\(provider): no data for 5-hour window"
+            return L10n.tr("%@: no data for 5-hour window", provider)
         }
         let pct = window.percentInt
         guard let resetAt = window.resetAt else {
-            return "\(provider): \(pct) percent of 5-hour window used"
+            return L10n.tr("%@: %d percent of 5-hour window used", provider, pct)
         }
         let remaining = max(0, resetAt.timeIntervalSinceNow)
         let resetPhrase: String = remaining >= 3600
-            ? "resets in \(Int((remaining / 3600).rounded(.down))) hours"
-            : "resets in \(max(1, Int((remaining / 60).rounded(.down)))) minutes"
-        return "\(provider): \(pct) percent of 5-hour window used, \(resetPhrase)"
+            ? L10n.tr("resets in %d hours", Int((remaining / 3600).rounded(.down)))
+            : L10n.tr("resets in %d minutes", max(1, Int((remaining / 60).rounded(.down))))
+        return L10n.tr("%@: %d percent of 5-hour window used, %@", provider, pct, resetPhrase)
     }
 }
 

@@ -16,7 +16,7 @@ struct StyleTile<Preview: View>: View {
                 preview()
                     .frame(height: 34)
                     .accessibilityHidden(true)
-                Text(label)
+                Text(L10n.tr(label))
                     .font(Typography.micro)
                     .foregroundStyle(isOn
                         ? Color(red: 0.58, green: 0.75, blue: 1.0)
@@ -43,7 +43,7 @@ struct StyleTile<Preview: View>: View {
             }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(label)
+        .accessibilityLabel(L10n.tr(label))
         .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
     }
 }

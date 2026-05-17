@@ -60,7 +60,7 @@ private struct DottedLink: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 4) {
-                Text(title)
+                Text(L10n.tr(title))
                     .font(Typography.label)
                     .foregroundStyle(.white.opacity(hovered ? 0.92 : 0.55))
                 Text("↗")

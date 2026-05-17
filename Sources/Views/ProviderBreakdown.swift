@@ -62,8 +62,8 @@ private func providerBrandColor(_ provider: AlertEngine.Provider) -> Color {
 
 private func providerLowerLabel(_ provider: AlertEngine.Provider) -> String {
     switch provider {
-    case .claude: return "claude"
-    case .codex:  return "codex"
+    case .claude: return "Claude"
+    case .codex:  return "Codex"
     }
 }
 
@@ -192,7 +192,7 @@ struct PerModelBreakdown: View {
 
             if rows.isEmpty {
                 Spacer(minLength: 0)
-                Text("no \(providerLowerLabel(provider)) activity in last 5h or this week")
+                Text(L10n.tr("no %@ activity in last 5h or this week", providerLowerLabel(provider)))
                     .font(Typography.caption)
                     .foregroundStyle(.white.opacity(0.4))
                 Spacer(minLength: 0)
