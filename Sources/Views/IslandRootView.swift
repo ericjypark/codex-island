@@ -198,7 +198,7 @@ struct IslandRootView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("CodexIsland panel")
+        .accessibilityLabel(L10n.tr("CodexIsland panel"))
         .accessibilityHint(accessibilityHintForState)
         .onAppear {
             if claudeLogo == nil {

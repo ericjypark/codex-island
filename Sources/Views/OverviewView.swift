@@ -711,14 +711,20 @@ private struct DayDetailStrip: View {
 
                 Spacer(minLength: 0)
 
-                detailMetric(label: L10n.tr("TOTAL"), value: day.totalTokens, color: .white.opacity(0.78))
+                detailMetric(
+                    label: L10n.tr("TOTAL"),
+                    spokenLabel: L10n.tr("Total"),
+                    value: day.totalTokens,
+                    color: .white.opacity(0.78),
+                    dimmed: true
+                )
 
                 if claudeVisible {
-                    detailMetric(label: "CLAUDE", value: day.claudeTokens, color: IslandColor.claude)
+                    detailMetric(label: "CLAUDE", spokenLabel: "Claude", value: day.claudeTokens, color: IslandColor.claude)
                 }
 
                 if codexVisible {
-                    detailMetric(label: "CODEX", value: day.codexTokens, color: IslandColor.codex)
+                    detailMetric(label: "CODEX", spokenLabel: "Codex", value: day.codexTokens, color: IslandColor.codex)
                 }
             }
         }
@@ -727,12 +733,18 @@ private struct DayDetailStrip: View {
         .accessibilityLabel(accessibilityLabel)
     }
 
-    private func detailMetric(label: String, value: Int, color: Color) -> some View {
+    private func detailMetric(
+        label: String,
+        spokenLabel: String? = nil,
+        value: Int,
+        color: Color,
+        dimmed: Bool = false
+    ) -> some View {
         VStack(alignment: .trailing, spacing: 2) {
             Text(label)
                 .font(Typography.chip)
                 .tracking(0.5)
-                .foregroundStyle(color.opacity(label == L10n.tr("TOTAL") ? 0.70 : 0.82))
+                .foregroundStyle(color.opacity(dimmed ? 0.70 : 0.82))
                 .lineLimit(1)
 
             Text(OverviewView.formatExactTokens(value))
@@ -743,7 +755,7 @@ private struct DayDetailStrip: View {
                 .allowsTightening(true)
         }
         .frame(width: 82, alignment: .trailing)
-        .help(L10n.tr("%@: %@ tokens", L10n.tr(label.capitalized), OverviewView.formatExactTokens(value)))
+        .help(L10n.tr("%@: %@ tokens", spokenLabel ?? label, OverviewView.formatExactTokens(value)))
     }
 
     private var accessibilityLabel: String {

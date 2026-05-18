@@ -25,8 +25,8 @@ struct SettingsButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hovered = $0 }
-        .help("Settings")
+        .help(L10n.tr("Settings"))
         .animation(.strongEaseOut, value: hovered)
-        .accessibilityLabel("Settings")
+        .accessibilityLabel(L10n.tr("Settings"))
     }
 }

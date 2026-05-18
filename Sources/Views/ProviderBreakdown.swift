@@ -223,7 +223,7 @@ struct PerModelBreakdown: View {
     private var header: some View {
         let topWeight = perModelRowWeights[0]
         return HStack(alignment: .firstTextBaseline, spacing: 6) {
-            Text("BY MODEL")
+            Text(L10n.tr("BY MODEL"))
                 .font(Typography.sectionLabel)
                 .tracking(0.6)
                 .foregroundStyle(.white.opacity(0.55))
@@ -232,14 +232,14 @@ struct PerModelBreakdown: View {
                 Capsule()
                     .fill(color.opacity(topWeight))
                     .frame(width: 8, height: 4)
-                Text("5h")
+                Text(L10n.tr("5h"))
                     .font(Typography.caption)
                     .foregroundStyle(.white.opacity(0.50))
                     .padding(.trailing, 4)
                 Capsule()
                     .fill(color.opacity(topWeight * dimFillMultiplier))
                     .frame(width: 8, height: 4)
-                Text("week")
+                Text(L10n.tr("week"))
                     .font(Typography.caption)
                     .foregroundStyle(.white.opacity(0.50))
             }
@@ -380,10 +380,10 @@ struct BothHiddenPlaceholder: View {
     var body: some View {
         VStack(spacing: 6) {
             Spacer(minLength: 0)
-            Text("Both providers hidden")
+            Text(L10n.tr("Both providers hidden"))
                 .font(Typography.providerTitle)
                 .foregroundStyle(.white.opacity(0.45))
-            Text("Re-enable in Settings → Providers")
+            Text(L10n.tr("Re-enable in Settings → Providers"))
                 .font(Typography.caption)
                 .foregroundStyle(.white.opacity(0.32))
             Spacer(minLength: 0)

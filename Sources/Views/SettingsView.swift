@@ -513,7 +513,7 @@ struct SettingsView: View {
     /// — compact so it sits cleanly under the Providers list.
     private var costSection: some View {
         HStack(alignment: .center, spacing: 10) {
-            Text("Cost")
+            Text(L10n.tr("Cost"))
                 .font(Typography.sectionLabel)
                 .tracking(1.05)
                 .textCase(.uppercase)
