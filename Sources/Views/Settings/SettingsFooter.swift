@@ -20,7 +20,7 @@ struct SettingsFooter: View {
             Button {
                 NSApp.terminate(nil)
             } label: {
-                Text("Quit")
+                Text(L10n.tr("Quit"))
                     .font(Typography.label)
                     .foregroundStyle(.white.opacity(quitHovered ? 0.92 : 0.55))
                     .padding(.horizontal, 11)
@@ -36,7 +36,7 @@ struct SettingsFooter: View {
             }
             .buttonStyle(.plain)
             .onHover { quitHovered = $0 }
-            .help("Quit CodexIsland")
+            .help(L10n.tr("Quit CodexIsland"))
             .animation(.strongEaseOut, value: quitHovered)
         }
         .padding(.horizontal, 24)

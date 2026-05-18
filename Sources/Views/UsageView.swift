@@ -93,9 +93,9 @@ struct ChartsBlock: View {
     var body: some View {
         VStack(spacing: 6) {
             HStack(spacing: 18) {
-                ChartTile(style: style, color: color, label: "5h",
+                ChartTile(style: style, color: color, labelKey: "5h",
                           window: usage.fiveHour, seed: seed)
-                ChartTile(style: style, color: color, label: "week",
+                ChartTile(style: style, color: color, labelKey: "week",
                           window: usage.weekly, seed: seed + 1)
             }
             if needsReauth && UsageFetcher.canPromptClaudeReauth() {
@@ -139,7 +139,7 @@ struct ReauthButton: View {
 struct ChartTile: View {
     let style: ChartStyle
     let color: Color
-    let label: String
+    let labelKey: String
     let window: WindowUsage
     let seed: Int
 
@@ -150,13 +150,14 @@ struct ChartTile: View {
     var body: some View {
         let value = window.usedPercent * 100   // 0-100
         let sub = subCaption()
+        let label = L10n.tr(labelKey)
 
         Group {
             switch style {
             case .ring:    RingChart(value: value, color: color, label: label, sub: sub)
             case .bar:     BarChart(value: value, color: color, label: label, sub: sub)
             case .stepped: SteppedChart(value: value, color: color, label: label, sub: sub)
-            case .numeric: NumericChart(value: value, color: color, label: label, sub: sub)
+            case .numeric: NumericChart(value: value, color: color, label: label, sub: compactSubCaption())
             case .spark:   SparkChart(value: value, color: color, label: label, sub: sub, seed: seed)
             }
         }
@@ -188,6 +189,21 @@ struct ChartTile: View {
             // remediation hint reads twice (caption + button label). Users
             // without a discoverable `claude` binary still get the raw text
             // so they know the manual fix.
+            if err == UsageFetcher.claudeReauthRequiredMessage,
+               UsageFetcher.canPromptClaudeReauth() {
+                return ""
+            }
+            return err
+        }
+        return ""
+    }
+
+    private func compactSubCaption() -> String {
+        if let r = window.resetAt {
+            let delta = max(0, r.timeIntervalSinceNow)
+            return "↻ " + Duration.compact(delta)
+        }
+        if let err = window.error, err != "no data" {
             if err == UsageFetcher.claudeReauthRequiredMessage,
                UsageFetcher.canPromptClaudeReauth() {
                 return ""

@@ -350,7 +350,7 @@ struct SettingsView: View {
                 .frame(width: 7, height: 7)
                 .shadow(color: color.opacity(0.7), radius: 4)
                 .accessibilityHidden(true)
-            Text(label)
+            Text(L10n.tr(label))
                 .font(Typography.rowTitle)
                 .tracking(-0.07)
                 .foregroundStyle(.white.opacity(0.92))
@@ -550,19 +550,23 @@ struct SettingsView: View {
     }()
 
     private func costSubtitle() -> String {
-        let base: String
-        if cost.loading {
-            base = L10n.tr("scanning local logs…")
-        } else if let updated = cost.lastUpdated {
-            base = L10n.tr("last scan %@", Self.relativeFormatter.localizedString(for: updated, relativeTo: Date()))
-        } else {
-            base = L10n.tr("swipe panel to view")
-        }
         let days = Pricing.daysSinceSnapshot
-        if days > Self.pricingFreshnessThreshold {
-            return base + L10n.tr(" · pricing data %dd old", days)
+        let isStale = days > Self.pricingFreshnessThreshold
+
+        if cost.loading {
+            return isStale
+                ? L10n.tr("scanning local logs… · pricing data %dd old", days)
+                : L10n.tr("scanning local logs…")
+        } else if let updated = cost.lastUpdated {
+            let relative = Self.relativeFormatter.localizedString(for: updated, relativeTo: Date())
+            return isStale
+                ? L10n.tr("last scan %@ · pricing data %dd old", relative, days)
+                : L10n.tr("last scan %@", relative)
         }
-        return base
+
+        return isStale
+            ? L10n.tr("swipe panel to view · pricing data %dd old", days)
+            : L10n.tr("swipe panel to view")
     }
 
     private var chartSection: some View {
@@ -649,7 +653,7 @@ struct SettingsView: View {
         let displays = DisplayInfo.all()
         let autoTag = IslandTargetDisplayStore.Choice.auto.rawValue
         return Picker("", selection: pickerSelection) {
-            Text("Auto").tag(autoTag)
+            Text(L10n.tr("Auto")).tag(autoTag)
             ForEach(displays, id: \.stableID) { d in
                 Text(d.isBuiltin ? L10n.tr("%@ (built-in)", d.name) : d.name)
                     .tag(d.stableID)
@@ -658,7 +662,7 @@ struct SettingsView: View {
         .labelsHidden()
         .pickerStyle(.menu)
         .frame(maxWidth: 220)
-        .accessibilityLabel("Target display")
+        .accessibilityLabel(L10n.tr("Target display"))
     }
 
     /// Bridges the enum `Choice` to a `String` selection that SwiftUI's

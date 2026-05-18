@@ -19,6 +19,8 @@
 "5h" = "5h";
 "All tokens" = "All tokens";
 "All Tokens" = "All Tokens";
+"TOTAL" = "TOTAL";
+"Total" = "Total";
 "Approaching-limit alerts" = "Approaching-limit alerts";
 "Auto" = "Auto";
 "Auto — currently on %@." = "Auto — currently on %@.";
@@ -51,6 +53,7 @@
 "Input + output only. Matches Anthropic's claude.ai stats." = "Input + output only. Matches Anthropic's claude.ai stats.";
 "Island width" = "Island width";
 "last scan %@" = "last scan %@";
+"last scan %@ · pricing data %dd old" = "last scan %@ · pricing data %dd old";
 "Launch at Login" = "Launch at Login";
 "License" = "License";
 "Live" = "Live";
@@ -83,12 +86,14 @@
 "Resets in %@" = "Resets in %@";
 "Ring" = "Ring";
 "scanning local logs…" = "scanning local logs…";
+"scanning local logs… · pricing data %dd old" = "scanning local logs… · pricing data %dd old";
 "Settings" = "Settings";
 "Show on" = "Show on";
 "Sparkline" = "Sparkline";
 "Spacing" = "Spacing";
 "Stepped" = "Stepped";
 "swipe panel to view" = "swipe panel to view";
+"swipe panel to view · pricing data %dd old" = "swipe panel to view · pricing data %dd old";
 "Synced" = "Synced";
 "Synced %@" = "Synced %@";
 "synced %@" = "synced %@";

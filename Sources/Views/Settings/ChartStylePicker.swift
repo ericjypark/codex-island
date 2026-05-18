@@ -12,7 +12,7 @@ struct ChartStylePicker: View {
         HStack(spacing: 6) {
             ForEach(ChartStyle.allCases, id: \.self) { style in
                 StyleTile(
-                    label: style.label,
+                    displayLabel: style.label,
                     isOn: style == selected,
                     action: {
                         selected = style

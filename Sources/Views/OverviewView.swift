@@ -121,7 +121,7 @@ struct OverviewView: View {
                     .font(Typography.label)
                     .foregroundStyle(.white.opacity(0.50))
                 if costStore.loading {
-                    Text("Syncing")
+                    Text(L10n.tr("Syncing"))
                         .font(Typography.caption)
                         .foregroundStyle(.white.opacity(0.36))
                 }
@@ -696,7 +696,7 @@ private struct DayDetailStrip: View {
                         .foregroundStyle(.white.opacity(0.58))
                         .lineLimit(1)
 
-                    Text("All Tokens")
+                    Text(L10n.tr("All Tokens"))
                         .font(Typography.caption)
                         .foregroundStyle(.white.opacity(0.36))
                         .lineLimit(1)
@@ -711,7 +711,7 @@ private struct DayDetailStrip: View {
 
                 Spacer(minLength: 0)
 
-                detailMetric(label: "TOTAL", value: day.totalTokens, color: .white.opacity(0.78))
+                detailMetric(label: L10n.tr("TOTAL"), value: day.totalTokens, color: .white.opacity(0.78))
 
                 if claudeVisible {
                     detailMetric(label: "CLAUDE", value: day.claudeTokens, color: IslandColor.claude)
@@ -732,7 +732,7 @@ private struct DayDetailStrip: View {
             Text(label)
                 .font(Typography.chip)
                 .tracking(0.5)
-                .foregroundStyle(color.opacity(label == "TOTAL" ? 0.70 : 0.82))
+                .foregroundStyle(color.opacity(label == L10n.tr("TOTAL") ? 0.70 : 0.82))
                 .lineLimit(1)
 
             Text(OverviewView.formatExactTokens(value))
@@ -818,7 +818,7 @@ private struct ProviderSplitRow: View {
 
     var body: some View {
         if visibleCount == 0 {
-            Text("Providers Hidden")
+            Text(L10n.tr("Providers Hidden"))
                 .font(Typography.caption)
                 .foregroundStyle(.white.opacity(0.36))
         } else {

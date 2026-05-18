@@ -14,9 +14,7 @@ struct NumericChart: View {
                     .foregroundStyle(.white.opacity(0.55))
                     .textCase(.lowercase)
                 Spacer()
-                // "resets in 3h" → "↻ 3h" — same info, less prose. The
-                // glyph reads at a glance; the words don't.
-                Text(sub.replacingOccurrences(of: "resets in ", with: "↻ "))
+                Text(sub)
                     .font(Typography.caption)
                     .foregroundStyle(.white.opacity(0.4))
             }

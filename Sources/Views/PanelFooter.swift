@@ -40,7 +40,7 @@ struct PanelFooter: View {
                         HStack(spacing: 5) {
                             Image(systemName: "command")
                                 .font(Typography.micro)
-                            Text("click to cycle")
+                            Text(L10n.tr("click to cycle"))
                                 .font(Typography.label)
                         }
                         .foregroundStyle(.white.opacity(0.42))
@@ -137,18 +137,18 @@ struct PanelFooter: View {
             HStack(spacing: 6) {
                 LiveDot(active: activeLastUpdated != nil && !activeLoading)
                 if activeLoading {
-                    Text("Syncing…")
+                    Text(L10n.tr("Syncing…"))
                         .font(Typography.label)
                         .foregroundStyle(.white.opacity(0.55))
                 } else if let updated = activeLastUpdated {
-                    Text("Synced")
+                    Text(L10n.tr("Synced"))
                         .font(Typography.label)
                         .foregroundStyle(.white.opacity(liveStatusHovered ? 0.85 : 0.55))
                     Text(relative(updated))
                         .font(Typography.bodyNumber)
                         .foregroundStyle(.white.opacity(liveStatusHovered ? 0.95 : 0.72))
                 } else {
-                    Text("Idle")
+                    Text(L10n.tr("Idle"))
                         .font(Typography.label)
                         .foregroundStyle(.white.opacity(liveStatusHovered ? 0.7 : 0.4))
                 }
@@ -171,12 +171,12 @@ struct PanelFooter: View {
                 NSCursor.pop()
             }
         }
-        .help("Refresh now")
+        .help(L10n.tr("Refresh now"))
         .animation(.easeOut(duration: 0.12), value: liveStatusHovered)
         .animation(.easeOut(duration: 0.12), value: activeLoading)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(liveStatusSpoken)
-        .accessibilityHint("Click to refresh now")
+        .accessibilityHint(L10n.tr("Click to refresh now"))
         .accessibilityAddTraits(.isButton)
     }
 
