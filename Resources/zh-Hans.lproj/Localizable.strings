@@ -13,7 +13,7 @@
 "%@ in %@. %d active days. Claude %@, Codex %@." = "%@，%@ 年。%d 个活跃日。Claude %@，Codex %@。";
 "%@ TOKENS" = "%@ TOKEN";
 "%d Active Days" = "%d 个活跃日";
-"⚠ %d unpriced" = "⚠ %d 个未计价";
+"⚠ %d unpriced" = "⚠ %d 个模型缺价格";
 " · pricing data %dd old" = " · 价格数据已过 %d 天";
 "$%@ cumulative" = "$%@ 累计";
 "5h" = "5小时";
@@ -22,6 +22,7 @@
 "TOTAL" = "总计";
 "Total" = "总计";
 "Approaching-limit alerts" = "接近限额提醒";
+"Alerts" = "提醒";
 "Auto" = "自动";
 "Auto — currently on %@." = "自动 — 当前在 %@。";
 "Auto — picks a notched display when available." = "自动 — 优先选择带刘海的屏幕。";
@@ -111,10 +112,11 @@
 "TREND" = "趋势";
 "USD" = "USD";
 "Usage" = "用量";
+"Updates" = "更新";
 "VALUE" = "价值";
 "Warn" = "警告";
 "Warning" = "警告";
-"Warning: %d unpriced models — totals may be incomplete." = "警告：%d 个模型未计价，总数可能不完整。";
+"Warning: %d unpriced models — totals may be incomplete." = "警告：%d 个模型缺少价格，成本总额可能偏低。";
 "week" = "周";
 "waiting for browser…" = "等待浏览器…";
 "You" = "你";

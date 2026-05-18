@@ -22,6 +22,7 @@
 "TOTAL" = "TOTAL";
 "Total" = "Total";
 "Approaching-limit alerts" = "Approaching-limit alerts";
+"Alerts" = "Alerts";
 "Auto" = "Auto";
 "Auto — currently on %@." = "Auto — currently on %@.";
 "Auto — picks a notched display when available." = "Auto — picks a notched display when available.";
@@ -111,6 +112,7 @@
 "TREND" = "TREND";
 "USD" = "USD";
 "Usage" = "Usage";
+"Updates" = "Updates";
 "VALUE" = "VALUE";
 "Warn" = "Warn";
 "Warning" = "Warning";

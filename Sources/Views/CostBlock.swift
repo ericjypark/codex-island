@@ -57,13 +57,14 @@ struct CostTile: View {
     var body: some View {
         VStack(alignment: centered ? .center : .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
-                Text(window.label)
+                Text(L10n.tr(window.label))
                     .font(Typography.label)
                     .foregroundStyle(.white.opacity(0.55))
                 Spacer()
                 Text(resetGlyph)
                     .font(Typography.caption)
                     .foregroundStyle(.white.opacity(window.unknownModels.isEmpty ? 0.4 : 0.5))
+                    .help(resetGlyphSpoken)
                     .accessibilityLabel(resetGlyphSpoken)
             }
             .frame(maxWidth: centered ? 240 : .infinity)

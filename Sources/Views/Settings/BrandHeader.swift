@@ -25,7 +25,7 @@ struct BrandHeader: View {
                     .font(Typography.brand)
                     .tracking(-0.15)
                     .foregroundStyle(.white.opacity(0.92))
-                Text("Your AI usage limits, living in your notch.")
+                Text(L10n.tr("Your AI usage limits, living in your notch."))
                     .font(Typography.label)
                     .foregroundStyle(.white.opacity(0.55))
             }

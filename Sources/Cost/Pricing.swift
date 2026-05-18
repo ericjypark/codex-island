@@ -59,6 +59,10 @@ enum Pricing {
             inputPerMillion: 2.5, outputPerMillion: 15,
             cacheCreationPerMillion: 2.5, cacheReadPerMillion: 0.25
         ),
+        "gpt-5.2": Rates(
+            inputPerMillion: 1.75, outputPerMillion: 14,
+            cacheCreationPerMillion: 1.75, cacheReadPerMillion: 0.175
+        ),
         "gpt-5.4-mini": Rates(
             inputPerMillion: 0.75, outputPerMillion: 4.5,
             cacheCreationPerMillion: 0.75, cacheReadPerMillion: 0.075
