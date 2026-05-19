@@ -1,6 +1,6 @@
 # CodexIsland
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+[English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-Hant.md) | [हिन्दी](README.hi.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Deutsch](README.de.md) | [Français](README.fr.md) | [Español](README.es.md) | [Português (Brasil)](README.pt-BR.md)
 
 <p align="center">
   <img src="Assets/codexisland-logo.png" width="160" alt="CodexIsland logo">
@@ -52,7 +52,12 @@ providers' own usage endpoints.
   pulses during active work.
 - **Settings without a Dock icon.** A quiet gear in the expanded panel opens a
   custom settings window for launch-at-login, refresh interval, provider
-  visibility, chart style, cost view style, token counting, links, and Quit.
+  visibility, app language, chart style, cost view style, token counting,
+  links, and Quit.
+- **Global localization.** CodexIsland follows the macOS language by default,
+  and Settings can pin the app to English, Simplified Chinese, Traditional
+  Chinese, Hindi, Japanese, Korean, German, French, Spanish, or Brazilian
+  Portuguese.
 - **Configurable safe polling.** Choose 5m, 15m, or 30m. The app does not offer
   sub-5-minute polling because Anthropic rate-limits the usage endpoint
   aggressively.
@@ -149,9 +154,9 @@ the first peek. Opening Settings also triggers a fresh fetch.
 - Click the gear in the lower-left corner of the expanded panel to open
   Settings.
 - Use Settings to enable Launch at Login, pick a refresh interval, toggle Low
-  Power Mode, hide/show Claude or Codex, choose the default chart and cost
-  styles, choose between all-tokens and billable-only token counting, open
-  GitHub / License, or quit the app.
+  Power Mode, hide/show Claude or Codex, choose the app language, choose the
+  default chart and cost styles, choose between all-tokens and billable-only
+  token counting, open GitHub / License, or quit the app.
 
 Provider visibility is display-only. Hiding a provider removes that provider's
 logo and column from the island, but the app keeps the latest usage values in
@@ -169,6 +174,7 @@ Stored preferences:
 | Chart style | `StylePref` | `MacIsland.chartStyle` | `ring`, `bar`, `stepped`, `numeric`, `spark` |
 | Cost style | `CostStylePref` | `MacIsland.costStyle` | `dollar`, `multi`, `tokens`, `spark` |
 | Token counting | `TokenCountModeStore` | `MacIsland.tokenCountMode` | `all`, `billable` |
+| App language | `AppLanguageStore` | `MacIsland.appLanguage` | `auto`, `en`, `zh-Hans`, `zh-Hant`, `hi`, `ja`, `ko`, `de`, `fr`, `es`, `pt-BR` |
 | Refresh interval | `RefreshIntervalStore` | `MacIsland.refreshInterval` | `300`, `900`, `1800` |
 | Low Power Mode | `LowPowerModeStore` | `MacIsland.lowPowerMode` | Boolean, default `false` |
 | Claude visible | `ProviderVisibilityStore` | `MacIsland.claudeVisible` | Boolean, default `true` |
@@ -179,6 +185,9 @@ Stored preferences:
 
 The refresh interval applies live. `UsageStore` invalidates the current timer
 and re-arms it with the selected cadence.
+
+The app language defaults to `auto`, which follows macOS. Manual language
+selection is saved immediately and takes effect after CodexIsland restarts.
 
 ## Build from source
 

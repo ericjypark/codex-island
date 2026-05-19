@@ -10,7 +10,7 @@
 "%@: %@, %@" = "%@：%@，%@";
 "%@: %@. Claude %@, Codex %@." = "%@：%@。Claude %@，Codex %@。";
 "%@%@ tokens" = "%@%@ 个 token";
-"%@ in %@. %d active days. Claude %@, Codex %@." = "%@，%@ 年。%d 个活跃日。Claude %@，Codex %@。";
+"%@ in %@. %d active days. Claude %@, Codex %@." = "%@，%@。%d 个活跃日。Claude %@，Codex %@。";
 "%@ TOKENS" = "%@ TOKEN";
 "%d Active Days" = "%d 个活跃日";
 "⚠ %d unpriced" = "⚠ %d 个模型缺价格";
@@ -45,9 +45,10 @@
 "Counts everything — input, output, and cache. Mirrors ccusage." = "统计所有 token：输入、输出和缓存；与 ccusage 一致。";
 "Crit" = "危急";
 "Critical" = "危急";
-"Daily token usage in %@" = "%@ 年每日 token 用量";
+"Daily token usage in %@" = "%@ 的每日 token 用量";
 "Display" = "显示";
 "General" = "通用";
+"Follows macOS" = "跟随 macOS";
 "Glow only on refresh, hover, or limit alerts." = "仅在刷新、悬停或限额提醒时显示辉光。";
 "Idle" = "空闲";
 "idle" = "空闲";
@@ -57,6 +58,8 @@
 "last scan %@" = "上次扫描 %@";
 "last scan %@ · pricing data %dd old" = "上次扫描 %@ · 价格数据已过 %d 天";
 "Launch at Login" = "登录时启动";
+"Language" = "语言";
+"Later" = "稍后";
 "License" = "许可证";
 "Live" = "实时";
 "Look for a new version immediately." = "立即检查是否有新版本。";
@@ -70,7 +73,7 @@
 "Numeric" = "数字";
 "Open CodexIsland when you sign in." = "登录系统时打开 CodexIsland。";
 "Overview" = "概览";
-"Overview shows %@ usage history" = "概览显示 %@ 年使用历史";
+"Overview shows %@ usage history" = "概览显示 %@ 的使用历史";
 "Pinned to a specific display. Falls back to Auto if unplugged." = "固定到指定屏幕；断开后回退为自动。";
 "Plan" = "套餐";
 "Plan: %@" = "套餐：%@";
@@ -86,6 +89,8 @@
 "Refreshing…" = "正在刷新…";
 "resets in %@" = "%@ 后重置";
 "Resets in %@" = "%@ 后重置";
+"Restart CodexIsland to apply language?" = "重启 CodexIsland 以应用语言？";
+"Restart now" = "立即重启";
 "Ring" = "环形";
 "scanning local logs…" = "正在扫描本地日志…";
 "scanning local logs… · pricing data %dd old" = "正在扫描本地日志… · 价格数据已过 %d 天";
@@ -121,6 +126,7 @@
 "waiting for browser…" = "等待浏览器…";
 "You" = "你";
 "Your AI usage limits, living in your notch." = "你的 AI 用量限额，住在 Mac 刘海里。";
+"Your language change will take effect after CodexIsland restarts." = "语言更改会在 CodexIsland 重启后生效。";
 "⌘-click to cycle" = "⌘ 点击切换";
 "⌘1 — pull real provider data" = "⌘1 — 拉取真实服务数据";
 "%@ (hidden)" = "%@（已隐藏）";
@@ -137,3 +143,11 @@
 "resets in %d minutes" = "%d 分钟后重置";
 "Swipe to change pages." = "滑动切换页面。";
 "Tightens the gap between logos when the island is on a screen without a hardware notch." = "在没有硬件刘海的屏幕上收紧 logo 之间的间距。";
+"No usage data" = "暂无用量数据";
+"No Codex authentication" = "未找到 Codex 认证";
+"Codex authentication expired — run codex login" = "Codex 认证已过期 — 运行 codex login";
+"Claude authentication required — run claude" = "需要 Claude 认证 — 运行 claude";
+"Rate limited" = "请求过于频繁";
+"Unable to parse usage response" = "无法解析用量响应";
+"Claude re-authentication required — run claude /login" = "需要重新认证 Claude — 运行 claude /login";
+"HTTP %@" = "HTTP %@";

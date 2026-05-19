@@ -195,6 +195,7 @@ struct PanelFooter: View {
 
     private static let relativeFormatter: RelativeDateTimeFormatter = {
         let f = RelativeDateTimeFormatter()
+        f.locale = L10n.locale
         f.unitsStyle = .abbreviated
         return f
     }()
