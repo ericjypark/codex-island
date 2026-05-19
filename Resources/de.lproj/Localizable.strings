@@ -75,8 +75,8 @@
 "Overview" = "Übersicht";
 "Overview shows %@ usage history" = "Übersicht zeigt Nutzung %@";
 "Pinned to a specific display. Falls back to Auto if unplugged." = "An Anzeige gebunden. Bei Trennung zurück zu Auto.";
-"Plan" = "Plan";
-"Plan: %@" = "Plan: %@";
+"Plan" = "Tarif";
+"Plan: %@" = "Tarif: %@";
 "Providers" = "Anbieter";
 "Providers Hidden" = "Anbieter ausgeblendet";
 "Quit" = "Beenden";
@@ -117,9 +117,9 @@
 "TREND" = "TREND";
 "USD" = "USD";
 "Usage" = "Nutzung";
-"Updates" = "Updates";
+"Updates" = "Aktualisierungen";
 "VALUE" = "WERT";
-"Warn" = "Warn";
+"Warn" = "Warnung";
 "Warning" = "Warnung";
 "Warning: %d unpriced models — totals may be incomplete." = "Warnung: %d Modelle ohne Preis — Summen evtl. zu niedrig.";
 "week" = "Woche";

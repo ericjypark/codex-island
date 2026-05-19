@@ -115,6 +115,70 @@ ignored_keys = Set[
 missing_required = required_keys.reject { |key| ignored_keys.include?(key) || base.key?(key) }
 failures << "missing localized keys referenced from Swift: #{missing_required.sort.join(", ")}" unless missing_required.empty?
 
+same_value_allowlist = {
+  "*" => Set[
+    "%@, %@",
+    "%@, %d%%",
+    "%@: %@, %@",
+    "%@: %@. Claude %@, Codex %@.",
+    "Codex",
+    "USD"
+  ],
+  "de" => Set[
+    "Auto",
+    "Live",
+    "Ring",
+    "Sparkline",
+    "TREND"
+  ],
+  "es" => Set[
+    "%@ %@ tokens",
+    "%@: %@ tokens",
+    "%@%@ tokens",
+    "%@ TOKENS",
+    "TOTAL",
+    "Total",
+    "Auto",
+    "General",
+    "Plan",
+    "Plan: %@",
+    "Tokens",
+    "TOKENS"
+  ],
+  "fr" => Set[
+    "%@ %@ tokens",
+    "%@%@ tokens",
+    "%@ TOKENS",
+    "TOTAL",
+    "Total",
+    "Auto",
+    "Compact",
+    "Sparkline",
+    "Tokens",
+    "TOKENS",
+    "Usage"
+  ],
+  "pt-BR" => Set[
+    "%@ %@ tokens",
+    "%@: %@ tokens",
+    "%@%@ tokens",
+    "%@ TOKENS",
+    "TOTAL",
+    "Total",
+    "Auto",
+    "Tokens",
+    "TOKENS"
+  ]
+}
+
+all_values.each do |locale, values|
+  next if locale == "en"
+
+  allowed = same_value_allowlist["*"] | (same_value_allowlist[locale] || Set[])
+  untranslated = base_keys.select { |key| values[key] == base[key] && !allowed.include?(key) }
+  failures << "#{locale}: same-as-English values need review: #{untranslated.sort.join(", ")}" unless untranslated.empty?
+end
+
 if failures.empty?
   puts "Localization check passed for #{locales.length} locales and #{base_keys.length} keys."
 else
