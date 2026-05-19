@@ -17,6 +17,7 @@ struct SettingsView: View {
     @ObservedObject private var alertPrefs = AlertThresholdStore.shared
     @ObservedObject private var spacing = IslandSpacingStore.shared
     @ObservedObject private var targetDisplay = IslandTargetDisplayStore.shared
+    @ObservedObject private var appLanguage = AppLanguageStore.shared
     @ObservedObject private var usage = UsageStore.shared
     @ObservedObject private var cost = CostStore.shared
     @ObservedObject private var updater = UpdaterController.shared
@@ -203,6 +204,12 @@ struct SettingsView: View {
                 subtitle: "How often to refresh."
             ) {
                 refreshSegmented
+            }
+            SettingsRow(
+                title: "Language",
+                subtitle: appLanguage.language.subtitle
+            ) {
+                languagePicker
             }
             SettingsRow(
                 title: "Low Power Mode",
@@ -436,6 +443,40 @@ struct SettingsView: View {
         .padding(.bottom, 6)
     }
 
+    private var languagePicker: some View {
+        Picker("", selection: languageSelection) {
+            ForEach(AppLanguage.allCases, id: \.self) { language in
+                Text(language.menuLabel).tag(language)
+            }
+        }
+        .labelsHidden()
+        .pickerStyle(.menu)
+        .frame(maxWidth: 220)
+        .accessibilityLabel(L10n.tr("Language"))
+    }
+
+    private var languageSelection: Binding<AppLanguage> {
+        Binding(
+            get: { appLanguage.language },
+            set: { newLanguage in
+                if appLanguage.select(newLanguage) {
+                    showLanguageRestartPrompt()
+                }
+            }
+        )
+    }
+
+    private func showLanguageRestartPrompt() {
+        let alert = NSAlert()
+        alert.messageText = L10n.tr("Restart CodexIsland to apply language?")
+        alert.informativeText = L10n.tr("Your language change will take effect after CodexIsland restarts.")
+        alert.addButton(withTitle: L10n.tr("Restart now"))
+        alert.addButton(withTitle: L10n.tr("Later"))
+        if alert.runModal() == .alertFirstButtonReturn {
+            appLanguage.restartApp()
+        }
+    }
+
     private var providersSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             sectionLabel("Providers")
@@ -545,6 +586,7 @@ struct SettingsView: View {
 
     private static let relativeFormatter: RelativeDateTimeFormatter = {
         let f = RelativeDateTimeFormatter()
+        f.locale = L10n.locale
         f.unitsStyle = .abbreviated
         return f
     }()

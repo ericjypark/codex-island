@@ -48,6 +48,7 @@
 "Daily token usage in %@" = "%@ 年每日 token 用量";
 "Display" = "显示";
 "General" = "通用";
+"Follows macOS" = "跟随 macOS";
 "Glow only on refresh, hover, or limit alerts." = "仅在刷新、悬停或限额提醒时显示辉光。";
 "Idle" = "空闲";
 "idle" = "空闲";
@@ -57,6 +58,8 @@
 "last scan %@" = "上次扫描 %@";
 "last scan %@ · pricing data %dd old" = "上次扫描 %@ · 价格数据已过 %d 天";
 "Launch at Login" = "登录时启动";
+"Language" = "语言";
+"Later" = "稍后";
 "License" = "许可证";
 "Live" = "实时";
 "Look for a new version immediately." = "立即检查是否有新版本。";
@@ -86,6 +89,8 @@
 "Refreshing…" = "正在刷新…";
 "resets in %@" = "%@ 后重置";
 "Resets in %@" = "%@ 后重置";
+"Restart CodexIsland to apply language?" = "重启 CodexIsland 以应用语言？";
+"Restart now" = "立即重启";
 "Ring" = "环形";
 "scanning local logs…" = "正在扫描本地日志…";
 "scanning local logs… · pricing data %dd old" = "正在扫描本地日志… · 价格数据已过 %d 天";
@@ -121,6 +126,7 @@
 "waiting for browser…" = "等待浏览器…";
 "You" = "你";
 "Your AI usage limits, living in your notch." = "你的 AI 用量限额，住在 Mac 刘海里。";
+"Your language change will take effect after CodexIsland restarts." = "语言更改会在 CodexIsland 重启后生效。";
 "⌘-click to cycle" = "⌘ 点击切换";
 "⌘1 — pull real provider data" = "⌘1 — 拉取真实服务数据";
 "%@ (hidden)" = "%@（已隐藏）";

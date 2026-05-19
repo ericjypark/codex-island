@@ -244,7 +244,7 @@ struct OverviewView: View {
 
     private static let dayLabelFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.locale = .current
+        formatter.locale = L10n.locale
         formatter.timeZone = .current
         formatter.setLocalizedDateFormatFromTemplate("MMM d")
         return formatter
@@ -253,7 +253,7 @@ struct OverviewView: View {
     private static let integerFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
-        formatter.locale = .current
+        formatter.locale = L10n.locale
         return formatter
     }()
 
@@ -452,7 +452,7 @@ private struct ContributionGrid: View {
 
     private static let monthFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.locale = .current
+        formatter.locale = L10n.locale
         formatter.timeZone = .current
         formatter.setLocalizedDateFormatFromTemplate("MMM")
         return formatter
@@ -595,7 +595,7 @@ private struct ContributionCell: View {
 
     private static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.locale = .current
+        formatter.locale = L10n.locale
         formatter.timeZone = .current
         formatter.setLocalizedDateFormatFromTemplate("MMM d")
         return formatter
@@ -770,7 +770,7 @@ private struct DayDetailStrip: View {
 
     private static let detailFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.locale = .current
+        formatter.locale = L10n.locale
         formatter.timeZone = .current
         formatter.setLocalizedDateFormatFromTemplate("EEE MMM d")
         return formatter

@@ -48,6 +48,7 @@
 "Daily token usage in %@" = "Daily token usage in %@";
 "Display" = "Display";
 "General" = "General";
+"Follows macOS" = "Follows macOS";
 "Glow only on refresh, hover, or limit alerts." = "Glow only on refresh, hover, or limit alerts.";
 "Idle" = "Idle";
 "idle" = "idle";
@@ -57,6 +58,8 @@
 "last scan %@" = "last scan %@";
 "last scan %@ · pricing data %dd old" = "last scan %@ · pricing data %dd old";
 "Launch at Login" = "Launch at Login";
+"Language" = "Language";
+"Later" = "Later";
 "License" = "License";
 "Live" = "Live";
 "Look for a new version immediately." = "Look for a new version immediately.";
@@ -86,6 +89,8 @@
 "Refreshing…" = "Refreshing…";
 "resets in %@" = "resets in %@";
 "Resets in %@" = "Resets in %@";
+"Restart CodexIsland to apply language?" = "Restart CodexIsland to apply language?";
+"Restart now" = "Restart now";
 "Ring" = "Ring";
 "scanning local logs…" = "scanning local logs…";
 "scanning local logs… · pricing data %dd old" = "scanning local logs… · pricing data %dd old";
@@ -121,6 +126,7 @@
 "waiting for browser…" = "waiting for browser…";
 "You" = "You";
 "Your AI usage limits, living in your notch." = "Your AI usage limits, living in your notch.";
+"Your language change will take effect after CodexIsland restarts." = "Your language change will take effect after CodexIsland restarts.";
 "⌘-click to cycle" = "⌘-click to cycle";
 "⌘1 — pull real provider data" = "⌘1 — pull real provider data";
 "%@ (hidden)" = "%@ (hidden)";

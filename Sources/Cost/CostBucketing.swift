@@ -15,7 +15,7 @@ enum CostBucketing {
 
     private static let monthFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.locale = .current
+        f.locale = L10n.locale
         f.timeZone = .current
         f.setLocalizedDateFormatFromTemplate("MMM")
         return f
