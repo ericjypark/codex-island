@@ -107,7 +107,18 @@ settings_variable_keys.concat(swift_string_literals(settings, /previewButton\(\s
 settings_variable_keys.concat(swift_string_literals(settings, /accessibilityPrefix:\s*"((?:\\.|[^"\\])*)"/))
 settings_variable_keys.concat(%w[General Display Providers Compact Notch-style])
 
-required_keys = (static_keys + settings_variable_keys).uniq
+usage_error_keys = [
+  "No usage data",
+  "No Codex authentication",
+  "Codex authentication expired — run codex login",
+  "Claude authentication required — run claude",
+  "Rate limited",
+  "Unable to parse usage response",
+  "Claude re-authentication required — run claude /login",
+  "HTTP %@"
+]
+
+required_keys = (static_keys + settings_variable_keys + usage_error_keys).uniq
 ignored_keys = Set[
   "Claude",
   "Codex"
@@ -122,6 +133,7 @@ same_value_allowlist = {
     "%@: %@, %@",
     "%@: %@. Claude %@, Codex %@.",
     "Codex",
+    "HTTP %@",
     "USD"
   ],
   "de" => Set[

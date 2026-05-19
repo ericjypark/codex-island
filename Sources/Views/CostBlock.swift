@@ -350,7 +350,7 @@ struct CostTile: View {
     /// an "⚠ N unpriced" warning so the user knows the dollar total is an
     /// undercount rather than a clean zero.
     private var resetGlyph: String {
-        if let err = window.error { return err }
+        if let err = window.error { return UsageErrorText.display(err) }
         if !window.unknownModels.isEmpty {
             return L10n.tr("⚠ %d unpriced", window.unknownModels.count)
         }
@@ -358,7 +358,7 @@ struct CostTile: View {
     }
 
     private var resetGlyphSpoken: String {
-        if let err = window.error { return err }
+        if let err = window.error { return UsageErrorText.display(err) }
         if !window.unknownModels.isEmpty {
             return L10n.tr("Warning: %d unpriced models — totals may be incomplete.", window.unknownModels.count)
         }

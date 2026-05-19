@@ -193,7 +193,7 @@ struct ChartTile: View {
                UsageFetcher.canPromptClaudeReauth() {
                 return ""
             }
-            return err
+            return UsageErrorText.display(err)
         }
         return ""
     }
@@ -208,7 +208,7 @@ struct ChartTile: View {
                UsageFetcher.canPromptClaudeReauth() {
                 return ""
             }
-            return err
+            return UsageErrorText.display(err)
         }
         return ""
     }

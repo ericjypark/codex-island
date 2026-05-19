@@ -143,3 +143,11 @@
 "resets in %d minutes" = "%d分後にリセット";
 "Swipe to change pages." = "スワイプでページ切替。";
 "Tightens the gap between logos when the island is on a screen without a hardware notch." = "ハードウェアノッチのない画面でロゴ間隔を詰めます。";
+"No usage data" = "使用量データなし";
+"No Codex authentication" = "Codex 認証がありません";
+"Codex authentication expired — run codex login" = "Codex 認証が期限切れです — codex login を実行";
+"Claude authentication required — run claude" = "Claude 認証が必要です — claude を実行";
+"Rate limited" = "レート制限中";
+"Unable to parse usage response" = "使用量レスポンスを解析できません";
+"Claude re-authentication required — run claude /login" = "Claude の再認証が必要です — claude /login を実行";
+"HTTP %@" = "HTTP %@";

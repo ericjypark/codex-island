@@ -143,3 +143,11 @@
 "resets in %d minutes" = "%d मिनट में रीसेट";
 "Swipe to change pages." = "पेज बदलने के लिए स्वाइप करें।";
 "Tightens the gap between logos when the island is on a screen without a hardware notch." = "हार्डवेयर नॉच न होने पर लोगो के बीच की दूरी घटाता है।";
+"No usage data" = "उपयोग डेटा नहीं";
+"No Codex authentication" = "Codex प्रमाणीकरण नहीं मिला";
+"Codex authentication expired — run codex login" = "Codex प्रमाणीकरण समाप्त — codex login चलाएं";
+"Claude authentication required — run claude" = "Claude प्रमाणीकरण चाहिए — claude चलाएं";
+"Rate limited" = "रेट लिमिट हो गया";
+"Unable to parse usage response" = "उपयोग प्रतिक्रिया पढ़ी नहीं जा सकी";
+"Claude re-authentication required — run claude /login" = "Claude फिर से प्रमाणित करें — claude /login चलाएं";
+"HTTP %@" = "HTTP %@";

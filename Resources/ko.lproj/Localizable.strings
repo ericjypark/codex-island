@@ -143,3 +143,11 @@
 "resets in %d minutes" = "%d분 후 재설정";
 "Swipe to change pages." = "스와이프하여 페이지 전환.";
 "Tightens the gap between logos when the island is on a screen without a hardware notch." = "하드웨어 노치가 없는 화면에서 로고 간격을 좁힙니다.";
+"No usage data" = "사용량 데이터 없음";
+"No Codex authentication" = "Codex 인증 없음";
+"Codex authentication expired — run codex login" = "Codex 인증 만료 — codex login 실행";
+"Claude authentication required — run claude" = "Claude 인증 필요 — claude 실행";
+"Rate limited" = "요청 제한됨";
+"Unable to parse usage response" = "사용량 응답을 해석할 수 없음";
+"Claude re-authentication required — run claude /login" = "Claude 재인증 필요 — claude /login 실행";
+"HTTP %@" = "HTTP %@";

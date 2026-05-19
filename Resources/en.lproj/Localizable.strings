@@ -143,3 +143,11 @@
 "resets in %d minutes" = "resets in %d minutes";
 "Swipe to change pages." = "Swipe to change pages.";
 "Tightens the gap between logos when the island is on a screen without a hardware notch." = "Tightens the gap between logos when the island is on a screen without a hardware notch.";
+"No usage data" = "No usage data";
+"No Codex authentication" = "No Codex authentication";
+"Codex authentication expired — run codex login" = "Codex authentication expired — run codex login";
+"Claude authentication required — run claude" = "Claude authentication required — run claude";
+"Rate limited" = "Rate limited";
+"Unable to parse usage response" = "Unable to parse usage response";
+"Claude re-authentication required — run claude /login" = "Claude re-authentication required — run claude /login";
+"HTTP %@" = "HTTP %@";

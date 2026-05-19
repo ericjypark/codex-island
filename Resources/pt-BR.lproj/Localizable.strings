@@ -143,3 +143,11 @@
 "resets in %d minutes" = "Reinicia em %d minutos";
 "Swipe to change pages." = "Deslize para mudar de página.";
 "Tightens the gap between logos when the island is on a screen without a hardware notch." = "Reduz o espaço entre logos em telas sem notch físico.";
+"No usage data" = "Sem dados de uso";
+"No Codex authentication" = "Autenticação do Codex ausente";
+"Codex authentication expired — run codex login" = "Autenticação do Codex expirou — execute codex login";
+"Claude authentication required — run claude" = "Autenticação do Claude necessária — execute claude";
+"Rate limited" = "Limite de taxa atingido";
+"Unable to parse usage response" = "Não foi possível ler a resposta de uso";
+"Claude re-authentication required — run claude /login" = "Reautenticação do Claude necessária — execute claude /login";
+"HTTP %@" = "HTTP %@";

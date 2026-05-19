@@ -143,3 +143,11 @@
 "resets in %d minutes" = "%d 分鐘後重置";
 "Swipe to change pages." = "滑動以切換頁面。";
 "Tightens the gap between logos when the island is on a screen without a hardware notch." = "當島位於沒有實體劉海的螢幕時，縮小標誌之間的距離。";
+"No usage data" = "暫無用量資料";
+"No Codex authentication" = "找不到 Codex 認證";
+"Codex authentication expired — run codex login" = "Codex 認證已過期 — 執行 codex login";
+"Claude authentication required — run claude" = "需要 Claude 認證 — 執行 claude";
+"Rate limited" = "請求過於頻繁";
+"Unable to parse usage response" = "無法解析用量回應";
+"Claude re-authentication required — run claude /login" = "需要重新認證 Claude — 執行 claude /login";
+"HTTP %@" = "HTTP %@";
