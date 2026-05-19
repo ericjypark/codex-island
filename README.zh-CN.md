@@ -1,6 +1,6 @@
 # CodexIsland
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+[English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-Hant.md) | [हिन्दी](README.hi.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Deutsch](README.de.md) | [Français](README.fr.md) | [Español](README.es.md) | [Português (Brasil)](README.pt-BR.md)
 
 <p align="center">
   <img src="Assets/codexisland-logo.png" width="160" alt="CodexIsland logo">
@@ -79,7 +79,7 @@ Claude：
 - 在展开面板里 Cmd 点击，可切换当前页面的可视化样式。
 - 点击 `synced Xs ago` 状态可立即刷新。
 - 点击展开面板左下角的齿轮打开设置。
-- 在设置里可以开启登录启动、选择刷新间隔、切换低功耗模式、隐藏或显示 Claude / Codex、选择默认图表和成本视图、切换 token 统计口径、打开 GitHub / License，或退出应用。
+- 在设置里可以开启登录启动、选择刷新间隔、切换低功耗模式、隐藏或显示 Claude / Codex、选择应用语言、选择默认图表和成本视图、切换 token 统计口径、打开 GitHub / License，或退出应用。
 
 服务可见性只影响显示。隐藏某个服务会移除它的 logo 和列，但应用仍会把最新用量保存在内存里，重新显示时不需要重置。
 
@@ -94,6 +94,7 @@ Claude：
 | 图表样式 | `StylePref` | `MacIsland.chartStyle` | `ring`, `bar`, `stepped`, `numeric`, `spark` |
 | 成本样式 | `CostStylePref` | `MacIsland.costStyle` | `dollar`, `multi`, `tokens`, `spark` |
 | Token 统计 | `TokenCountModeStore` | `MacIsland.tokenCountMode` | `all`, `billable` |
+| 应用语言 | `AppLanguageStore` | `MacIsland.appLanguage` | `auto`, `en`, `zh-Hans`, `zh-Hant`, `hi`, `ja`, `ko`, `de`, `fr`, `es`, `pt-BR` |
 | 刷新间隔 | `RefreshIntervalStore` | `MacIsland.refreshInterval` | `300`, `900`, `1800` |
 | 低功耗模式 | `LowPowerModeStore` | `MacIsland.lowPowerMode` | Boolean，默认 `false` |
 | Claude 可见 | `ProviderVisibilityStore` | `MacIsland.claudeVisible` | Boolean，默认 `true` |
@@ -101,6 +102,8 @@ Claude：
 | 登录启动 | `LaunchAtLoginStore` | 由 `SMAppService.mainApp` 管理 | 系统登录项状态 |
 
 刷新间隔会立即生效。`UsageStore` 会重置当前计时器，并用新的间隔重新安排下一次拉取。
+
+应用语言默认是 `auto`，跟随 macOS。手动选择语言后会立即保存，并在 CodexIsland 重启后生效。
 
 ## 从源码构建
 
@@ -135,3 +138,7 @@ npm install --global create-dmg
 `release.sh` 会运行原生构建，把 `.app` 复制到 `dist/`，应用 ad-hoc codesign，创建 `dist/CodexIsland-X.Y.Z.dmg`，并输出文件大小和 SHA-256。
 
 推送 `v*` tag 会触发 `.github/workflows/release.yml`，在 `macos-15` 上构建 DMG、计算 checksum、发布 GitHub Release，并在配置了 `HOMEBREW_TAP_TOKEN` 时同步 cask 到 `ericjypark/homebrew-tap`。
+
+## 隐私
+
+CodexIsland 没有应用遥测、崩溃上报、第三方分析或代理服务。Codex token 只从本机 `~/.codex/auth.json` 读取；Claude 凭据只来自环境变量、macOS Keychain 或官方 OAuth 刷新流程。
