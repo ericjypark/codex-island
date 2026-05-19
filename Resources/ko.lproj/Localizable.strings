@@ -10,7 +10,7 @@
 "%@: %@, %@" = "%@: %@, %@";
 "%@: %@. Claude %@, Codex %@." = "%@: %@. Claude %@, Codex %@.";
 "%@%@ tokens" = "%@%@ 토큰";
-"%@ in %@. %d active days. Claude %@, Codex %@." = "%@, %@년. 활성일 %d일. Claude %@, Codex %@.";
+"%@ in %@. %d active days. Claude %@, Codex %@." = "%@, %@. 활성일 %d일. Claude %@, Codex %@.";
 "%@ TOKENS" = "%@ 토큰";
 "%d Active Days" = "활성일 %d일";
 "⚠ %d unpriced" = "⚠ %d개 모델 가격 없음";
@@ -45,7 +45,7 @@
 "Counts everything — input, output, and cache. Mirrors ccusage." = "입력, 출력, 캐시를 모두 집계합니다. ccusage와 같습니다.";
 "Crit" = "위험";
 "Critical" = "위험";
-"Daily token usage in %@" = "%@년 일별 토큰 사용량";
+"Daily token usage in %@" = "%@ 일별 토큰 사용량";
 "Display" = "디스플레이";
 "General" = "일반";
 "Follows macOS" = "macOS 따름";

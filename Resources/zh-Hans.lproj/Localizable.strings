@@ -10,7 +10,7 @@
 "%@: %@, %@" = "%@：%@，%@";
 "%@: %@. Claude %@, Codex %@." = "%@：%@。Claude %@，Codex %@。";
 "%@%@ tokens" = "%@%@ 个 token";
-"%@ in %@. %d active days. Claude %@, Codex %@." = "%@，%@ 年。%d 个活跃日。Claude %@，Codex %@。";
+"%@ in %@. %d active days. Claude %@, Codex %@." = "%@，%@。%d 个活跃日。Claude %@，Codex %@。";
 "%@ TOKENS" = "%@ TOKEN";
 "%d Active Days" = "%d 个活跃日";
 "⚠ %d unpriced" = "⚠ %d 个模型缺价格";
@@ -45,7 +45,7 @@
 "Counts everything — input, output, and cache. Mirrors ccusage." = "统计所有 token：输入、输出和缓存；与 ccusage 一致。";
 "Crit" = "危急";
 "Critical" = "危急";
-"Daily token usage in %@" = "%@ 年每日 token 用量";
+"Daily token usage in %@" = "%@ 的每日 token 用量";
 "Display" = "显示";
 "General" = "通用";
 "Follows macOS" = "跟随 macOS";
@@ -73,7 +73,7 @@
 "Numeric" = "数字";
 "Open CodexIsland when you sign in." = "登录系统时打开 CodexIsland。";
 "Overview" = "概览";
-"Overview shows %@ usage history" = "概览显示 %@ 年使用历史";
+"Overview shows %@ usage history" = "概览显示 %@ 的使用历史";
 "Pinned to a specific display. Falls back to Auto if unplugged." = "固定到指定屏幕；断开后回退为自动。";
 "Plan" = "套餐";
 "Plan: %@" = "套餐：%@";

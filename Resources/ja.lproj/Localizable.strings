@@ -10,7 +10,7 @@
 "%@: %@, %@" = "%@：%@、%@";
 "%@: %@. Claude %@, Codex %@." = "%@：%@。Claude %@、Codex %@。";
 "%@%@ tokens" = "%@%@ トークン";
-"%@ in %@. %d active days. Claude %@, Codex %@." = "%@、%@年。%d日アクティブ。Claude %@、Codex %@。";
+"%@ in %@. %d active days. Claude %@, Codex %@." = "%@、%@。%d日アクティブ。Claude %@、Codex %@。";
 "%@ TOKENS" = "%@ トークン";
 "%d Active Days" = "%d日アクティブ";
 "⚠ %d unpriced" = "⚠ %d モデル価格なし";
@@ -45,7 +45,7 @@
 "Counts everything — input, output, and cache. Mirrors ccusage." = "入力・出力・キャッシュをすべて集計。ccusage と同じです。";
 "Crit" = "危険";
 "Critical" = "重大";
-"Daily token usage in %@" = "%@年の日別トークン使用量";
+"Daily token usage in %@" = "%@の日別トークン使用量";
 "Display" = "表示";
 "General" = "一般";
 "Follows macOS" = "macOS に従う";
@@ -73,7 +73,7 @@
 "Numeric" = "数値";
 "Open CodexIsland when you sign in." = "サインイン時に CodexIsland を開きます。";
 "Overview" = "概要";
-"Overview shows %@ usage history" = "概要に%@年の使用履歴を表示";
+"Overview shows %@ usage history" = "概要に%@の使用履歴を表示";
 "Pinned to a specific display. Falls back to Auto if unplugged." = "特定の画面に固定。外すと自動に戻ります。";
 "Plan" = "プラン";
 "Plan: %@" = "プラン：%@";

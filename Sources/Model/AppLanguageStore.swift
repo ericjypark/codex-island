@@ -109,7 +109,11 @@ final class AppLanguageStore: ObservableObject {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
         task.arguments = ["-n", Bundle.main.bundleURL.path]
-        try? task.run()
-        NSApp.terminate(nil)
+        do {
+            try task.run()
+            NSApp.terminate(nil)
+        } catch {
+            NSLog("CodexIsland: failed to restart app: %@", error.localizedDescription)
+        }
     }
 }

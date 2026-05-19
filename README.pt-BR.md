@@ -88,7 +88,7 @@ npm install --global create-dmg
 ./release.sh
 ```
 
-Um tag `v*` aciona o GitHub Actions, gera o DMG, calcula o checksum, publica a GitHub Release e sincroniza o cask do Homebrew se o token estiver configurado.
+Uma tag `v*` aciona o GitHub Actions, gera o DMG, calcula o checksum, publica a GitHub Release e sincroniza o cask do Homebrew se o token estiver configurado.
 
 ## Privacidade
 
