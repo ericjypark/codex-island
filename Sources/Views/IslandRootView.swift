@@ -181,7 +181,6 @@ struct IslandRootView: View {
                         // EXIT: pills fade first (unless we're pinning peek),
                         // then the shape settles at the rest state — `.compact`
                         // normally, `.peek` under always-show.
-                        let target = restState
                         if !alwaysShow.enabled {
                             withAnimation(.easeOut(duration: 0.08)) {
                                 pillsVisible = false
@@ -192,6 +191,11 @@ struct IslandRootView: View {
                         }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
                             guard !hovering else { return }
+                            // Re-read restState here — the user may have flipped
+                            // the always-show toggle during the 100ms wait, and
+                            // a captured-at-creation-time `target` would settle
+                            // at the wrong state for them.
+                            let target = restState
                             if model.state != target {
                                 withAnimation(.closeMorph) {
                                     model.setState(target)
@@ -256,7 +260,10 @@ struct IslandRootView: View {
                         pillsVisible = false
                     }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
-                        guard !hovering, model.state == .peek else { return }
+                        // Re-check `alwaysShow.enabled` — if the user toggled
+                        // back on inside the 100ms wait, leave the peek state
+                        // alone instead of fighting their newer intent.
+                        guard !hovering, model.state == .peek, !alwaysShow.enabled else { return }
                         withAnimation(.closeMorph) {
                             model.setState(.compact)
                         }
@@ -306,7 +313,9 @@ struct IslandRootView: View {
                 pillsVisible = false
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
-                guard !hovering, model.state == .peek else { return }
+                // Mirror the outer 4-second guard — if always-show flipped on
+                // during the tiny inner wait, leave the peek state alone.
+                guard !hovering, model.state == .peek, !alwaysShow.enabled else { return }
                 withAnimation(.closeMorph) {
                     model.setState(.compact)
                 }
