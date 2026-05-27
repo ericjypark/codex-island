@@ -3,6 +3,7 @@ import AppKit
 
 struct IslandRootView: View {
     @ObservedObject var model: IslandModel
+    @ObservedObject private var alwaysShow = AlwaysShowUsageStore.shared
     @State private var hovering = false
     @State private var contentVisible = false
     @State private var pillsVisible = false
@@ -177,19 +178,32 @@ struct IslandRootView: View {
                             }
                         }
                     } else {
-                        // EXIT: pills fade first, then shape collapses.
-                        // Branches by state so peek-out shrinks to compact
-                        // and expanded-out collapses the panel content too.
-                        withAnimation(.easeOut(duration: 0.08)) {
-                            pillsVisible = false
+                        // EXIT: pills fade first (unless we're pinning peek),
+                        // then the shape settles at the rest state — `.compact`
+                        // normally, `.peek` under always-show.
+                        let target = restState
+                        if !alwaysShow.enabled {
+                            withAnimation(.easeOut(duration: 0.08)) {
+                                pillsVisible = false
+                            }
                         }
                         withAnimation(.easeOut(duration: 0.10)) {
                             contentVisible = false
                         }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
                             guard !hovering else { return }
-                            withAnimation(.closeMorph) {
-                                model.setState(.compact)
+                            if model.state != target {
+                                withAnimation(.closeMorph) {
+                                    model.setState(target)
+                                }
+                            }
+                            // Coming out of `.expanded` under always-show, the
+                            // pills were hidden by the open-panel branch — bring
+                            // them back as the shape resettles at peek.
+                            if alwaysShow.enabled && !pillsVisible {
+                                withAnimation(.easeOut(duration: 0.18)) {
+                                    pillsVisible = true
+                                }
                             }
                         }
                     }
@@ -208,6 +222,46 @@ struct IslandRootView: View {
             if openaiLogo == nil {
                 openaiLogo = Bundle.main.url(forResource: "openai_logo", withExtension: "pdf")
                     .flatMap { NSImage(contentsOf: $0) }
+            }
+            // Snap to peek on launch when the user has opted into always-show.
+            // No animation here — the window is just becoming visible, so the
+            // user sees the silhouette appear already at peek width rather
+            // than morphing out under their gaze.
+            if alwaysShow.enabled && model.state == .compact {
+                model.setState(.peek)
+                pillsVisible = true
+            }
+        }
+        .onChange(of: alwaysShow.enabled) { enabled in
+            // Live toggle — defer to the user's current interaction. If they
+            // happen to be hovering, the hover state machine owns the morph
+            // and will land on the new rest state on hover-out. If the panel
+            // is expanded, leave it alone for the same reason.
+            guard !hovering, model.state != .expanded else { return }
+            if enabled {
+                if model.state == .compact {
+                    withAnimation(.openMorph) {
+                        model.setState(.peek)
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
+                        guard model.state == .peek, !hovering else { return }
+                        withAnimation(.easeOut(duration: 0.18)) {
+                            pillsVisible = true
+                        }
+                    }
+                }
+            } else {
+                if model.state == .peek {
+                    withAnimation(.easeOut(duration: 0.08)) {
+                        pillsVisible = false
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
+                        guard !hovering, model.state == .peek else { return }
+                        withAnimation(.closeMorph) {
+                            model.setState(.compact)
+                        }
+                    }
+                }
             }
         }
         .onReceive(AlertEngine.shared.$pulseEvent) { event in
@@ -244,8 +298,10 @@ struct IslandRootView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
             // If the user is hovering or has expanded the panel meanwhile,
             // don't fight their state — let their interaction own the peek
-            // lifecycle from here.
-            guard !hovering, model.state == .peek else { return }
+            // lifecycle from here. Under always-show, `.peek` IS the rest
+            // state, so the pulse just resolves into the steady-state pill
+            // rather than collapsing back to compact.
+            guard !hovering, model.state == .peek, !alwaysShow.enabled else { return }
             withAnimation(.easeOut(duration: 0.08)) {
                 pillsVisible = false
             }
@@ -258,9 +314,16 @@ struct IslandRootView: View {
         }
     }
 
+    private var restState: IslandModel.State {
+        alwaysShow.enabled ? .peek : .compact
+    }
+
     private var accessibilityHintForState: String {
         switch model.state {
-        case .compact:  return L10n.tr("Hover to peek usage. Click to expand. Command-click to cycle visualization.")
+        case .compact:
+            return alwaysShow.enabled
+                ? L10n.tr("Click to expand. Command-click to cycle visualization.")
+                : L10n.tr("Hover to peek usage. Click to expand. Command-click to cycle visualization.")
         case .peek:     return L10n.tr("Click to expand. Command-click to cycle visualization.")
         case .expanded:
             return ScreenPref.shared.screen == .overview

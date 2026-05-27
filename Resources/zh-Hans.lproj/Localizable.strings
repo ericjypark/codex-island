@@ -21,6 +21,7 @@
 "All Tokens" = "全部 Token";
 "TOTAL" = "总计";
 "Total" = "总计";
+"Always show usage" = "始终显示使用量";
 "Approaching-limit alerts" = "接近限额提醒";
 "Alerts" = "提醒";
 "Auto" = "自动";
@@ -137,6 +138,7 @@
 "Command-click to cycle visualization." = "Command 点击可切换可视化。";
 "Hover to peek usage. Click to expand. Command-click to cycle visualization." = "悬停预览用量。点击展开。Command 点击可切换可视化。";
 "How often to refresh." = "刷新频率。";
+"Keep the percentage and time remaining visible without hovering." = "无需悬停即可始终查看用量百分比和剩余时间。";
 "Inject test percentages. Visible only when launched with CODEXISLAND_DEBUG=1." = "注入测试百分比。仅在使用 CODEXISLAND_DEBUG=1 启动时显示。";
 "Preview" = "预览";
 "resets in %d hours" = "%d 小时后重置";

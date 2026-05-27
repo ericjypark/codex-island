@@ -14,6 +14,7 @@ struct SettingsView: View {
     @ObservedObject private var refreshStore = RefreshIntervalStore.shared
     @ObservedObject private var tokenMode = TokenCountModeStore.shared
     @ObservedObject private var lowPower = LowPowerModeStore.shared
+    @ObservedObject private var alwaysShow = AlwaysShowUsageStore.shared
     @ObservedObject private var alertPrefs = AlertThresholdStore.shared
     @ObservedObject private var spacing = IslandSpacingStore.shared
     @ObservedObject private var targetDisplay = IslandTargetDisplayStore.shared
@@ -210,6 +211,14 @@ struct SettingsView: View {
                 subtitle: appLanguage.language.subtitle
             ) {
                 languagePicker
+            }
+            SettingsRow(
+                title: "Always show usage",
+                subtitle: "Keep the percentage and time remaining visible without hovering."
+            ) {
+                SettingsToggle(isOn: alwaysShow.enabled) {
+                    alwaysShow.enabled.toggle()
+                }
             }
             SettingsRow(
                 title: "Low Power Mode",
