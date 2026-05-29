@@ -16,11 +16,25 @@ struct CodexIslandApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var island: IslandWindowController?
+    private var settingsShortcutMonitor: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         island = IslandWindowController()
         island?.show()
+
+        // Route Cmd+, to our hand-rolled Settings window. Without this, the
+        // inert `Settings { EmptyView() }` scene below claims the shortcut and
+        // opens a blank window. Consuming the event (returning nil) keeps that
+        // empty scene from ever surfacing.
+        settingsShortcutMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if event.modifierFlags.contains(.command),
+               event.charactersIgnoringModifiers == "," {
+                SettingsWindowController.shared.show()
+                return nil
+            }
+            return event
+        }
 
         // Start fetching at app launch — NOT on view appear — so the panel
         // already has cached values the first time the user hovers, instead
