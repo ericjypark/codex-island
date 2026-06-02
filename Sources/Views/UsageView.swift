@@ -152,25 +152,49 @@ struct ChartTile: View {
         let sub = subCaption()
         let label = L10n.tr(labelKey)
 
-        Group {
-            switch style {
-            case .ring:    RingChart(value: value, color: color, label: label, sub: sub)
-            case .bar:     BarChart(value: value, color: color, label: label, sub: sub)
-            case .stepped: SteppedChart(value: value, color: color, label: label, sub: sub)
-            case .numeric: NumericChart(value: value, color: color, label: label, sub: compactSubCaption())
-            case .spark:   SparkChart(value: value, color: color, label: label, sub: sub, seed: seed)
+        VStack(alignment: .leading, spacing: 5) {
+            Group {
+                switch style {
+                case .ring:    RingChart(value: value, color: color, label: label, sub: sub)
+                case .bar:     BarChart(value: value, color: color, label: label, sub: sub)
+                case .stepped: SteppedChart(value: value, color: color, label: label, sub: sub)
+                case .numeric: NumericChart(value: value, color: color, label: label, sub: compactSubCaption())
+                case .spark:   SparkChart(value: value, color: color, label: label, sub: sub, seed: seed)
+                }
             }
+            .id(style)
+            // Blur + scale + opacity, all on the same strong ease-out at 220ms.
+            // The blur masks the geometric mismatch between Ring and Bar so the
+            // crossfade reads as one morph instead of two stacked objects.
+            .transition(.chartSwap.animation(.chartSwap))
+
+            PaceGuideBar(guide: paceGuide(), color: color)
         }
-        .id(style)
-        // Blur + scale + opacity, all on the same strong ease-out at 220ms.
-        // The blur masks the geometric mismatch between Ring and Bar so the
-        // crossfade reads as one morph instead of two stacked objects.
-        .transition(.chartSwap.animation(.chartSwap))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .frame(height: Self.tileHeight)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(L10n.tr("%@, %d%%", label, Int(value)))
-        .accessibilityValue(subCaption())
+        .accessibilityValue(accessibilityValue())
+    }
+
+    private func paceGuide() -> PaceGuide? {
+        guard window.error == nil,
+              let resetAt = window.resetAt
+        else { return nil }
+
+        let duration: TimeInterval = labelKey == "week"
+            ? 7 * 24 * 60 * 60
+            : 5 * 60 * 60
+        let remaining = resetAt.timeIntervalSinceNow
+        let target = min(1, max(0, 1 - remaining / duration))
+        return PaceGuide(actualPercent: window.usedPercent, targetPercent: target)
+    }
+
+    private func accessibilityValue() -> String {
+        guard let guide = paceGuide() else { return subCaption() }
+        return L10n.tr("used %d%%, guide %d%%",
+                       window.percentInt,
+                       Int((guide.targetPercent * 100).rounded()))
     }
 
     private func subCaption() -> String {
@@ -211,5 +235,50 @@ struct ChartTile: View {
             return err
         }
         return ""
+    }
+}
+
+private struct PaceGuide {
+    let actualPercent: Double
+    let targetPercent: Double
+}
+
+private struct PaceGuideBar: View {
+    let guide: PaceGuide?
+    let color: Color
+
+    var body: some View {
+        Group {
+            if let guide {
+                VStack(alignment: .leading, spacing: 2) {
+                    GeometryReader { geo in
+                        let actualX = geo.size.width * CGFloat(guide.actualPercent)
+                        let targetX = geo.size.width * CGFloat(guide.targetPercent)
+
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(.white.opacity(0.055))
+                                .frame(height: 3)
+                            Capsule()
+                                .fill(color.opacity(0.72))
+                                .frame(width: actualX, height: 3)
+                                .animation(.strongEaseOut, value: guide.actualPercent)
+                            Rectangle()
+                                .fill(.white.opacity(0.72))
+                                .frame(width: 1, height: 8)
+                                .offset(x: targetX)
+                                .animation(.strongEaseOut, value: guide.targetPercent)
+                        }
+                    }
+                    .frame(height: 8)
+
+                    Text(L10n.tr("guide %d%%", Int((guide.targetPercent * 100).rounded())))
+                        .font(Typography.caption)
+                        .foregroundStyle(.white.opacity(0.34))
+                        .lineLimit(1)
+                }
+                .accessibilityHidden(true)
+            }
+        }
     }
 }

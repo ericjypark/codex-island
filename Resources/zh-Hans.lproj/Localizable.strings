@@ -136,6 +136,7 @@
 "%@: no data for 5-hour window" = "%@：5 小时窗口暂无数据";
 "Click to expand. Command-click to cycle visualization." = "点击展开。Command 点击可切换可视化。";
 "Command-click to cycle visualization." = "Command 点击可切换可视化。";
+"guide %d%%" = "建议 %d%%";
 "Hover to peek usage. Click to expand. Command-click to cycle visualization." = "悬停预览用量。点击展开。Command 点击可切换可视化。";
 "How often to refresh." = "刷新频率。";
 "Keep the percentage and time remaining visible without hovering." = "无需悬停即可始终查看用量百分比和剩余时间。";
@@ -145,3 +146,4 @@
 "resets in %d minutes" = "%d 分钟后重置";
 "Swipe to change pages." = "滑动切换页面。";
 "Tightens the gap between logos when the island is on a screen without a hardware notch." = "在没有硬件刘海的屏幕上收紧 logo 之间的间距。";
+"used %d%%, guide %d%%" = "已用 %d%%，建议 %d%%";
