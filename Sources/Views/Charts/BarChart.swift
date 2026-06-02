@@ -5,6 +5,7 @@ struct BarChart: View {
     let color: Color
     let label: String
     let sub: String
+    let guide: Double?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -16,6 +17,13 @@ struct BarChart: View {
                         .fill(color)
                         .frame(width: geo.size.width * CGFloat(value / 100), height: 4)
                         .animation(.strongEaseOut, value: value)
+                    if let guide {
+                        RoundedRectangle(cornerRadius: 1)
+                            .fill(.white.opacity(0.86))
+                            .frame(width: 2, height: 11)
+                            .offset(x: geo.size.width * CGFloat(guide / 100))
+                            .animation(.strongEaseOut, value: guide)
+                    }
                     // Tick marks at quartiles. Subtle (12% white) so they
                     // hint at scale without competing with the fill.
                     ForEach([0.25, 0.5, 0.75], id: \.self) { p in

@@ -5,6 +5,7 @@ struct NumericChart: View {
     let color: Color
     let label: String
     let sub: String
+    let guide: Double?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -39,6 +40,13 @@ struct NumericChart: View {
                         .frame(width: geo.size.width * CGFloat(value / 100), height: 3)
                         .shadow(color: color.opacity(0.7), radius: 4)
                         .animation(.strongEaseOut, value: value)
+                    if let guide {
+                        RoundedRectangle(cornerRadius: 1)
+                            .fill(.white.opacity(0.86))
+                            .frame(width: 2, height: 10)
+                            .offset(x: geo.size.width * CGFloat(guide / 100))
+                            .animation(.strongEaseOut, value: guide)
+                    }
                 }
             }
             .frame(height: 4)
