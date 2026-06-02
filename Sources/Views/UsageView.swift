@@ -177,7 +177,7 @@ struct ChartTile: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .frame(height: Self.tileHeight)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(L10n.tr("%@, %d%%", label, Int(value)))
+        .accessibilityLabel(L10n.tr("%@, %d%%", label, window.percentInt))
         .accessibilityValue(accessibilityValue())
     }
 
