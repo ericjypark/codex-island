@@ -48,10 +48,12 @@
 "Critical" = "危急";
 "Daily token usage in %@" = "%@ 年每日 token 用量";
 "Display" = "显示";
+"Show provider logos before hover or expand." = "在悬停或展开前显示服务图标。";
 "General" = "通用";
 "Follows macOS" = "跟随 macOS";
 "Glow only on refresh, hover, or limit alerts." = "仅在刷新、悬停或限额提醒时显示辉光。";
 "Idle" = "空闲";
+"Idle logos" = "空闲图标";
 "idle" = "空闲";
 "Input + output" = "输入 + 输出";
 "Input + output only. Matches Anthropic's claude.ai stats." = "只统计输入 + 输出；与 Anthropic 的 claude.ai 统计一致。";
