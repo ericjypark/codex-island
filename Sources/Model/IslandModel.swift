@@ -47,7 +47,7 @@ final class IslandModel: ObservableObject {
     private var rawNotch: NotchInfo
     private var activeScreen = ScreenPref.shared.screen
     private var overviewDayDetailVisible = false
-    private(set) var compactLogosVisible = LogoVisibilityStore.shared.visible
+    private var compactLogoPreferenceVisible = LogoVisibilityStore.shared.visible
 
     private var subs: Set<AnyCancellable> = []
 
@@ -153,7 +153,7 @@ final class IslandModel: ObservableObject {
             .sink { [weak self] visible in
                 guard let self else { return }
                 withAnimation(.openMorph) {
-                    self.compactLogosVisible = visible
+                    self.compactLogoPreferenceVisible = visible
                     if self.state == .compact {
                         self.recomputeSize()
                     }
@@ -201,6 +201,10 @@ final class IslandModel: ObservableObject {
 
     private var compactLogoTabWidth: CGFloat {
         compactLogosVisible ? tabWidth : 0
+    }
+
+    var compactLogosVisible: Bool {
+        !notch.hasNotch || compactLogoPreferenceVisible
     }
 
     private var expandedContentHeight: CGFloat {

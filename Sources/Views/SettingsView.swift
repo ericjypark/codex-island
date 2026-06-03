@@ -139,7 +139,9 @@ struct SettingsView: View {
             chartSection
             costStyleSection
             targetDisplaySection
-            restChromeSection
+            if restChromeSectionVisible {
+                restChromeSection
+            }
             if spacingSectionVisible {
                 spacingSection
             }
@@ -152,6 +154,13 @@ struct SettingsView: View {
     /// the gate stays in sync with where the island actually is.
     private var spacingSectionVisible: Bool {
         DisplayInfo.currentTarget()?.notch.hasNotch == false
+    }
+
+    /// The idle-logo toggle only makes sense on a physical notch. On
+    /// non-notched displays, hiding the rest-state logos would leave an empty
+    /// synthetic pill floating at top-center.
+    private var restChromeSectionVisible: Bool {
+        DisplayInfo.currentTarget()?.notch.hasNotch == true
     }
 
     private var providersTab: some View {
