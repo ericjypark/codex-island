@@ -15,6 +15,7 @@ struct SettingsView: View {
     @ObservedObject private var tokenMode = TokenCountModeStore.shared
     @ObservedObject private var lowPower = LowPowerModeStore.shared
     @ObservedObject private var alwaysShow = AlwaysShowUsageStore.shared
+    @ObservedObject private var paceGuide = PaceGuideStore.shared
     @ObservedObject private var alertPrefs = AlertThresholdStore.shared
     @ObservedObject private var spacing = IslandSpacingStore.shared
     @ObservedObject private var targetDisplay = IslandTargetDisplayStore.shared
@@ -218,6 +219,14 @@ struct SettingsView: View {
             ) {
                 SettingsToggle(isOn: alwaysShow.enabled) {
                     alwaysShow.enabled.toggle()
+                }
+            }
+            SettingsRow(
+                title: "Pace guide",
+                subtitle: "Show a small marker for expected usage before reset."
+            ) {
+                SettingsToggle(isOn: paceGuide.enabled) {
+                    paceGuide.enabled.toggle()
                 }
             }
             SettingsRow(

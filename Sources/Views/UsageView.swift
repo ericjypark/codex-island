@@ -137,6 +137,8 @@ struct ReauthButton: View {
 }
 
 struct ChartTile: View {
+    @ObservedObject private var paceGuide = PaceGuideStore.shared
+
     let style: ChartStyle
     let color: Color
     let labelKey: String
@@ -151,14 +153,20 @@ struct ChartTile: View {
         let value = window.usedPercent * 100   // 0-100
         let sub = subCaption()
         let label = L10n.tr(labelKey)
+        let guide = paceGuidePercent()
 
         Group {
             switch style {
-            case .ring:    RingChart(value: value, color: color, label: label, sub: sub)
-            case .bar:     BarChart(value: value, color: color, label: label, sub: sub)
-            case .stepped: SteppedChart(value: value, color: color, label: label, sub: sub)
-            case .numeric: NumericChart(value: value, color: color, label: label, sub: compactSubCaption())
-            case .spark:   SparkChart(value: value, color: color, label: label, sub: sub, seed: seed)
+            case .ring:
+                RingChart(value: value, color: color, label: label, sub: sub, guide: guide)
+            case .bar:
+                BarChart(value: value, color: color, label: label, sub: sub, guide: guide)
+            case .stepped:
+                SteppedChart(value: value, color: color, label: label, sub: sub, guide: guide)
+            case .numeric:
+                NumericChart(value: value, color: color, label: label, sub: compactSubCaption(), guide: guide)
+            case .spark:
+                SparkChart(value: value, color: color, label: label, sub: sub, seed: seed, guide: guide)
             }
         }
         .id(style)
@@ -169,8 +177,28 @@ struct ChartTile: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .frame(height: Self.tileHeight)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(L10n.tr("%@, %d%%", label, Int(value)))
-        .accessibilityValue(subCaption())
+        .accessibilityLabel(L10n.tr("%@, %d%%", label, window.percentInt))
+        .accessibilityValue(accessibilityValue())
+    }
+
+    private func paceGuidePercent() -> Double? {
+        guard paceGuide.enabled,
+              window.error == nil,
+              let resetAt = window.resetAt
+        else { return nil }
+
+        let duration: TimeInterval = labelKey == "week"
+            ? 7 * 24 * 60 * 60
+            : 5 * 60 * 60
+        let remaining = resetAt.timeIntervalSinceNow
+        return min(100, max(0, (1 - remaining / duration) * 100))
+    }
+
+    private func accessibilityValue() -> String {
+        guard let guide = paceGuidePercent() else { return subCaption() }
+        return L10n.tr("used %d%%, guide %d%%",
+                       window.percentInt,
+                       Int(guide.rounded()))
     }
 
     private func subCaption() -> String {

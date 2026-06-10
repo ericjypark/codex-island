@@ -6,11 +6,12 @@ struct SparkChart: View {
     let label: String
     let sub: String
     let seed: Int
+    let guide: Double?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             ChartHead(value: value, label: label)
-            SparkSVG(value: value, color: color, seed: seed)
+            SparkSVG(value: value, color: color, seed: seed, guide: guide)
                 .frame(height: 50)
                 .animation(.strongEaseOut, value: value)
             ChartFoot(caption: sub)
@@ -22,6 +23,7 @@ private struct SparkSVG: View {
     let value: Double
     let color: Color
     let seed: Int
+    let guide: Double?
 
     /// Synthesize 36 plausible-looking historical points around the current
     /// value. Real history would need a usage time-series API neither
@@ -60,6 +62,7 @@ private struct SparkSVG: View {
             let w = geo.size.width, h = geo.size.height
             let pts = generatePoints(width: w, height: h)
             let baselineY = h - CGFloat(value / 100) * (h - 8) - 4
+            let guideY = guide.map { h - CGFloat($0 / 100) * (h - 8) - 4 }
             ZStack {
                 // Quartile rules at 4% white, barely there.
                 ForEach([0.25, 0.5, 0.75], id: \.self) { p in
@@ -69,13 +72,17 @@ private struct SparkSVG: View {
                     }
                     .stroke(.white.opacity(0.04), lineWidth: 1)
                 }
-                // Dotted threshold at the current value — the line reading
-                // "this is now" against the synthesized history.
+                // Dotted threshold: guide when reset data exists; otherwise
+                // the current value as the old decorative baseline.
                 Path { path in
-                    path.move(to: CGPoint(x: 0, y: baselineY))
-                    path.addLine(to: CGPoint(x: w, y: baselineY))
+                    path.move(to: CGPoint(x: 0, y: guideY ?? baselineY))
+                    path.addLine(to: CGPoint(x: w, y: guideY ?? baselineY))
                 }
-                .stroke(color.opacity(0.25), style: StrokeStyle(lineWidth: 1, dash: [2, 3]))
+                .stroke(
+                    guideY == nil ? color.opacity(0.25) : .white.opacity(0.38),
+                    style: StrokeStyle(lineWidth: guideY == nil ? 1 : 1.5, dash: [2, 3])
+                )
+                .animation(.strongEaseOut, value: guide ?? value)
 
                 // Gradient area fill under the curve.
                 Path { p in
