@@ -47,6 +47,7 @@ final class IslandModel: ObservableObject {
     private var rawNotch: NotchInfo
     private var activeScreen = ScreenPref.shared.screen
     private var overviewDayDetailVisible = false
+    private var compactLogoPreferenceVisible = LogoVisibilityStore.shared.visible
 
     private var subs: Set<AnyCancellable> = []
 
@@ -55,6 +56,7 @@ final class IslandModel: ObservableObject {
         self.notch = Self.applyOverride(to: notch, width: IslandSpacingStore.shared.width)
         recomputeSize()
         subscribeToSpacingStore()
+        subscribeToLogoVisibilityStore()
         subscribeToScreenPref()
     }
 
@@ -145,6 +147,21 @@ final class IslandModel: ObservableObject {
             .store(in: &subs)
     }
 
+    private func subscribeToLogoVisibilityStore() {
+        LogoVisibilityStore.shared.$visible
+            .dropFirst()
+            .sink { [weak self] visible in
+                guard let self else { return }
+                withAnimation(.openMorph) {
+                    self.compactLogoPreferenceVisible = visible
+                    if self.state == .compact {
+                        self.recomputeSize()
+                    }
+                }
+            }
+            .store(in: &subs)
+    }
+
     private func subscribeToScreenPref() {
         ScreenPref.shared.$screen
             .dropFirst()
@@ -166,7 +183,7 @@ final class IslandModel: ObservableObject {
         switch state {
         case .compact:
             size = CGSize(
-                width: notch.width + tabWidth * 2,
+                width: notch.width + compactLogoTabWidth * 2,
                 height: notch.height
             )
         case .peek:
@@ -180,6 +197,14 @@ final class IslandModel: ObservableObject {
                 height: expandedContentHeight + notch.height
             )
         }
+    }
+
+    private var compactLogoTabWidth: CGFloat {
+        compactLogosVisible ? tabWidth : 0
+    }
+
+    var compactLogosVisible: Bool {
+        !notch.hasNotch || compactLogoPreferenceVisible
     }
 
     private var expandedContentHeight: CGFloat {

@@ -17,6 +17,7 @@ struct SettingsView: View {
     @ObservedObject private var alwaysShow = AlwaysShowUsageStore.shared
     @ObservedObject private var alertPrefs = AlertThresholdStore.shared
     @ObservedObject private var spacing = IslandSpacingStore.shared
+    @ObservedObject private var logos = LogoVisibilityStore.shared
     @ObservedObject private var targetDisplay = IslandTargetDisplayStore.shared
     @ObservedObject private var appLanguage = AppLanguageStore.shared
     @ObservedObject private var usage = UsageStore.shared
@@ -138,6 +139,9 @@ struct SettingsView: View {
             chartSection
             costStyleSection
             targetDisplaySection
+            if restChromeSectionVisible {
+                restChromeSection
+            }
             if spacingSectionVisible {
                 spacingSection
             }
@@ -150,6 +154,13 @@ struct SettingsView: View {
     /// the gate stays in sync with where the island actually is.
     private var spacingSectionVisible: Bool {
         DisplayInfo.currentTarget()?.notch.hasNotch == false
+    }
+
+    /// The idle-logo toggle only makes sense on a physical notch. On
+    /// non-notched displays, hiding the rest-state logos would leave an empty
+    /// synthetic pill floating at top-center.
+    private var restChromeSectionVisible: Bool {
+        DisplayInfo.currentTarget()?.notch.hasNotch == true
     }
 
     private var providersTab: some View {
@@ -652,6 +663,23 @@ struct SettingsView: View {
                 subtitle: "Tightens the gap between logos when the island is on a screen without a hardware notch."
             ) {
                 spacingSegmented
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 14)
+        .padding(.bottom, 14)
+    }
+
+    private var restChromeSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionLabel("Idle")
+            SettingsRow(
+                title: "Idle logos",
+                subtitle: "Show provider logos before hover or expand."
+            ) {
+                SettingsToggle(isOn: logos.visible) {
+                    logos.visible.toggle()
+                }
             }
         }
         .padding(.horizontal, 14)

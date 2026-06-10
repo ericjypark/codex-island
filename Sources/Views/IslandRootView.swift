@@ -74,6 +74,8 @@ struct IslandRootView: View {
                         image: claudeLogo,
                         color: IslandColor.claude,
                         provider: .claude,
+                        state: model.state,
+                        compactLogosVisible: model.compactLogosVisible,
                         edgePadding: logoEdgePadding,
                         topPadding: max(0, (model.notch.height - 20) / 2)
                     )
@@ -83,6 +85,8 @@ struct IslandRootView: View {
                         image: openaiLogo,
                         color: IslandColor.codex,
                         provider: .codex,
+                        state: model.state,
+                        compactLogosVisible: model.compactLogosVisible,
                         edgePadding: logoEdgePadding,
                         topPadding: max(0, (model.notch.height - 20) / 2)
                     )
@@ -440,18 +444,17 @@ private struct LogoOverlay: View {
     let image: NSImage?
     let color: Color
     let provider: AlertEngine.Provider
+    let state: IslandModel.State
+    let compactLogosVisible: Bool
     let edgePadding: CGFloat
     let topPadding: CGFloat
 
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
 
     var body: some View {
-        // Hidden providers fully drop out — header / peek pill / chrome
-        // are gated identically. `.opacity(isVisible ? 1 : 0)` keeps the
-        // view in the layout (so other overlays don't reflow) but makes
-        // it invisible, and the explicit `.animation(.openMorph, value:)`
-        // pairs the chrome fade with the panel layout swap when the user
-        // toggles a provider in Settings.
+        // The logo preference applies only to the compact rest state.
+        // Peek/expanded remain exactly as before so hover, pills, and panel
+        // chrome keep their current geometry.
         if let image {
             Image(nsImage: image)
                 .resizable()
@@ -470,6 +473,7 @@ private struct LogoOverlay: View {
 
     private var isVisible: Bool {
         visibility.effectiveVisible(provider: provider)
+            && (state != .compact || compactLogosVisible)
     }
 
     private var providerLabel: String {
