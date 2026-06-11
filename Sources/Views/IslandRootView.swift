@@ -558,15 +558,20 @@ private struct PeekPillOverlay: View {
         if window.error != nil && window.usedPercent == 0 {
             return L10n.tr("%@: no data for 5-hour window", provider)
         }
-        let pct = window.percentInt
+        let mode = UsageDisplayModeStore.shared.mode
+        let pct = window.displayedPercentInt(mode: mode)
         guard let resetAt = window.resetAt else {
-            return L10n.tr("%@: %d percent of 5-hour window used", provider, pct)
+            return mode == .used
+                ? L10n.tr("%@: %d percent of 5-hour window used", provider, pct)
+                : L10n.tr("%@: %d percent of 5-hour window remaining", provider, pct)
         }
         let remaining = max(0, resetAt.timeIntervalSinceNow)
         let resetPhrase: String = remaining >= 3600
             ? L10n.tr("resets in %d hours", Int((remaining / 3600).rounded(.down)))
             : L10n.tr("resets in %d minutes", max(1, Int((remaining / 60).rounded(.down))))
-        return L10n.tr("%@: %d percent of 5-hour window used, %@", provider, pct, resetPhrase)
+        return mode == .used
+            ? L10n.tr("%@: %d percent of 5-hour window used, %@", provider, pct, resetPhrase)
+            : L10n.tr("%@: %d percent of 5-hour window remaining, %@", provider, pct, resetPhrase)
     }
 }
 

@@ -10,6 +10,19 @@ struct WindowUsage {
     static let unknown = WindowUsage(usedPercent: 0, resetAt: nil, error: "no data")
 
     var percentInt: Int { Int((usedPercent * 100).rounded()) }
+
+    func displayedFraction(mode: UsageDisplayMode) -> Double {
+        switch mode {
+        case .used:
+            return usedPercent
+        case .remaining:
+            return max(0, 1 - usedPercent)
+        }
+    }
+
+    func displayedPercentInt(mode: UsageDisplayMode) -> Int {
+        Int((displayedFraction(mode: mode) * 100).rounded())
+    }
 }
 
 struct AppUsage {

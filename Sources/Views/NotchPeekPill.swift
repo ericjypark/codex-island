@@ -17,6 +17,7 @@ struct NotchPeekPill: View {
     let tint: Color
     let alignment: HorizontalAlignment
     var severity: AlertEngine.Severity = .none
+    @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
 
     var body: some View {
         Group {
@@ -109,7 +110,7 @@ struct NotchPeekPill: View {
     }
 
     private var percentText: String {
-        "\(usage.percentInt)%"
+        "\(usage.displayedPercentInt(mode: usageDisplay.mode))%"
     }
 
     /// `Nh` when ≥ 1h remaining, `Nm` under 1h. Returns nil if there's no

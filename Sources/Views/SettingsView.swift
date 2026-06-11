@@ -17,6 +17,7 @@ struct SettingsView: View {
     @ObservedObject private var alwaysShow = AlwaysShowUsageStore.shared
     @ObservedObject private var alertPrefs = AlertThresholdStore.shared
     @ObservedObject private var spacing = IslandSpacingStore.shared
+    @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
     @ObservedObject private var targetDisplay = IslandTargetDisplayStore.shared
     @ObservedObject private var appLanguage = AppLanguageStore.shared
     @ObservedObject private var usage = UsageStore.shared
@@ -135,6 +136,7 @@ struct SettingsView: View {
 
     private var displayTab: some View {
         VStack(alignment: .leading, spacing: 0) {
+            usageDisplaySection
             chartSection
             costStyleSection
             targetDisplaySection
@@ -632,6 +634,21 @@ struct SettingsView: View {
         .padding(.bottom, 14)
     }
 
+    private var usageDisplaySection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionLabel("Usage display")
+            SettingsRow(
+                title: "Percentages",
+                subtitle: "Show usage as used or remaining quota."
+            ) {
+                usageDisplaySegmented
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 18)
+        .padding(.bottom, 14)
+    }
+
     private var costStyleSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             sectionLabel("Cost view", hint: "⌘-click to cycle")
@@ -667,6 +684,15 @@ struct SettingsView: View {
             selected: $spacing.mode,
             label: { $0 == .compact ? "Compact" : "Notch-style" },
             accessibilityPrefix: "Island width"
+        )
+    }
+
+    private var usageDisplaySegmented: some View {
+        SegmentedControl(
+            items: UsageDisplayMode.allCases,
+            selected: $usageDisplay.mode,
+            label: \.label,
+            accessibilityPrefix: "Usage display"
         )
     }
 
@@ -754,12 +780,12 @@ struct SettingsView: View {
             guard let updated = usage.lastUpdated else { return L10n.tr("idle") }
             return L10n.tr("synced %@", Self.relativeFormatter.localizedString(for: updated, relativeTo: Date()))
         }()
-        let nums = "\(Self.windowCaption(u.fiveHour)) / \(Self.windowCaption(u.weekly))"
+        let nums = "\(windowCaption(u.fiveHour)) / \(windowCaption(u.weekly))"
         return "\(synced) · \(nums)"
     }
 
-    private static func windowCaption(_ w: WindowUsage) -> String {
+    private func windowCaption(_ w: WindowUsage) -> String {
         if let err = w.error, w.percentInt == 0 { return "⚠ \(err)" }
-        return "\(w.percentInt)%"
+        return "\(w.displayedPercentInt(mode: usageDisplay.mode))%"
     }
 }
