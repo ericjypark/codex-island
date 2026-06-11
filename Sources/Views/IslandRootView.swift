@@ -189,7 +189,13 @@ struct IslandRootView: View {
                         withAnimation(.easeOut(duration: 0.10)) {
                             contentVisible = false
                         }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
+                        // Start the shape morph after only 20ms — overlapping
+                        // with the content fade — so the silhouette begins
+                        // shrinking while the content is still fading out.
+                        // The original 100ms wait caused a visible "flash black"
+                        // because the full-size black shape was exposed for the
+                        // entire fade before the closeMorph fired.
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
                             guard !hovering else { return }
                             // Re-read restState here — the user may have flipped
                             // the always-show toggle during the 100ms wait, and
