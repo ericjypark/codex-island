@@ -78,6 +78,7 @@ struct IslandRootView: View {
                         topPadding: max(0, (model.notch.height - 20) / 2)
                     )
                     .opacity(model.state == .compact && model.compactLogosHidden ? 0 : 1)
+                    .accessibilityHidden(model.state == .compact && model.compactLogosHidden)
                 }
                 .overlay(alignment: .topTrailing) {
                     LogoOverlay(
@@ -88,6 +89,7 @@ struct IslandRootView: View {
                         topPadding: max(0, (model.notch.height - 20) / 2)
                     )
                     .opacity(model.state == .compact && model.compactLogosHidden ? 0 : 1)
+                    .accessibilityHidden(model.state == .compact && model.compactLogosHidden)
                 }
                 .overlay(alignment: .topLeading) {
                     // Pill lives in the new outboard slot (the 78pt the

@@ -83,7 +83,8 @@ final class IslandModel: ObservableObject {
     func updateNotch(_ raw: NotchInfo) {
         guard raw.width != rawNotch.width
             || raw.height != rawNotch.height
-            || raw.hasNotch != rawNotch.hasNotch else { return }
+            || raw.hasNotch != rawNotch.hasNotch
+            || raw.sideSpace != rawNotch.sideSpace else { return }
         rawNotch = raw
         notch = Self.applyOverride(to: raw, width: IslandSpacingStore.shared.width)
         recomputeSize()
