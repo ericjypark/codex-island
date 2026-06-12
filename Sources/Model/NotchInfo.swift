@@ -4,6 +4,10 @@ struct NotchInfo {
     let width: CGFloat
     let height: CGFloat
     let hasNotch: Bool
+    /// Available points on each side of the notch before menu items begin.
+    /// Only meaningful on macOS 27+ notched screens where menu items flow
+    /// around the notch; set to .infinity on older systems (no constraint).
+    let sideSpace: CGFloat
 
     /// `screen.frame.maxY - screen.visibleFrame.maxY` reports the actual
     /// pixel distance between the top of the screen and the top of the app
@@ -22,7 +26,7 @@ struct NotchInfo {
     /// (screen width - left - right).
     static func detect(from screen: NSScreen?) -> NotchInfo {
         guard let screen else {
-            return NotchInfo(width: IslandSpacingStore.compactWidth, height: menuBarFallback(), hasNotch: false)
+            return NotchInfo(width: IslandSpacingStore.compactWidth, height: menuBarFallback(), hasNotch: false, sideSpace: .infinity)
         }
         let safeTop = screen.safeAreaInsets.top
         let visualHeight = visibleMenuBarHeight(of: screen)
@@ -33,9 +37,24 @@ struct NotchInfo {
             let width: CGFloat = (leftW > 0 && rightW > 0)
                 ? screen.frame.width - leftW - rightW
                 : 200
-            return NotchInfo(width: width, height: visualHeight, hasNotch: true)
+
+            // On macOS 27+ menu items flow into the aux areas beside the notch,
+            // so we calculate how much space remains on each side after they end.
+            // On older macOS the aux areas are dead zones — no constraint needed.
+            let sideSpace: CGFloat
+            if #available(macOS 27, *) {
+                let halfScreen = screen.frame.width / 2
+                let halfNotch  = width / 2
+                let leftFree   = halfScreen - halfNotch - leftW
+                let rightFree  = halfScreen - halfNotch - rightW
+                sideSpace = max(0, min(leftFree, rightFree))
+            } else {
+                sideSpace = .infinity
+            }
+
+            return NotchInfo(width: width, height: visualHeight, hasNotch: true, sideSpace: sideSpace)
         }
-        return NotchInfo(width: IslandSpacingStore.compactWidth, height: visualHeight, hasNotch: false)
+        return NotchInfo(width: IslandSpacingStore.compactWidth, height: visualHeight, hasNotch: false, sideSpace: .infinity)
     }
 
     private static func visibleMenuBarHeight(of screen: NSScreen) -> CGFloat {

@@ -13,16 +13,32 @@ final class IslandModel: ObservableObject {
     @Published var size: CGSize = .zero
     @Published var notch: NotchInfo
 
-    /// Side extension that houses each brand logo in compact state.
-    let tabWidth: CGFloat = 38
+    /// Maximum side extension for the brand logo tab in compact state.
+    private let maxTabWidth: CGFloat = 38
+    /// Maximum per-side outboard slot for the peek-state percentage pill.
+    private let maxPillSlotWidth: CGFloat = 78
+    /// Safety gap (pt) between our outermost edge and the nearest menu item.
+    private let sideMargin: CGFloat = 8
 
-    /// Per-side outboard slot that houses the peek-state percentage pill.
-    /// Sized for "100% · Nh" worst case at the chosen pill typography.
-    /// Fixed (not text-measured) so percentage updates don't jitter the
-    /// silhouette width during refresh. Grown symmetrically on both sides
-    /// regardless of which provider is visible — keeps the silhouette
-    /// balanced over the physical notch.
-    let pillSlotWidth: CGFloat = 78
+    /// Actual tab width, clamped to the space available beside the notch
+    /// before menu items begin (macOS 27+). Falls back to maxTabWidth when
+    /// there is no constraint (older macOS / non-notch screens).
+    var tabWidth: CGFloat {
+        let available = notch.sideSpace == .infinity ? maxTabWidth : max(0, notch.sideSpace - sideMargin)
+        return min(maxTabWidth, available)
+    }
+
+    /// Actual peek pill slot width, clamped to whatever space remains after
+    /// the tab and safety margin are accounted for.
+    var pillSlotWidth: CGFloat {
+        let available = notch.sideSpace == .infinity ? maxPillSlotWidth : max(0, notch.sideSpace - sideMargin - tabWidth)
+        return min(maxPillSlotWidth, available)
+    }
+
+    /// True when compact-state logo tabs are suppressed because menu items are
+    /// too close. Logos reappear as soon as the user hovers (peek state always
+    /// expands to full width regardless of this constraint).
+    var compactLogosHidden: Bool { tabWidth < maxTabWidth }
 
     /// Visible expanded panel width.
     private let expandedWidth: CGFloat = 800
@@ -67,7 +83,8 @@ final class IslandModel: ObservableObject {
     func updateNotch(_ raw: NotchInfo) {
         guard raw.width != rawNotch.width
             || raw.height != rawNotch.height
-            || raw.hasNotch != rawNotch.hasNotch else { return }
+            || raw.hasNotch != rawNotch.hasNotch
+            || raw.sideSpace != rawNotch.sideSpace else { return }
         rawNotch = raw
         notch = Self.applyOverride(to: raw, width: IslandSpacingStore.shared.width)
         recomputeSize()
@@ -118,7 +135,7 @@ final class IslandModel: ObservableObject {
     /// notch).
     private static func applyOverride(to raw: NotchInfo, width: CGFloat) -> NotchInfo {
         if raw.hasNotch { return raw }
-        return NotchInfo(width: width, height: raw.height, hasNotch: false)
+        return NotchInfo(width: width, height: raw.height, hasNotch: false, sideSpace: .infinity)
     }
 
     /// Re-applies the override and re-computes size whenever the user
@@ -170,8 +187,11 @@ final class IslandModel: ObservableObject {
                 height: notch.height
             )
         case .peek:
+            // Always expand to full peek width on hover even when compact is
+            // constrained — the user is actively interacting, brief menu
+            // overlap is acceptable and logos/pills must always be reachable.
             size = CGSize(
-                width: notch.width + tabWidth * 2 + pillSlotWidth * 2,
+                width: notch.width + maxTabWidth * 2 + maxPillSlotWidth * 2,
                 height: notch.height
             )
         case .expanded:
