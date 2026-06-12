@@ -21,7 +21,7 @@ struct NumericChart: View {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text("\(Int(value))")
                     .font(Typography.bigNumber)
-                    .foregroundStyle(UrgencyColor.value(value))
+                    .foregroundStyle(UrgencyColor.value(value, mode: UsageDisplayModeStore.shared.mode))
                     .numericTransition(value: value)
                     .animation(.strongEaseOut, value: value)
                 Text("%")

@@ -142,13 +142,14 @@ struct ChartTile: View {
     let labelKey: String
     let window: WindowUsage
     let seed: Int
+    @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
 
     /// Locked tile height across all 5 styles so the panel size is
     /// identical regardless of what the user picks.
     private static let tileHeight: CGFloat = 96
 
     var body: some View {
-        let value = window.usedPercent * 100   // 0-100
+        let value = window.displayedFraction(mode: usageDisplay.mode) * 100   // 0-100
         let sub = subCaption()
         let label = L10n.tr(labelKey)
 

@@ -16,7 +16,7 @@ struct ChartHead: View {
             HStack(alignment: .firstTextBaseline, spacing: 1) {
                 Text("\(Int(value))")
                     .font(Typography.chartValue)
-                    .foregroundStyle(UrgencyColor.value(value))
+                    .foregroundStyle(UrgencyColor.value(value, mode: UsageDisplayModeStore.shared.mode))
                     .numericTransition(value: value)
                     .animation(.strongEaseOut, value: value)
                 Text("%")
