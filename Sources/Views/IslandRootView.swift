@@ -363,7 +363,7 @@ struct IslandRootView: View {
         // Peek always expands to maxPillSlotWidth (78pt) regardless of the
         // compact-state sideSpace constraint, so pin the logo to that fixed
         // offset — model.pillSlotWidth may be 0 in constrained compact.
-        case .peek:               return 78 + 9
+        case .peek:               return IslandModel.maxPillSlotWidth + 9
         }
     }
 }

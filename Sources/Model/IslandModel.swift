@@ -16,7 +16,7 @@ final class IslandModel: ObservableObject {
     /// Maximum side extension for the brand logo tab in compact state.
     private let maxTabWidth: CGFloat = 38
     /// Maximum per-side outboard slot for the peek-state percentage pill.
-    private let maxPillSlotWidth: CGFloat = 78
+    static let maxPillSlotWidth: CGFloat = 78
     /// Safety gap (pt) between our outermost edge and the nearest menu item.
     private let sideMargin: CGFloat = 8
 
@@ -31,8 +31,8 @@ final class IslandModel: ObservableObject {
     /// Actual peek pill slot width, clamped to whatever space remains after
     /// the tab and safety margin are accounted for.
     var pillSlotWidth: CGFloat {
-        let available = notch.sideSpace == .infinity ? maxPillSlotWidth : max(0, notch.sideSpace - sideMargin - tabWidth)
-        return min(maxPillSlotWidth, available)
+        let available = notch.sideSpace == .infinity ? Self.maxPillSlotWidth : max(0, notch.sideSpace - sideMargin - tabWidth)
+        return min(Self.maxPillSlotWidth, available)
     }
 
     /// True when compact-state logo tabs are suppressed because menu items are

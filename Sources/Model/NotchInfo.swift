@@ -44,9 +44,8 @@ struct NotchInfo {
             let sideSpace: CGFloat
             if #available(macOS 27, *) {
                 let halfScreen = screen.frame.width / 2
-                let halfNotch  = width / 2
-                let leftFree   = halfScreen - halfNotch - leftW
-                let rightFree  = halfScreen - halfNotch - rightW
+                let leftFree   = halfScreen - leftW
+                let rightFree  = halfScreen - rightW
                 sideSpace = max(0, min(leftFree, rightFree))
             } else {
                 sideSpace = .infinity
