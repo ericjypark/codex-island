@@ -60,7 +60,16 @@ enum CodexLogReader {
         var currentModel: String?
         var out: [CachedEvent] = []
 
-        LogParseCache.streamLines(at: url) { lineData in
+        // `maxLineBytes` skips the multi-MB `response_item` blobs (base64
+        // screenshots, large tool output) at the reader level — they're never
+        // the records we want and assembling them is what stalls big sessions.
+        LogParseCache.streamLines(at: url, maxLineBytes: maxUsefulLineBytes) { lineData in
+            // The only lines we care about — `turn_context` (model) and
+            // `event_msg`/`token_count` (usage) — carry these markers. A cheap
+            // byte-scan rejects everything else before paying for JSON parsing.
+            guard lineData.range(of: tokenCountMarker) != nil
+                    || lineData.range(of: turnContextMarker) != nil else { return }
+
             guard let raw = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any],
                   let type = raw["type"] as? String else { return }
 
@@ -108,6 +117,16 @@ enum CodexLogReader {
         }
         return out
     }
+
+    // MARK: - Line pre-filter
+
+    /// Upper bound for a usage/model line. `token_count` payloads are well
+    /// under 1KB and even a tool-heavy `turn_context` stays small; 1MB leaves
+    /// generous headroom while skipping the multi-MB image/payload lines that
+    /// dominate large sessions.
+    private static let maxUsefulLineBytes = 1 << 20
+    private static let tokenCountMarker = Data("token_count".utf8)
+    private static let turnContextMarker = Data("turn_context".utf8)
 
     // MARK: - Per-file cache
 

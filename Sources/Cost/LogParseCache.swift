@@ -43,31 +43,58 @@ enum LogParseCache {
     /// terminated line, plus once for any trailing line lacking a newline.
     /// Session JSONLs can reach 50+ MB and we may walk months of them, so
     /// loading entire files via `Data(contentsOf:)` blows up peak memory.
-    /// Buffer trim happens once per chunk (not per line) — `removeSubrange`
-    /// is O(N) and per-line trimming made a single 50MB JSONL O(N²).
-    static func streamLines(at url: URL, onLine: (Data) -> Void) {
+    ///
+    /// Newline scanning happens on each freshly-read chunk (always ≤64KB), and
+    /// only the in-progress partial line is carried forward in `pending`. The
+    /// previous implementation appended every chunk to one growing buffer and
+    /// re-scanned it from the cursor each time, which is O(N²) for a single
+    /// long line — a Codex session that embeds base64 images produces lines
+    /// up to ~50MB, and a 10GB home of them pegged a core for minutes. Here a
+    /// long line only ever costs the per-chunk scan plus appends to `pending`.
+    ///
+    /// `maxLineBytes` caps a single line: once `pending` exceeds it, the line
+    /// is abandoned (never buffered further, never delivered) and bytes are
+    /// dropped until the next newline. Defaults to no cap so existing callers
+    /// (Claude) are byte-for-byte unchanged; the Codex reader opts in to skip
+    /// the image/payload blobs it never needs to parse.
+    static func streamLines(at url: URL, maxLineBytes: Int = .max, onLine: (Data) -> Void) {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return }
         defer { try? handle.close() }
 
-        var buffer = Data()
         let chunkSize = 64 * 1024
+        var pending = Data()          // partial line carried across chunk reads
+        var skippingLongLine = false  // discarding an over-cap line until its '\n'
 
         while true {
             let chunk = handle.readData(ofLength: chunkSize)
             if chunk.isEmpty { break }
-            buffer.append(chunk)
 
-            var cursor = buffer.startIndex
-            while cursor < buffer.endIndex {
-                guard let nl = buffer[cursor..<buffer.endIndex].firstIndex(of: 0x0A) else { break }
-                if nl > cursor { onLine(buffer[cursor..<nl]) }
-                cursor = buffer.index(after: nl)
+            var lineStart = chunk.startIndex
+            while let nl = chunk[lineStart..<chunk.endIndex].firstIndex(of: 0x0A) {
+                if skippingLongLine {
+                    // Reached the end of the abandoned line; resume normally.
+                    skippingLongLine = false
+                    pending.removeAll(keepingCapacity: true)
+                } else if pending.isEmpty {
+                    if nl > lineStart { onLine(chunk[lineStart..<nl]) }
+                } else {
+                    pending.append(chunk[lineStart..<nl])
+                    onLine(pending)
+                    pending.removeAll(keepingCapacity: true)
+                }
+                lineStart = chunk.index(after: nl)
             }
-            if cursor > buffer.startIndex {
-                buffer.removeSubrange(buffer.startIndex..<cursor)
+
+            // Bytes after the last newline form (the start of) the next line.
+            if lineStart < chunk.endIndex, !skippingLongLine {
+                pending.append(chunk[lineStart..<chunk.endIndex])
+                if pending.count > maxLineBytes {
+                    pending.removeAll(keepingCapacity: true)
+                    skippingLongLine = true
+                }
             }
         }
-        if !buffer.isEmpty { onLine(buffer) }
+        if !skippingLongLine, !pending.isEmpty { onLine(pending) }
     }
 
     /// Per-file cache entry. Generic over the provider's `Event` Codable shape.
