@@ -71,7 +71,8 @@ enum ClaudeCredentials {
     ///      to platform.claude.com — old URL still resolves but is not the
     ///      canonical issuer for fresh tokens.)
     static func resolveUsage(probe: (_ token: String, _ plan: String?) async -> ProbeOutcome) async -> Resolution {
-        var lastError = "auth required — run claude"
+        let defaultError = "auth required — run claude"
+        var lastError = defaultError
         // Plan tier ships in the keychain dict only — Anthropic's usage
         // endpoint doesn't echo it back. We peek the keychain even on the
         // env-token path so the chip works for users whose token came from
@@ -129,6 +130,14 @@ enum ClaudeCredentials {
                 case .otherError(let e):    lastError = e
                 }
             }
+        }
+
+        // No usage, and no probe set a more specific error: if we never had a
+        // login because the keychain returned a stray item (its account isn't
+        // the current user), say so rather than the generic "auth required".
+        if lastError == defaultError, cachedCreds == nil,
+           let account = readClaudeKeychainAccount(), account != NSUserName() {
+            lastError = "multiple keychain logins"
         }
 
         return .failed(lastError)
