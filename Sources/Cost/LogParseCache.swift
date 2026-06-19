@@ -41,15 +41,19 @@ enum LogParseCache {
 
     /// Stream `url` in 64 KB chunks and invoke `onLine` once per newline-
     /// terminated line, plus once for any trailing line lacking a newline.
-    /// Session JSONLs can reach 50+ MB and we may walk months of them, so
-    /// loading entire files via `Data(contentsOf:)` blows up peak memory.
-    /// Buffer trim happens once per chunk (not per line) — `removeSubrange`
-    /// is O(N) and per-line trimming made a single 50MB JSONL O(N²).
+    /// Session JSONLs can reach hundreds of MB and we may walk months of
+    /// them, so loading entire files via `Data(contentsOf:)` blows up peak
+    /// memory. Newlines are found with `memchr` over only the bytes added
+    /// since the last search: Codex rollout files write 20+ MB single lines,
+    /// and the old `Data.firstIndex` path rescanned the whole growing buffer
+    /// on every chunk, turning one such line into O(N²). Buffer trim still
+    /// happens once per chunk, not once per line.
     static func streamLines(at url: URL, onLine: (Data) -> Void) {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return }
         defer { try? handle.close() }
 
         var buffer = Data()
+        var scanned = 0
         let chunkSize = 64 * 1024
 
         while true {
@@ -57,17 +61,29 @@ enum LogParseCache {
             if chunk.isEmpty { break }
             buffer.append(chunk)
 
-            var cursor = buffer.startIndex
-            while cursor < buffer.endIndex {
-                guard let nl = buffer[cursor..<buffer.endIndex].firstIndex(of: 0x0A) else { break }
+            var cursor = 0
+            var searchFrom = scanned
+            while let nl = firstNewline(in: buffer, from: searchFrom) {
                 if nl > cursor { onLine(buffer[cursor..<nl]) }
-                cursor = buffer.index(after: nl)
+                cursor = nl + 1
+                searchFrom = nl + 1
             }
-            if cursor > buffer.startIndex {
-                buffer.removeSubrange(buffer.startIndex..<cursor)
-            }
+            scanned = buffer.count - cursor
+            if cursor > 0 { buffer.removeSubrange(0..<cursor) }
         }
         if !buffer.isEmpty { onLine(buffer) }
+    }
+
+    /// Offset of the first 0x0A at or after `start`, or nil. `memchr` is
+    /// vectorized and skips the per-byte bounds-checked `Data` subscript that
+    /// dominated the sample profile on large session logs.
+    private static func firstNewline(in data: Data, from start: Int) -> Int? {
+        guard start < data.count else { return nil }
+        return data.withUnsafeBytes { raw in
+            guard let base = raw.baseAddress else { return nil }
+            guard let hit = memchr(base + start, 0x0A, data.count - start) else { return nil }
+            return UnsafeRawPointer(hit) - base
+        }
     }
 
     /// Per-file cache entry. Generic over the provider's `Event` Codable shape.
