@@ -116,10 +116,16 @@ struct IslandRootView: View {
                 .overlay(alignment: .bottomLeading) {
                     // Utility control, not dashboard status. Keep it in a
                     // quiet corner so the footer remains about live data.
+                    // Bottom padding (23) centers the 26pt-tall button on
+                    // PanelFooter's content row: that row sits 14pt
+                    // (ExpandedView's outer vertical padding) + 10pt
+                    // (the footer's own bottom padding) + 12pt (half its
+                    // 24pt height) = 36pt above the panel's bottom edge.
                     if model.state == .expanded {
                         SettingsButton()
                             .opacity(contentVisible ? 1 : 0)
-                            .padding(6)
+                            .padding(.leading, 6)
+                            .padding(.bottom, 23)
                     }
                 }
                 .contentShape(IslandShape())
