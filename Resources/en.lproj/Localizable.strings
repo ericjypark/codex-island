@@ -148,7 +148,10 @@
 "Keep the percentage and time remaining visible without hovering." = "Keep the percentage and time remaining visible without hovering.";
 "Inject test percentages. Visible only when launched with CODEXISLAND_DEBUG=1." = "Inject test percentages. Visible only when launched with CODEXISLAND_DEBUG=1.";
 "Preview" = "Preview";
+"Pace guide" = "Pace guide";
 "resets in %d hours" = "resets in %d hours";
 "resets in %d minutes" = "resets in %d minutes";
+"Show a small marker for expected usage before reset." = "Show a small marker for expected usage before reset.";
 "Swipe to change pages." = "Swipe to change pages.";
 "Tightens the gap between logos when the island is on a screen without a hardware notch." = "Tightens the gap between logos when the island is on a screen without a hardware notch.";
+"used %d%%, guide %d%%" = "used %d%%, guide %d%%";

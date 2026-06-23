@@ -5,6 +5,7 @@ struct RingChart: View {
     let color: Color
     let label: String
     let sub: String
+    let guide: Double?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -20,6 +21,12 @@ struct RingChart: View {
                         // (old → new), which makes the trim feel alive
                         // without ever flashing 0%.
                         .animation(.strongEaseOut, value: value)
+                    if let guide {
+                        RingGuideTick(guide: guide)
+                            .stroke(.white.opacity(0.86),
+                                    style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                            .animation(.strongEaseOut, value: guide)
+                    }
                 }
                 .frame(width: 56, height: 56)
 
@@ -47,5 +54,33 @@ struct RingChart: View {
                 .lineLimit(1)
                 .truncationMode(.tail)
         }
+    }
+}
+
+private struct RingGuideTick: Shape {
+    var guide: Double
+
+    var animatableData: Double {
+        get { guide }
+        set { guide = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let radius = min(rect.width, rect.height) / 2
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radians = CGFloat((guide / 100) * 360 - 90) * .pi / 180
+        let inner = radius - 8
+        let outer = radius + 1
+
+        var path = Path()
+        path.move(to: CGPoint(
+            x: center.x + cos(radians) * inner,
+            y: center.y + sin(radians) * inner
+        ))
+        path.addLine(to: CGPoint(
+            x: center.x + cos(radians) * outer,
+            y: center.y + sin(radians) * outer
+        ))
+        return path
     }
 }
