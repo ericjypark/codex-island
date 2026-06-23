@@ -49,12 +49,25 @@ final class CostStore: ObservableObject {
             loadDemoData()
             return
         }
+        let days = CostSummary.yearHistoryDays()
+        // Only scan OpenCode when at least one provider will consume
+        // the result; avoids wasted I/O when both are already loading.
+        let openCodeTask: Task<[TokenEvent], Never>?
+        if !claudeLoading || !codexLoading {
+            openCodeTask = Task.detached(priority: .userInitiated) {
+                OpenCodeLogReader.scan(lookbackDays: days)
+            }
+        } else {
+            openCodeTask = nil
+        }
         // Per-provider gate so a slow Claude scan doesn't block a fast
         // Codex one (and vice versa) on the next tick.
         if !claudeLoading {
             claudeLoading = true
             Task.detached(priority: .userInitiated) { [weak self] in
-                let events = ClaudeLogReader.scan(lookbackDays: CostSummary.yearHistoryDays())
+                let openCodeEvents = await openCodeTask?.value ?? []
+                let events = ClaudeLogReader.scan(lookbackDays: days)
+                    + openCodeEvents.filter { $0.provider == .claude }
                 let cost = CostSummary.summarize(events: events)
                 await self?.commitClaude(cost)
             }
@@ -62,7 +75,9 @@ final class CostStore: ObservableObject {
         if !codexLoading {
             codexLoading = true
             Task.detached(priority: .userInitiated) { [weak self] in
-                let events = CodexLogReader.scan(lookbackDays: CostSummary.yearHistoryDays())
+                let openCodeEvents = await openCodeTask?.value ?? []
+                let events = CodexLogReader.scan(lookbackDays: days)
+                    + openCodeEvents.filter { $0.provider == .codex }
                 let cost = CostSummary.summarize(events: events)
                 await self?.commitCodex(cost)
             }
