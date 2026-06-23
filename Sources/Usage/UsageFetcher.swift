@@ -65,6 +65,50 @@ enum UsageFetcher {
         return WindowUsage(usedPercent: used / 100, resetAt: resetAt, error: nil)
     }
 
+    static func fetchCodexResetCredits() async -> CodexResetCredits? {
+        guard let token = readCodexAccessToken() else { return nil }
+
+        var req = URLRequest(url: URL(string: "https://chatgpt.com/backend-api/wham/rate-limit-reset-credits")!)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            guard status == 200,
+                  let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            else { return nil }
+
+            let availableCount = (obj["available_count"] as? Int) ?? 0
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let fallbackFormatter = ISO8601DateFormatter()
+            fallbackFormatter.formatOptions = [.withInternetDateTime]
+
+            let rawCredits: [[String: Any]] = (obj["credits"] as? [[String: Any]]) ?? []
+            let credits: [CodexResetCredit] = rawCredits.compactMap { item -> CodexResetCredit? in
+                guard let id = item["id"] as? String,
+                      let status = item["status"] as? String,
+                      let expiresRaw = item["expires_at"] as? String,
+                      let expiresAt = formatter.date(from: expiresRaw)
+                        ?? fallbackFormatter.date(from: expiresRaw)
+                else { return nil }
+
+                return CodexResetCredit(
+                    id: id,
+                    status: status,
+                    expiresAt: expiresAt,
+                    title: item["title"] as? String ?? "",
+                    description: item["description"] as? String ?? ""
+                )
+            }
+
+            return CodexResetCredits(availableCount: availableCount, credits: credits)
+        } catch {
+            return nil
+        }
+    }
+
     // MARK: - Claude
 
     /// Anthropic doesn't ship a usage endpoint for end users — Claude Code

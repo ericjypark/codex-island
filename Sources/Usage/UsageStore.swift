@@ -9,6 +9,7 @@ final class UsageStore: ObservableObject {
 
     @Published var claude: AppUsage = .empty
     @Published var codex: AppUsage = .empty
+    @Published var codexResetCredits: CodexResetCredits = .empty
     @Published var lastUpdated: Date?
     @Published var loading = false
     /// Set while a `claude auth login` flow is in progress (spawned + still
@@ -67,6 +68,25 @@ final class UsageStore: ObservableObject {
                 ),
                 plan: "pro"
             )
+            self.codexResetCredits = CodexResetCredits(
+                availableCount: 2,
+                credits: [
+                    CodexResetCredit(
+                        id: "demo-reset-1",
+                        status: "available",
+                        expiresAt: now.addingTimeInterval(3 * 86400 + 4 * 3600),
+                        title: "One free rate limit reset",
+                        description: "Thanks for using Codex! You've been granted one free rate limit reset."
+                    ),
+                    CodexResetCredit(
+                        id: "demo-reset-2",
+                        status: "available",
+                        expiresAt: now.addingTimeInterval(9 * 86400 + 3600),
+                        title: "One free rate limit reset",
+                        description: "Thanks for using Codex! You've been granted one free rate limit reset."
+                    )
+                ]
+            )
             self.lastUpdated = now
             return
         }
@@ -75,8 +95,10 @@ final class UsageStore: ObservableObject {
         refreshTask?.cancel()
         refreshTask = Task {
             async let codexResult = UsageFetcher.fetchCodex()
+            async let codexResetCreditsResult = UsageFetcher.fetchCodexResetCredits()
             async let claudeResult = UsageFetcher.fetchClaude()
             let c = await codexResult
+            let codexResetCredits = await codexResetCreditsResult
             let cl = await claudeResult
 
             // Cancellation = network monitor saw the path come up while we
@@ -100,6 +122,9 @@ final class UsageStore: ObservableObject {
             }
             if !UsageStore.isErrorOnly(cl) || UsageStore.isErrorOnly(self.claude) {
                 self.claude = cl
+            }
+            if let codexResetCredits {
+                self.codexResetCredits = codexResetCredits
             }
             self.lastUpdated = Date()
             self.loading = false
