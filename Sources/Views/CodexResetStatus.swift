@@ -62,7 +62,7 @@ struct CodexResetStatus: View {
     }
 
     private var popoverYOffset: CGFloat {
-        usageStore.codexResetCredits.availableCredits.count == 1 ? -92 : -118
+        usageStore.codexResetCredits.availableCredits.count == 1 ? -56 : -118
     }
 
     private var popover: some View {
