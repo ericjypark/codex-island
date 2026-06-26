@@ -6,11 +6,15 @@ struct SparkChart: View {
     let label: String
     let sub: String
     let seed: Int
+    /// Real observed history for this window, oldest first, in display
+    /// percent (0-100). Empty until enough polls accrue, at which point the
+    /// curve switches from synthesized to real.
+    var history: [Double] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             ChartHead(value: value, label: label)
-            SparkSVG(value: value, color: color, seed: seed)
+            SparkSVG(value: value, color: color, seed: seed, history: history)
                 .frame(height: 50)
                 .animation(.strongEaseOut, value: value)
             ChartFoot(caption: sub)
@@ -22,6 +26,11 @@ private struct SparkSVG: View {
     let value: Double
     let color: Color
     let seed: Int
+    let history: [Double]
+
+    /// Below this many real samples the curve reads as a stub, not a trend,
+    /// so the synthesized shape stands in until enough polls have landed.
+    private static let minRealPoints = 6
 
     /// Synthesize 36 plausible-looking historical points around the current
     /// value. Real history would need a usage time-series API neither
@@ -55,10 +64,27 @@ private struct SparkSVG: View {
         }
     }
 
+    /// Map the recorded readings onto the plot. nil (too few samples, or demo
+    /// mode, which keeps the staged synthetic shape) tells the caller to fall
+    /// back to `generatePoints`. The last point is pinned to the live `value`
+    /// so the end cursor and the dotted "now" baseline agree exactly.
+    private func realPoints(width: CGFloat, height: CGFloat) -> [CGPoint]? {
+        guard !AppEnvironment.isDemo, history.count >= Self.minRealPoints else { return nil }
+        var pts = history
+        pts[pts.count - 1] = value
+        let n = pts.count
+        return pts.enumerated().map { (i, p) in
+            CGPoint(
+                x: CGFloat(i) * (width / CGFloat(n - 1)),
+                y: height - CGFloat(min(100, max(0, p)) / 100) * (height - 8) - 4
+            )
+        }
+    }
+
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width, h = geo.size.height
-            let pts = generatePoints(width: w, height: h)
+            let pts = realPoints(width: w, height: h) ?? generatePoints(width: w, height: h)
             let baselineY = h - CGFloat(value / 100) * (h - 8) - 4
             ZStack {
                 // Quartile rules at 4% white, barely there.

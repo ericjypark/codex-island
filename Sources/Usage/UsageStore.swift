@@ -120,7 +120,14 @@ final class UsageStore: ObservableObject {
                     self.claude = cl
                 }
             }
-            self.lastUpdated = Date()
+
+            // Record this poll's readings so the SparkChart can plot real
+            // history. `record` keeps only non-errored windows, so a failed
+            // or rate-limited fetch leaves a gap instead of a flat fake line.
+            let now = Date()
+            UsageHistoryStore.shared.record(provider: .codex, usage: c, at: now)
+            if let cl { UsageHistoryStore.shared.record(provider: .claude, usage: cl, at: now) }
+            self.lastUpdated = now
             self.loading = false
         }
     }

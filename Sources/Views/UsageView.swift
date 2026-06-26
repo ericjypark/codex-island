@@ -25,13 +25,13 @@ struct UsageView: View {
             switch (claudeOn, codexOn) {
             case (true, true):
                 ChartsBlock(color: IslandColor.claude, usage: store.claude,
-                            style: style, seed: 1)
+                            style: style, seed: 1, provider: .claude)
                 hairline
                 ChartsBlock(color: IslandColor.codex, usage: store.codex,
-                            style: style, seed: 3)
+                            style: style, seed: 3, provider: .codex)
             case (true, false):
                 ChartsBlock(color: IslandColor.claude, usage: store.claude,
-                            style: style, seed: 1)
+                            style: style, seed: 1, provider: .claude)
                 hairline
                 PerModelBreakdown(provider: .claude, metric: .tokens)
                     .frame(maxWidth: .infinity, alignment: .top)
@@ -44,7 +44,7 @@ struct UsageView: View {
                     .transition(breakdownTransition)
                 hairline
                 ChartsBlock(color: IslandColor.codex, usage: store.codex,
-                            style: style, seed: 3)
+                            style: style, seed: 3, provider: .codex)
             case (false, false):
                 BothHiddenPlaceholder()
                     .transition(.opacity)
@@ -80,6 +80,7 @@ struct ChartsBlock: View {
     let usage: AppUsage
     let style: ChartStyle
     let seed: Int
+    let provider: AlertEngine.Provider
 
     /// Treat the block as needing re-auth when both windows are stuck on the
     /// scope-insufficient sentinel. Either tile alone could be a transient
@@ -94,9 +95,11 @@ struct ChartsBlock: View {
         VStack(spacing: 6) {
             HStack(spacing: 18) {
                 ChartTile(style: style, color: color, labelKey: "5h",
-                          window: usage.fiveHour, seed: seed)
+                          window: usage.fiveHour, seed: seed,
+                          provider: provider, windowKind: .fiveHour)
                 ChartTile(style: style, color: color, labelKey: "week",
-                          window: usage.weekly, seed: seed + 1)
+                          window: usage.weekly, seed: seed + 1,
+                          provider: provider, windowKind: .weekly)
             }
             if needsReauth && ClaudeCredentials.canPromptReauth() {
                 ReauthButton()
@@ -142,7 +145,10 @@ struct ChartTile: View {
     let labelKey: String
     let window: WindowUsage
     let seed: Int
+    let provider: AlertEngine.Provider
+    let windowKind: UsageWindow
     @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
+    @ObservedObject private var historyStore = UsageHistoryStore.shared
 
     /// Locked tile height across all 5 styles so the panel size is
     /// identical regardless of what the user picks.
@@ -159,7 +165,8 @@ struct ChartTile: View {
             case .bar:     BarChart(value: value, color: color, label: label, sub: sub)
             case .stepped: SteppedChart(value: value, color: color, label: label, sub: sub)
             case .numeric: NumericChart(value: value, color: color, label: label, sub: compactSubCaption())
-            case .spark:   SparkChart(value: value, color: color, label: label, sub: sub, seed: seed)
+            case .spark:   SparkChart(value: value, color: color, label: label, sub: sub,
+                                      seed: seed, history: historyPoints())
             }
         }
         .id(style)
@@ -172,6 +179,17 @@ struct ChartTile: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(L10n.tr("%@, %d%%", label, Int(value)))
         .accessibilityValue(subCaption())
+    }
+
+    /// Recorded readings for this window, mapped through the active
+    /// used/remaining mode into display percent (0-100), oldest first — the
+    /// same transform `value` uses, so the history and the live point agree.
+    private func historyPoints() -> [Double] {
+        let mode = usageDisplay.mode
+        return historyStore.samples(provider: provider, window: windowKind).map { sample in
+            WindowUsage(usedPercent: sample.used, resetAt: nil, error: nil)
+                .displayedFraction(mode: mode) * 100
+        }
     }
 
     private func subCaption() -> String {
