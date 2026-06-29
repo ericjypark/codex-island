@@ -1,0 +1,54 @@
+name: Upstream API regression
+description: Claude `/api/oauth/usage` or Codex `/wham/usage` started returning unexpected fields, errors, or shape changes.
+title: "fix(usage): <endpoint> returning <symptom>"
+labels: ["bug", "upstream-api"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Both upstream endpoints are undocumented and change without notice. This template captures what's needed to update the parser.
+
+        **Redact your bearer token before posting any `curl` output.**
+
+  - type: dropdown
+    id: endpoint
+    attributes:
+      label: Which endpoint?
+      options:
+        - Claude — `/api/oauth/usage`
+        - Codex — `/wham/usage`
+        - Claude OAuth refresh — `platform.claude.com/v1/oauth/token`
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: CodexIsland version
+      placeholder: "0.0.42"
+    validations:
+      required: true
+
+  - type: textarea
+    id: symptom
+    attributes:
+      label: What does the chip show now?
+      placeholder: "HTTP 403 / `auth required` / wrong percentage / missing plan badge"
+    validations:
+      required: true
+
+  - type: textarea
+    id: curl
+    attributes:
+      label: Raw response
+      description: |
+        Paste the JSON body of the actual API response (token redacted). For Claude, include the request headers you used — the endpoint gates on `User-Agent: claude-code/X.Y.Z` and the `oauth-2025-04-20` beta header.
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: when
+    attributes:
+      label: When did it start?
+      description: Approximate date/time. If a model change or Anthropic announcement preceded it, link it.
