@@ -1,4 +1,5 @@
 import Foundation
+import Security
 
 /// Deep module owning Claude OAuth credential acquisition: the
 /// env → keychain → refresh → rotation-writeback flow, plus the in-app
@@ -116,11 +117,16 @@ enum ClaudeCredentials {
                 // attempt 401s and forces the user to re-run /login. Persist
                 // the rotated tokens so the keychain stays in sync with what
                 // the server considers valid.
-                var updated = creds.oauth
-                updated["accessToken"] = refreshed.accessToken
-                updated["refreshToken"] = refreshed.refreshToken
-                updated["expiresAt"] = refreshed.expiresAt
-                writeClaudeCreds(account: creds.account, oauth: updated)
+                var updatedOAuth = creds.oauth
+                updatedOAuth["accessToken"] = refreshed.accessToken
+                updatedOAuth["refreshToken"] = refreshed.refreshToken
+                updatedOAuth["expiresAt"] = refreshed.expiresAt
+                // Rewrite the FULL item, not just claudeAiOauth. The selected
+                // account's blob can also carry sibling top-level keys (e.g.
+                // mcpOAuth, per-MCP-server tokens); a {"claudeAiOauth": …}-only
+                // payload would clobber them and break Claude Code's MCP auth.
+                writeClaudeCreds(account: creds.account,
+                                 payload: rotatedPayload(outer: creds.outer, oauth: updatedOAuth))
 
                 switch await probe(refreshed.accessToken, plan) {
                 case .success(let u):       return .usage(u)
@@ -145,22 +151,109 @@ enum ClaudeCredentials {
 
     // MARK: - Keychain
 
-    private struct ClaudeCreds {
+    /// Internal (not private) so ResolveUsageTests can assert which item the
+    /// multi-account selection picks and that the rotation writeback keeps
+    /// sibling keys.
+    struct ClaudeCreds {
         let account: String
         let accessToken: String
         let refreshToken: String
+        /// The `claudeAiOauth` subdict only.
         let oauth: [String: Any]
+        /// The entire decoded keychain blob (e.g. `{mcpOAuth, claudeAiOauth}`),
+        /// carried so a token refresh can rewrite the item without dropping
+        /// sibling top-level keys.
+        let outer: [String: Any]
         let subscriptionType: String?
     }
 
-    /// Reads the keychain item Claude Code writes on first login. Returns
-    /// nil silently on any error — the caller falls through to the next
-    /// token source. Captures the account name and the full claudeAiOauth
-    /// dict so a refresh can be written back via writeClaudeCreds without
-    /// dropping unrelated fields (scopes, subscriptionType, rateLimitTier).
-    private static func readClaudeCreds() -> ClaudeCreds? {
-        guard let account = readClaudeKeychainAccount() else { return nil }
+    /// One decoded keychain item under the Claude service.
+    struct KeychainCandidate {
+        let account: String
+        let blob: [String: Any]
+    }
 
+    /// Reads Claude Code's login from the keychain, or nil if there isn't a
+    /// usable one — the caller then falls through to the next token source.
+    /// Claude Code stores several generic-password items under the SAME service
+    /// "Claude Code-credentials": the subscription tokens live in
+    /// `claudeAiOauth`, but a separate item written with acct="unknown" holds
+    /// only `mcpOAuth` (per-MCP-server tokens). `security find-generic-password
+    /// -s` returns an arbitrary one, so a single blind lookup can land on the
+    /// mcpOAuth item and miss the real login — the bug where the panel showed
+    /// no Claude usage. Read every item and let `selectClaudeCreds` pick by
+    /// content rather than by "first item". The full blob is carried through so
+    /// a token refresh can rewrite the item without dropping sibling keys.
+    private static func readClaudeCreds() -> ClaudeCreds? {
+        selectClaudeCreds(from: readClaudeKeychainCandidates())
+    }
+
+    /// First candidate carrying a usable `claudeAiOauth` (non-empty access +
+    /// refresh tokens). Pure — exposed for ResolveUsageTests, which locks down
+    /// both the multi-item selection and that `outer` retains sibling keys for
+    /// the rotation writeback. An empty-token item is a logged-out remnant,
+    /// skipped so a later account still gets its chance.
+    static func selectClaudeCreds(from candidates: [KeychainCandidate]) -> ClaudeCreds? {
+        for candidate in candidates {
+            guard let oauth = candidate.blob["claudeAiOauth"] as? [String: Any],
+                  let access = oauth["accessToken"] as? String, !access.isEmpty,
+                  let refresh = oauth["refreshToken"] as? String, !refresh.isEmpty else { continue }
+            return ClaudeCreds(
+                account: candidate.account,
+                accessToken: access,
+                refreshToken: refresh,
+                oauth: oauth,
+                outer: candidate.blob,
+                subscriptionType: oauth["subscriptionType"] as? String
+            )
+        }
+        return nil
+    }
+
+    /// Full keychain payload to persist after a token rotation: every sibling
+    /// top-level key from `outer` kept, with only `claudeAiOauth` swapped for
+    /// the rotated subdict. A partial `{"claudeAiOauth": …}` payload would drop
+    /// siblings like `mcpOAuth`. Pure — exercised by ResolveUsageTests.
+    static func rotatedPayload(outer: [String: Any], oauth: [String: Any]) -> [String: Any] {
+        var merged = outer
+        merged["claudeAiOauth"] = oauth
+        return merged
+    }
+
+    /// Decoded blob for every account under the service. Side-effecting: shells
+    /// out to `security` per account. (An attributes-only SecItem query
+    /// enumerates the accounts without an ACL prompt; reading the secret value
+    /// stays on the already-trusted `security` CLI path.)
+    private static func readClaudeKeychainCandidates() -> [KeychainCandidate] {
+        var accounts = claudeKeychainAccounts()
+        if accounts.isEmpty, let legacy = readClaudeKeychainAccount() {
+            accounts = [legacy]
+        }
+        return accounts.compactMap { account in
+            readClaudeKeychainBlob(account: account).map {
+                KeychainCandidate(account: account, blob: $0)
+            }
+        }
+    }
+
+    /// Every account name under the "Claude Code-credentials" service. An
+    /// attributes-only SecItem query (no `kSecReturnData`) does not trip the
+    /// keychain ACL prompt — only reading the secret value would.
+    private static func claudeKeychainAccounts() -> [String] {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "Claude Code-credentials",
+            kSecMatchLimit as String: kSecMatchLimitAll,
+            kSecReturnAttributes as String: true,
+        ]
+        var result: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+              let items = result as? [[String: Any]] else { return [] }
+        return items.compactMap { $0[kSecAttrAccount as String] as? String }
+    }
+
+    /// Decoded JSON blob of one account's item, or nil on any read/parse error.
+    private static func readClaudeKeychainBlob(account: String) -> [String: Any]? {
         let task = Process()
         task.launchPath = "/usr/bin/security"
         task.arguments = [
@@ -179,12 +272,8 @@ enum ClaudeCredentials {
             guard let raw = String(data: data, encoding: .utf8)?
                     .trimmingCharacters(in: .whitespacesAndNewlines),
                   let jsonData = raw.data(using: .utf8),
-                  let outer = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
-                  let oauth = outer["claudeAiOauth"] as? [String: Any],
-                  let access = oauth["accessToken"] as? String,
-                  let refresh = oauth["refreshToken"] as? String else { return nil }
-            let plan = oauth["subscriptionType"] as? String
-            return ClaudeCreds(account: account, accessToken: access, refreshToken: refresh, oauth: oauth, subscriptionType: plan)
+                  let outer = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { return nil }
+            return outer
         } catch {
             return nil
         }
@@ -222,16 +311,18 @@ enum ClaudeCredentials {
     }
 
     /// Updates the existing `Claude Code-credentials` keychain item in place
-    /// (`-U` flag) so the rotated OAuth tokens persist. Best-effort: a
-    /// failure here means the next CodexIsland refresh will pay the same
-    /// rotation cost again, but Claude Code itself recovers because the
-    /// fresh refresh_token we wrote — if the write actually landed — works.
+    /// (`-U` flag) so the rotated OAuth tokens persist. `payload` MUST be the
+    /// complete top-level blob (build it with `rotatedPayload`) — `security`
+    /// replaces the whole secret, so a partial payload silently drops the
+    /// omitted keys. Best-effort: a failure here means the next CodexIsland
+    /// refresh pays the same rotation cost again, but Claude Code itself
+    /// recovers because the fresh refresh_token we wrote — if the write
+    /// actually landed — works.
     /// Note: passing the JSON via `-w` makes it briefly visible in `ps` to
     /// processes owned by the same user. The keychain itself is gated by
     /// the same trust boundary, so this is not a meaningful regression.
     @discardableResult
-    private static func writeClaudeCreds(account: String, oauth: [String: Any]) -> Bool {
-        let payload: [String: Any] = ["claudeAiOauth": oauth]
+    private static func writeClaudeCreds(account: String, payload: [String: Any]) -> Bool {
         guard let data = try? JSONSerialization.data(withJSONObject: payload, options: []),
               let json = String(data: data, encoding: .utf8) else {
             NSLog("CodexIsland: failed to serialize rotated Claude tokens for keychain write")
