@@ -310,25 +310,43 @@ enum ClaudeCredentials {
         }
     }
 
-    /// Updates the existing `Claude Code-credentials` keychain item in place
-    /// (`-U` flag) so the rotated OAuth tokens persist. `payload` MUST be the
-    /// complete top-level blob (build it with `rotatedPayload`) — `security`
-    /// replaces the whole secret, so a partial payload silently drops the
-    /// omitted keys. Best-effort: a failure here means the next CodexIsland
-    /// refresh pays the same rotation cost again, but Claude Code itself
-    /// recovers because the fresh refresh_token we wrote — if the write
-    /// actually landed — works.
-    /// Note: passing the JSON via `-w` makes it briefly visible in `ps` to
-    /// processes owned by the same user. The keychain itself is gated by
-    /// the same trust boundary, so this is not a meaningful regression.
+    /// Updates the existing `Claude Code-credentials` keychain item in place so
+    /// the rotated OAuth tokens persist. `payload` MUST be the complete
+    /// top-level blob (build it with `rotatedPayload`) — the secret is replaced
+    /// wholesale, so a partial payload silently drops the omitted keys.
+    ///
+    /// Primary path is `SecItemUpdate`, which carries the secret in-process via
+    /// `kSecValueData`, so the JSON never lands on the process list. Only if
+    /// SecItem can't update the item (e.g. its ACL doesn't trust this app) do we
+    /// fall back to the `security` CLI: dropping a rotated refresh_token would
+    /// 401 downstream consumers (Claude Code, Claude Desktop), so a write that
+    /// actually lands always wins over avoiding the brief argv exposure.
     @discardableResult
     private static func writeClaudeCreds(account: String, payload: [String: Any]) -> Bool {
-        guard let data = try? JSONSerialization.data(withJSONObject: payload, options: []),
-              let json = String(data: data, encoding: .utf8) else {
+        guard let data = try? JSONSerialization.data(withJSONObject: payload, options: []) else {
             NSLog("CodexIsland: failed to serialize rotated Claude tokens for keychain write")
             return false
         }
 
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "Claude Code-credentials",
+            kSecAttrAccount as String: account,
+        ]
+        let status = SecItemUpdate(query as CFDictionary, [kSecValueData as String: data] as CFDictionary)
+        if status == errSecSuccess { return true }
+
+        NSLog("CodexIsland: SecItemUpdate for rotated Claude tokens failed (OSStatus %d), falling back to security CLI", status)
+        return writeClaudeCredsViaSecurityCLI(account: account, json: String(decoding: data, as: UTF8.self))
+    }
+
+    /// Fallback keychain write via the Apple-signed `security` tool, used only
+    /// when `SecItemUpdate` can't land the write. Briefly exposes the JSON on
+    /// the process list via `-w` to same-user processes — accepted here because
+    /// a same-user process can already read the item straight from the keychain,
+    /// and losing the rotated token is the worse failure.
+    @discardableResult
+    private static func writeClaudeCredsViaSecurityCLI(account: String, json: String) -> Bool {
         let task = Process()
         task.launchPath = "/usr/bin/security"
         task.arguments = [
