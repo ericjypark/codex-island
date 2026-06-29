@@ -72,6 +72,36 @@ struct ResolveUsageTests {
         }
         expect(t2.calls == 1, "T2 probes exactly once (got \(t2.calls))")
 
+        // T3 — multi-item keychain selection. Claude Code writes several items
+        // under one service name; a stray acct="unknown" item holds only
+        // mcpOAuth. Selection must skip it (and any logged-out empty-token
+        // item) and pick the item that actually carries claudeAiOauth.
+        let candidates = [
+            ClaudeCredentials.KeychainCandidate(account: "unknown", blob: ["mcpOAuth": ["server": "x"]]),
+            ClaudeCredentials.KeychainCandidate(account: "loggedout", blob: ["claudeAiOauth": ["accessToken": "", "refreshToken": ""]]),
+            ClaudeCredentials.KeychainCandidate(account: "ericpark", blob: [
+                "mcpOAuth": ["server": "x"],
+                "claudeAiOauth": ["accessToken": "at", "refreshToken": "rt", "subscriptionType": "max"],
+            ]),
+        ]
+        let picked = ClaudeCredentials.selectClaudeCreds(from: candidates)
+        expect(picked?.account == "ericpark", "T3 selects the claudeAiOauth item, not the mcpOAuth/empty ones")
+        expect(picked?.subscriptionType == "max", "T3 carries subscriptionType from the picked item")
+        expect(picked?.outer["mcpOAuth"] != nil, "T3 keeps sibling top-level keys in outer")
+        expect(ClaudeCredentials.selectClaudeCreds(from: [
+            ClaudeCredentials.KeychainCandidate(account: "unknown", blob: ["mcpOAuth": [:]]),
+        ]) == nil, "T3 returns nil when no item carries claudeAiOauth")
+
+        // T4 — rotation writeback preserves every sibling key. Writing only
+        // {"claudeAiOauth": …} back to an item that also held mcpOAuth would
+        // clobber Claude Code's MCP auth.
+        let rotated = ClaudeCredentials.rotatedPayload(
+            outer: ["mcpOAuth": ["server": "x"], "claudeAiOauth": ["accessToken": "old"]],
+            oauth: ["accessToken": "new", "refreshToken": "rt2"]
+        )
+        expect(rotated["mcpOAuth"] != nil, "T4 rotation payload keeps mcpOAuth")
+        expect((rotated["claudeAiOauth"] as? [String: Any])?["accessToken"] as? String == "new", "T4 rotation payload updates claudeAiOauth")
+
         // The store and views match these exact strings; a reword is a
         // breaking change for them, not a copy edit.
         expect(ClaudeCredentials.rateLimitedMessage == "rate limited", "rateLimitedMessage literal is stable")

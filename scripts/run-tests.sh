@@ -13,6 +13,7 @@ trap 'rm -rf "$OUT_DIR"' EXIT
 swiftc \
   -parse-as-library \
   -o "$OUT_DIR/resolve-usage-tests" \
+  Sources/Model/UsageDisplayModeStore.swift \
   Sources/Usage/AppUsage.swift \
   Sources/Usage/ClaudeCredentials.swift \
   Tests/ResolveUsageTests.swift
