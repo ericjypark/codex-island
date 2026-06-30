@@ -173,6 +173,8 @@ enum ClaudeCredentials {
         let blob: [String: Any]
     }
 
+    private static var cachedClaudeCreds: ClaudeCreds?
+
     /// Reads Claude Code's login from the keychain, or nil if there isn't a
     /// usable one — the caller then falls through to the next token source.
     /// Claude Code stores several generic-password items under the SAME service
@@ -185,7 +187,14 @@ enum ClaudeCredentials {
     /// content rather than by "first item". The full blob is carried through so
     /// a token refresh can rewrite the item without dropping sibling keys.
     private static func readClaudeCreds() -> ClaudeCreds? {
-        selectClaudeCreds(from: readClaudeKeychainCandidates())
+        if let cachedClaudeCreds { return cachedClaudeCreds }
+        let creds = selectClaudeCreds(from: readClaudeKeychainCandidates())
+        cachedClaudeCreds = creds
+        return creds
+    }
+
+    static func clearCache() {
+        cachedClaudeCreds = nil
     }
 
     /// First candidate carrying a usable `claudeAiOauth` (non-empty access +
@@ -220,15 +229,11 @@ enum ClaudeCredentials {
         return merged
     }
 
-    /// Decoded blob for every account under the service. Side-effecting: shells
-    /// out to `security` per account. (An attributes-only SecItem query
-    /// enumerates the accounts without an ACL prompt; reading the secret value
-    /// stays on the already-trusted `security` CLI path.)
+    /// Decoded blob for every account under the service. The secret read uses
+    /// SecItemCopyMatching in-process so the keychain prompt is attributed to
+    /// CodexIsland instead of the generic `/usr/bin/security` CLI.
     private static func readClaudeKeychainCandidates() -> [KeychainCandidate] {
-        var accounts = claudeKeychainAccounts()
-        if accounts.isEmpty, let legacy = readClaudeKeychainAccount() {
-            accounts = [legacy]
-        }
+        let accounts = claudeKeychainAccounts()
         return accounts.compactMap { account in
             readClaudeKeychainBlob(account: account).map {
                 KeychainCandidate(account: account, blob: $0)
@@ -254,6 +259,30 @@ enum ClaudeCredentials {
 
     /// Decoded JSON blob of one account's item, or nil on any read/parse error.
     private static func readClaudeKeychainBlob(account: String) -> [String: Any]? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "Claude Code-credentials",
+            kSecAttrAccount as String: account,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+            kSecReturnData as String: true,
+        ]
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess, let data = result as? Data else {
+            NSLog("CodexIsland: SecItemCopyMatching for Claude credentials failed (OSStatus %d)", status)
+            if ProcessInfo.processInfo.environment["CODEXISLAND_ALLOW_SECURITY_CLI_KEYCHAIN_FALLBACK"] == "1" {
+                return readClaudeKeychainBlobViaSecurityCLI(account: account)
+            }
+            return nil
+        }
+        return decodeClaudeKeychainBlob(data)
+    }
+
+    private static func decodeClaudeKeychainBlob(_ data: Data) -> [String: Any]? {
+        try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    }
+
+    private static func readClaudeKeychainBlobViaSecurityCLI(account: String) -> [String: Any]? {
         let task = Process()
         task.launchPath = "/usr/bin/security"
         task.arguments = [
@@ -271,43 +300,18 @@ enum ClaudeCredentials {
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             guard let raw = String(data: data, encoding: .utf8)?
                     .trimmingCharacters(in: .whitespacesAndNewlines),
-                  let jsonData = raw.data(using: .utf8),
-                  let outer = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { return nil }
-            return outer
+                  let jsonData = raw.data(using: .utf8) else { return nil }
+            return decodeClaudeKeychainBlob(jsonData)
         } catch {
             return nil
         }
     }
 
-    /// `security add-generic-password -U` requires the original account name
-    /// to find and update the existing item. The metadata listing puts it on
-    /// a line shaped like: `    "acct"<blob>="ericpark"` — pull the value
-    /// from inside the trailing quotes. Returns nil if the line is missing
-    /// or the value is `<NULL>`.
+    /// Account name for an existing Claude Code credential item. Keep this on
+    /// Security.framework metadata reads so CodexIsland never shells out to the
+    /// generic `/usr/bin/security` binary on the normal path.
     private static func readClaudeKeychainAccount() -> String? {
-        let task = Process()
-        task.launchPath = "/usr/bin/security"
-        task.arguments = ["find-generic-password", "-s", "Claude Code-credentials"]
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = Pipe()
-        do {
-            try task.run()
-            task.waitUntilExit()
-            let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-            for line in output.split(separator: "\n") {
-                let trimmed = line.trimmingCharacters(in: .whitespaces)
-                guard trimmed.hasPrefix("\"acct\"") else { continue }
-                guard let eq = trimmed.firstIndex(of: "=") else { return nil }
-                let value = trimmed[trimmed.index(after: eq)...]
-                guard value.hasPrefix("\""), value.hasSuffix("\""), value.count >= 2 else { return nil }
-                let inner = value.dropFirst().dropLast()
-                return inner.isEmpty ? nil : String(inner)
-            }
-            return nil
-        } catch {
-            return nil
-        }
+        claudeKeychainAccounts().first
     }
 
     /// Updates the existing `Claude Code-credentials` keychain item in place so
@@ -334,10 +338,22 @@ enum ClaudeCredentials {
             kSecAttrAccount as String: account,
         ]
         let status = SecItemUpdate(query as CFDictionary, [kSecValueData as String: data] as CFDictionary)
-        if status == errSecSuccess { return true }
+        if status == errSecSuccess {
+            cachedClaudeCreds = selectClaudeCreds(from: [KeychainCandidate(account: account, blob: payload)])
+            return true
+        }
+
+        guard ProcessInfo.processInfo.environment["CODEXISLAND_ALLOW_SECURITY_CLI_KEYCHAIN_FALLBACK"] == "1" else {
+            NSLog("CodexIsland: SecItemUpdate for rotated Claude tokens failed (OSStatus %d); security CLI fallback disabled", status)
+            return false
+        }
 
         NSLog("CodexIsland: SecItemUpdate for rotated Claude tokens failed (OSStatus %d), falling back to security CLI", status)
-        return writeClaudeCredsViaSecurityCLI(account: account, json: String(decoding: data, as: UTF8.self))
+        let didWrite = writeClaudeCredsViaSecurityCLI(account: account, json: String(decoding: data, as: UTF8.self))
+        if didWrite {
+            cachedClaudeCreds = selectClaudeCreds(from: [KeychainCandidate(account: account, blob: payload)])
+        }
+        return didWrite
     }
 
     /// Fallback keychain write via the Apple-signed `security` tool, used only
