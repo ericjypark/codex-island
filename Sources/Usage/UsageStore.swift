@@ -204,6 +204,7 @@ final class UsageStore: ObservableObject {
             for _ in 0..<24 {
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
                 if Task.isCancelled { return }
+                ClaudeCredentials.clearCache()
                 let cl = await UsageFetcher.fetchClaude()
                 if Task.isCancelled { return }
                 if cl.fiveHour.error == nil || cl.weekly.error == nil {
