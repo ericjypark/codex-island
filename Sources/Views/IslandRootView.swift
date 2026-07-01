@@ -77,6 +77,8 @@ struct IslandRootView: View {
                         edgePadding: logoEdgePadding,
                         topPadding: max(0, (model.notch.height - 20) / 2)
                     )
+                    .opacity(model.state == .compact && model.compactLogosHidden ? 0 : 1)
+                    .accessibilityHidden(model.state == .compact && model.compactLogosHidden)
                 }
                 .overlay(alignment: .topTrailing) {
                     LogoOverlay(
@@ -86,6 +88,8 @@ struct IslandRootView: View {
                         edgePadding: logoEdgePadding,
                         topPadding: max(0, (model.notch.height - 20) / 2)
                     )
+                    .opacity(model.state == .compact && model.compactLogosHidden ? 0 : 1)
+                    .accessibilityHidden(model.state == .compact && model.compactLogosHidden)
                 }
                 .overlay(alignment: .topLeading) {
                     // Pill lives in the new outboard slot (the 78pt the
@@ -350,7 +354,10 @@ struct IslandRootView: View {
     private var logoEdgePadding: CGFloat {
         switch model.state {
         case .compact, .expanded: return 9
-        case .peek:               return model.pillSlotWidth + 9
+        // Peek always expands to maxPillSlotWidth (78pt) regardless of the
+        // compact-state sideSpace constraint, so pin the logo to that fixed
+        // offset — model.pillSlotWidth may be 0 in constrained compact.
+        case .peek:               return 78 + 9
         }
     }
 }
