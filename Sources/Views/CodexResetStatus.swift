@@ -62,7 +62,8 @@ struct CodexResetStatus: View {
     }
 
     private var popoverYOffset: CGFloat {
-        usageStore.codexResetCredits.availableCredits.count == 1 ? -56 : -118
+        let extraRows = max(0, min(2, usageStore.codexResetCredits.availableCredits.count - 1))
+        return -56 - CGFloat(extraRows * 50)
     }
 
     private var popover: some View {
