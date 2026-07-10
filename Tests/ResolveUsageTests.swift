@@ -34,6 +34,12 @@ struct ResolveUsageTests {
             exit(1)
         }
 
+        // Prime the creds cache so resolveUsage never reads the developer's
+        // real keychain — an actual read would pop the keychain ACL prompt on
+        // every test run and make results depend on the machine's login state.
+        ClaudeCredentials.cachedClaudeCreds = ClaudeCredentials.ClaudeCreds(
+            account: "test-stub", accessToken: "stub-keychain-token", subscriptionType: nil)
+
         // T1 — a rate-limited probe short-circuits the whole resolution:
         // exactly one probe (no fallback to the next token source) and the
         // exact error string the UI and UsageStore cooldown match on.
@@ -85,10 +91,34 @@ struct ResolveUsageTests {
             ClaudeCredentials.KeychainCandidate(account: "unknown", blob: ["mcpOAuth": [:]]),
         ]) == nil, "T3 returns nil when no item carries claudeAiOauth")
 
+        // T4 — an unauthorized keychain-token probe must clear the creds
+        // cache, or a token Claude Code rotated externally stays stale in
+        // the cache forever and the chip never recovers past "token expired".
+        // Priming the cache short-circuits the real keychain read, keeping
+        // this deterministic on any machine.
+        ClaudeCredentials.cachedClaudeCreds = ClaudeCredentials.ClaudeCreds(
+            account: "primed", accessToken: "stale-token", subscriptionType: "max")
+        let t4 = ProbeCounter()
+        let r4 = await ClaudeCredentials.resolveUsage { _, _ in
+            t4.calls += 1
+            return .unauthorized
+        }
+        // Env stub token probes first (unauthorized → falls through), then
+        // the primed keychain creds probe (unauthorized → clears cache).
+        expect(t4.calls == 2, "T4 probes env then cached keychain token (got \(t4.calls))")
+        expect(ClaudeCredentials.cachedClaudeCreds == nil, "T4 unauthorized keychain probe clears the creds cache")
+        if case .failed(let msg) = r4 {
+            expect(msg == ClaudeCredentials.tokenExpiredMessage, "T4 resolution is .failed(tokenExpiredMessage)")
+        } else {
+            expect(false, "T4 resolution is .failed(tokenExpiredMessage)")
+        }
+        ClaudeCredentials.clearCache()
+
         // The store and views match these exact strings; a reword is a
         // breaking change for them, not a copy edit.
         expect(ClaudeCredentials.rateLimitedMessage == "rate limited", "rateLimitedMessage literal is stable")
         expect(ClaudeCredentials.reauthRequiredMessage == "re-login: claude /login", "reauthRequiredMessage literal is stable")
+        expect(ClaudeCredentials.tokenExpiredMessage == "token expired — run claude", "tokenExpiredMessage literal is stable")
 
         if failures > 0 {
             print("\(failures) failure(s)")

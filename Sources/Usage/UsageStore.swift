@@ -204,6 +204,9 @@ final class UsageStore: ObservableObject {
             for _ in 0..<24 {
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
                 if Task.isCancelled { return }
+                // The whole point of this loop is to catch the keychain item
+                // `claude auth login` just rewrote — never serve the cache.
+                ClaudeCredentials.clearCache()
                 let cl = await UsageFetcher.fetchClaude()
                 if Task.isCancelled { return }
                 if cl.fiveHour.error == nil || cl.weekly.error == nil {

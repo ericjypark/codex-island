@@ -109,11 +109,19 @@ enum ClaudeCredentials {
             case .rateLimited:          return .failed(rateLimitedMessage)
             // Expired access token. Claude Code will refresh it on its next
             // run; we stay read-only and show the stale state until then.
-            case .unauthorized:         lastError = tokenExpiredMessage
+            // Drop the cached creds so the next poll re-reads the keychain —
+            // otherwise a token Claude Code already rotated stays stale in
+            // the cache forever and the chip never recovers.
+            case .unauthorized:
+                clearCache()
+                lastError = tokenExpiredMessage
             // A refresh re-issues the same scope set, so it cannot recover
             // from a missing-scope 403. Surface the only remediation that
-            // actually works.
-            case .scopeInsufficient:    return .reauthRequired(reauthRequiredMessage)
+            // actually works. Clear the cache so the re-minted token from
+            // `claude /login` is picked up on the next poll.
+            case .scopeInsufficient:
+                clearCache()
+                return .reauthRequired(reauthRequiredMessage)
             case .otherError(let e):    lastError = e
             }
         }
@@ -145,18 +153,33 @@ enum ClaudeCredentials {
         let blob: [String: Any]
     }
 
+    /// Last successful keychain read, held so ordinary polls don't re-trigger
+    /// the keychain ACL prompt every cycle. Only a successful read is cached
+    /// (nil results retry on the next poll). Invalidation: an unauthorized or
+    /// scope-insufficient probe clears it in `resolveUsage` — the token was
+    /// rotated or re-minted externally and the cached copy is stale — and the
+    /// in-app re-auth poll loop clears it before each fetch. Internal (not
+    /// private) so ResolveUsageTests can prime it and assert the clearing.
+    static var cachedClaudeCreds: ClaudeCreds?
+
+    static func clearCache() {
+        cachedClaudeCreds = nil
+    }
+
     /// Reads Claude Code's login from the keychain, or nil if there isn't a
     /// usable one — the caller then falls through to the next token source.
     /// Claude Code stores several generic-password items under the SAME service
     /// "Claude Code-credentials": the subscription tokens live in
     /// `claudeAiOauth`, but a separate item written with acct="unknown" holds
-    /// only `mcpOAuth` (per-MCP-server tokens). `security find-generic-password
-    /// -s` returns an arbitrary one, so a single blind lookup can land on the
-    /// mcpOAuth item and miss the real login — the bug where the panel showed
-    /// no Claude usage. Read every item and let `selectClaudeCreds` pick by
-    /// content rather than by "first item".
+    /// only `mcpOAuth` (per-MCP-server tokens). A single blind lookup can land
+    /// on the mcpOAuth item and miss the real login — the bug where the panel
+    /// showed no Claude usage. Read every item and let `selectClaudeCreds`
+    /// pick by content rather than by "first item".
     private static func readClaudeCreds() -> ClaudeCreds? {
-        selectClaudeCreds(from: readClaudeKeychainCandidates())
+        if let cachedClaudeCreds { return cachedClaudeCreds }
+        let creds = selectClaudeCreds(from: readClaudeKeychainCandidates())
+        cachedClaudeCreds = creds
+        return creds
     }
 
     /// First candidate carrying a usable `claudeAiOauth` (non-empty access
@@ -176,15 +199,12 @@ enum ClaudeCredentials {
         return nil
     }
 
-    /// Decoded blob for every account under the service. Side-effecting: shells
-    /// out to `security` per account. (An attributes-only SecItem query
-    /// enumerates the accounts without an ACL prompt; reading the secret value
-    /// stays on the already-trusted `security` CLI path.)
+    /// Decoded blob for every account under the service. Side-effecting: the
+    /// secret read trips the keychain ACL prompt (in-process first, `security`
+    /// CLI fallback) — callers go through the `readClaudeCreds` cache so this
+    /// runs rarely, not every poll.
     private static func readClaudeKeychainCandidates() -> [KeychainCandidate] {
-        var accounts = claudeKeychainAccounts()
-        if accounts.isEmpty, let legacy = readClaudeKeychainAccount() {
-            accounts = [legacy]
-        }
+        let accounts = claudeKeychainAccounts()
         return accounts.compactMap { account in
             readClaudeKeychainBlob(account: account).map {
                 KeychainCandidate(account: account, blob: $0)
@@ -209,7 +229,38 @@ enum ClaudeCredentials {
     }
 
     /// Decoded JSON blob of one account's item, or nil on any read/parse error.
+    ///
+    /// Primary path is an in-process `SecItemCopyMatching`, so the keychain
+    /// ACL prompt is attributed to CodexIsland (and "Always Allow" grants
+    /// this app) instead of the generic `/usr/bin/security` binary. The CLI
+    /// fallback stays default-ON: the app is ad-hoc signed, so its keychain
+    /// identity changes with every build and a previously granted in-process
+    /// ACL entry can stop matching after an update. `security` is
+    /// Apple-signed with a stable identity, so a grant to it persists — a
+    /// denied/failed SecItem read must degrade to the old working path, not
+    /// to silently-missing Claude usage.
     private static func readClaudeKeychainBlob(account: String) -> [String: Any]? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "Claude Code-credentials",
+            kSecAttrAccount as String: account,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+            kSecReturnData as String: true,
+        ]
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess, let data = result as? Data else {
+            NSLog("CodexIsland: SecItemCopyMatching for Claude credentials failed (OSStatus %d), falling back to security CLI", status)
+            return readClaudeKeychainBlobViaSecurityCLI(account: account)
+        }
+        return decodeClaudeKeychainBlob(data)
+    }
+
+    private static func decodeClaudeKeychainBlob(_ data: Data) -> [String: Any]? {
+        try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    }
+
+    private static func readClaudeKeychainBlobViaSecurityCLI(account: String) -> [String: Any]? {
         let task = Process()
         task.launchPath = "/usr/bin/security"
         task.arguments = [
@@ -227,43 +278,18 @@ enum ClaudeCredentials {
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             guard let raw = String(data: data, encoding: .utf8)?
                     .trimmingCharacters(in: .whitespacesAndNewlines),
-                  let jsonData = raw.data(using: .utf8),
-                  let outer = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { return nil }
-            return outer
+                  let jsonData = raw.data(using: .utf8) else { return nil }
+            return decodeClaudeKeychainBlob(jsonData)
         } catch {
             return nil
         }
     }
 
-    /// `security add-generic-password -U` requires the original account name
-    /// to find and update the existing item. The metadata listing puts it on
-    /// a line shaped like: `    "acct"<blob>="ericpark"` — pull the value
-    /// from inside the trailing quotes. Returns nil if the line is missing
-    /// or the value is `<NULL>`.
+    /// Account name for an existing Claude Code credential item, from the
+    /// attributes-only SecItem query — metadata reads never trip the ACL
+    /// prompt, so this is safe to call from UI paths (`canPromptReauth`).
     private static func readClaudeKeychainAccount() -> String? {
-        let task = Process()
-        task.launchPath = "/usr/bin/security"
-        task.arguments = ["find-generic-password", "-s", "Claude Code-credentials"]
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = Pipe()
-        do {
-            try task.run()
-            task.waitUntilExit()
-            let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-            for line in output.split(separator: "\n") {
-                let trimmed = line.trimmingCharacters(in: .whitespaces)
-                guard trimmed.hasPrefix("\"acct\"") else { continue }
-                guard let eq = trimmed.firstIndex(of: "=") else { return nil }
-                let value = trimmed[trimmed.index(after: eq)...]
-                guard value.hasPrefix("\""), value.hasSuffix("\""), value.count >= 2 else { return nil }
-                let inner = value.dropFirst().dropLast()
-                return inner.isEmpty ? nil : String(inner)
-            }
-            return nil
-        } catch {
-            return nil
-        }
+        claudeKeychainAccounts().first
     }
 
     // MARK: - In-app re-auth
