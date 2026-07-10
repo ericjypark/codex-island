@@ -10,7 +10,7 @@ import Foundation
 /// Unknown models silently price to $0 — same behavior as ccusage when
 /// LiteLLM has no entry.
 enum Pricing {
-    static let snapshotDate = "2026-06-10"
+    static let snapshotDate = "2026-07-10"
 
     struct Rates {
         let inputPerMillion: Double
@@ -43,6 +43,12 @@ enum Pricing {
             inputPerMillion: 5, outputPerMillion: 25,
             cacheCreationPerMillion: 6.25, cacheReadPerMillion: 0.50
         ),
+        // Sonnet 5 rates reflect Anthropic's introductory pricing ($2/$10
+        // through 2026-08-31; $3/$15 after) — matches LiteLLM's current entry.
+        "claude-sonnet-5": Rates(
+            inputPerMillion: 2, outputPerMillion: 10,
+            cacheCreationPerMillion: 2.50, cacheReadPerMillion: 0.20
+        ),
         "claude-sonnet-4-6": Rates(
             inputPerMillion: 3, outputPerMillion: 15,
             cacheCreationPerMillion: 3.75, cacheReadPerMillion: 0.30
@@ -59,7 +65,25 @@ enum Pricing {
         // OpenAI — Codex CLI tags conversations with the chat-completion
         // model name. cache_creation has no separate rate (OpenAI bills
         // cache writes at the standard input rate).
-        // Base reasoning models (newest first).
+        // Base reasoning models (newest first). Starting with 5.6, OpenAI
+        // bills cache writes at 1.25x input (matching Anthropic) instead of
+        // the standard input rate.
+        "gpt-5.6": Rates(
+            inputPerMillion: 5, outputPerMillion: 30,
+            cacheCreationPerMillion: 6.25, cacheReadPerMillion: 0.50
+        ),
+        "gpt-5.6-sol": Rates(
+            inputPerMillion: 5, outputPerMillion: 30,
+            cacheCreationPerMillion: 6.25, cacheReadPerMillion: 0.50
+        ),
+        "gpt-5.6-terra": Rates(
+            inputPerMillion: 2.5, outputPerMillion: 15,
+            cacheCreationPerMillion: 3.125, cacheReadPerMillion: 0.25
+        ),
+        "gpt-5.6-luna": Rates(
+            inputPerMillion: 1, outputPerMillion: 6,
+            cacheCreationPerMillion: 1.25, cacheReadPerMillion: 0.10
+        ),
         "gpt-5.5": Rates(
             inputPerMillion: 5, outputPerMillion: 30,
             cacheCreationPerMillion: 5, cacheReadPerMillion: 0.50
