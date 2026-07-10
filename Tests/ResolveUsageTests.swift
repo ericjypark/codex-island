@@ -114,6 +114,35 @@ struct ResolveUsageTests {
         }
         ClaudeCredentials.clearCache()
 
+        // T5 — file credential store (issue #54). Users who migrated to
+        // ~/.claude/.credentials.json and deleted the keychain item must
+        // still get usage. Point CLAUDE_CONFIG_DIR at a fixture and assert
+        // the decoded candidate feeds the same selection as keychain items.
+        let fixtureDir = NSTemporaryDirectory() + "codexisland-tests-\(ProcessInfo.processInfo.processIdentifier)"
+        try? FileManager.default.createDirectory(atPath: fixtureDir, withIntermediateDirectories: true)
+        let fixture = """
+        {"claudeAiOauth": {"accessToken": "file-at", "refreshToken": "file-rt", "subscriptionType": "pro"}}
+        """
+        FileManager.default.createFile(atPath: fixtureDir + "/.credentials.json", contents: Data(fixture.utf8))
+        setenv("CLAUDE_CONFIG_DIR", fixtureDir, 1)
+        let fileCandidates = ClaudeCredentials.readClaudeFileCandidates()
+        let filePicked = ClaudeCredentials.selectClaudeCreds(from: fileCandidates)
+        expect(filePicked?.accessToken == "file-at", "T5 file store candidate decodes and is selectable")
+        expect(filePicked?.subscriptionType == "pro", "T5 file store carries subscriptionType")
+        // File store outranks a coexisting (stale) keychain item — Claude
+        // Code itself prefers the file when it exists.
+        let mixed = ClaudeCredentials.selectClaudeCreds(from: fileCandidates + [
+            ClaudeCredentials.KeychainCandidate(account: "ericpark", blob: [
+                "claudeAiOauth": ["accessToken": "stale-keychain-at"],
+            ]),
+        ])
+        expect(mixed?.accessToken == "file-at", "T5 file store wins over a coexisting keychain item")
+        // Keep CLAUDE_CONFIG_DIR pinned to the (now deleted) fixture dir so
+        // this assertion never touches a real ~/.claude on the dev machine.
+        try? FileManager.default.removeItem(atPath: fixtureDir)
+        expect(ClaudeCredentials.readClaudeFileCandidates().isEmpty, "T5 missing file yields no candidates")
+        unsetenv("CLAUDE_CONFIG_DIR")
+
         // The store and views match these exact strings; a reword is a
         // breaking change for them, not a copy edit.
         expect(ClaudeCredentials.rateLimitedMessage == "rate limited", "rateLimitedMessage literal is stable")

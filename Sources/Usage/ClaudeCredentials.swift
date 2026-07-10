@@ -166,20 +166,48 @@ enum ClaudeCredentials {
         cachedClaudeCreds = nil
     }
 
-    /// Reads Claude Code's login from the keychain, or nil if there isn't a
-    /// usable one — the caller then falls through to the next token source.
-    /// Claude Code stores several generic-password items under the SAME service
-    /// "Claude Code-credentials": the subscription tokens live in
-    /// `claudeAiOauth`, but a separate item written with acct="unknown" holds
-    /// only `mcpOAuth` (per-MCP-server tokens). A single blind lookup can land
-    /// on the mcpOAuth item and miss the real login — the bug where the panel
-    /// showed no Claude usage. Read every item and let `selectClaudeCreds`
-    /// pick by content rather than by "first item".
+    /// Reads Claude Code's login from the file store or keychain, or nil if
+    /// there isn't a usable one — the caller then falls through to the next
+    /// token source. The file store (`~/.claude/.credentials.json`) comes
+    /// FIRST: when the file exists, Claude Code itself reads and maintains it
+    /// in preference to the keychain, so a coexisting keychain item is a
+    /// stale leftover (issue #54 — users delete the keychain item to escape
+    /// its ACL prompts, and the file never prompts at all).
+    ///
+    /// Keychain shape: Claude Code stores several generic-password items
+    /// under the SAME service "Claude Code-credentials": the subscription
+    /// tokens live in `claudeAiOauth`, but a separate item written with
+    /// acct="unknown" holds only `mcpOAuth` (per-MCP-server tokens). A single
+    /// blind lookup can land on the mcpOAuth item and miss the real login —
+    /// the bug where the panel showed no Claude usage. Read every item and
+    /// let `selectClaudeCreds` pick by content rather than by "first item".
     private static func readClaudeCreds() -> ClaudeCreds? {
         if let cachedClaudeCreds { return cachedClaudeCreds }
-        let creds = selectClaudeCreds(from: readClaudeKeychainCandidates())
+        let creds = selectClaudeCreds(
+            from: readClaudeFileCandidates() + readClaudeKeychainCandidates())
         cachedClaudeCreds = creds
         return creds
+    }
+
+    // MARK: - File store
+
+    /// Claude Code's file-based credential store, same JSON shape as the
+    /// keychain blob. Default on Linux; on macOS users opt in (and typically
+    /// delete the keychain item). `CLAUDE_CONFIG_DIR` relocates `~/.claude`
+    /// — rarely set for a LaunchServices-spawned GUI app, but honored to
+    /// match Claude Code's resolution.
+    private static func claudeCredentialsFilePath() -> String {
+        let configDir = ProcessInfo.processInfo.environment["CLAUDE_CONFIG_DIR"]
+            ?? "\(NSHomeDirectory())/.claude"
+        return "\(configDir)/.credentials.json"
+    }
+
+    /// Internal (not private) so ResolveUsageTests can point it at a fixture
+    /// via CLAUDE_CONFIG_DIR and assert the decoded candidate.
+    static func readClaudeFileCandidates() -> [KeychainCandidate] {
+        guard let data = FileManager.default.contents(atPath: claudeCredentialsFilePath()),
+              let blob = decodeClaudeKeychainBlob(data) else { return [] }
+        return [KeychainCandidate(account: NSUserName(), blob: blob)]
     }
 
     /// First candidate carrying a usable `claudeAiOauth` (non-empty access
@@ -295,15 +323,17 @@ enum ClaudeCredentials {
     // MARK: - In-app re-auth
 
     /// True only when the in-app "Re-authenticate" button can actually do
-    /// something useful: the user already has a Claude keychain item
-    /// (otherwise they're a Codex-only user — no Claude flow to re-auth) and
-    /// the `claude` binary exists at a known install path. We deliberately do
-    /// not shell out to `which`; LaunchServices gives the app a stripped PATH
+    /// something useful: the user already has a Claude login store (keychain
+    /// item or credentials file — otherwise they're a Codex-only user, no
+    /// Claude flow to re-auth) and the `claude` binary exists at a known
+    /// install path. We deliberately do not shell out to `which`;
+    /// LaunchServices gives the app a stripped PATH
     /// (`/usr/bin:/bin:/usr/sbin:/sbin`), so a `which` call would miss every
     /// Homebrew/nvm/Bun install and the button would silently never appear
     /// for most users.
     static func canPromptReauth() -> Bool {
-        guard readClaudeKeychainAccount() != nil else { return false }
+        guard readClaudeKeychainAccount() != nil
+                || FileManager.default.fileExists(atPath: claudeCredentialsFilePath()) else { return false }
         return locateClaudeBinary() != nil
     }
 
