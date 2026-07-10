@@ -39,16 +39,39 @@ struct NotchInfo {
     }
 
     private static func visibleMenuBarHeight(of screen: NSScreen) -> CGFloat {
-        let fromVisibleFrame = screen.frame.maxY - screen.visibleFrame.maxY
-        if fromVisibleFrame > 0 { return fromVisibleFrame }
+        menuBarHeight(
+            safeTop: screen.safeAreaInsets.top,
+            visibleFrameDelta: screen.frame.maxY - screen.visibleFrame.maxY,
+            statusBarThickness: NSStatusBar.system.thickness
+        )
+    }
+
+    /// Pure height rule, separated from NSScreen so the test harness can
+    /// drive it (see Tests/NotchHeightTests.swift).
+    ///
+    /// `visibleFrame.maxY` sits 1pt BELOW the menu bar's bottom edge (AppKit
+    /// reserves that strip), so the raw frame/visibleFrame delta over-reports
+    /// the bar by 1pt — measured 39pt against a 38pt bar on a notched 14".
+    /// That extra point made the silhouette's bottom edge dip into app
+    /// content below the menu bar. Correct for the gap, and clamp to the
+    /// physical notch height so a stale visibleFrame reading (login, display
+    /// wake) can never push the silhouette below the real bar either.
+    static func menuBarHeight(
+        safeTop: CGFloat,
+        visibleFrameDelta: CGFloat,
+        statusBarThickness: CGFloat
+    ) -> CGFloat {
+        let fromVisibleFrame = visibleFrameDelta - 1
+        if fromVisibleFrame > 0 {
+            return safeTop > 0 ? min(fromVisibleFrame, safeTop) : fromVisibleFrame
+        }
         // Auto-hide menu bar — visibleFrame == frame, so derive from the
         // physical notch (if present) or the system status bar thickness.
-        if screen.safeAreaInsets.top > 0 { return screen.safeAreaInsets.top }
-        return menuBarFallback()
+        if safeTop > 0 { return safeTop }
+        return statusBarThickness > 0 ? statusBarThickness : 24
     }
 
     private static func menuBarFallback() -> CGFloat {
-        let t = NSStatusBar.system.thickness
-        return t > 0 ? t : 24
+        menuBarHeight(safeTop: 0, visibleFrameDelta: 0, statusBarThickness: NSStatusBar.system.thickness)
     }
 }
