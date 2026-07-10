@@ -13,6 +13,10 @@
 "%@ in %@. %d active days. Claude %@, Codex %@." = "%@，%@ 年。%d 个活跃日。Claude %@，Codex %@。";
 "%@ TOKENS" = "%@ TOKEN";
 "%d Active Days" = "%d 个活跃日";
+"%d Codex resets available" = "%d 个 Codex 重置可用";
+"%d resets available" = "%d 个重置可用";
+"1 Codex reset available" = "1 个 Codex 重置可用";
+"1 reset available" = "1 个重置可用";
 "⚠ %d unpriced" = "⚠ %d 个模型缺价格";
 " · pricing data %dd old" = " · 价格数据已过 %d 天";
 "$%@ cumulative" = "$%@ 累计";
@@ -27,6 +31,8 @@
 "Auto" = "自动";
 "Auto — currently on %@." = "自动 — 当前在 %@。";
 "Auto — picks a notched display when available." = "自动 — 优先选择带刘海的屏幕。";
+"Available" = "可用";
+"EXPIRES" = "到期时间";
 "Bar" = "柱状";
 "Both" = "两者";
 "Both providers hidden" = "两个服务都已隐藏";
@@ -139,6 +145,7 @@
 "Click to expand. Command-click to cycle visualization." = "点击展开。Command 点击可切换可视化。";
 "Command-click to cycle visualization." = "Command 点击可切换可视化。";
 "Hover to peek usage. Click to expand. Command-click to cycle visualization." = "悬停预览用量。点击展开。Command 点击可切换可视化。";
+"Hover to show reset expiration details" = "悬停查看重置到期详情";
 "How often to refresh." = "刷新频率。";
 "Percentages" = "百分比";
 "Remaining" = "剩余";

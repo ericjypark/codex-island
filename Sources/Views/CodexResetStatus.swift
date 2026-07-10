@@ -189,23 +189,12 @@ struct CodexResetStatus: View {
         hideWorkItem = nil
     }
 
-    private static let relativeFormatter: RelativeDateTimeFormatter = {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.locale = L10n.locale
-        formatter.unitsStyle = .abbreviated
-        return formatter
-    }()
-
     private static let absoluteFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = L10n.locale
         formatter.setLocalizedDateFormatFromTemplate("yMMMdahmm")
         return formatter
     }()
-
-    private func relative(_ date: Date) -> String {
-        Self.relativeFormatter.localizedString(for: date, relativeTo: Date())
-    }
 
     private func absolute(_ date: Date) -> String {
         Self.absoluteFormatter.locale = L10n.locale

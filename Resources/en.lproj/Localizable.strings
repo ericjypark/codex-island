@@ -13,6 +13,10 @@
 "%@ in %@. %d active days. Claude %@, Codex %@." = "%@ in %@. %d active days. Claude %@, Codex %@.";
 "%@ TOKENS" = "%@ TOKENS";
 "%d Active Days" = "%d Active Days";
+"%d Codex resets available" = "%d Codex resets available";
+"%d resets available" = "%d resets available";
+"1 Codex reset available" = "1 Codex reset available";
+"1 reset available" = "1 reset available";
 "⚠ %d unpriced" = "⚠ %d unpriced";
 " · pricing data %dd old" = " · pricing data %dd old";
 "$%@ cumulative" = "$%@ cumulative";
@@ -27,6 +31,8 @@
 "Auto" = "Auto";
 "Auto — currently on %@." = "Auto — currently on %@.";
 "Auto — picks a notched display when available." = "Auto — picks a notched display when available.";
+"Available" = "Available";
+"EXPIRES" = "EXPIRES";
 "Bar" = "Bar";
 "Both" = "Both";
 "Both providers hidden" = "Both providers hidden";
@@ -139,6 +145,7 @@
 "Click to expand. Command-click to cycle visualization." = "Click to expand. Command-click to cycle visualization.";
 "Command-click to cycle visualization." = "Command-click to cycle visualization.";
 "Hover to peek usage. Click to expand. Command-click to cycle visualization." = "Hover to peek usage. Click to expand. Command-click to cycle visualization.";
+"Hover to show reset expiration details" = "Hover to show reset expiration details";
 "How often to refresh." = "How often to refresh.";
 "Percentages" = "Percentages";
 "Remaining" = "Remaining";

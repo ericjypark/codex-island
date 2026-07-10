@@ -18,8 +18,10 @@ struct CodexResetCredits: Equatable {
 
     static let empty = CodexResetCredits(availableCount: 0, credits: [])
 
+    /// Status alone isn't enough: with 30-minute polling a credit can lapse
+    /// mid-cycle while the last snapshot still reports it "available".
     var availableCredits: [CodexResetCredit] {
-        credits.filter(\.isAvailable)
+        credits.filter { $0.isAvailable && $0.expiresAt > Date() }
             .sorted { $0.expiresAt < $1.expiresAt }
     }
 }
