@@ -19,3 +19,13 @@ swiftc \
   Tests/ResolveUsageTests.swift
 
 CLAUDE_CODE_OAUTH_TOKEN="test-stub-token" "$OUT_DIR/resolve-usage-tests"
+
+swiftc \
+  -parse-as-library \
+  -o "$OUT_DIR/notch-height-tests" \
+  Sources/Model/NotchInfo.swift \
+  Sources/Model/IslandSpacingStore.swift \
+  Sources/Model/PreferenceStorage.swift \
+  Tests/NotchHeightTests.swift
+
+"$OUT_DIR/notch-height-tests"
