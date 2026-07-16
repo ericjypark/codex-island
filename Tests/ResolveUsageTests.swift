@@ -143,6 +143,40 @@ struct ResolveUsageTests {
         expect(ClaudeCredentials.readClaudeFileCandidates().isEmpty, "T5 missing file yields no candidates")
         unsetenv("CLAUDE_CONFIG_DIR")
 
+        // T6 — auth-failure classification. UsageStore lets a terminal auth
+        // error (expired token / missing scope) REPLACE a stale good value,
+        // while a transient 429/network error is retained. Both predicates
+        // must key only on the two actionable sentinels, and
+        // isTerminalAuthFailure must require BOTH windows to carry one — a
+        // single-window failure is a transient per-window glitch, not a dead
+        // token.
+        expect(ClaudeCredentials.isReauthActionable(ClaudeCredentials.tokenExpiredMessage),
+               "T6 expired token is reauth-actionable")
+        expect(ClaudeCredentials.isReauthActionable(ClaudeCredentials.reauthRequiredMessage),
+               "T6 scope-insufficient is reauth-actionable")
+        expect(!ClaudeCredentials.isReauthActionable(ClaudeCredentials.rateLimitedMessage),
+               "T6 rate-limited is NOT reauth-actionable")
+        expect(!ClaudeCredentials.isReauthActionable("no data"), "T6 no-data is NOT reauth-actionable")
+        expect(!ClaudeCredentials.isReauthActionable(nil), "T6 nil error is NOT reauth-actionable")
+
+        func pair(_ msg: String?) -> AppUsage {
+            AppUsage(
+                fiveHour: WindowUsage(usedPercent: 0, resetAt: nil, error: msg),
+                weekly: WindowUsage(usedPercent: 0, resetAt: nil, error: msg))
+        }
+        expect(ClaudeCredentials.isTerminalAuthFailure(pair(ClaudeCredentials.tokenExpiredMessage)),
+               "T6 both-window expired is a terminal auth failure")
+        expect(ClaudeCredentials.isTerminalAuthFailure(pair(ClaudeCredentials.reauthRequiredMessage)),
+               "T6 both-window scope is a terminal auth failure")
+        expect(!ClaudeCredentials.isTerminalAuthFailure(pair(ClaudeCredentials.rateLimitedMessage)),
+               "T6 rate-limited is NOT a terminal auth failure")
+        expect(!ClaudeCredentials.isTerminalAuthFailure(pair(nil)),
+               "T6 good usage is NOT a terminal auth failure")
+        expect(!ClaudeCredentials.isTerminalAuthFailure(AppUsage(
+            fiveHour: WindowUsage(usedPercent: 0.1, resetAt: nil, error: nil),
+            weekly: WindowUsage(usedPercent: 0, resetAt: nil, error: ClaudeCredentials.tokenExpiredMessage))),
+            "T6 single-window failure is NOT terminal (needs both)")
+
         // The store and views match these exact strings; a reword is a
         // breaking change for them, not a copy edit.
         expect(ClaudeCredentials.rateLimitedMessage == "rate limited", "rateLimitedMessage literal is stable")

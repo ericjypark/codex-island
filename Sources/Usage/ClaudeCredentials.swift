@@ -41,6 +41,26 @@ enum ClaudeCredentials {
     /// refreshes and writes back the next time the user runs it.
     static let tokenExpiredMessage = "token expired — run claude"
 
+    /// True when a probe error is one the in-app re-auth flow can act on: a
+    /// terminal auth failure — an expired keychain token (401) or a token
+    /// missing a scope the usage endpoint now requires (403). Distinct from a
+    /// transient 429/network error, which self-heals and must NOT trigger the
+    /// re-auth prompt. Views key the "Re-authenticate" button and its caption
+    /// on this; `UsageStore` uses `isTerminalAuthFailure` to let these replace
+    /// a stale good value instead of retaining it.
+    static func isReauthActionable(_ error: String?) -> Bool {
+        error == tokenExpiredMessage || error == reauthRequiredMessage
+    }
+
+    /// True when BOTH windows carry a reauth-actionable error — the token
+    /// itself is unusable, not one window transiently failing. `UsageStore`'s
+    /// "don't clobber good values" retention makes an exception for this so the
+    /// panel surfaces the re-auth prompt instead of freezing on numbers it can
+    /// no longer refresh.
+    static func isTerminalAuthFailure(_ usage: AppUsage) -> Bool {
+        isReauthActionable(usage.fiveHour.error) && isReauthActionable(usage.weekly.error)
+    }
+
     /// Outcome of a single usage-endpoint probe against one token. The fetcher
     /// owns the HTTP + parsing and reports back through this; `ClaudeCredentials`
     /// interprets it to decide whether to advance to the next token source.

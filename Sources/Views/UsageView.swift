@@ -82,31 +82,67 @@ struct ChartsBlock: View {
     let seed: Int
     let provider: AlertEngine.Provider
 
-    /// Treat the block as needing re-auth when both windows are stuck on the
-    /// scope-insufficient sentinel. Either tile alone could be a transient
-    /// per-window failure, but matching pair = the underlying token genuinely
-    /// lacks the required scope.
+    /// Treat the block as needing re-auth when both windows are stuck on a
+    /// reauth-actionable sentinel — an expired token (401) or a missing scope
+    /// (403). Either tile alone could be a transient per-window failure, but a
+    /// matching pair = the underlying token is genuinely unusable.
     private var needsReauth: Bool {
-        usage.fiveHour.error == ClaudeCredentials.reauthRequiredMessage
-            && usage.weekly.error == ClaudeCredentials.reauthRequiredMessage
+        ClaudeCredentials.isTerminalAuthFailure(usage)
     }
 
     var body: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 18) {
-                ChartTile(style: style, color: color, labelKey: "5h",
-                          window: usage.fiveHour, seed: seed,
-                          provider: provider, windowKind: .fiveHour)
-                ChartTile(style: style, color: color, labelKey: "week",
-                          window: usage.weekly, seed: seed + 1,
-                          provider: provider, windowKind: .weekly)
-            }
-            if needsReauth && ClaudeCredentials.canPromptReauth() {
-                ReauthButton()
+        Group {
+            if needsReauth {
+                // Dead token: the sparkline tiles carry no live data, so
+                // replace them with a single centered prompt. Swapping (not
+                // appending a button row) keeps the panel within its fixed
+                // 188pt height instead of overflowing into the footer.
+                ReauthState(color: color, usage: usage)
+            } else {
+                HStack(spacing: 18) {
+                    ChartTile(style: style, color: color, labelKey: "5h",
+                              window: usage.fiveHour, seed: seed,
+                              provider: provider, windowKind: .fiveHour)
+                    ChartTile(style: style, color: color, labelKey: "week",
+                              window: usage.weekly, seed: seed + 1,
+                              provider: provider, windowKind: .weekly)
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, 12)
+    }
+}
+
+/// Shown in place of the sparkline tiles when the Claude token can no longer
+/// be used — expired (401) or missing the scope the usage endpoint now
+/// requires (403). Both windows carry a reauth-actionable sentinel; the dead
+/// numbers would only mislead, so this centered prompt takes their place. When
+/// a `claude` binary is discoverable it offers one-click re-auth; otherwise it
+/// shows the exact manual command from the sentinel.
+struct ReauthState: View {
+    let color: Color
+    let usage: AppUsage
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "key.slash")
+                .font(.system(size: 20, weight: .regular))
+                .foregroundStyle(color.opacity(0.85))
+            if ClaudeCredentials.canPromptReauth() {
+                Text(L10n.tr("Claude session expired"))
+                    .font(Typography.label)
+                    .foregroundStyle(.white.opacity(0.55))
+                ReauthButton()
+            } else {
+                Text(usage.fiveHour.error ?? ClaudeCredentials.tokenExpiredMessage)
+                    .font(Typography.label)
+                    .foregroundStyle(.white.opacity(0.55))
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .padding(.horizontal, 8)
     }
 }
 
@@ -202,16 +238,10 @@ struct ChartTile: View {
         // OAuth call lands. Hide it so the tile reads as a passive
         // window-context cue (the "5h"/"week" header label communicates the
         // window type) instead of looking broken. Real errors still surface.
+        // A terminal auth failure is handled by ReauthState (which replaces
+        // the tiles entirely), so any error reaching a tile here is a genuine
+        // per-window caption worth showing verbatim.
         if let err = window.error, err != "no data" {
-            // Suppress the scope-insufficient text when the inline re-auth
-            // button is going to appear below the tiles — otherwise the same
-            // remediation hint reads twice (caption + button label). Users
-            // without a discoverable `claude` binary still get the raw text
-            // so they know the manual fix.
-            if err == ClaudeCredentials.reauthRequiredMessage,
-               ClaudeCredentials.canPromptReauth() {
-                return ""
-            }
             return err
         }
         return ""
@@ -223,10 +253,6 @@ struct ChartTile: View {
             return "↻ " + Duration.compact(delta)
         }
         if let err = window.error, err != "no data" {
-            if err == ClaudeCredentials.reauthRequiredMessage,
-               ClaudeCredentials.canPromptReauth() {
-                return ""
-            }
             return err
         }
         return ""

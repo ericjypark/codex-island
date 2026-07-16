@@ -138,7 +138,13 @@ final class UsageStore: ObservableObject {
                 } else {
                     self.claudeCooldownUntil = nil
                 }
-                if !UsageStore.isErrorOnly(cl) || UsageStore.isErrorOnly(self.claude) {
+                // A terminal auth failure (expired token / missing scope)
+                // REPLACES a stale good value — otherwise the panel freezes on
+                // numbers we can no longer refresh with no signal to the user.
+                // Transient errors (429/network) still fall through to the
+                // retention rule above.
+                if !UsageStore.isErrorOnly(cl) || UsageStore.isErrorOnly(self.claude)
+                    || ClaudeCredentials.isTerminalAuthFailure(cl) {
                     self.claude = cl
                 }
             }
