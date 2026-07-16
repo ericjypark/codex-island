@@ -5,8 +5,9 @@ import SwiftUI
 /// directly on the dark silhouette, like the logos.
 ///
 /// Renders one of three states:
-///   • value:    "32% · 2h"  (active countdown) or "0% · 5h" (window-length
-///               fallback at lower opacity when no active resetAt is known)
+///   • value:    "32% · 2h" / "0% · 6d 23h" (active countdown) or
+///               "0% · 5h" (window-length fallback at lower opacity when no
+///               active resetAt is known)
 ///   • loading:  small pulsing dot (only when `loading && usedPercent == 0`)
 ///   • errored:  "—%"         (when error is set and we have no value)
 ///
@@ -113,18 +114,14 @@ struct NotchPeekPill: View {
         "\(usage.displayedPercentInt(mode: usageDisplay.mode))%"
     }
 
-    /// `Nh` when ≥ 1h remaining, `Nm` under 1h. Returns nil if there's no
-    /// resetAt or the reset has already passed (happens transiently when a
-    /// window rolls over before the next fetch lands).
+    /// Shared compact countdown (`Nm` / `Nh` / `Nd Nh`). Returns nil if
+    /// there's no resetAt or the reset has already passed (happens
+    /// transiently when a window rolls over before the next fetch lands).
     private var resetText: String? {
         guard let resetAt = usage.resetAt else { return nil }
         let remaining = resetAt.timeIntervalSinceNow
         guard remaining > 0 else { return nil }
-        if remaining >= 3600 {
-            return "\(Int((remaining / 3600).rounded(.down)))h"
-        } else {
-            return "\(max(1, Int((remaining / 60).rounded(.down))))m"
-        }
+        return Duration.compact(remaining)
     }
 }
 

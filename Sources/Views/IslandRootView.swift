@@ -88,7 +88,7 @@ struct IslandRootView: View {
                     )
                 }
                 .overlay(alignment: .topLeading) {
-                    // Pill lives in the new outboard slot (the 78pt the
+                    // Pill lives in the new outboard slot (the width the
                     // silhouette grew on entering peek). 14pt inset from the
                     // silhouette's new leading edge keeps it visually
                     // breathing inside the rounded corner.
