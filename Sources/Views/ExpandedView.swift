@@ -10,6 +10,10 @@ struct ExpandedView: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(notch: model.notch)
+                // The Codex reset badge's hover popover opens downward out of
+                // the header; without this it renders behind PagedContent
+                // (later VStack sibling → drawn on top).
+                .zIndex(1)
             PagedContent(model: model)
             PanelFooter(model: model)
         }

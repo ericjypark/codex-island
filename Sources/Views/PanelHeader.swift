@@ -17,13 +17,21 @@ struct PanelHeader: View {
             let claudeOn = visibility.claudeVisible
             let codexOn = visibility.codexVisible
             providerTitle(name: "Claude", tag: usageStore.claude.plan?.uppercased(),
-                          color: IslandColor.claude, alignment: .leading)
+                          color: IslandColor.claude, alignment: .leading) {
+                EmptyView()
+            }
                 .opacity(claudeOn ? 1 : 0)
                 .animation(.openMorph, value: claudeOn)
                 .accessibilityHidden(!claudeOn)
             Color.clear.frame(width: notch.width)
             providerTitle(name: "Codex", tag: usageStore.codex.plan?.uppercased(),
-                          color: IslandColor.codex, alignment: .trailing)
+                          color: IslandColor.codex, alignment: .trailing) {
+                // Codex-only rate-limit reset credits, pinned to the Codex
+                // title so the badge unambiguously belongs to Codex — its old
+                // footer-center spot read as panel-global. Account-level like
+                // the plan tag, so it rides along on every screen.
+                CodexResetStatus()
+            }
                 .opacity(codexOn ? 1 : 0)
                 .animation(.openMorph, value: codexOn)
                 .accessibilityHidden(!codexOn)
@@ -35,11 +43,12 @@ struct PanelHeader: View {
     }
 
     @ViewBuilder
-    private func providerTitle(
+    private func providerTitle<Accessory: View>(
         name: String,
         tag: String?,
         color: Color,
-        alignment: HorizontalAlignment
+        alignment: HorizontalAlignment,
+        @ViewBuilder accessory: () -> Accessory
     ) -> some View {
         // Push past where the overlay logo lands: 9 leading + 20 logo + 8 gap.
         let logoOffset: CGFloat = 9 + 20 + 8
@@ -73,8 +82,9 @@ struct PanelHeader: View {
             }
             .frame(maxWidth: .infinity)
         } else {
-            HStack {
+            HStack(spacing: 10) {
                 Spacer(minLength: 0)
+                accessory()
                 content.padding(.trailing, logoOffset)
             }
             .frame(maxWidth: .infinity)

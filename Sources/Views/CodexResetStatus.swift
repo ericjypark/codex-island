@@ -12,14 +12,15 @@ struct CodexResetStatus: View {
     var body: some View {
         if shouldShowBadge {
             badge
-                .overlay(alignment: .bottomTrailing) {
+                .overlay(alignment: .topTrailing) {
                     if showPopover {
                         popover
-                            // Anchored to the badge bottom, lifted clear of
-                            // the badge so the card grows upward inside the
-                            // panel regardless of row count.
-                            .offset(y: -30)
-                            .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .bottomTrailing)))
+                            // Anchored to the badge top, dropped clear of the
+                            // badge so the card grows downward into the panel.
+                            // The badge now lives in the header (panel top), so
+                            // opening upward would spill off the top edge.
+                            .offset(y: 28)
+                            .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .topTrailing)))
                     }
                 }
                 .zIndex(showPopover ? 10 : 0)
@@ -59,8 +60,11 @@ struct CodexResetStatus: View {
     }
 
     private var resetAvailabilityText: String {
+        // Short form: the badge now sits next to the Codex title where
+        // "N resets available" truncates. The fuller phrasing lives on the
+        // accessibility label below.
         let count = usageStore.codexResetCredits.availableCount
-        return count == 1 ? L10n.tr("1 reset available") : L10n.tr("%d resets available", count)
+        return count == 1 ? L10n.tr("1 reset") : L10n.tr("%d resets", count)
     }
 
     private var resetAvailabilityAccessibilityLabel: String {

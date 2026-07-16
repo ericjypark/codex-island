@@ -51,10 +51,6 @@ struct PanelFooter: View {
 
                     Spacer()
 
-                    if screenPref.screen == .usage {
-                        CodexResetStatus()
-                    }
-
                     liveStatus
                 }
 
