@@ -4,6 +4,40 @@ User-facing changes per release. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); dates are when the
 tag was cut.
 
+## [0.1.19] - 2026-07-22
+
+The stop-nagging-me release: no more macOS keychain password popups, and no
+more false "Claude session expired" panels.
+
+### Fixed
+
+- **macOS keychain password prompts are gone.** Clicking "Always Allow"
+  never stuck because Claude Code's ~8h token rotation rewrites its
+  keychain item in a way that silently wipes per-app grants (the item's
+  partition list resets to `apple-tool:`). CodexIsland now reads the
+  credential through Apple's `security` tool, which that rewrite
+  permanently trusts — so reads are silent on every Mac, across every
+  update, with no Apple Developer certificate required.
+- **"Claude session expired" no longer appears while you're actually
+  logged in.** The app held a copy of the access token in memory past
+  Claude Code's rotation; when the copy expired it flashed the re-auth
+  panel for up to a full poll interval even though a fresh token was
+  already in the keychain. A failed token now triggers an immediate
+  re-read and retry in the same pass — the panel only appears when the
+  login is genuinely dead.
+- **Logins under a custom `CLAUDE_CONFIG_DIR` are now found.** Claude Code
+  stores those under a hashed keychain service name; the app now discovers
+  credential items by enumerating keychain metadata instead of assuming
+  the default name.
+- **The re-auth panel now says "Claude re-login needed"** when the token is
+  missing a required scope (the fix is `claude /login`), keeping "session
+  expired" for genuine expiry. Localized in English and Chinese.
+- **The one-click Re-authenticate flow is quieter and sturdier.** It waits
+  for the login to actually write credentials before touching the keychain
+  (previously up to 24 reads per re-auth), recovers from a transient
+  network failure right after login, and backs off immediately when the
+  usage API rate-limits.
+
 ## [0.1.4] - 2026-05-09
 
 A polish + hardening release. One user-visible fix in Settings; the rest
