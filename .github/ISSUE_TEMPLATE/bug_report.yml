@@ -1,0 +1,117 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly.
+title: "bug: <short summary>"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. The more of the fields below you fill in, the faster this gets fixed.
+
+        Before filing: please search [existing issues](https://github.com/ericjypark/codex-island/issues?q=is%3Aissue) to avoid duplicates.
+
+  - type: input
+    id: app-version
+    attributes:
+      label: CodexIsland version
+      description: Click the menu bar chip → About, or run `defaults read dev.codexisland.CodexIsland CFBundleShortVersionString`.
+      placeholder: "0.0.42"
+    validations:
+      required: true
+
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      description: Output of `sw_vers -productVersion`. Include chip (Apple Silicon / Intel) if you know it.
+      placeholder: "14.5 (Apple Silicon)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: How did you install?
+      options:
+        - Homebrew cask (`brew install --cask ericjypark/tap/codexisland`)
+        - DMG download from Releases
+        - Built from source (`./build.sh`)
+        - Auto-updated from a previous version
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: One or two sentences. What you were doing and what went wrong.
+      placeholder: "Opened settings → toggled X → the chip showed `HTTP 403` instead of token usage."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: Numbered steps. If it's intermittent, say how often it happens.
+      placeholder: |
+        1. Launch the app
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the app?
+      multiple: true
+      options:
+        - Window placement / notch detection
+        - Settings panel
+        - Claude usage chip
+        - Codex usage chip
+        - Auto-update (Sparkle)
+        - SparkChart / history
+        - Launch at login
+        - Build / install
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: usage-state
+    attributes:
+      label: Was usage data populated before the bug?
+      description: |
+        If this is a usage-chip bug — was the chip showing real numbers before? `auth required` or `HTTP 4xx` errors usually mean upstream creds are missing/expired, not an app bug. Try `claude /login` (or re-login to Codex) before filing.
+      placeholder: "Claude was showing 47% before; suddenly flipped to HTTP 403 after the app updated to 0.0.42."
+
+  - type: textarea
+    id: defaults
+    attributes:
+      label: Settings dump (optional, for settings/UI bugs)
+      description: Output of `defaults read dev.codexisland.CodexIsland`. Redact anything sensitive.
+      render: shell
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console logs (optional)
+      description: |
+        Open Console.app → search "CodexIsland" → copy any errors from the timeframe of the bug. For Sparkle update bugs, also include `Sparkle` lines.
+      render: shell
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots, recordings, related issues, theories.
