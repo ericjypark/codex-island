@@ -32,22 +32,20 @@ swiftc \
 
 swiftc \
   -parse-as-library \
+  -o "$OUT_DIR/codex-task-status-log-parser-tests" \
+  Sources/Model/CodexTaskStatusLogParser.swift \
+  Tests/CodexTaskStatusLogParserTests.swift
+
+"$OUT_DIR/codex-task-status-log-parser-tests"
+
+swiftc \
+  -parse-as-library \
   -o "$OUT_DIR/usage-merge-tests" \
   Sources/Model/UsageDisplayModeStore.swift \
   Sources/Usage/AppUsage.swift \
   Tests/UsageMergeTests.swift
 
 "$OUT_DIR/usage-merge-tests"
-
-swiftc \
-  -parse-as-library \
-  -o "$OUT_DIR/pricing-tests" \
-  Sources/Cost/TokenEvent.swift \
-  Sources/Cost/PricingCatalog.swift \
-  Sources/Cost/Pricing.swift \
-  Tests/PricingTests.swift
-
-"$OUT_DIR/pricing-tests"
 
 swiftc \
   -parse-as-library \

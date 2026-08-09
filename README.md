@@ -189,12 +189,34 @@ runs as an accessory app with no Dock icon and no menu bar.
 - **Display:** used/remaining percentages, Usage and Cost visualization styles,
   target display, and island width on non-notched screens.
 - **Providers:** Claude/Codex visibility and status, token-counting mode, and a
-  manual refresh for local cost data.
+  manual refresh for local cost data. When Claude is hidden, an optional local
+  Codex task signal can fill the freed half.
 
 Preferences are stored in `UserDefaults` under `MacIsland.*` keys (Sparkle
 manages its own `SU*` update keys, and Launch at Login uses
 `SMAppService.mainApp`). Refresh, display, and provider changes apply live;
 changing the app language offers to restart CodexIsland.
+
+Codex task status is inferred locally from recent
+`~/.codex/sessions/**/*.jsonl` rollout lifecycle events. It reports only the
+states the current rollout format can support reliably: running, waiting for
+approval, idle, cancelled, error, or unavailable. Approval is detected from an
+unresolved `request_permissions` call. User-input waits are not claimed because
+current rollout files do not expose a reliable event for that state. The
+feature is off by default, polls only while enabled with Claude hidden and
+Codex visible, and never displays prompts, commands, or output.
+
+Optional status sounds are event-specific: completion uses Glass, approval
+uses Ping, cancellation uses Funk, and errors use Basso. Notifications are
+emitted only for top-level sessions; Codex guardian/subagent rollouts are
+excluded so internal work cannot produce a false completion alert. Monitoring
+generations also prevent an old scan or queued sound from leaking across a
+provider or setting change.
+
+The compact and peek views are visual-only so their normal click-to-expand
+behavior is preserved. The expanded status card can open the related task in
+the Codex app when available. Disable the feature at any time to restore the
+original per-model token breakdown.
 
 ## Build from source
 

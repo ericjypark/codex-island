@@ -11,18 +11,27 @@ struct PanelHeader: View {
     let notch: NotchInfo
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @ObservedObject private var usageStore = UsageStore.shared
+    @ObservedObject private var taskStatus = CodexTaskStatusStore.shared
 
     var body: some View {
         HStack(spacing: 0) {
             let claudeOn = visibility.claudeVisible
             let codexOn = visibility.codexVisible
-            providerTitle(name: "Claude", tag: usageStore.claude.plan?.uppercased(),
-                          color: IslandColor.claude, alignment: .leading) {
-                EmptyView()
+            Group {
+                if claudeOn {
+                    providerTitle(name: "Claude", tag: usageStore.claude.plan?.uppercased(),
+                                  color: IslandColor.claude, alignment: .leading) {
+                        EmptyView()
+                    }
+                } else if codexOn && taskStatus.enabled {
+                    codexStatusTitle
+                } else {
+                    Color.clear
+                }
             }
-                .opacity(claudeOn ? 1 : 0)
-                .animation(.openMorph, value: claudeOn)
-                .accessibilityHidden(!claudeOn)
+            .frame(maxWidth: .infinity)
+            .animation(.openMorph, value: claudeOn)
+            .animation(.openMorph, value: taskStatus.enabled)
             Color.clear.frame(width: notch.width)
             providerTitle(name: "Codex", tag: usageStore.codex.plan?.uppercased(),
                           color: IslandColor.codex, alignment: .trailing) {
@@ -40,6 +49,33 @@ struct PanelHeader: View {
         .padding(.horizontal, 16)
         .padding(.top, 4)
         .padding(.bottom, min(14, max(0, notch.height - 22 - 4)))
+    }
+
+    private var codexStatusTitle: some View {
+        HStack(spacing: 8) {
+            CodexTaskStatusGlyph(status: taskStatus.snapshot.status, size: 20)
+            Text(L10n.tr("Codex task status"))
+                .font(Typography.providerTitle)
+                .foregroundStyle(.white)
+            if taskStatus.displayMode == .iconAndText {
+                Text(L10n.tr(taskStatus.snapshot.status.compactLabel))
+                    .font(Typography.chip)
+                    .tracking(0.5)
+                    .foregroundStyle(CodexTaskStatusGlyph.color(for: taskStatus.snapshot.status))
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background {
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(CodexTaskStatusGlyph.color(for: taskStatus.snapshot.status).opacity(0.10))
+                    }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.leading, 9)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            L10n.tr("Codex status: %@", L10n.tr(taskStatus.snapshot.status.label))
+        )
     }
 
     @ViewBuilder

@@ -14,6 +14,7 @@ struct UsageView: View {
     @ObservedObject private var store = UsageStore.shared
     @ObservedObject private var pref = StylePref.shared
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
+    @ObservedObject private var taskStatus = CodexTaskStatusStore.shared
 
     private var style: ChartStyle { pref.style }
 
@@ -38,10 +39,15 @@ struct UsageView: View {
                     .padding(.horizontal, 12)
                     .transition(breakdownTransition)
             case (false, true):
-                PerModelBreakdown(provider: .codex, metric: .tokens)
-                    .frame(maxWidth: .infinity, alignment: .top)
-                    .padding(.horizontal, 12)
-                    .transition(breakdownTransition)
+                if taskStatus.enabled {
+                    CodexTaskStatusView()
+                        .transition(breakdownTransition)
+                } else {
+                    PerModelBreakdown(provider: .codex, metric: .tokens)
+                        .frame(maxWidth: .infinity, alignment: .top)
+                        .padding(.horizontal, 12)
+                        .transition(breakdownTransition)
+                }
                 hairline
                 ChartsBlock(color: IslandColor.codex, usage: store.codex,
                             style: style, seed: 3, provider: .codex)
