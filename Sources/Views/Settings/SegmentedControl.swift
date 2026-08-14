@@ -21,16 +21,19 @@ struct SegmentedControl<Value: Hashable>: View {
                     Text(itemLabel)
                         .font(Typography.bodyNumber)
                         .foregroundStyle(isOn
-                            ? Color.white.opacity(0.95)
-                            : .white.opacity(0.55))
+                            ? Color.primary.opacity(0.95)
+                            : Color.primary.opacity(0.55))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
                         .background {
                             RoundedRectangle(cornerRadius: 5)
-                                .fill(isOn ? .white.opacity(0.10) : .clear)
+                                .fill(isOn ? Color.primary.opacity(0.10) : Color.clear)
                                 .overlay {
                                     RoundedRectangle(cornerRadius: 5)
-                                        .strokeBorder(.white.opacity(isOn ? 0.08 : 0), lineWidth: 0.5)
+                                        .strokeBorder(
+                                            Color.primary.opacity(isOn ? 0.08 : 0),
+                                            lineWidth: 0.5
+                                        )
                                 }
                         }
                 }
@@ -45,7 +48,7 @@ struct SegmentedControl<Value: Hashable>: View {
         .padding(2)
         .background {
             RoundedRectangle(cornerRadius: 7)
-                .fill(.white.opacity(0.04))
+                .fill(Color.primary.opacity(0.04))
         }
     }
 }
@@ -62,15 +65,15 @@ struct PillButton: View {
         Button(action: action) {
             Text(L10n.tr(label))
                 .font(Typography.button)
-                .foregroundStyle(.white.opacity(0.9))
+                .foregroundStyle(Color.primary.opacity(0.9))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 5)
                 .background {
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(.white.opacity(0.10))
+                        .fill(Color.primary.opacity(0.10))
                         .overlay {
                             RoundedRectangle(cornerRadius: 6)
-                                .strokeBorder(.white.opacity(0.08), lineWidth: 0.5)
+                                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
                         }
                 }
         }

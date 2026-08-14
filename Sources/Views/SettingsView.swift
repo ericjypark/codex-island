@@ -20,6 +20,7 @@ struct SettingsView: View {
     @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
     @ObservedObject private var targetDisplay = IslandTargetDisplayStore.shared
     @ObservedObject private var appLanguage = AppLanguageStore.shared
+    @ObservedObject private var appearanceStore = AppearanceStore.shared
     @ObservedObject private var usage = UsageStore.shared
     @ObservedObject private var cost = CostStore.shared
     @ObservedObject private var updater = UpdaterController.shared
@@ -67,8 +68,8 @@ struct SettingsView: View {
             SettingsFooter()
         }
         .frame(minWidth: 440, minHeight: 420)
-        .background(Color(red: 0.020, green: 0.020, blue: 0.027))
-        .preferredColorScheme(.dark)
+        .background(IslandColor.settingsBackground)
+        .preferredColorScheme(appearanceStore.appearance.colorScheme)
     }
 
     // MARK: - Tabs
@@ -105,16 +106,16 @@ struct SettingsView: View {
             Text(L10n.tr(tab.label))
                 .font(Typography.tabLabel)
                 .foregroundStyle(isOn
-                    ? .white.opacity(0.95)
-                    : .white.opacity(0.50))
+                    ? Color.primary.opacity(0.95)
+                    : Color.primary.opacity(0.50))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background {
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(isOn ? .white.opacity(0.08) : .clear)
+                        .fill(isOn ? Color.primary.opacity(0.08) : .clear)
                         .overlay {
                             RoundedRectangle(cornerRadius: 6)
-                                .strokeBorder(.white.opacity(isOn ? 0.08 : 0), lineWidth: 0.5)
+                                .strokeBorder(Color.primary.opacity(isOn ? 0.08 : 0), lineWidth: 0.5)
                         }
                 }
         }
@@ -166,7 +167,7 @@ struct SettingsView: View {
 
     private var hairline: some View {
         LinearGradient(
-            colors: [.clear, .white.opacity(0.055), .white.opacity(0.055), .clear],
+            colors: [.clear, Color.primary.opacity(0.055), Color.primary.opacity(0.055), .clear],
             startPoint: .leading, endPoint: .trailing
         )
         .frame(height: 1)
@@ -179,12 +180,12 @@ struct SettingsView: View {
                 .font(Typography.sectionLabel)
                 .tracking(1.05)
                 .textCase(.uppercase)
-                .foregroundStyle(.white.opacity(0.34))
+                .foregroundStyle(Color.primary.opacity(0.34))
             Spacer(minLength: 8)
             if let hint {
                 Text(L10n.tr(hint))
                     .font(Typography.micro)
-                    .foregroundStyle(.white.opacity(0.18))
+                    .foregroundStyle(Color.primary.opacity(0.18))
             }
         }
         .padding(.horizontal, 10)
@@ -213,6 +214,12 @@ struct SettingsView: View {
                 subtitle: appLanguage.language.subtitle
             ) {
                 languagePicker
+            }
+            SettingsRow(
+                title: "Appearance",
+                subtitle: "Choose a light or dark skin, or follow macOS."
+            ) {
+                appearanceSegmented
             }
             SettingsRow(
                 title: "Always show usage",
@@ -296,17 +303,17 @@ struct SettingsView: View {
         Button(action: action) {
             Text(L10n.tr(label))
                 .font(Typography.bodyNumber)
-                .foregroundStyle(.white.opacity(0.85))
+                .foregroundStyle(Color.primary.opacity(0.85))
                 .lineLimit(1)
                 .fixedSize()
                 .padding(.horizontal, 9)
                 .padding(.vertical, 4)
                 .background {
                     RoundedRectangle(cornerRadius: 5)
-                        .fill(.white.opacity(0.06))
+                        .fill(Color.primary.opacity(0.06))
                         .overlay {
                             RoundedRectangle(cornerRadius: 5)
-                                .strokeBorder(.white.opacity(0.10), lineWidth: 0.5)
+                                .strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5)
                         }
                 }
         }
@@ -371,7 +378,7 @@ struct SettingsView: View {
             Text(L10n.tr(label))
                 .font(Typography.rowTitle)
                 .tracking(-0.07)
-                .foregroundStyle(.white.opacity(0.92))
+                .foregroundStyle(Color.primary.opacity(0.92))
             Spacer(minLength: 8)
             thresholdStepper(value: value, range: range)
         }
@@ -412,21 +419,21 @@ struct SettingsView: View {
                 .textFieldStyle(.plain)
                 .multilineTextAlignment(.center)
                 .font(Typography.bodyNumber)
-                .foregroundStyle(.white.opacity(0.95))
+                .foregroundStyle(Color.primary.opacity(0.95))
                 .monospacedDigit()
                 .frame(width: 22, height: 18)
                 .clipped()
             Text("%")
                 .font(Typography.bodyNumber)
-                .foregroundStyle(.white.opacity(0.55))
+                .foregroundStyle(Color.primary.opacity(0.55))
         }
         .frame(width: 64, height: 28)
         .background {
             RoundedRectangle(cornerRadius: 7)
-                .fill(.white.opacity(0.05))
+                .fill(Color.primary.opacity(0.05))
                 .overlay {
                     RoundedRectangle(cornerRadius: 7)
-                        .strokeBorder(.white.opacity(0.10), lineWidth: 0.5)
+                        .strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5)
                 }
         }
     }
@@ -464,6 +471,15 @@ struct SettingsView: View {
         .pickerStyle(.menu)
         .fixedSize()
         .accessibilityLabel(L10n.tr("Language"))
+    }
+
+    private var appearanceSegmented: some View {
+        SegmentedControl(
+            items: AppAppearance.allCases,
+            selected: $appearanceStore.appearance,
+            label: \.label,
+            accessibilityPrefix: "Appearance"
+        )
     }
 
     private var languageSelection: Binding<AppLanguage> {
@@ -569,11 +585,11 @@ struct SettingsView: View {
                 .font(Typography.sectionLabel)
                 .tracking(1.05)
                 .textCase(.uppercase)
-                .foregroundStyle(.white.opacity(0.34))
+                .foregroundStyle(Color.primary.opacity(0.34))
 
             Text(costSubtitle())
                 .font(Typography.label)
-                .foregroundStyle(.white.opacity(0.42))
+                .foregroundStyle(Color.primary.opacity(0.42))
                 .lineLimit(1)
                 .truncationMode(.tail)
 

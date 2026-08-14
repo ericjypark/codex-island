@@ -1,7 +1,13 @@
+import AppKit
 import SwiftUI
 
 /// Locked color tokens for CodexIsland.
 enum IslandColor {
+    static let settingsBackground = Color(
+        light: NSColor(calibratedWhite: 0.965, alpha: 1),
+        dark: NSColor(calibratedRed: 0.020, green: 0.020, blue: 0.027, alpha: 1)
+    )
+
     /// #0047AB — loading sweep, glow halo.
     static let cobalt = Color(red: 0/255, green: 71/255, blue: 171/255)
 
@@ -22,4 +28,12 @@ enum IslandColor {
     /// #E5484D — approaching-limit critical tint. Saturated enough to read
     /// as "stop, you're cooked" without going full red-alert pure.
     static let alertRed = Color(red: 229/255, green: 72/255, blue: 77/255)
+}
+
+private extension Color {
+    init(light: NSColor, dark: NSColor) {
+        self.init(nsColor: NSColor(name: nil) { appearance in
+            appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? dark : light
+        })
+    }
 }

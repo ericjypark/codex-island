@@ -101,6 +101,11 @@
 "Ring" = "Ring";
 "scanning local logs…" = "scanning local logs…";
 "Settings" = "Settings";
+"Appearance" = "Appearance";
+"Choose a light or dark skin, or follow macOS." = "Choose a light or dark skin, or follow macOS.";
+"System" = "System";
+"Light" = "Light";
+"Dark" = "Dark";
 "Show on" = "Show on";
 "Sparkline" = "Sparkline";
 "Spacing" = "Spacing";

@@ -91,6 +91,7 @@ Claude：
 
 | 设置 | 存储 | UserDefaults key | 值 |
 | --- | --- | --- | --- |
+| 外观 | `AppearanceStore` | `MacIsland.appearance` | `system`, `light`, `dark`，默认 `dark` |
 | 图表样式 | `StylePref` | `MacIsland.chartStyle` | `ring`, `bar`, `stepped`, `numeric`, `spark` |
 | 成本样式 | `CostStylePref` | `MacIsland.costStyle` | `dollar`, `multi`, `tokens`, `spark` |
 | Token 统计 | `TokenCountModeStore` | `MacIsland.tokenCountMode` | `all`, `billable` |
@@ -100,7 +101,8 @@ Claude：
 | Codex 可见 | `ProviderVisibilityStore` | `MacIsland.codexVisible` | Boolean，默认 `true` |
 | 登录启动 | `LaunchAtLoginStore` | 由 `SMAppService.mainApp` 管理 | 系统登录项状态 |
 
-刷新间隔会立即生效。`UsageStore` 会重置当前计时器，并用新的间隔重新安排下一次拉取。
+外观和刷新间隔都会立即生效；选择“跟随系统”后，设置窗口会随 macOS
+浅色/深色外观自动切换。`UsageStore` 会重置当前计时器，并用新的间隔重新安排下一次拉取。
 
 ## 从源码构建
 

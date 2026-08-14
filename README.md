@@ -184,8 +184,8 @@ Settings is a custom `NSWindow`, not the system Settings scene. The app still
 runs as an accessory app with no Dock icon and no menu bar.
 
 - **General:** Launch at Login, 5m/15m/30m refresh interval, app language,
-  Always show usage, Low Power Mode, configurable limit alerts, and Sparkle
-  update controls.
+  light/dark/system appearance, Always show usage, Low Power Mode,
+  configurable limit alerts, and Sparkle update controls.
 - **Display:** used/remaining percentages, Usage and Cost visualization styles,
   target display, and island width on non-notched screens.
 - **Providers:** Claude/Codex visibility and status, token-counting mode, and a
@@ -193,8 +193,8 @@ runs as an accessory app with no Dock icon and no menu bar.
 
 Preferences are stored in `UserDefaults` under `MacIsland.*` keys (Sparkle
 manages its own `SU*` update keys, and Launch at Login uses
-`SMAppService.mainApp`). Refresh, display, and provider changes apply live;
-changing the app language offers to restart CodexIsland.
+`SMAppService.mainApp`). Appearance, refresh, display, and provider changes
+apply live; changing the app language offers to restart CodexIsland.
 
 ## Build from source
 

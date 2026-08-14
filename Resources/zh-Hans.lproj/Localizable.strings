@@ -101,6 +101,11 @@
 "Ring" = "环形";
 "scanning local logs…" = "正在扫描本地日志…";
 "Settings" = "设置";
+"Appearance" = "外观";
+"Choose a light or dark skin, or follow macOS." = "选择浅色或深色皮肤，或跟随 macOS。";
+"System" = "跟随系统";
+"Light" = "浅色";
+"Dark" = "深色";
 "Show on" = "显示在";
 "Sparkline" = "折线";
 "Spacing" = "间距";
