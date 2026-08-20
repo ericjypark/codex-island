@@ -10,7 +10,7 @@ struct ChartHead: View {
         HStack(alignment: .firstTextBaseline) {
             Text(label)
                 .font(Typography.label)
-                .foregroundStyle(.white.opacity(0.55))
+                .foregroundStyle(Color.primary.opacity(0.78))
                 .textCase(.lowercase)
             Spacer()
             HStack(alignment: .firstTextBaseline, spacing: 1) {
@@ -21,7 +21,7 @@ struct ChartHead: View {
                     .animation(.strongEaseOut, value: value)
                 Text("%")
                     .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(Color.primary.opacity(0.62))
             }
         }
     }
@@ -33,7 +33,7 @@ struct ChartFoot: View {
     var body: some View {
         Text(caption)
             .font(Typography.caption)
-            .foregroundStyle(.white.opacity(0.4))
+            .foregroundStyle(Color.primary.opacity(0.64))
             .lineLimit(1)
             .truncationMode(.tail)
             .frame(maxWidth: .infinity, alignment: .leading)

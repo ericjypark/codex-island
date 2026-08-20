@@ -67,7 +67,7 @@ struct UsageView: View {
     private var hairline: some View {
         Rectangle()
             .fill(LinearGradient(
-                colors: [.clear, .white.opacity(0.06), .clear],
+                colors: [.clear, Color.primary.opacity(0.10), .clear],
                 startPoint: .top, endPoint: .bottom
             ))
             .frame(width: 1)
@@ -141,12 +141,12 @@ struct ReauthState: View {
                 Text(L10n.tr(usage.fiveHour.error == ClaudeCredentials.reauthRequiredMessage
                     ? "Claude re-login needed" : "Claude session expired"))
                     .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(Color.primary.opacity(0.55))
                 ReauthButton()
             } else {
                 Text(usage.fiveHour.error ?? ClaudeCredentials.tokenExpiredMessage)
                     .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(Color.primary.opacity(0.55))
                     .multilineTextAlignment(.center)
             }
         }
@@ -169,12 +169,12 @@ struct ReauthButton: View {
         } label: {
             Text(store.claudeReauthInProgress ? L10n.tr("waiting for browser…") : L10n.tr("Re-authenticate"))
                 .font(Typography.label)
-                .foregroundStyle(.white.opacity(hovered && !store.claudeReauthInProgress ? 0.95 : 0.72))
+                .foregroundStyle(Color.primary.opacity(hovered && !store.claudeReauthInProgress ? 0.95 : 0.72))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
                 .background(
                     RoundedRectangle(cornerRadius: 5)
-                        .fill(.white.opacity(hovered && !store.claudeReauthInProgress ? 0.08 : 0.04))
+                        .fill(Color.primary.opacity(hovered && !store.claudeReauthInProgress ? 0.08 : 0.04))
                 )
                 .contentShape(RoundedRectangle(cornerRadius: 5))
         }

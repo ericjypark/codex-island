@@ -19,8 +19,8 @@ struct StyleTile<Preview: View>: View {
                 Text(displayLabel)
                     .font(Typography.micro)
                     .foregroundStyle(isOn
-                        ? Color(red: 0.58, green: 0.75, blue: 1.0)
-                        : .white.opacity(0.55))
+                        ? Color.primary.opacity(0.90)
+                        : Color.primary.opacity(0.55))
             }
             .frame(maxWidth: .infinity)
             .padding(.top, 14)
@@ -30,7 +30,7 @@ struct StyleTile<Preview: View>: View {
                 RoundedRectangle(cornerRadius: 9)
                     .fill(isOn
                           ? IslandColor.cobalt.opacity(0.14)
-                          : .white.opacity(0.025))
+                          : Color.primary.opacity(0.025))
                     .overlay {
                         RoundedRectangle(cornerRadius: 9)
                             .strokeBorder(isOn

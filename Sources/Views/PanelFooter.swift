@@ -25,7 +25,7 @@ struct PanelFooter: View {
     var body: some View {
         VStack(spacing: 0) {
             LinearGradient(
-                colors: [.clear, .white.opacity(0.06), .white.opacity(0.06), .clear],
+                colors: [.clear, Color.primary.opacity(0.08), Color.primary.opacity(0.08), .clear],
                 startPoint: .leading, endPoint: .trailing
             )
             .frame(height: 1)
@@ -43,7 +43,7 @@ struct PanelFooter: View {
                             Text(L10n.tr("click to cycle"))
                                 .font(Typography.label)
                         }
-                        .foregroundStyle(.white.opacity(0.42))
+                        .foregroundStyle(Color.primary.opacity(0.48))
                         .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel(cycleHintAccessibilityLabel)
@@ -97,15 +97,15 @@ struct PanelFooter: View {
         Text(label)
             .font(Typography.chip)
             .tracking(0.8)
-            .foregroundStyle(.white.opacity(0.78))
+            .foregroundStyle(Color.primary.opacity(0.78))
             .padding(.horizontal, 6)
             .padding(.vertical, 2.5)
             .background(
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(.white.opacity(0.08))
+                    .fill(Color.primary.opacity(0.08))
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
-                            .strokeBorder(.white.opacity(0.10), lineWidth: 0.5)
+                            .strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5)
                     )
             )
             .contentTransition(.opacity)
@@ -139,25 +139,25 @@ struct PanelFooter: View {
                 if activeLoading {
                     Text(L10n.tr("Syncing…"))
                         .font(Typography.label)
-                        .foregroundStyle(.white.opacity(0.55))
+                        .foregroundStyle(Color.primary.opacity(0.55))
                 } else if let updated = activeLastUpdated {
                     Text(L10n.tr("Synced"))
                         .font(Typography.label)
-                        .foregroundStyle(.white.opacity(liveStatusHovered ? 0.85 : 0.55))
+                        .foregroundStyle(Color.primary.opacity(liveStatusHovered ? 0.85 : 0.55))
                     Text(relative(updated))
                         .font(Typography.bodyNumber)
-                        .foregroundStyle(.white.opacity(liveStatusHovered ? 0.95 : 0.72))
+                        .foregroundStyle(Color.primary.opacity(liveStatusHovered ? 0.95 : 0.72))
                 } else {
                     Text(L10n.tr("Idle"))
                         .font(Typography.label)
-                        .foregroundStyle(.white.opacity(liveStatusHovered ? 0.7 : 0.4))
+                        .foregroundStyle(Color.primary.opacity(liveStatusHovered ? 0.70 : 0.40))
                 }
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
             .background(
                 RoundedRectangle(cornerRadius: 5)
-                    .fill(.white.opacity(liveStatusHovered && !activeLoading ? 0.05 : 0))
+                    .fill(Color.primary.opacity(liveStatusHovered && !activeLoading ? 0.05 : 0))
             )
             .contentShape(RoundedRectangle(cornerRadius: 5))
         }

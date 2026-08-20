@@ -34,7 +34,7 @@ struct ChartStylePicker: View {
         case .ring:
             ZStack {
                 Circle()
-                    .stroke(.white.opacity(0.10), lineWidth: 3)
+                    .stroke(Color.primary.opacity(0.10), lineWidth: 3)
                 Circle()
                     .trim(from: 0, to: 0.35)
                     .stroke(claude, style: StrokeStyle(lineWidth: 3, lineCap: .round))
@@ -43,7 +43,7 @@ struct ChartStylePicker: View {
             .frame(width: 26, height: 26)
         case .bar:
             ZStack(alignment: .leading) {
-                Capsule().fill(.white.opacity(0.10))
+                Capsule().fill(Color.primary.opacity(0.10))
                 Capsule().fill(claude)
                     .frame(width: 28 * 0.35)
             }
@@ -52,7 +52,7 @@ struct ChartStylePicker: View {
             HStack(spacing: 1.5) {
                 ForEach(0..<8) { i in
                     RoundedRectangle(cornerRadius: 0.75)
-                        .fill(i < 3 ? claude : .white.opacity(0.10))
+                        .fill(i < 3 ? claude : Color.primary.opacity(0.10))
                         .frame(width: 2, height: 12)
                 }
             }
@@ -64,7 +64,7 @@ struct ChartStylePicker: View {
                     .foregroundStyle(claude)
                 Text("%")
                     .font(Typography.micro)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(Color.primary.opacity(0.5))
             }
         case .spark:
             SparkPath()

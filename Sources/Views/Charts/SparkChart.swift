@@ -93,7 +93,7 @@ private struct SparkSVG: View {
                         path.move(to: CGPoint(x: 0, y: h * p))
                         path.addLine(to: CGPoint(x: w, y: h * p))
                     }
-                    .stroke(.white.opacity(0.04), lineWidth: 1)
+                    .stroke(Color.primary.opacity(0.04), lineWidth: 1)
                 }
                 // Dotted threshold at the current value — the line reading
                 // "this is now" against the synthesized history.

@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 /// Hand-rolled NSWindow for Settings instead of the SwiftUI `Settings` scene.
@@ -9,6 +10,7 @@ import SwiftUI
 @MainActor
 final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     static let shared = SettingsWindowController()
+    private var appearanceSubscription: AnyCancellable?
 
     private init() {
         let hosting = NSHostingController(rootView: SettingsView())
@@ -23,9 +25,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
-        window.backgroundColor = NSColor(
-            calibratedRed: 0.075, green: 0.077, blue: 0.090, alpha: 1
-        )
+        window.backgroundColor = .windowBackgroundColor
         window.minSize = NSSize(width: 440, height: 420)
         // Hide the dock-stow button (we have no dock icon) but keep zoom
         // alongside resize handles so the user controls size.
@@ -33,6 +33,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window.center()
         super.init(window: window)
         window.delegate = self
+        appearanceSubscription = AppearanceStore.shared.$appearance
+            .sink { [weak window] appearance in
+                switch appearance {
+                case .system: window?.appearance = nil
+                case .light: window?.appearance = NSAppearance(named: .aqua)
+                case .dark: window?.appearance = NSAppearance(named: .darkAqua)
+                }
+            }
     }
 
     @available(*, unavailable)

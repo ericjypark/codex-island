@@ -16,16 +16,16 @@ struct SettingsToggle: View {
         Button(action: action) {
             ZStack(alignment: isOn ? .trailing : .leading) {
                 Capsule()
-                    .strokeBorder(.white.opacity(hovered ? 0.20 : 0.13), lineWidth: 1)
+                    .strokeBorder(Color.primary.opacity(hovered ? 0.20 : 0.13), lineWidth: 1)
                     .background {
                         Capsule().fill(isOn
                             ? IslandColor.cobalt.opacity(0.32)
-                            : .white.opacity(0.07))
+                            : Color.primary.opacity(0.07))
                     }
                     .frame(width: trackWidth, height: trackHeight)
 
                 Circle()
-                    .fill(isOn ? IslandColor.cobalt : Color.white.opacity(0.5))
+                    .fill(isOn ? IslandColor.cobalt : Color.primary.opacity(0.5))
                     .frame(width: dotSize, height: dotSize)
                     .shadow(
                         color: isOn ? IslandColor.cobalt.opacity(0.85) : .clear,

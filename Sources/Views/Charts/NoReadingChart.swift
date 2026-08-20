@@ -21,17 +21,17 @@ struct NoReadingChart: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(label)
                     .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(Color.primary.opacity(0.55))
                     .textCase(.lowercase)
                 Spacer()
                 Text(verbatim: "—")
                     .font(Typography.chartValue)
-                    .foregroundStyle(.white.opacity(0.3))
+                    .foregroundStyle(Color.primary.opacity(0.3))
             }
             // Empty track, no fill: the scale is still there, we just have
             // nothing to put on it.
             Capsule()
-                .fill(.white.opacity(0.06))
+                .fill(Color.primary.opacity(0.06))
                 .frame(height: 4)
                 .frame(height: 8)
             ChartFoot(caption: sub)

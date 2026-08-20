@@ -22,15 +22,15 @@ struct SettingsFooter: View {
             } label: {
                 Text(L10n.tr("Quit"))
                     .font(Typography.label)
-                    .foregroundStyle(.white.opacity(quitHovered ? 0.92 : 0.55))
+                    .foregroundStyle(Color.primary.opacity(quitHovered ? 0.92 : 0.55))
                     .padding(.horizontal, 11)
                     .padding(.vertical, 5)
                     .background {
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(.white.opacity(quitHovered ? 0.06 : 0.03))
+                            .fill(Color.primary.opacity(quitHovered ? 0.06 : 0.03))
                             .overlay {
                                 RoundedRectangle(cornerRadius: 6)
-                                    .strokeBorder(.white.opacity(0.07), lineWidth: 0.5)
+                                    .strokeBorder(Color.primary.opacity(0.07), lineWidth: 0.5)
                             }
                     }
             }
@@ -62,14 +62,14 @@ private struct DottedLink: View {
             HStack(spacing: 4) {
                 Text(L10n.tr(title))
                     .font(Typography.label)
-                    .foregroundStyle(.white.opacity(hovered ? 0.92 : 0.55))
+                    .foregroundStyle(Color.primary.opacity(hovered ? 0.92 : 0.55))
                 Text("↗")
                     .font(Typography.micro)
-                    .foregroundStyle(.white.opacity(hovered ? 0.6 : 0.3))
+                    .foregroundStyle(Color.primary.opacity(hovered ? 0.6 : 0.3))
             }
             .overlay(alignment: .bottom) {
                 Rectangle()
-                    .fill(.white.opacity(hovered ? 0.32 : 0.18))
+                    .fill(Color.primary.opacity(hovered ? 0.32 : 0.18))
                     .frame(height: 0.5)
                     .offset(y: 1)
                     .mask(

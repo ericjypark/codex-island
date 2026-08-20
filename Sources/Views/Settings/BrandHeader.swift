@@ -24,21 +24,21 @@ struct BrandHeader: View {
                 Text("CodexIsland")
                     .font(Typography.brand)
                     .tracking(-0.15)
-                    .foregroundStyle(.white.opacity(0.92))
+                    .foregroundStyle(Color.primary.opacity(0.92))
                 Text(L10n.tr("Your AI usage limits, living in your notch."))
                     .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(Color.primary.opacity(0.55))
             }
 
             Spacer(minLength: 8)
 
             Text("v\(version)")
                 .font(Typography.bodyNumber)
-                .foregroundStyle(.white.opacity(0.34))
+                .foregroundStyle(Color.primary.opacity(0.34))
                 .padding(.horizontal, 9)
                 .padding(.vertical, 4)
                 .background(
-                    Capsule().fill(.white.opacity(0.04))
+                    Capsule().fill(Color.primary.opacity(0.04))
                 )
         }
         .padding(.horizontal, 24)
@@ -55,7 +55,7 @@ struct BrandHeader: View {
                 .interpolation(.high)
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 26, height: 26)
-                .foregroundStyle(.white.opacity(0.92))
+                .foregroundStyle(Color.primary.opacity(0.92))
                 .shadow(color: IslandColor.cobalt.opacity(0.35), radius: 6)
         } else {
             // Fallback if the resource is missing in the bundle: a plain

@@ -14,7 +14,7 @@ struct SteppedChart: View {
                 let filled = (value / 100) * Double(segments)
                 ForEach(0..<segments, id: \.self) { i in
                     RoundedRectangle(cornerRadius: 1.5)
-                        .fill(Double(i) < floor(filled) ? color : .white.opacity(0.10))
+                        .fill(Double(i) < floor(filled) ? color : Color.primary.opacity(0.10))
                         .frame(maxWidth: .infinity)
                         .frame(height: 16)
                         // ~7ms stagger across 30 cells = ~210ms sweep when

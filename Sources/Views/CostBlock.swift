@@ -59,11 +59,11 @@ struct CostTile: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(L10n.tr(window.label))
                     .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(Color.primary.opacity(0.55))
                 Spacer()
                 Text(resetGlyph)
                     .font(Typography.caption)
-                    .foregroundStyle(.white.opacity(window.unknownModels.isEmpty ? 0.4 : 0.5))
+                    .foregroundStyle(Color.primary.opacity(window.unknownModels.isEmpty ? 0.4 : 0.5))
                     .help(resetGlyphSpoken)
                     .accessibilityLabel(resetGlyphSpoken)
             }
@@ -121,7 +121,7 @@ struct CostTile: View {
         HStack(alignment: .firstTextBaseline, spacing: 1) {
             Text("$")
                 .font(Typography.unit)
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(Color.primary.opacity(0.4))
             CountUpDollar(target: window.dollars, color: color, glowOpacity: glowOpacity)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -148,7 +148,7 @@ struct CostTile: View {
             barColumn(
                 amount: plan,
                 label: planLabel ?? L10n.tr("Plan"),
-                fill: .white.opacity(0.20),
+                fill: Color.primary.opacity(0.20),
                 isYou: false,
                 maxAmount: maxAmount,
                 maxBarHeight: maxBarHeight
@@ -185,7 +185,7 @@ struct CostTile: View {
         return VStack(spacing: 3) {
             Text(formatBarDollars(amount))
                 .font(Typography.bodyNumber)
-                .foregroundStyle(isYou ? color : .white.opacity(0.78))
+                .foregroundStyle(isYou ? color : Color.primary.opacity(0.78))
                 .lineLimit(1)
             ZStack(alignment: .bottom) {
                 Color.clear.frame(width: 24, height: maxBarHeight)
@@ -200,7 +200,7 @@ struct CostTile: View {
             }
             Text(label)
                 .font(Typography.micro)
-                .foregroundStyle(.white.opacity(0.5))
+                .foregroundStyle(Color.primary.opacity(0.5))
                 .lineLimit(1)
         }
     }
@@ -214,7 +214,7 @@ struct CostTile: View {
                 .shadow(color: color.opacity(glowOpacity * 0.5), radius: 14)
             Text(tokensUnit)
                 .font(Typography.unit)
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(Color.primary.opacity(0.4))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -229,7 +229,7 @@ struct CostTile: View {
             HStack(alignment: .firstTextBaseline, spacing: 1) {
                 Text("$")
                     .font(Typography.micro)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(Color.primary.opacity(0.5))
                 Text(formattedDollarsCompact)
                     .font(Typography.bodyNumber)
                     .foregroundStyle(color)

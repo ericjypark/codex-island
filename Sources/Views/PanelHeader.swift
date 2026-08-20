@@ -56,20 +56,20 @@ struct PanelHeader: View {
         let content = HStack(spacing: 8) {
             Text(name)
                 .font(Typography.providerTitle)
-                .foregroundStyle(.white)
+                .foregroundStyle(Color.primary)
             if let tag {
                 Text(tag)
                     .font(Typography.chip)
                     .tracking(0.8)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(Color.primary.opacity(0.60))
                     .padding(.horizontal, 5)
                     .padding(.vertical, 2)
                     .background(
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(.white.opacity(0.06))
+                            .fill(Color.primary.opacity(0.06))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 3)
-                                    .strokeBorder(.white.opacity(0.08), lineWidth: 0.5)
+                                    .strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5)
                             )
                     )
             }

@@ -34,14 +34,14 @@ struct CostStylePicker: View {
             HStack(alignment: .firstTextBaseline, spacing: 1) {
                 Text("$")
                     .font(Typography.micro)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(Color.primary.opacity(0.5))
                 Text("87")
                     .font(Typography.previewNumber)
                     .foregroundStyle(claude)
             }
         case .multi:
             HStack(alignment: .bottom, spacing: 4) {
-                Capsule().fill(.white.opacity(0.20))
+                Capsule().fill(Color.primary.opacity(0.20))
                     .frame(width: 8, height: 6)
                 Capsule().fill(claude)
                     .frame(width: 8, height: 18)
@@ -54,7 +54,7 @@ struct CostStylePicker: View {
                     .foregroundStyle(claude)
                 Text("M")
                     .font(Typography.micro)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(Color.primary.opacity(0.5))
             }
         case .spark:
             CostSparkPath()

@@ -86,7 +86,7 @@ struct CostView: View {
     private var hairline: some View {
         Rectangle()
             .fill(LinearGradient(
-                colors: [.clear, .white.opacity(0.06), .clear],
+                colors: [.clear, Color.primary.opacity(0.08), .clear],
                 startPoint: .top, endPoint: .bottom
             ))
             .frame(width: 1)

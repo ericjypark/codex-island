@@ -15,12 +15,12 @@ struct SettingsButton: View {
             Image(systemName: "gearshape")
                 .font(Typography.button)
                 .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(.white.opacity(hovered ? 0.64 : 0.34))
+                .foregroundStyle(Color.primary.opacity(hovered ? 0.64 : 0.34))
                 .frame(width: 26, height: 26)
                 .contentShape(Rectangle())
                 .background {
                     Circle()
-                        .fill(.white.opacity(hovered ? 0.08 : 0))
+                        .fill(Color.primary.opacity(hovered ? 0.08 : 0))
                 }
         }
         .buttonStyle(PressableButtonStyle())

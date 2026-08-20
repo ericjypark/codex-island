@@ -104,26 +104,26 @@ struct OverviewView: View {
                 Text(summaryLabel)
                     .font(Typography.sectionLabel)
                     .tracking(0.7)
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(Color.primary.opacity(0.55))
 
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(Self.formatTokens(displayedTokens).value)
                         .font(Typography.chartValue)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.primary)
                     Text(Self.formatTokens(displayedTokens).unit)
                         .font(Typography.unit)
-                        .foregroundStyle(.white.opacity(0.40))
+                        .foregroundStyle(Color.primary.opacity(0.40))
                 }
             }
 
             HStack(alignment: .center, spacing: 10) {
                 Text(summarySubline)
                     .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.50))
+                    .foregroundStyle(Color.primary.opacity(0.50))
                 if costStore.loading {
                     Text(L10n.tr("Syncing"))
                         .font(Typography.caption)
-                        .foregroundStyle(.white.opacity(0.36))
+                        .foregroundStyle(Color.primary.opacity(0.36))
                 }
             }
             .padding(.bottom, 5)
@@ -483,7 +483,7 @@ private struct MonthRail: View {
             ForEach(marks) { mark in
                 Text(mark.label)
                     .font(Typography.caption)
-                    .foregroundStyle(.white.opacity(0.30))
+                    .foregroundStyle(Color.primary.opacity(0.30))
                     .lineLimit(1)
                     .fixedSize()
                     .offset(x: mark.x, y: 0)
@@ -498,10 +498,10 @@ private struct FutureContributionCell: View {
 
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius)
-            .fill(.white.opacity(0.012))
+            .fill(Color.primary.opacity(0.012))
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .strokeBorder(.white.opacity(0.030), lineWidth: 0.5)
+                    .strokeBorder(Color.primary.opacity(0.030), lineWidth: 0.5)
             }
         .frame(width: cellSize, height: cellSize)
         .accessibilityHidden(true)
@@ -545,7 +545,7 @@ private struct ContributionCell: View {
         let opacity = day.totalTokens > 0 ? intensityScale.opacity(for: day.totalTokens) : 0.035
         switch day.dominantProvider {
         case .none:
-            Color.white.opacity(opacity)
+            Color.primary.opacity(opacity)
         case .claude:
             IslandColor.claude.opacity(opacity)
         case .codex:
@@ -569,10 +569,10 @@ private struct ContributionCell: View {
     }
 
     private var strokeColor: Color {
-        if isSelected { return .white.opacity(0.72) }
-        if hovering { return .white.opacity(0.22) }
-        guard day.totalTokens > 0 else { return .white.opacity(0.04) }
-        return .white.opacity(0.06 + Double(intensityScale.level(for: day.totalTokens)) * 0.012)
+        if isSelected { return Color.primary.opacity(0.72) }
+        if hovering { return Color.primary.opacity(0.22) }
+        guard day.totalTokens > 0 else { return Color.primary.opacity(0.04) }
+        return Color.primary.opacity(0.06 + Double(intensityScale.level(for: day.totalTokens)) * 0.012)
     }
 
     private var helpText: String {
@@ -685,7 +685,7 @@ private struct DayDetailStrip: View {
     var body: some View {
         VStack(spacing: 8) {
             Rectangle()
-                .fill(.white.opacity(0.075))
+                .fill(Color.primary.opacity(0.075))
                 .frame(height: 0.5)
 
             HStack(alignment: .center, spacing: 14) {
@@ -693,12 +693,12 @@ private struct DayDetailStrip: View {
                     Text(Self.detailFormatter.string(from: day.date).uppercased())
                         .font(Typography.sectionLabel)
                         .tracking(0.6)
-                        .foregroundStyle(.white.opacity(0.58))
+                        .foregroundStyle(Color.primary.opacity(0.58))
                         .lineLimit(1)
 
                     Text(L10n.tr("All Tokens"))
                         .font(Typography.caption)
-                        .foregroundStyle(.white.opacity(0.36))
+                        .foregroundStyle(Color.primary.opacity(0.36))
                         .lineLimit(1)
                 }
                 .frame(width: 116, alignment: .leading)
@@ -715,7 +715,7 @@ private struct DayDetailStrip: View {
                     label: L10n.tr("TOTAL"),
                     spokenLabel: L10n.tr("Total"),
                     value: day.totalTokens,
-                    color: .white.opacity(0.78),
+                    color: Color.primary.opacity(0.78),
                     dimmed: true
                 )
 
@@ -749,7 +749,7 @@ private struct DayDetailStrip: View {
 
             Text(OverviewView.formatExactTokens(value))
                 .font(Typography.bodyNumber)
-                .foregroundStyle(.white.opacity(0.76))
+                .foregroundStyle(Color.primary.opacity(0.76))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
                 .allowsTightening(true)
@@ -787,7 +787,7 @@ private struct TokenSplitMeter: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(.white.opacity(0.055))
+                    .fill(Color.primary.opacity(0.055))
 
                 if total > 0 {
                     HStack(spacing: 0) {
@@ -832,7 +832,7 @@ private struct ProviderSplitRow: View {
         if visibleCount == 0 {
             Text(L10n.tr("Providers Hidden"))
                 .font(Typography.caption)
-                .foregroundStyle(.white.opacity(0.36))
+                .foregroundStyle(Color.primary.opacity(0.36))
         } else {
             HStack(spacing: 8) {
                 if claudeVisible {
@@ -860,7 +860,7 @@ private struct ProviderSplitRow: View {
                 .frame(width: 5, height: 5)
             Text("\(label) \(share(value))")
                 .font(Typography.caption)
-                .foregroundStyle(.white.opacity(0.46))
+                .foregroundStyle(Color.primary.opacity(0.46))
                 .lineLimit(1)
         }
     }

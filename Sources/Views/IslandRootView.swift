@@ -4,6 +4,7 @@ import AppKit
 struct IslandRootView: View {
     @ObservedObject var model: IslandModel
     @ObservedObject private var alwaysShow = AlwaysShowUsageStore.shared
+    @ObservedObject private var appearanceStore = AppearanceStore.shared
     @State private var hovering = false
     @State private var contentVisible = false
     @State private var pillsVisible = false
@@ -16,6 +17,7 @@ struct IslandRootView: View {
     @State private var openaiLogo: NSImage?
 
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorScheme) private var systemColorScheme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -29,11 +31,15 @@ struct IslandRootView: View {
             ZStack {
                 GlowLayer(
                     isExpanded: model.state == .expanded,
-                    hovering: hovering
+                    hovering: hovering,
+                    usesLightSurface: expandedUsesLightSurface
                 )
 
                 if model.state == .expanded {
                     ExpandedView(model: model)
+                        .modifier(ExpandedContentAppearance(
+                            usesLightPalette: expandedUsesLightSurface
+                        ))
                         .opacity(contentVisible ? 1 : 0)
                         // Slide down from -8 → 0 on enter pairs with the
                         // 100ms→180ms opacity delay set in onHover. On
@@ -121,6 +127,9 @@ struct IslandRootView: View {
                     // quiet corner so the footer remains about live data.
                     if model.state == .expanded {
                         SettingsButton()
+                            .modifier(ExpandedContentAppearance(
+                                usesLightPalette: expandedUsesLightSurface
+                            ))
                             .opacity(contentVisible ? 1 : 0)
                             .padding(6)
                     }
@@ -345,6 +354,14 @@ struct IslandRootView: View {
         alwaysShow.enabled ? .peek : .compact
     }
 
+    private var expandedUsesLightSurface: Bool {
+        switch appearanceStore.appearance {
+        case .light: return true
+        case .dark: return false
+        case .system: return systemColorScheme == .light
+        }
+    }
+
     private var accessibilityHintForState: String {
         switch model.state {
         case .compact:
@@ -381,6 +398,7 @@ struct IslandRootView: View {
 private struct GlowLayer: View {
     let isExpanded: Bool
     let hovering: Bool
+    let usesLightSurface: Bool
 
     @ObservedObject private var usageStore = UsageStore.shared
     @ObservedObject private var costStore = CostStore.shared
@@ -397,11 +415,14 @@ private struct GlowLayer: View {
             )
 
             IslandShape()
-                .fill(.black)
+                .fill(isExpanded && usesLightSurface
+                    ? IslandColor.expandedLightBackground
+                    : .black)
                 .overlay {
                     IslandShape()
                         .strokeBorder(
-                            .white.opacity(isExpanded ? 0.12 : 0),
+                            (usesLightSurface ? Color.black : Color.white)
+                                .opacity(isExpanded ? 0.12 : 0),
                             lineWidth: 0.5
                         )
                 }
@@ -423,6 +444,7 @@ private struct GlowLayer: View {
                     color: isExpanded ? .black.opacity(0.5) : .clear,
                     radius: 20, y: 10
                 )
+                .animation(.easeInOut(duration: 0.20), value: usesLightSurface)
         }
     }
 
@@ -447,6 +469,24 @@ private struct GlowLayer: View {
         case .none:     return IslandColor.cobalt
         case .warning:  return IslandColor.alertAmber
         case .critical: return IslandColor.alertRed
+        }
+    }
+}
+
+/// Gives expanded content a real semantic color scheme. Compact and peek
+/// remain dark; expanded descendants resolve `Color.primary` and related
+/// hierarchy against the selected light/dark surface without altering brand
+/// or status hues.
+private struct ExpandedContentAppearance: ViewModifier {
+    let usesLightPalette: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if usesLightPalette {
+            content
+                .environment(\.colorScheme, .light)
+        } else {
+            content.environment(\.colorScheme, .dark)
         }
     }
 }

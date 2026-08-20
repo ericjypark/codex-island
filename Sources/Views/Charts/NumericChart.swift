@@ -11,12 +11,12 @@ struct NumericChart: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(label)
                     .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(Color.primary.opacity(0.78))
                     .textCase(.lowercase)
                 Spacer()
                 Text(sub)
                     .font(Typography.caption)
-                    .foregroundStyle(.white.opacity(0.4))
+                    .foregroundStyle(Color.primary.opacity(0.68))
             }
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text("\(Int(value))")
@@ -26,14 +26,14 @@ struct NumericChart: View {
                     .animation(.strongEaseOut, value: value)
                 Text("%")
                     .font(Typography.unit)
-                    .foregroundStyle(.white.opacity(0.4))
+                    .foregroundStyle(Color.primary.opacity(0.58))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             // Thin 3pt meter underneath echoes the value at a glance and
             // glows in the brand color so the big number doesn't sit alone.
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(.white.opacity(0.05)).frame(height: 3)
+                    Capsule().fill(Color.primary.opacity(0.05)).frame(height: 3)
                     Capsule()
                         .fill(color)
                         .frame(width: geo.size.width * CGFloat(value / 100), height: 3)

@@ -23,7 +23,7 @@ struct PageIndicator: View {
             model.showScreen(screen)
         } label: {
             Circle()
-                .fill(.white.opacity(isActive ? 0.78 : 0.22))
+                .fill(Color.primary.opacity(isActive ? 0.78 : 0.22))
                 .frame(width: 5, height: 5)
                 // Visual stays 5pt; hit area expands ~6pt outward so the dot
                 // is reachable without pixel-precise aim.

@@ -42,17 +42,17 @@ struct SettingsRow<Trailing: View>: View {
                     Text(L10n.tr(title))
                         .font(Typography.rowTitle)
                         .tracking(-0.07)
-                        .foregroundStyle(.white.opacity(0.92))
+                        .foregroundStyle(Color.primary.opacity(0.92))
                     if let chip {
                         Text(chip)
                             .font(Typography.chip)
                             .tracking(0.8)
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(Color.primary.opacity(0.6))
                             .padding(.horizontal, 5)
                             .padding(.vertical, 2)
                             .background(
                                 RoundedRectangle(cornerRadius: 3)
-                                    .fill(.white.opacity(0.06))
+                                    .fill(Color.primary.opacity(0.06))
                             )
                             .accessibilityLabel(L10n.tr("Plan: %@", chip))
                     }
@@ -60,7 +60,7 @@ struct SettingsRow<Trailing: View>: View {
                 if let subtitle {
                     Text(L10n.tr(subtitle))
                         .font(Typography.label)
-                        .foregroundStyle(.white.opacity(0.55))
+                        .foregroundStyle(Color.primary.opacity(0.55))
                 }
             }
             .accessibilityElement(children: .combine)
@@ -73,7 +73,7 @@ struct SettingsRow<Trailing: View>: View {
         .padding(.vertical, 11)
         .background {
             RoundedRectangle(cornerRadius: 8)
-                .fill(.white.opacity(hovered ? 0.030 : 0))
+                .fill(Color.primary.opacity(hovered ? 0.030 : 0))
         }
         .contentShape(Rectangle())
         .onHover { hovered = $0 }

@@ -13,6 +13,9 @@ enum UrgencyColor {
         let usedPercent = mode == .used ? percent : 100 - percent
         if usedPercent >= 90 { return red }
         if usedPercent >= 70 { return amber }
-        return .white
+        // Normal readings follow the active surface. Fixed white disappears
+        // on the expanded light panel; Color.primary resolves to black there
+        // and white in the dark expanded panel.
+        return Color.primary
     }
 }

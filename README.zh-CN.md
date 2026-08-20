@@ -80,6 +80,7 @@ Claude：
 - 点击 `synced Xs ago` 状态可立即刷新。
 - 点击展开面板左下角的齿轮打开设置。
 - 在设置里可以开启登录启动、选择刷新间隔、切换低功耗模式、隐藏或显示 Claude / Codex、选择默认图表和成本视图、切换 token 统计口径、打开 GitHub / License，或退出应用。
+- 选择浅色外观后，展开面板会使用自适应的浅色文字与图表层级；收起和悬停预览状态仍保持黑色灵动岛外观。
 
 服务可见性只影响显示。隐藏某个服务会移除它的 logo 和列，但应用仍会把最新用量保存在内存里，重新显示时不需要重置。
 
@@ -91,6 +92,7 @@ Claude：
 
 | 设置 | 存储 | UserDefaults key | 值 |
 | --- | --- | --- | --- |
+| 外观 | `AppearanceStore` | `MacIsland.appearance` | `system`, `light`, `dark`，默认 `dark` |
 | 图表样式 | `StylePref` | `MacIsland.chartStyle` | `ring`, `bar`, `stepped`, `numeric`, `spark` |
 | 成本样式 | `CostStylePref` | `MacIsland.costStyle` | `dollar`, `multi`, `tokens`, `spark` |
 | Token 统计 | `TokenCountModeStore` | `MacIsland.tokenCountMode` | `all`, `billable` |
@@ -100,7 +102,8 @@ Claude：
 | Codex 可见 | `ProviderVisibilityStore` | `MacIsland.codexVisible` | Boolean，默认 `true` |
 | 登录启动 | `LaunchAtLoginStore` | 由 `SMAppService.mainApp` 管理 | 系统登录项状态 |
 
-刷新间隔会立即生效。`UsageStore` 会重置当前计时器，并用新的间隔重新安排下一次拉取。
+外观和刷新间隔都会立即生效；选择“跟随系统”后，设置窗口会随 macOS
+浅色/深色外观自动切换。`UsageStore` 会重置当前计时器，并用新的间隔重新安排下一次拉取。
 
 ## 从源码构建
 
