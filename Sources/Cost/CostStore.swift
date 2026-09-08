@@ -223,6 +223,24 @@ final class CostStore: ObservableObject {
                 175, 188, 201, 214, 228, 239, 254, 268, 282, 164,
             ], millionScale: 1_000_000)
         )
+        for (provider, scale) in [(IslandProvider.grok, 0.32), (.antigravity, 0.24)] {
+            func scaled(_ window: CostWindow) -> CostWindow {
+                CostWindow(dollars: window.dollars * scale,
+                           tokens: Int(Double(window.tokens) * scale),
+                           billableTokens: Int(Double(window.billableTokens) * scale),
+                           series: window.series.map { $0 * scale },
+                           label: window.label, error: nil, unknownModels: [])
+            }
+            connectedCosts[provider] = ProviderCost(
+                today: scaled(codex.today), month: scaled(codex.month),
+                dailyTokens: codex.dailyTokens.map {
+                    DailyTokenBucket(dayStart: $0.dayStart,
+                                     tokens: Int(Double($0.tokens) * scale),
+                                     billableTokens: Int(Double($0.billableTokens) * scale))
+                })
+            connectedUpdated[provider] = Date()
+            localNotices[provider] = "Demo data — illustrative API-equivalent cost, not actual spending."
+        }
         self.lastUpdated = Date()
     }
 

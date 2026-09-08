@@ -282,6 +282,11 @@ struct CostTile: View {
     /// or OpenAI's "plan_type" so each provider's bar reflects its actual
     /// plan: Claude Pro $20 / Max $200, Codex Plus $20 / Pro $100 or $200.
     private var subscriptionUSD: Double? {
+        // Illustrative demo baselines; do not infer live subscription pricing.
+        if AppEnvironment.isDemo {
+            if provider == .grok { return 30 }
+            if provider == .antigravity { return 19.99 }
+        }
         let plan: String? = {
             switch provider {
             case .claude: return usageStore.claude.plan?.lowercased()
@@ -306,6 +311,10 @@ struct CostTile: View {
     /// label under the plan bar so the user always knows what the
     /// comparison is anchored to.
     private var planLabel: String? {
+        if AppEnvironment.isDemo {
+            if provider == .grok { return "SuperGrok" }
+            if provider == .antigravity { return "AI Pro" }
+        }
         let plan: String? = {
             switch provider {
             case .claude: return usageStore.claude.plan?.lowercased()

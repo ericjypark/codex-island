@@ -97,3 +97,10 @@ provider cancels its pending request, and swapping positions does not fetch.
 Grok's CLI billing response and Antigravity's quota protocol can change.
 Fixture tests cover parsing and selection; validating authentication requires a
 signed-in CLI. Authenticated requests use HTTPS and do not follow redirects.
+
+## Demo mode
+
+`CODEXISLAND_DEMO=1` also supplies synthetic Grok and Antigravity cost totals,
+cumulative trends, and overview token history. VALUE uses illustrative monthly
+plan baselines ($30 and $19.99 respectively) only in demo mode. These fixtures
+never write the real cost cache or establish live subscription prices.
