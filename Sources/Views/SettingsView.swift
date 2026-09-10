@@ -435,19 +435,30 @@ struct SettingsView: View {
     private var updatesSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             sectionLabel("Updates")
-            SettingsRow(
-                title: "Check for updates automatically",
-                subtitle: "Check for new versions in the background and notify you when one's available."
-            ) {
-                SettingsToggle(isOn: updater.automaticallyChecks) {
-                    updater.automaticallyChecks.toggle()
+            if updater.updatesEnabled {
+                SettingsRow(
+                    title: "Check for updates automatically",
+                    subtitle: "Check for new versions in the background and notify you when one's available."
+                ) {
+                    SettingsToggle(isOn: updater.automaticallyChecks) {
+                        updater.automaticallyChecks.toggle()
+                    }
                 }
-            }
-            SettingsRow(
-                title: "Check now",
-                subtitle: "Look for a new version immediately."
-            ) {
-                PillButton(label: "Check") { updater.checkForUpdates() }
+                SettingsRow(
+                    title: "Check now",
+                    subtitle: "Look for a new version immediately."
+                ) {
+                    PillButton(label: "Check") { updater.checkForUpdates() }
+                }
+            } else {
+                SettingsRow(
+                    title: "Local customization build",
+                    subtitle: "Official automatic updates are disabled to preserve local features. Use the sync script for updates."
+                ) {
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(Typography.label)
+                        .foregroundStyle(.green)
+                }
             }
         }
         .padding(.horizontal, 14)

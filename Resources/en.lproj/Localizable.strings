@@ -129,6 +129,8 @@
 "USD" = "USD";
 "Usage" = "Usage";
 "Updates" = "Updates";
+"Local customization build" = "Local customization build";
+"Official automatic updates are disabled to preserve local features. Use the sync script for updates." = "Official automatic updates are disabled to preserve local features. Use the sync script for updates.";
 "VALUE" = "VALUE";
 "Warn" = "Warn";
 "Warning" = "Warning";

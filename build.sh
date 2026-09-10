@@ -33,6 +33,24 @@ SPARKLE_FW="$SPARKLE_DIR/Sparkle.framework"
 SU_PUBLIC_KEY="bz1gwLBKgIL/Y7OO23o3gaMNIeTpvv/C90F9inr9Quo="
 
 SU_FEED_URL="${SU_FEED_URL:-https://github.com/ericjypark/codex-island/releases/latest/download/appcast.xml}"
+ENABLE_UPDATES="${ENABLE_UPDATES:-0}"
+if [[ "$ENABLE_UPDATES" != "0" && "$ENABLE_UPDATES" != "1" ]]; then
+  echo "error: ENABLE_UPDATES must be 0 or 1" >&2
+  exit 1
+fi
+
+if [[ "$ENABLE_UPDATES" == "1" ]]; then
+  SPARKLE_PLIST_CONFIG="
+  <key>SUFeedURL</key><string>$SU_FEED_URL</string>
+  <key>SUPublicEDKey</key><string>$SU_PUBLIC_KEY</string>
+  <key>SUEnableAutomaticChecks</key><true/>"
+else
+  # A locally customized build must not install an official binary over itself.
+  # Upstream source updates are merged by scripts/sync-upstream.sh instead.
+  SPARKLE_PLIST_CONFIG="
+  <key>CodexIslandLocalBuild</key><true/>
+  <key>SUEnableAutomaticChecks</key><false/>"
+fi
 
 rm -rf "$BUILD_DIR"
 mkdir -p "$MACOS_DIR" "$RES_DIR" "$FRAMEWORKS_DIR"
@@ -95,9 +113,7 @@ cat > "$CONTENTS/Info.plist" <<EOF
   <key>NSHighResolutionCapable</key><true/>
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Eric Park. MIT licensed.</string>
-  <key>SUFeedURL</key><string>$SU_FEED_URL</string>
-  <key>SUPublicEDKey</key><string>$SU_PUBLIC_KEY</string>
-  <key>SUEnableAutomaticChecks</key><true/>
+$SPARKLE_PLIST_CONFIG
 </dict>
 </plist>
 EOF

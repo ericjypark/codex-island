@@ -129,6 +129,8 @@
 "USD" = "USD";
 "Usage" = "用量";
 "Updates" = "更新";
+"Local customization build" = "本地定制版";
+"Official automatic updates are disabled to preserve local features. Use the sync script for updates." = "已关闭官方自动更新，以保留本地功能。请使用同步脚本更新。";
 "VALUE" = "价值";
 "Warn" = "警告";
 "Warning" = "警告";
