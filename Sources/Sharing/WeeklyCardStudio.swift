@@ -84,7 +84,7 @@ struct WeeklyCardStudio: View {
         .onChange(of: store.lastUpdated) { _ in
             now = Date()
             status = nil
-            if usesFullHistory { history.loadIfNeeded() }
+            if usesFullHistory { history.refresh() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .codexIslandUsageHistoryRecovered)) { _ in
             status = nil
