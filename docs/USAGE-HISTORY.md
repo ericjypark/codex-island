@@ -43,8 +43,9 @@ The remainder keeps the original calendar date; moving it between hourly or
 current-timezone daily buckets would invent a distribution the source did not
 record. Overlapping aggregate intervals are rejected transactionally.
 
-Recovered counts with no model breakdown remain unpriced. Cached zero days do
-not establish that no activity occurred.
+Recovered counts with no model breakdown remain unpriced. Usage cards identify
+recovered daily totals, and their API-value view marks the missing pricing as
+partial. Cached zero days do not establish that no activity occurred.
 
 ## Recover your Claude usage
 
@@ -59,10 +60,10 @@ an old CodexIsland preferences file. Changing any selection clears the old
 preview, so you must scan again before importing.
 
 Click **Import recovery** to save the reviewed records. The app backs up the
-archive, imports the exact records from the preview, and refreshes usage
-history. Records that appear in source files after the preview are not silently
+archive, imports the exact records from the preview, and refreshes the usage
+card. Records that appear in source files after the preview are not silently
 included. If the app has already captured the same usage, it is not counted
-again.
+again. An open **All time** card also refreshes after recovery.
 
 The optional terminal script uses the same recovery code. No Xcode, Python,
 login, or downloads are required. Start with a preview:
@@ -79,8 +80,8 @@ counts unchanged. To save the verified records, run it again with `--apply`:
 bash /Applications/CodexIsland.app/Contents/Resources/recover-claude-usage.sh --apply
 ```
 
-Refresh CodexIsland to include the recovered counts. You can repeat recovery
-safely. Copied Claude messages
+Refresh CodexIsland, then open **Overview → Share usage** and select **This
+year** or **All time**. You can repeat recovery safely. Copied Claude messages
 are deduplicated by message and request IDs, and overlapping daily snapshots
 contribute only the part not covered by detailed records. Recovery leaves
 already captured messages intact and never reduces saved daily totals.

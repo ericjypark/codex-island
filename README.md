@@ -46,6 +46,23 @@ providers' own usage endpoints.
   calendar using logs from every supported provider, regardless of which
   providers are selected for the usage pills. Click a provider in the calendar
   legend to filter its history; click it again to show all providers.
+- **A usage card worth sharing.** Open **Overview → Share usage** or
+  **Settings → General → Usage card**. Put your estimated API value
+  in USD front and center, with a flowing cumulative chart and provider
+  amounts, or spotlight your token count. Card colors are earned: White below
+  $1K / 100M tokens, Black from $1K / 100M, and Blue from $10K / 1B, using the
+  selected metric. Pick **Last 7 days**, **This month**, **Last 3 months**, **This year**,
+  or **All time**. Last 7 days is the default and includes today plus the previous
+  six days. Last 3 months is a rolling calendar
+  window ending today. Month and year run through today; All time reads the oldest
+  available local usage records on demand. Choose a feed / square / story format and optional
+  signature, then share the image and caption
+  through the macOS share menu. Use **Actual size** for a closer look and the
+  **…** menu to save a 1080-pixel-wide PNG or copy the image and caption.
+  After an app update, the card opens once when your weekly usage is ready.
+  Figures follow your local calendar and include cache usage;
+  API value is an estimate, not your subscription bill.
+  Missing prices are marked as partial. Everything is rendered on your Mac.
 - **Usage history that stays yours.** CodexIsland saves captured token counts
   in its own local database, including older records still available when it
   scans. Provider log cleanup no longer erases captured history. Repeated
@@ -310,6 +327,12 @@ Native app behavior:
   in `CLAUDE_CONFIG_DIR`), Codex session logs from `~/.codex/sessions/`, and
   OpenCode data from `~/.local/share/opencode/`. Aggregation happens entirely
   on-device — no log content is uploaded or shared anywhere.
+- Default Claude history discovery also includes locally mirrored Cowork
+  session logs in `~/Library/Application Support/Claude/local-agent-mode-sessions/`.
+  Captured usage is retained in
+  `~/Library/Application Support/dev.codexisland.CodexIsland/usage-history.sqlite3`.
+  The database contains token counts, models, timestamps, and opaque record
+  identifiers; it does not contain prompts, responses, or credentials.
 
 The visitor badge at the top of this README is an external `hits.sh` image that
 counts badge requests. It is not bundled with or contacted by the native app.

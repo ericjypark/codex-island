@@ -137,6 +137,11 @@ struct SettingsView: View {
     private var generalTab: some View {
         VStack(alignment: .leading, spacing: 0) {
             generalSection
+            SettingsRow(title: "Usage card", subtitle: "Your time with AI, ready to share.") {
+                Button(L10n.tr("Create card…")) { WeeklyCardWindowController.shared.show() }
+                    .controlSize(.small)
+            }
+            .padding(.horizontal, 14)
             SettingsRow(title: "Usage history", subtitle: "Find older Claude counts.") {
                 HStack(spacing: 8) {
                     RecoveryHelp(

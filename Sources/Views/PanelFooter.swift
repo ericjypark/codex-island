@@ -40,6 +40,10 @@ struct PanelFooter: View {
                     SettingsButton()
                     chip
 
+                    if screenPref.screen == .overview {
+                        WeeklyCardButton()
+                    }
+
                     if !activeStyleCycled {
                         HStack(spacing: 5) {
                             Image(systemName: "command")
