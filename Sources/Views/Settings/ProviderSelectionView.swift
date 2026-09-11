@@ -203,6 +203,7 @@ private struct ProviderMetricSelection: View {
     let provider: IslandProvider
     let usage: ConnectedUsage
     @ObservedObject private var preferences = ProviderQuotaPreferences.shared
+    @State private var isExpanded = false
 
     private var scope: String { usage.storageScope(provider: provider) }
     private var selection: QuotaSelection { preferences.selection(for: scope) }
@@ -215,8 +216,24 @@ private struct ProviderMetricSelection: View {
 
     var body: some View {
         if usage.limits.count > 1 || selection != QuotaSelection() {
-            DisclosureGroup(L10n.tr("Usage display")) {
-                controls.padding(.top, 8)
+            VStack(alignment: .leading, spacing: 0) {
+                Button {
+                    isExpanded.toggle()
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                        Text(L10n.tr("Usage display"))
+                        Spacer(minLength: 0)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+
+                if isExpanded {
+                    controls.padding(.top, 8)
+                }
             }
             .font(.system(size: 12))
             .tint(.white.opacity(0.65))

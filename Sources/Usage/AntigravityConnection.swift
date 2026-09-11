@@ -86,7 +86,8 @@ enum AntigravityConnection {
     }
 
     private static func request<Body: Encodable>(_ method: String, token: String, body: Body) throws -> URLRequest {
-        guard let url = URL(string: "https://cloudcode-pa.googleapis.com/v1internal:\(method)") else {
+        // Match agy's backend; the production host can return an unrelated, unused quota.
+        guard let url = URL(string: "https://daily-cloudcode-pa.googleapis.com/v1internal:\(method)") else {
             throw ProviderConnectionError.invalidResponse
         }
         var request = URLRequest(url: url)

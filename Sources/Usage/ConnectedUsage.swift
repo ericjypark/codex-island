@@ -40,6 +40,11 @@ struct ConnectedUsage {
 
     var primary: ConnectedLimit? { limits.first { $0.usedFraction != nil } }
 
+    var hasNoActiveSubscription: Bool {
+        guard !needsLogin, updatedAt != nil, primary == nil else { return false }
+        return plan?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "free"
+    }
+
     func storageScope(provider: IslandProvider) -> String {
         let identity = accountID ?? account ?? "local-session"
         let hash = SHA256.hash(data: Data(identity.utf8)).map { String(format: "%02x", $0) }.joined()

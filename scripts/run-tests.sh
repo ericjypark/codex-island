@@ -10,6 +10,13 @@ cd "$(dirname "$0")/.."
 OUT_DIR=$(mktemp -d)
 trap 'rm -rf "$OUT_DIR"' EXIT
 
+swiftc -parse-as-library -o "$OUT_DIR/currency-tests" \
+  Sources/Model/CurrencyStore.swift \
+  Sources/Model/AppLanguageStore.swift \
+  Sources/Localization/L10n.swift \
+  Tests/CurrencyStoreTests.swift
+"$OUT_DIR/currency-tests"
+
 swiftc \
   -parse-as-library \
   -o "$OUT_DIR/resolve-usage-tests" \
@@ -140,6 +147,19 @@ swiftc \
 
 swiftc \
   -parse-as-library \
+  -o "$OUT_DIR/grok-billing-tests" \
+  Sources/Model/IslandProvider.swift \
+  Sources/Model/UsageDisplayModeStore.swift \
+  Sources/Usage/AppUsage.swift \
+  Sources/Usage/ConnectedUsage.swift \
+  Sources/Usage/GrokConnection.swift \
+  Sources/Usage/AntigravityConnection.swift \
+  Tests/GrokBillingTests.swift
+
+"$OUT_DIR/grok-billing-tests"
+
+swiftc \
+  -parse-as-library \
   -o "$OUT_DIR/local-provider-cost-tests" \
   Sources/Cost/TokenEvent.swift \
   Sources/Cost/LocalCostScan.swift \
@@ -155,3 +175,16 @@ swiftc \
   Tests/LocalProviderCostTests.swift
 
 "$OUT_DIR/local-provider-cost-tests"
+
+swiftc \
+  -parse-as-library \
+  -o "$OUT_DIR/provider-session-recovery-tests" \
+  Sources/Model/IslandProvider.swift \
+  Sources/Model/UsageDisplayModeStore.swift \
+  Sources/Usage/AppUsage.swift \
+  Sources/Usage/ConnectedUsage.swift \
+  Sources/Usage/GrokConnection.swift \
+  Sources/Usage/ProviderSessionRecovery.swift \
+  Tests/ProviderSessionRecoveryTests.swift
+
+"$OUT_DIR/provider-session-recovery-tests"

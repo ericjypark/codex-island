@@ -4,6 +4,61 @@ User-facing changes per release. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); dates are when the
 tag was cut.
 
+## [0.2.4] - 2026-09-08
+
+### Fixed
+
+- Antigravity quota now uses the agy CLI backend, correcting readings stuck at
+  100% remaining while the CLI reports usage.
+- Grok reads weekly and monthly subscription allowances without substituting
+  on-demand spending caps for subscription usage. Missing readings stay unknown.
+- Overview labels small nonzero provider shares as `<1%` instead of `0%`.
+
+## [0.2.3] - 2026-09-08
+
+Large cost totals are easier to read: the main numbers now use digit grouping
+such as `1,964,040`, including during the count-up animation. Separators follow
+the app's locale, and the full amount still scales to fit its tile.
+
+## [0.2.2] - 2026-09-08
+
+View estimated token costs in your preferred currency, with nine display
+currencies and cached daily exchange rates.
+
+### Added
+
+- Choose USD, CNY, EUR, GBP, JPY, KRW, CAD, AUD, or CHF in Settings → Providers.
+  Cost totals, value comparisons, and model breakdowns use the selected currency;
+  underlying model prices stay in USD. Offline, the last valid exchange rates
+  are retained, with a clearly labeled USD fallback before rates are available.
+
+### Fixed
+
+- Large converted amounts scale to fit the cost tile instead of truncating digits.
+- The expanded panel fits the selected page's content, including calendar day
+  details, and settles at the correct height after rapid navigation during opening.
+- The entire Usage display row in provider settings now opens its controls.
+
+## [0.2.1] - 2026-09-08
+
+See every supported provider's activity in one calendar, then click a provider
+in the legend to filter its history—even when it is not selected for the usage pills.
+
+### Changed
+
+- Overview combines local history from all supported providers and adds provider filters.
+- Page transitions use Core Animation, with display-aware frame pacing and a
+  30 FPS request in Low Power Mode. History preparation avoids repeated work
+  during interaction updates.
+- Antigravity has a distinct lilac color, and Settings opens with more vertical space.
+
+### Fixed
+
+- Expired Grok and Antigravity sessions get one renewal attempt through the
+  official CLI before retrying. HTTP 403 no longer implies that the user is logged out.
+- Accounts without reported usage show actionable empty states; existing cost
+  records and real zero-percent readings remain visible.
+
 ## [0.1.23] - 2026-08-14
 
 Weekly-only Codex plans get a real number in the peek pill instead of "—%".

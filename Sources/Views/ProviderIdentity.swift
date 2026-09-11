@@ -17,8 +17,8 @@ extension IslandProvider {
         switch self {
         case .claude: return IslandColor.claude
         case .codex: return IslandColor.codex
-        case .grok: return .white
-        case .antigravity: return Color(red: 0.55, green: 0.72, blue: 1)
+        case .grok: return IslandColor.grok
+        case .antigravity: return IslandColor.antigravity
         }
     }
     var legacy: AlertEngine.Provider? {

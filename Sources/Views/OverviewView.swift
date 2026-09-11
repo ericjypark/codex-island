@@ -1,38 +1,50 @@
 import SwiftUI
 
+struct OverviewView: View {
+    @ObservedObject private var costStore = CostStore.shared
+
+    var body: some View {
+        OverviewContent(
+            allDays: OverviewContent.joinDays(buckets: Dictionary(uniqueKeysWithValues:
+                IslandProvider.allCases.map { ($0, costStore.cost(for: $0).dailyTokens) }
+            )),
+            loading: costStore.loading
+        )
+    }
+}
+
 /// Minimal contribution-style view. Powered by the same local log scan as
 /// the cost page, but framed as usage history: cell intensity is token
 /// volume, and cell hue follows the dominant provider for that day.
-struct OverviewView: View {
-    @ObservedObject var model: IslandModel
-    @ObservedObject private var screenPref = ScreenPref.shared
-    @ObservedObject private var costStore = CostStore.shared
-    @ObservedObject private var visibility = ProviderVisibilityStore.shared
+private struct OverviewContent: View {
+    let allDays: [OverviewDay]
+    let loading: Bool
     @State private var selectedDate: Date?
+    @State private var selectedProvider: IslandProvider?
 
     private var days: [OverviewDay] {
-        Self.joinDays(
-            leftBuckets: costStore.cost(for: visibility.left).dailyTokens,
-            rightBuckets: visibility.right.map { costStore.cost(for: $0).dailyTokens } ?? [],
-            leftProvider: visibility.left, rightProvider: visibility.right,
-            mode: .all
-        )
+        guard let selectedProvider else { return allDays }
+        return allDays.map { day in
+            OverviewDay(date: day.date,
+                        tokens: [selectedProvider: day.tokens[selectedProvider] ?? 0],
+                        isFuture: day.isFuture)
+        }
     }
 
-    private var totalTokens: Int {
-        days.reduce(0) { $0 + $1.totalTokens }
-    }
+    private var totalTokens: Int { days.reduce(0) { $0 + $1.totalTokens } }
+    private var activeDays: Int { days.filter { $0.totalTokens > 0 }.count }
 
-    private var activeDays: Int {
-        days.filter { $0.totalTokens > 0 }.count
-    }
-
-    private var leftTokens: Int {
-        days.reduce(0) { $0 + $1.leftTokens }
-    }
-
-    private var rightTokens: Int {
-        days.reduce(0) { $0 + $1.rightTokens }
+    private var displayedUsage: [ProviderTokenUsage] {
+        let history = allDays
+        let selected = selectedDate.flatMap { date in
+            history.first { Calendar.current.isDate($0.date, inSameDayAs: date) }
+        }
+        return IslandProvider.allCases.compactMap { provider in
+            let tokens = history.reduce(0) { $0 + ($1.tokens[provider] ?? 0) }
+            guard tokens > 0 else { return nil }
+            return ProviderTokenUsage(provider: provider,
+                                      tokens: selected.map { $0.tokens[provider] ?? 0 } ?? tokens)
+        }
     }
 
     private var selectedDay: OverviewDay? {
@@ -44,14 +56,6 @@ struct OverviewView: View {
 
     private var displayedTokens: Int {
         selectedDay?.totalTokens ?? totalTokens
-    }
-
-    private var displayedLeftTokens: Int {
-        selectedDay?.leftTokens ?? leftTokens
-    }
-
-    private var displayedRightTokens: Int {
-        selectedDay?.rightTokens ?? rightTokens
     }
 
     var body: some View {
@@ -66,11 +70,7 @@ struct OverviewView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             if let selectedDay {
-                DayDetailStrip(
-                    day: selectedDay,
-                    leftVisible: true,
-                    rightVisible: visibility.right != nil
-                )
+                DayDetailStrip(day: selectedDay)
                 .transition(.detailReveal)
             }
 
@@ -81,16 +81,7 @@ struct OverviewView: View {
         .padding(.top, 4)
         .padding(.bottom, 6)
         .animation(.detailExpand, value: selectedDate)
-        .onAppear {
-            model.setOverviewDayDetailVisible(screenPref.screen == .overview && selectedDate != nil)
-        }
-        .onDisappear {
-            model.setOverviewDayDetailVisible(false)
-        }
-        .onChange(of: selectedDate) { _ in
-            model.setOverviewDayDetailVisible(screenPref.screen == .overview && selectedDate != nil)
-        }
-        .onChange(of: screenPref.screen) { screen in
+        .onReceive(ScreenPref.shared.$screen.dropFirst()) { screen in
             guard screen != .overview else { return }
             if selectedDate != nil {
                 var transaction = Transaction()
@@ -99,7 +90,6 @@ struct OverviewView: View {
                     selectedDate = nil
                 }
             }
-            model.setOverviewDayDetailVisible(false)
         }
     }
 
@@ -125,7 +115,7 @@ struct OverviewView: View {
                 Text(summarySubline)
                     .font(Typography.label)
                     .foregroundStyle(.white.opacity(0.50))
-                if costStore.loading {
+                if loading {
                     Text(L10n.tr("Syncing"))
                         .font(Typography.caption)
                         .foregroundStyle(.white.opacity(0.36))
@@ -133,90 +123,54 @@ struct OverviewView: View {
             }
             .padding(.bottom, 5)
 
-            ProviderSplitRow(
-                leftProvider: visibility.left, rightProvider: visibility.right,
-                leftTokens: displayedLeftTokens,
-                rightTokens: displayedRightTokens,
-                leftVisible: true,
-                rightVisible: visibility.right != nil
-            )
-            .padding(.bottom, 5)
-
             Spacer(minLength: 0)
+
+            ProviderSplitRow(usage: displayedUsage, selectedProvider: $selectedProvider)
+                .padding(.bottom, 5)
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
         .accessibilityLabel(summaryAccessibilityLabel)
     }
 
     private var summaryLabel: String {
-        guard let selectedDay else { return L10n.tr("%@ TOKENS", Self.currentYearString) }
+        guard let selectedDay else {
+            let yearLabel = L10n.tr("%@ TOKENS", Self.currentYearString)
+            return selectedProvider.map { "\($0.name.uppercased()) · \(yearLabel)" } ?? yearLabel
+        }
         return Self.dayLabelFormatter.string(from: selectedDay.date).uppercased()
     }
 
     private var summarySubline: String {
         guard let selectedDay else { return L10n.tr("%d Active Days", activeDays) }
-        switch selectedDay.dominantProvider {
-        case .none:   return L10n.tr("No Activity")
-        case .left: return "Mostly " + selectedDay.leftProvider.name
-        case .right:  return "Mostly " + (selectedDay.rightProvider?.name ?? "")
-        case .mixed:  return L10n.tr("Mixed Use")
-        }
+        return selectedDay.dominanceLabel
     }
 
     private var summaryAccessibilityLabel: String {
         let period = selectedDay.map { Self.dayLabelFormatter.string(from: $0.date) } ?? Self.currentYearString
-        var text = "\(period): \(Self.formatTokensSpoken(displayedTokens)). \(visibility.left.name) \(Self.formatTokensSpoken(displayedLeftTokens))"
-        if let right = visibility.right { text += ", \(right.name) \(Self.formatTokensSpoken(displayedRightTokens))" }
-        return text
+        return "\(period): \(Self.formatTokensSpoken(displayedTokens)). " + displayedUsage.filter { selectedProvider == nil || $0.provider == selectedProvider }.map {
+            "\($0.provider.name) \(Self.formatTokensSpoken($0.tokens))"
+        }.joined(separator: ", ")
     }
 
-    private static func joinDays(
-        leftBuckets: [DailyTokenBucket],
-        rightBuckets: [DailyTokenBucket],
-        leftProvider: IslandProvider, rightProvider: IslandProvider?,
-        mode: TokenCountMode
-    ) -> [OverviewDay] {
+    static func joinDays(buckets: [IslandProvider: [DailyTokenBucket]]) -> [OverviewDay] {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = .current
         let today = cal.startOfDay(for: Date())
         let start = cal.date(from: cal.dateComponents([.year], from: today)) ?? today
         let nextYear = cal.date(byAdding: .year, value: 1, to: start) ?? today
-        let end = cal.date(byAdding: .day, value: -1, to: nextYear) ?? today
-        let dayCount = (cal.dateComponents([.day], from: start, to: end).day ?? 0) + 1
-
-        let leftMap = bucketMap(leftBuckets, mode: mode, calendar: cal)
-        let rightMap = bucketMap(rightBuckets, mode: mode, calendar: cal)
-
+        let dayCount = cal.dateComponents([.day], from: start, to: nextYear).day ?? 365
+        var totals: [Date: [IslandProvider: Int]] = [:]
+        for (provider, history) in buckets {
+            for bucket in history {
+                let day = cal.startOfDay(for: bucket.dayStart)
+                totals[day, default: [:]][provider, default: 0] += bucket.tokens
+            }
+        }
         return (0..<dayCount).map { offset in
             let day = cal.date(byAdding: .day, value: offset, to: start) ?? start
-            let key = cal.startOfDay(for: day)
-            return OverviewDay(
-                leftProvider: leftProvider, rightProvider: rightProvider,
-                date: key,
-                leftTokens: leftMap[key] ?? 0,
-                rightTokens: rightMap[key] ?? 0,
-                isFuture: key > today
-            )
+            return OverviewDay(date: day, tokens: totals[day] ?? [:], isFuture: day > today)
         }
-    }
-
-    private static func bucketMap(
-        _ buckets: [DailyTokenBucket],
-        mode: TokenCountMode,
-        calendar: Calendar
-    ) -> [Date: Int] {
-        var out: [Date: Int] = [:]
-        for bucket in buckets {
-            let key = calendar.startOfDay(for: bucket.dayStart)
-            let value: Int
-            switch mode {
-            case .all:      value = bucket.tokens
-            case .billable: value = bucket.billableTokens
-            }
-            out[key, default: 0] += value
-        }
-        return out
     }
 
     fileprivate static func formatTokens(_ n: Int) -> (value: String, unit: String) {
@@ -258,32 +212,36 @@ struct OverviewView: View {
     }
 }
 
+private struct ProviderTokenUsage: Identifiable {
+    let provider: IslandProvider
+    let tokens: Int
+    var id: IslandProvider { provider }
+}
+
 private struct OverviewDay: Identifiable {
-    let leftProvider: IslandProvider
-    let rightProvider: IslandProvider?
     let date: Date
-    let leftTokens: Int
-    let rightTokens: Int
+    let tokens: [IslandProvider: Int]
     var isFuture = false
 
     var id: Date { date }
-    var totalTokens: Int { leftTokens + rightTokens }
-
-    var dominantProvider: DominantProvider {
-        guard totalTokens > 0 else { return .none }
-        let leftShare = Double(leftTokens) / Double(totalTokens)
-        let rightShare = Double(rightTokens) / Double(totalTokens)
-        if leftShare >= 0.60 { return .left }
-        if rightShare >= 0.60 { return .right }
-        return .mixed
+    var totalTokens: Int { tokens.values.reduce(0, +) }
+    var usage: [ProviderTokenUsage] {
+        IslandProvider.allCases.compactMap { provider in
+            let count = tokens[provider] ?? 0
+            return count > 0 ? ProviderTokenUsage(provider: provider, tokens: count) : nil
+        }
     }
-}
-
-private enum DominantProvider {
-    case none
-    case left
-    case right
-    case mixed
+    var leadingProvider: IslandProvider? {
+        usage.max { $0.tokens < $1.tokens }?.provider
+    }
+    var dominantProvider: IslandProvider? {
+        guard totalTokens > 0 else { return nil }
+        return usage.first { Double($0.tokens) / Double(totalTokens) >= 0.60 }?.provider
+    }
+    var dominanceLabel: String {
+        guard totalTokens > 0 else { return L10n.tr("No Activity") }
+        return dominantProvider.map { "Mostly " + $0.name } ?? L10n.tr("Mixed Use")
+    }
 }
 
 private struct ContributionGrid: View {
@@ -333,7 +291,7 @@ private struct ContributionGrid: View {
         .frame(maxWidth: .infinity, minHeight: gridHeight + 19, maxHeight: gridHeight + 19, alignment: .leading)
         .clipped()
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(L10n.tr("Daily token usage in %@", OverviewView.currentYearString))
+        .accessibilityLabel(L10n.tr("Daily token usage in %@", OverviewContent.currentYearString))
     }
 
     private var weeks: [ContributionWeek] {
@@ -540,30 +498,25 @@ private struct ContributionCell: View {
     @ViewBuilder
     private var cellFill: some View {
         let opacity = day.totalTokens > 0 ? intensityScale.opacity(for: day.totalTokens) : 0.035
-        switch day.dominantProvider {
-        case .none:
+        if let provider = day.leadingProvider {
+            provider.color.opacity(opacity)
+                .overlay(alignment: .bottom) {
+                    if day.usage.count > 1 {
+                        HStack(spacing: 0) {
+                            ForEach(day.usage) { item in
+                                item.provider.color.opacity(max(0.35, opacity))
+                                    .frame(width: cellSize * CGFloat(Double(item.tokens) / Double(day.totalTokens)))
+                            }
+                        }
+                        .frame(height: max(2, cellSize * 0.20))
+                    }
+                }
+        } else {
             Color.white.opacity(opacity)
-        case .left:
-            day.leftProvider.color.opacity(opacity)
-        case .right:
-            (day.rightProvider?.color ?? .clear).opacity(opacity)
-        case .mixed:
-            ZStack {
-                (day.rightProvider?.color ?? .clear).opacity(opacity)
-                day.leftProvider.color.opacity(opacity)
-                    .clipShape(DiagonalProviderSplitShape(share: leftShare))
-            }
         }
     }
 
-    private var cornerRadius: CGFloat {
-        min(3, cellSize * 0.22)
-    }
-
-    private var leftShare: CGFloat {
-        guard day.totalTokens > 0 else { return 0.5 }
-        return CGFloat(Double(day.leftTokens) / Double(day.totalTokens))
-    }
+    private var cornerRadius: CGFloat { min(3, cellSize * 0.22) }
 
     private var strokeColor: Color {
         if isSelected { return .white.opacity(0.72) }
@@ -576,18 +529,16 @@ private struct ContributionCell: View {
         L10n.tr(
             "%@: %@, %@",
             Self.dayFormatter.string(from: day.date),
-            OverviewView.formatTokensSpoken(day.totalTokens),
+            OverviewContent.formatTokensSpoken(day.totalTokens),
             dominanceLabel
-        )
+        ) + (day.usage.isEmpty ? "" : "\n" + day.usage.map { item in
+            let percent = Double(item.tokens) / Double(day.totalTokens) * 100
+            return "\(item.provider.name): \(String(format: "%.1f", percent))%"
+        }.joined(separator: ", "))
     }
 
     private var dominanceLabel: String {
-        switch day.dominantProvider {
-        case .none:   return L10n.tr("No Activity")
-        case .left: return "Mostly " + day.leftProvider.name
-        case .right:  return "Mostly " + (day.rightProvider?.name ?? "")
-        case .mixed:  return L10n.tr("Mixed Use")
-        }
+        day.dominanceLabel
     }
 
     private static let dayFormatter: DateFormatter = {
@@ -597,34 +548,6 @@ private struct ContributionCell: View {
         formatter.setLocalizedDateFormatFromTemplate("MMM d")
         return formatter
     }()
-}
-
-private struct DiagonalProviderSplitShape: Shape {
-    let share: CGFloat
-
-    func path(in rect: CGRect) -> Path {
-        let s = min(1, max(0, share))
-        let diagonal = s <= 0.5
-            ? CGFloat(sqrt(Double(2 * s)))
-            : 2 - CGFloat(sqrt(Double(2 * (1 - s))))
-
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-
-        if diagonal <= 1 {
-            path.addLine(to: CGPoint(x: rect.minX + rect.width * diagonal, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + rect.height * diagonal))
-        } else {
-            let overflow = diagonal - 1
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + rect.height * overflow))
-            path.addLine(to: CGPoint(x: rect.minX + rect.width * overflow, y: rect.maxY))
-            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        }
-
-        path.closeSubpath()
-        return path
-    }
 }
 
 private struct TokenIntensityScale {
@@ -676,8 +599,6 @@ private struct TokenIntensityScale {
 
 private struct DayDetailStrip: View {
     let day: OverviewDay
-    let leftVisible: Bool
-    let rightVisible: Bool
 
     var body: some View {
         VStack(spacing: 8) {
@@ -700,13 +621,6 @@ private struct DayDetailStrip: View {
                 }
                 .frame(width: 116, alignment: .leading)
 
-                TokenSplitMeter(
-                    leftProvider: day.leftProvider, rightProvider: day.rightProvider,
-                    leftTokens: leftVisible ? day.leftTokens : 0,
-                    rightTokens: rightVisible ? day.rightTokens : 0
-                )
-                .frame(width: 150)
-
                 Spacer(minLength: 0)
 
                 detailMetric(
@@ -717,12 +631,9 @@ private struct DayDetailStrip: View {
                     dimmed: true
                 )
 
-                if leftVisible {
-                    detailMetric(label: day.leftProvider.name.uppercased(), spokenLabel: day.leftProvider.name, value: day.leftTokens, color: day.leftProvider.color)
-                }
-
-                if rightVisible {
-                    detailMetric(label: day.rightProvider?.name.uppercased() ?? "", spokenLabel: day.rightProvider?.name, value: day.rightTokens, color: (day.rightProvider?.color ?? .clear))
+                ForEach(day.usage) { item in
+                    detailMetric(label: item.provider.name.uppercased(), spokenLabel: item.provider.name,
+                                 value: item.tokens, color: item.provider.color)
                 }
             }
         }
@@ -745,7 +656,7 @@ private struct DayDetailStrip: View {
                 .foregroundStyle(color.opacity(dimmed ? 0.70 : 0.82))
                 .lineLimit(1)
 
-            Text(OverviewView.formatExactTokens(value))
+            Text(OverviewContent.formatExactTokens(value))
                 .font(Typography.bodyNumber)
                 .foregroundStyle(.white.opacity(0.76))
                 .lineLimit(1)
@@ -753,13 +664,13 @@ private struct DayDetailStrip: View {
                 .allowsTightening(true)
         }
         .frame(width: 82, alignment: .trailing)
-        .help(L10n.tr("%@: %@ tokens", spokenLabel ?? label, OverviewView.formatExactTokens(value)))
+        .help(L10n.tr("%@: %@ tokens", spokenLabel ?? label, OverviewContent.formatExactTokens(value)))
     }
 
     private var accessibilityLabel: String {
-        var text = "\(Self.detailFormatter.string(from: day.date)), all tokens. Total \(OverviewView.formatTokensSpoken(day.totalTokens)), \(day.leftProvider.name) \(OverviewView.formatTokensSpoken(day.leftTokens))"
-        if let right = day.rightProvider { text += ", \(right.name) \(OverviewView.formatTokensSpoken(day.rightTokens))" }
-        return text
+        "\(Self.detailFormatter.string(from: day.date)), all tokens. Total \(OverviewContent.formatTokensSpoken(day.totalTokens)), " + day.usage.map {
+            "\($0.provider.name) \(OverviewContent.formatTokensSpoken($0.tokens))"
+        }.joined(separator: ", ")
     }
 
     private static let detailFormatter: DateFormatter = {
@@ -771,100 +682,43 @@ private struct DayDetailStrip: View {
     }()
 }
 
-private struct TokenSplitMeter: View {
-    let leftProvider: IslandProvider
-    let rightProvider: IslandProvider?
-    let leftTokens: Int
-    let rightTokens: Int
-
-    private var total: Int { leftTokens + rightTokens }
-
-    var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(.white.opacity(0.055))
-
-                if total > 0 {
-                    HStack(spacing: 0) {
-                        if leftTokens > 0 {
-                            Rectangle()
-                                .fill(leftProvider.color.opacity(0.78))
-                                .frame(width: segmentWidth(leftTokens, in: geo.size.width))
-                        }
-
-                        if rightTokens > 0 {
-                            Rectangle()
-                                .fill((rightProvider?.color ?? .clear).opacity(0.78))
-                                .frame(width: segmentWidth(rightTokens, in: geo.size.width))
-                        }
-                    }
-                    .clipShape(Capsule())
-                }
-            }
-        }
-        .frame(height: 5)
-    }
-
-    private func segmentWidth(_ value: Int, in width: CGFloat) -> CGFloat {
-        guard total > 0 else { return 0 }
-        return max(3, width * CGFloat(Double(value) / Double(total)))
-    }
-}
-
 private struct ProviderSplitRow: View {
-    let leftProvider: IslandProvider
-    let rightProvider: IslandProvider?
-    let leftTokens: Int
-    let rightTokens: Int
-    let leftVisible: Bool
-    let rightVisible: Bool
-
-    private var total: Int { leftTokens + rightTokens }
-
-    private var visibleCount: Int {
-        (leftVisible ? 1 : 0) + (rightVisible ? 1 : 0)
-    }
+    let usage: [ProviderTokenUsage]
+    @Binding var selectedProvider: IslandProvider?
+    private var total: Int { usage.reduce(0) { $0 + $1.tokens } }
 
     var body: some View {
-        if visibleCount == 0 {
-            Text(L10n.tr("Providers Hidden"))
-                .font(Typography.caption)
-                .foregroundStyle(.white.opacity(0.36))
-        } else {
-            HStack(spacing: 8) {
-                if leftVisible {
-                    splitChip(
-                        color: leftProvider.color,
-                        label: leftProvider.name,
-                        value: leftTokens
-                    )
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 3) {
+            ForEach(usage) { item in
+                Button {
+                    selectedProvider = selectedProvider == item.provider ? nil : item.provider
+                } label: {
+                    HStack(spacing: 4) {
+                        Circle().fill(item.provider.color).frame(width: 5, height: 5)
+                        Text("\(item.provider.name) \(share(item.tokens))")
+                            .font(Typography.caption)
+                            .foregroundStyle(.white.opacity(selectedProvider == item.provider ? 0.95 : 0.46))
+                            .lineLimit(1)
+                    }
+                    .padding(.vertical, 3)
+                    .padding(.horizontal, 4)
+                    .background(selectedProvider == item.provider ? item.provider.color.opacity(0.18) : .clear,
+                                in: RoundedRectangle(cornerRadius: 4))
+                    .contentShape(Rectangle())
                 }
-                if rightVisible {
-                    splitChip(
-                        color: (rightProvider?.color ?? .clear),
-                        label: rightProvider?.name ?? "",
-                        value: rightTokens
-                    )
-                }
+                .buttonStyle(.plain)
+                .help(selectedProvider == item.provider ? "Show all providers" : "Show only \(item.provider.name)")
+                .accessibilityLabel("\(item.provider.name), \(share(item.tokens)) of all tokens")
+                .accessibilityAddTraits(selectedProvider == item.provider ? .isSelected : [])
             }
         }
-    }
-
-    private func splitChip(color: Color, label: String, value: Int) -> some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(color)
-                .frame(width: 5, height: 5)
-            Text("\(label) \(share(value))")
-                .font(Typography.caption)
-                .foregroundStyle(.white.opacity(0.46))
-                .lineLimit(1)
-        }
+        .frame(width: 230)
     }
 
     private func share(_ value: Int) -> String {
         guard total > 0 else { return "0%" }
-        return "\(Int((Double(value) / Double(total) * 100).rounded()))%"
+        let percent = Double(value) / Double(total) * 100
+        if value > 0 && percent < 1 { return "<1%" }
+        return "\(Int(percent.rounded()))%"
     }
 }

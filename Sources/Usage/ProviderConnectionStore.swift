@@ -88,7 +88,11 @@ final class ProviderConnectionStore: ObservableObject {
                 }
             }
             do {
-                let fetched = try await (provider == .grok ? GrokConnection.fetch() : AntigravityConnection.fetch())
+                let fetched = try await ProviderSessionRecovery.fetch {
+                    try await (provider == .grok ? GrokConnection.fetch() : AntigravityConnection.fetch())
+                } renew: {
+                    try await ProviderSessionRecovery.renew(provider == .grok ? "grok" : "agy")
+                }
                 guard !Task.isCancelled else { return }
                 snapshots[provider] = fetched
                 if fetched.accountID != nil || fetched.account != nil {
@@ -103,7 +107,7 @@ final class ProviderConnectionStore: ObservableObject {
                 var needsLogin = false
                 switch error {
                 case ProviderConnectionError.signIn, ProviderConnectionError.expired,
-                     ProviderConnectionError.http(401), ProviderConnectionError.http(403):
+                     ProviderConnectionError.http(401):
                     needsLogin = true
                     message = provider == .grok ? "Run grok login, then refresh the connection."
                         : "Open agy CLI to restore your session, then refresh the connection."
@@ -122,10 +126,7 @@ final class ProviderConnectionStore: ObservableObject {
     func connect(_ provider: IslandProvider) {
         guard provider == .grok || provider == .antigravity else { return }
         let command = provider == .grok ? "grok" : "agy"
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        let paths = ["\(home)/.local/bin/\(command)", "/opt/homebrew/bin/\(command)", "/usr/local/bin/\(command)"]
-            + (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":").map { "\($0)/\(command)" }
-        guard let binary = paths.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else {
+        guard let binary = ProviderSessionRecovery.binary(command) else {
             let installURL = provider == .grok ? "https://grok.com/build" : "https://antigravity.google/docs/cli/install/"
             if let url = URL(string: installURL) { NSWorkspace.shared.open(url) }
             return

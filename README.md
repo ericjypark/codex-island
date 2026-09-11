@@ -43,7 +43,9 @@ providers' own usage endpoints.
   **Cost**, and **Overview**. Cost estimates today and month-to-date spend and
   token throughput from local Claude Code, Codex CLI, and OpenCode session
   data. Overview renders the current year's activity as a contribution-style
-  calendar.
+  calendar using logs from every supported provider, regardless of which
+  providers are selected for the usage pills. Click a provider in the calendar
+  legend to filter its history; click it again to show all providers.
 - **Used or remaining quota.** Display provider windows as usage consumed or
   quota remaining.
 - **Approaching-limit alerts.** Optional warning and critical thresholds tint
@@ -189,7 +191,13 @@ runs as an accessory app with no Dock icon and no menu bar.
 - **Display:** used/remaining percentages, Usage and Cost visualization styles,
   target display, and island width on non-notched screens.
 - **Providers:** Claude/Codex visibility and status, token-counting mode, and a
-  manual refresh for local cost data.
+  manual refresh for local cost data. Cost estimates can be displayed in USD,
+  CNY, EUR, GBP, JPY, KRW, CAD, AUD, or CHF. Conversion uses a cached daily
+  reference rate; the underlying model prices and cost calculations remain in
+  USD. Like model pricing, exchange rates load from cache at startup and are
+  checked every six hours, fetching when at least 24 hours old. Refresh also
+  updates exchange rates. Currency selection uses the shared cached table;
+  offline, the last valid table is retained (or USD is shown until one is available).
 
 Preferences are stored in `UserDefaults` under `MacIsland.*` keys (Sparkle
 manages its own `SU*` update keys, and Launch at Login uses

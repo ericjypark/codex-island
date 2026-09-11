@@ -50,6 +50,7 @@ struct CostTile: View {
     @ObservedObject private var usageStore = UsageStore.shared
     @ObservedObject private var connections = ProviderConnectionStore.shared
     @ObservedObject private var tokenMode = TokenCountModeStore.shared
+    @ObservedObject private var currencyStore = CurrencyStore.shared
 
     /// Locked to match `ChartTile.tileHeight` so swipe transitions don't
     /// reflow the panel.
@@ -116,7 +117,7 @@ struct CostTile: View {
         }
         switch stylePref.style {
         case .dollar:
-            return "$\(formattedDollarsCompact)"
+            return currencyStore.formatted(usd: window.dollars)
         case .multi:
             let plan = formatBarDollars(planAmount)
             let you = formatBarDollars(window.dollars)
@@ -124,7 +125,7 @@ struct CostTile: View {
         case .tokens:
             return L10n.tr("%@%@ tokens", tokensValue, tokensUnit)
         case .spark:
-            return L10n.tr("$%@ cumulative", formattedDollarsCompact)
+            return L10n.tr("%@ cumulative", currencyStore.formatted(usd: window.dollars))
         }
     }
 
@@ -139,10 +140,15 @@ struct CostTile: View {
 
     private var dollarHero: some View {
         HStack(alignment: .firstTextBaseline, spacing: 1) {
-            Text("$")
+            Text(currencyStore.displaySymbol)
                 .font(Typography.unit)
                 .foregroundStyle(.white.opacity(0.4))
-            CountUpDollar(target: window.dollars, color: color, glowOpacity: glowOpacity)
+            CountUpDollar(
+                target: currencyStore.converted(usd: window.dollars),
+                wholeUnits: currencyStore.displayUsesWholeUnits,
+                color: color,
+                glowOpacity: glowOpacity
+            )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -264,7 +270,7 @@ struct CostTile: View {
             // sparkline gets the full cell but the user still has the
             // numeric anchor they can read at a glance.
             HStack(alignment: .firstTextBaseline, spacing: 1) {
-                Text("$")
+                Text(currencyStore.displaySymbol)
                     .font(Typography.micro)
                     .foregroundStyle(.white.opacity(0.5))
                 Text(formattedDollarsCompact)
@@ -346,8 +352,7 @@ struct CostTile: View {
     }
 
     private func formatBarDollars(_ v: Double) -> String {
-        if v < 10 { return String(format: "$%.2f", v) }
-        return String(format: "$%.0f", v)
+        currencyStore.formatted(usd: v)
     }
 
     /// Honors the user's TokenCountMode setting: `.all` shows wire-level
@@ -379,9 +384,7 @@ struct CostTile: View {
     }
 
     private var formattedDollarsCompact: String {
-        let v = window.dollars
-        if v < 100 { return String(format: "%.2f", v) }
-        return String(format: "%.0f", v)
+        currencyStore.formatted(usd: window.dollars, includesSymbol: false)
     }
 
     /// Glow intensity scales softly with spend so a quiet day stays calm

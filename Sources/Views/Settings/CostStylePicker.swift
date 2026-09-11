@@ -6,12 +6,15 @@ import SwiftUI
 /// also updates the `CostStylePref.shared` singleton via the binding.
 struct CostStylePicker: View {
     @Binding var selected: CostStyle
+    @ObservedObject private var currencyStore = CurrencyStore.shared
 
     var body: some View {
         HStack(spacing: 6) {
             ForEach(CostStyle.allCases, id: \.self) { style in
                 StyleTile(
-                    displayLabel: style.label,
+                    displayLabel: style == .dollar
+                        ? currencyStore.displayCurrency.rawValue
+                        : style.label,
                     isOn: style == selected,
                     action: {
                         selected = style
@@ -32,10 +35,10 @@ struct CostStylePicker: View {
         switch style {
         case .dollar:
             HStack(alignment: .firstTextBaseline, spacing: 1) {
-                Text("$")
+                Text(currencyStore.displaySymbol)
                     .font(Typography.micro)
                     .foregroundStyle(.white.opacity(0.5))
-                Text("87")
+                Text(currencyStore.formatted(usd: 87, includesSymbol: false))
                     .font(Typography.previewNumber)
                     .foregroundStyle(claude)
             }

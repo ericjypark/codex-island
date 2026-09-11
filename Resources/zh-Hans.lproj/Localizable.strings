@@ -20,6 +20,7 @@
 "1 reset available" = "1 个重置可用";
 "⚠ %d unpriced" = "⚠ %d 个模型缺价格";
 "$%@ cumulative" = "$%@ 累计";
+"%@ cumulative" = "%@ 累计";
 "5h" = "5小时";
 "All tokens" = "全部 token";
 "All Tokens" = "全部 Token";
@@ -49,6 +50,10 @@
 "CodexIsland panel" = "CodexIsland 面板";
 "Compact" = "紧凑";
 "Cost" = "成本";
+"Display currency" = "显示货币";
+"Rates by ExchangeRate-API" = "汇率由 ExchangeRate-API 提供";
+"updating exchange rate…" = "正在更新汇率…";
+"last scan %@ · estimated %@" = "上次扫描 %1$@ · %2$@ 估算";
 "Cost view" = "成本视图";
 "Counts everything — input, output, and cache. Mirrors ccusage." = "统计所有 token：输入、输出和缓存；与 ccusage 一致。";
 "Crit" = "危急";

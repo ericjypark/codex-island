@@ -20,6 +20,7 @@
 "1 reset available" = "1 reset available";
 "⚠ %d unpriced" = "⚠ %d unpriced";
 "$%@ cumulative" = "$%@ cumulative";
+"%@ cumulative" = "%@ cumulative";
 "5h" = "5h";
 "All tokens" = "All tokens";
 "All Tokens" = "All Tokens";
@@ -49,6 +50,10 @@
 "CodexIsland panel" = "CodexIsland panel";
 "Compact" = "Compact";
 "Cost" = "Cost";
+"Display currency" = "Display currency";
+"Rates by ExchangeRate-API" = "Rates by ExchangeRate-API";
+"updating exchange rate…" = "updating exchange rate…";
+"last scan %@ · estimated %@" = "last scan %1$@ · estimated %2$@";
 "Cost view" = "Cost view";
 "Counts everything — input, output, and cache. Mirrors ccusage." = "Counts everything — input, output, and cache. Mirrors ccusage.";
 "Crit" = "Crit";

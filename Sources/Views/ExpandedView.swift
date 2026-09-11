@@ -17,6 +17,7 @@ struct ExpandedView: View {
             PagedContent(model: model)
             PanelFooter(model: model)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }

@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Three-page horizontal carousel: live usage (page 0), cost (page 1), and
 /// history overview (page 2). Each page renders at the full content width;
-/// the HStack slides via `.offset` based on
+/// the layout slides based on
 /// `ScreenPref.screen`. Horizontal movement gets its own drawer-style curve
 /// so page navigation does not inherit the island shape's spring bounce.
 ///
@@ -20,57 +20,52 @@ struct PagedContent: View {
     @State private var bumpOffset: CGFloat = 0
 
     var body: some View {
-        GeometryReader { geo in
-            let pageWidth = geo.size.width
-            HStack(alignment: .top, spacing: 0) {
-                UsageView()
-                    .frame(width: pageWidth, height: geo.size.height, alignment: .top)
-                    .accessibilityHidden(screenPref.screen != .usage)
-                CostView()
-                    .frame(width: pageWidth, height: geo.size.height, alignment: .top)
-                    .accessibilityHidden(screenPref.screen != .cost)
-                OverviewView(model: model)
-                    .frame(width: pageWidth, height: geo.size.height, alignment: .top)
-                    .accessibilityHidden(screenPref.screen != .overview)
+        ContentSizedPageLayout(selectedPage: screenPref.screen.pageIndex,
+                               position: CGFloat(screenPref.screen.pageIndex),
+                               feedbackOffset: peekOffset + bumpOffset) {
+            UsageView()
+                .padding(.vertical, 24)
+                .accessibilityHidden(screenPref.screen != .usage)
+            CostView()
+                .padding(.vertical, 24)
+                .accessibilityHidden(screenPref.screen != .cost)
+            OverviewView()
+                .accessibilityHidden(screenPref.screen != .overview)
+        }
+        .clipped()
+        .onAppear {
+            // Discoverability cue, not decorative motion — fires even
+            // when @Environment(\.accessibilityReduceMotion) is on,
+            // because without it reduce-motion users have no path to
+            // learn the second screen exists. The motion is brief
+            // (~1s total) and slow-eased.
+            guard !screenPref.hasSwipedScreen,
+                  screenPref.screen == .usage
+            else { return }
+            schedulePeek()
+        }
+        .onChange(of: screenPref.hasSwipedScreen) { swiped in
+            // User swiped mid-peek: collapse the peek smoothly so the
+            // composite offset doesn't jump when the real screen
+            // transition fires alongside it.
+            if swiped, peekOffset != 0 {
+                withAnimation(.pageSwipe) { peekOffset = 0 }
             }
-            .frame(width: pageWidth, height: geo.size.height, alignment: .topLeading)
-            .offset(x: (-pageWidth * CGFloat(screenPref.screen.pageIndex)) + peekOffset + bumpOffset)
-            .animation(.pageSwipe, value: screenPref.screen)
-            .clipped()
-            .onAppear {
-                // Discoverability cue, not decorative motion — fires even
-                // when @Environment(\.accessibilityReduceMotion) is on,
-                // because without it reduce-motion users have no path to
-                // learn the second screen exists. The motion is brief
-                // (~1s total) and slow-eased.
-                guard !screenPref.hasSwipedScreen,
-                      screenPref.screen == .usage
-                else { return }
-                schedulePeek()
+        }
+        .onChange(of: model.edgeBump) { bump in
+            // Rubber-band at the carousel ends: an over-swipe nudges
+            // the row 12pt toward the attempted direction and springs
+            // back, so the dead-end gesture reads as "you're at the
+            // edge" instead of a dropped input. The bumpOffset == 0
+            // guard swallows Shift+wheel tick spam while a bump is
+            // already in flight.
+            guard let bump, bumpOffset == 0 else { return }
+            withAnimation(.easeOut(duration: 0.10)) {
+                bumpOffset = bump.direction > 0 ? -12 : 12
             }
-            .onChange(of: screenPref.hasSwipedScreen) { swiped in
-                // User swiped mid-peek: collapse the peek smoothly so the
-                // composite offset doesn't jump when the real screen
-                // transition fires alongside it.
-                if swiped, peekOffset != 0 {
-                    withAnimation(.pageSwipe) { peekOffset = 0 }
-                }
-            }
-            .onChange(of: model.edgeBump) { bump in
-                // Rubber-band at the carousel ends: an over-swipe nudges
-                // the row 12pt toward the attempted direction and springs
-                // back, so the dead-end gesture reads as "you're at the
-                // edge" instead of a dropped input. The bumpOffset == 0
-                // guard swallows Shift+wheel tick spam while a bump is
-                // already in flight.
-                guard let bump, bumpOffset == 0 else { return }
-                withAnimation(.easeOut(duration: 0.10)) {
-                    bumpOffset = bump.direction > 0 ? -12 : 12
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
-                    withAnimation(.spring(response: 0.32, dampingFraction: 0.62)) {
-                        bumpOffset = 0
-                    }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
+                withAnimation(.spring(response: 0.32, dampingFraction: 0.62)) {
+                    bumpOffset = 0
                 }
             }
         }

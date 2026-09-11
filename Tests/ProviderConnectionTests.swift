@@ -10,6 +10,21 @@ struct ProviderConnectionTests {
 
     @MainActor
     static func main() throws {
+        var unsubscribed = ConnectedUsage(limits: [
+            ConnectedLimit(id: "credits", label: "Credits", usedFraction: nil, resetAt: Date())
+        ], plan: " FREE ", updatedAt: Date())
+        expect(unsubscribed.hasNoActiveSubscription, "free account without a reading shows subscription state")
+        unsubscribed.limits[0] = ConnectedLimit(id: "credits", label: "Credits", usedFraction: 0, resetAt: nil)
+        expect(!unsubscribed.hasNoActiveSubscription, "real zero usage remains visible even on free plans")
+        unsubscribed.limits = []
+        unsubscribed.plan = "SuperGrok"
+        expect(!unsubscribed.hasNoActiveSubscription, "missing paid-plan data is not an inactive subscription")
+        unsubscribed.plan = nil
+        expect(!unsubscribed.hasNoActiveSubscription, "unknown plans are not treated as unsubscribed")
+        unsubscribed.plan = "free"
+        unsubscribed.needsLogin = true
+        expect(!unsubscribed.hasNoActiveSubscription, "sign-in failures take precedence over subscription state")
+        expect(!ConnectedUsage(plan: "free").hasNoActiveSubscription, "subscription state requires a successful fetch")
         let suite = "CodexIsland.ProviderTests.\(UUID().uuidString)"
         guard let defaults = UserDefaults(suiteName: suite) else { fatalError("Cannot create test defaults") }
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -66,7 +81,7 @@ struct ProviderConnectionTests {
         let unknown = try GrokConnection.parse(data(#"{"config":{"currentPeriod":{"end":"2099-01-01T00:00:00Z"}}}"#))
         expect(unknown.primary == nil && unknown.message != nil, "period-only billing does not invent zero")
         let ratio = try GrokConnection.parse(data(#"{"config":{"onDemandUsed":{"val":25},"onDemandCap":{"val":100}}}"#))
-        expect(ratio.primary?.usedFraction == 0.25, "credit amount fallback is normalized")
+        expect(ratio.primary == nil, "extra spending cannot substitute for subscription usage")
         let invalid = try GrokConnection.parse(data(#"{"config":{"creditUsagePercent":-10}}"#))
         expect(invalid.primary == nil, "negative quota is not a reading")
 

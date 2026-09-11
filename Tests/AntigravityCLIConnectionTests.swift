@@ -17,7 +17,8 @@ struct AntigravityCLIConnectionTests {
             default: fatalError("Unexpected endpoint")
             }
         }
-        precondition(requests.count == 2 && requests.allSatisfy { $0.url?.host == "cloudcode-pa.googleapis.com" })
+        precondition(requests.count == 2 && requests.allSatisfy { $0.url?.host == "daily-cloudcode-pa.googleapis.com" },
+                     "Both requests must use agy's backend to avoid reporting an unrelated, unused quota")
         precondition(requests.allSatisfy { $0.value(forHTTPHeaderField: "Authorization") == "Bearer fixture-only" })
         precondition(usage.limits.count == 2 && usage.accountID == "fixture-project" && usage.plan == "AI Pro")
         precondition(usage.limits[1].kind == .session && usage.limits[1].usedFraction == 0.25)

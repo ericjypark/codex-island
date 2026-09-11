@@ -22,11 +22,6 @@ struct IslandRootView: View {
             // with the spring for main-thread budget and showing up as
             // hover-spring jank.
             ZStack {
-                GlowLayer(
-                    isExpanded: model.state == .expanded,
-                    hovering: hovering
-                )
-
                 if model.state == .expanded {
                     ExpandedView(model: model)
                         .opacity(contentVisible ? 1 : 0)
@@ -36,10 +31,20 @@ struct IslandRootView: View {
                         // content fully fades before the shape shrinks.
                         .offset(y: contentVisible ? 0 : -8)
                         .allowsHitTesting(contentVisible)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background {
+                            GeometryReader { geometry in
+                                Color.clear.preference(key: ExpandedHeightKey.self, value: geometry.size.height)
+                            }
+                        }
+                } else {
+                    Color.clear.frame(height: model.notch.height)
                 }
             }
-            .frame(width: model.size.width, height: model.size.height)
+            .frame(width: model.size.width)
+            .onPreferenceChange(ExpandedHeightKey.self) { model.updateExpandedHeight($0) }
+            .background {
+                GlowLayer(isExpanded: model.state == .expanded, hovering: hovering)
+            }
             .background {
                     // Frosted halo. ultraThinMaterial is a backdrop blur of
                     // whatever desktop content is behind the window. Lives
@@ -563,5 +568,12 @@ private struct LoadingSweep: View {
                     .blur(radius: 3)
             }
         }
+    }
+}
+
+private struct ExpandedHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }

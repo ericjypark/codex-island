@@ -167,6 +167,7 @@ struct PerModelBreakdown: View {
 
     let provider: AlertEngine.Provider
     let metric: Metric
+    @ObservedObject private var currencyStore = CurrencyStore.shared
 
     @ObservedObject private var costStore = CostStore.shared
 
@@ -207,7 +208,7 @@ struct PerModelBreakdown: View {
                             displayName: row.displayName,
                             recentAbsolute: row.recentAbsolute(metric: metric),
                             weekAbsolute: row.weekAbsolute(metric: metric),
-                            trailingValue: row.trailingValue(metric: metric),
+                            trailingValue: trailingValue(for: row),
                             color: color,
                             weight: perModelRowWeights[min(idx, perModelRowWeights.count - 1)]
                         )
@@ -215,6 +216,15 @@ struct PerModelBreakdown: View {
                 }
                 Spacer(minLength: 0)
             }
+        }
+    }
+
+    private func trailingValue(for row: JoinedModelRow) -> String {
+        switch metric {
+        case .tokens:
+            return row.trailingValue(metric: metric)
+        case .dollars:
+            return currencyStore.formatted(usd: row.week.dollars)
         }
     }
 

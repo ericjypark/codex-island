@@ -181,13 +181,26 @@ struct UsageChartsRow: View {
     let seed: Int
     let metrics: [UsageChartMetric]
 
+    /// Ring is the only style that draws a fixed-size gauge instead of
+    /// stretching to the tile width. Equal tiles center each ring in its own
+    /// half of the column, which leaves the gap between the two rings about
+    /// twice the gaps at the column edges. Lay the rings against equal
+    /// spacers instead so all three gaps match. A window with no reading
+    /// falls back to NoReadingChart, which does stretch, so it keeps tiles.
+    private var ringsHugContent: Bool {
+        style == .ring && metrics.allSatisfy { $0.window.hasReading }
+    }
+
     var body: some View {
-        HStack(spacing: 18) {
+        HStack(spacing: ringsHugContent ? 0 : 18) {
             ForEach(Array(metrics.enumerated()), id: \.element.id) { index, metric in
+                if ringsHugContent { Spacer(minLength: 18) }
                 ChartTile(style: style, color: color, labelKey: metric.label,
                           window: metric.window, seed: seed + index, historyKey: metric.historyKey,
                           centered: metrics.count == 1)
+                    .frame(maxWidth: ringsHugContent ? nil : .infinity)
             }
+            if ringsHugContent { Spacer(minLength: 18) }
         }
         .frame(maxWidth: metrics.count == 1 ? (style == .numeric ? 180 : 240) : .infinity)
         .frame(maxWidth: .infinity, alignment: .center)
@@ -240,7 +253,9 @@ struct ChartTile: View {
         // The blur masks the geometric mismatch between Ring and Bar so the
         // crossfade reads as one morph instead of two stacked objects.
         .transition(.chartSwap.animation(.chartSwap))
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: centered ? .top : .topLeading)
+        // Width is decided by UsageChartsRow: tiled styles get an infinite
+        // max there, rings hug their content so the row can space them.
+        .frame(maxHeight: .infinity, alignment: .center)
         .frame(height: Self.tileHeight)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
