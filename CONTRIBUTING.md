@@ -26,10 +26,10 @@ No Xcode project, no SwiftPM. Just `swiftc Sources/**/*.swift`.
 
 ## Pull request checks and reviews
 
-Every pull request runs the Swift regression suite, builds the universal macOS
-app, and validates the GitHub Actions workflows. These checks run again after
+Every pull request runs the Swift regression suite, builds and smoke-launches
+the universal macOS app, and validates the GitHub Actions workflows. These checks run again after
 new commits and also run on `main`. Forks use the same checks without repository
-secrets. Run `bash scripts/run-tests.sh` and `./build.sh` locally before opening
+secrets. Run `bash scripts/run-tests.sh` and `./scripts/verify.sh` locally before opening
 a PR; workflow edits can be checked with `actionlint`.
 
 Codex reviews pull requests through the GitHub integration and follows the

@@ -42,5 +42,5 @@ jobs:
       - name: Run Swift regression tests
         run: bash scripts/run-tests.sh
 
-      - name: Build universal macOS app
-        run: ./build.sh
+      - name: Build and smoke-launch universal macOS app
+        run: ./scripts/verify.sh
