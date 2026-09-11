@@ -51,10 +51,10 @@ providers' own usage endpoints.
   in USD front and center, with a flowing cumulative chart and provider
   amounts, or spotlight your token count. Card colors are earned: White below
   $1K / 100M tokens, Black from $1K / 100M, and Blue from $10K / 1B, using the
-  selected metric. Pick **Last 7 days**, **This month**, **Last 3 months**, **This year**,
-  or **All time**. Last 7 days is the default and includes today plus the previous
-  six days. Last 3 months is a rolling calendar
-  window ending today. Month and year run through today; All time reads the oldest
+  selected metric. Pick **Last 7 days**, **Last 30 days**, **Last 3 months**, **This year**,
+  or **All time**. Last 7 days is the default. The 7-day and 30-day ranges include
+  today plus the previous 6 or 29 days. Last 3 months is a rolling calendar
+  window ending today. This year runs through today; All time reads the oldest
   available local usage records on demand. Choose a feed / square / story format and optional
   signature, then share the image and caption
   through the macOS share menu. Use **Actual size** for a closer look and the

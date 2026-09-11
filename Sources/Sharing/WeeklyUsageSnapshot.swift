@@ -30,7 +30,9 @@ struct WeeklyValueMilestone {
     func headline(for period: WeeklyCardPeriod) -> String {
         switch period {
         case .lastSevenDays: return headline
-        case .thisMonth: return headline.replacingOccurrences(of: "week", with: "month")
+        case .lastThirtyDays:
+            return minimumDollars >= 1_000_000_000 ? "Billions. 30 days."
+                : headline.replacingOccurrences(of: "-figure week.", with: " figures. 30 days.")
         case .lastThreeMonths:
             return minimumDollars >= 1_000_000_000 ? "Billions. 3 months."
                 : headline.replacingOccurrences(of: "-figure week.", with: " figures. 3 months.")
@@ -43,13 +45,13 @@ struct WeeklyValueMilestone {
 }
 
 enum WeeklyCardPeriod: String, CaseIterable, Identifiable {
-    case lastSevenDays, thisMonth, lastThreeMonths, thisYear, allTime
+    case lastSevenDays, lastThirtyDays, lastThreeMonths, thisYear, allTime
 
     var id: String { rawValue }
     var title: String {
         switch self {
         case .lastSevenDays: return "Last 7 days"
-        case .thisMonth: return "This month"
+        case .lastThirtyDays: return "Last 30 days"
         case .lastThreeMonths: return "Last 3 months"
         case .thisYear: return "This year"
         case .allTime: return "All time"
@@ -59,7 +61,7 @@ enum WeeklyCardPeriod: String, CaseIterable, Identifiable {
     var tokenHeadline: String {
         switch self {
         case .lastSevenDays: return "My week with AI."
-        case .thisMonth: return "My month with AI."
+        case .lastThirtyDays: return "30 days with AI."
         case .lastThreeMonths: return "Three months with AI."
         case .thisYear: return "My year with AI."
         case .allTime: return "My AI journey."
@@ -69,7 +71,7 @@ enum WeeklyCardPeriod: String, CaseIterable, Identifiable {
     var valueQualifier: String {
         switch self {
         case .lastSevenDays: return "In just 7 days."
-        case .thisMonth: return "This month so far."
+        case .lastThirtyDays: return "In just 30 days."
         case .lastThreeMonths: return "In just 3 months."
         case .thisYear: return "This year so far."
         case .allTime: return "All time."
@@ -79,7 +81,7 @@ enum WeeklyCardPeriod: String, CaseIterable, Identifiable {
     var tokenCallToAction: String {
         switch self {
         case .lastSevenDays: return "Your week. Your card."
-        case .thisMonth: return "Your month. Your card."
+        case .lastThirtyDays: return "Your 30 days. Your card."
         case .lastThreeMonths: return "Your AI. Your card."
         case .thisYear: return "Your year. Your card."
         case .allTime: return "Your AI. Your card."
@@ -93,8 +95,8 @@ enum WeeklyCardPeriod: String, CaseIterable, Identifiable {
         switch self {
         case .lastSevenDays:
             start = calendar.date(byAdding: .day, value: -6, to: today) ?? today
-        case .thisMonth:
-            start = calendar.dateInterval(of: .month, for: today)?.start ?? today
+        case .lastThirtyDays:
+            start = calendar.date(byAdding: .day, value: -29, to: today) ?? today
         case .lastThreeMonths:
             start = calendar.date(byAdding: .month, value: -3, to: end) ?? today
         case .thisYear:
@@ -107,7 +109,7 @@ enum WeeklyCardPeriod: String, CaseIterable, Identifiable {
 
     func needsExtendedHistory(now: Date, calendar: Calendar) -> Bool {
         if self == .allTime { return true }
-        guard self == .lastThreeMonths else { return false }
+        guard self == .lastThirtyDays || self == .lastThreeMonths else { return false }
         let yearStart = calendar.dateInterval(of: .year, for: now)?.start ?? now
         return interval(now: now, calendar: calendar).start < yearStart
     }
@@ -147,13 +149,18 @@ struct WeeklyUsageSnapshot {
     var totalTokens: Int { providers.reduce(0) { $0 + $1.tokens } }
     var totalDollars: Double { providers.reduce(0) { $0 + $1.dollars } }
     var valueMilestone: WeeklyValueMilestone? { .earned(dollars: totalDollars) }
-    var valueHeadline: String { valueMilestone?.headline(for: period) ?? "My AI tab." }
-    var valueChallenge: String { valueMilestone == nil ? "What's your AI tab?" : "Can you top this?" }
+    var valueHeadline: String { valueMilestone?.headline(for: period) ?? period.tokenHeadline }
+    var valueChallenge: String { valueMilestone == nil ? "What does yours look like?" : "Can you top this?" }
     var hasPartialPricing: Bool { providers.contains { $0.unpricedTokens > 0 } }
     var hasRecoveredHistory: Bool { recoveredTokens > 0 }
     var hasPricedUsage: Bool { providers.contains { $0.tokens > $0.unpricedTokens } }
     var valueSuffix: String { hasPartialPricing || hasPartialRecords ? "+" : "" }
     var activeDays: Int { days.filter { $0.total > 0 }.count }
+    var activityLabel: String { "\(activeDays) active \(activeDays == 1 ? "day" : "days")" }
+    var tokenLabel: String {
+        let count = Self.compactTokens(totalTokens)
+        return "\(count.value)\(count.unit) \(totalTokens == 1 ? "token" : "tokens")"
+    }
     var durationLabel: String { "\(days.count) \(days.count == 1 ? "day" : "days")" }
     var peakDay: Day? { days.filter { $0.total > 0 }.max { $0.total < $1.total } }
 
@@ -209,6 +216,7 @@ struct WeeklyUsageSnapshot {
 
     var dateLabel: String {
         let end = days.last?.date ?? interval.start
+        if days.count == 1 { return dateText(end, format: "MMM d, yyyy") }
         let sameYear = calendar.component(.year, from: interval.start) == calendar.component(.year, from: end)
         let startText = dateText(interval.start, format: sameYear ? "MMM d" : "MMM d, yyyy")
         return "\(startText) – \(dateText(end, format: "MMM d, yyyy"))"
@@ -263,7 +271,6 @@ struct WeeklyUsageSnapshot {
     }
 
     func shareText(metric: WeeklyCardMetric = .tokens) -> String {
-        let count = Self.compactTokens(totalTokens)
         let stack = providers.map(\.provider.name).joined(separator: " + ")
         let demoLabel = period == .lastSevenDays ? "Demo week" : "Demo \(period.title.lowercased())"
         let qualifier = isDemo ? demoLabel : String(period.tokenHeadline.dropLast())
@@ -273,17 +280,18 @@ struct WeeklyUsageSnapshot {
             let pricing = hasPartialPricing ? " Some tokens have no known price." : ""
             let timeframe = period == .lastThreeMonths ? "over the last 3 months" : "in \(durationLabel)"
             return """
-            \(isDemo ? "Demo: " : "")\(valueHeadline) \(Self.money(totalDollars))\(valueSuffix) \(timeframe).
-            \(tier(for: metric).title) card · \(count.value)\(count.unit) tokens incl. cache · \(stack)
+            \(isDemo ? "Demo: " : "")\(valueHeadline) My AI usage: \(Self.money(totalDollars))\(valueSuffix) at API rates \(timeframe).
+            \(tokenLabel) · \(activityLabel) · \(stack)
+            \(tier(for: metric).title) card
             \(dateLabel)
-            API-rate estimate (USD), not a bill.\(caveat)\(pricing)
+            API-rate estimate (USD), not a bill. Tokens include cache.\(caveat)\(pricing)
 
             \(valueChallenge)
             https://codexisland.com
             """
         }
         return """
-        \(qualifier): \(count.value)\(count.unit) tokens. \(activeDays)/\(days.count) active days.
+        \(qualifier): \(tokenLabel). \(activityLabel) out of \(days.count).
         \(tier(for: metric).title) card · \(stack)
         \(dateLabel) · Includes cache tokens.\(caveat)
 

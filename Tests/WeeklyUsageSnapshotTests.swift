@@ -53,13 +53,48 @@ struct WeeklyUsageSnapshotTests {
         expect(springCard.days.allSatisfy { calendar.component(.hour, from: $0.date) == 0 },
                "day labels stay at midnight across DST")
 
-        let month = WeeklyCardPeriod.thisMonth.interval(now: now, calendar: calendar)
+        let month = WeeklyCardPeriod.lastThirtyDays.interval(now: now, calendar: calendar)
         let year = WeeklyCardPeriod.thisYear.interval(now: now, calendar: calendar)
-        expect(month.start == date("2026-09-01 00:00") && month.end == date("2026-09-11 00:00"),
-               "this month begins on the first and ends after today")
+        expect(month.start == date("2026-08-12 00:00") && month.end == date("2026-09-11 00:00"),
+               "last thirty days includes today and the 29 preceding local dates")
+        let nextThirtyDays = WeeklyCardPeriod.lastThirtyDays.interval(now: date("2026-09-11 00:00"), calendar: calendar)
+        expect(nextThirtyDays.start == date("2026-08-13 00:00") && nextThirtyDays.end == date("2026-09-12 00:00"),
+               "the thirty-day window advances one local date at midnight")
+        let firstOfMonth = WeeklyCardPeriod.lastThirtyDays.interval(now: date("2026-09-01 12:00"), calendar: calendar)
+        expect(firstOfMonth.start == date("2026-08-03 00:00") && firstOfMonth.end == date("2026-09-02 00:00"),
+               "the first of a month still includes thirty days")
+        let leapThirtyDays = WeeklyCardPeriod.lastThirtyDays.interval(now: date("2024-03-01 12:00"), calendar: calendar)
+        let commonThirtyDays = WeeklyCardPeriod.lastThirtyDays.interval(now: date("2026-03-01 12:00"), calendar: calendar)
+        expect(leapThirtyDays.start == date("2024-02-01 00:00") && commonThirtyDays.start == date("2026-01-31 00:00"),
+               "thirty days is independent of February's length")
+        let springThirtyDays = WeeklyCardPeriod.lastThirtyDays.interval(now: date("2026-03-09 12:00"), calendar: calendar)
+        let fallThirtyDays = WeeklyCardPeriod.lastThirtyDays.interval(now: date("2026-11-02 12:00"), calendar: calendar)
+        expect(springThirtyDays.duration == 719 * 3600 && fallThirtyDays.duration == 721 * 3600,
+               "thirty local dates allow shorter and longer daylight-saving days")
+        let januaryThirtyDays = WeeklyCardPeriod.lastThirtyDays.interval(now: date("2026-01-10 12:00"), calendar: calendar)
+        expect(januaryThirtyDays.start == date("2025-12-12 00:00") && januaryThirtyDays.end == date("2026-01-11 00:00"),
+               "the thirty-day window includes December when viewed in January")
+        expect(WeeklyCardPeriod.lastThirtyDays.needsExtendedHistory(now: date("2026-01-29 12:00"), calendar: calendar)
+            && !WeeklyCardPeriod.lastThirtyDays.needsExtendedHistory(now: date("2026-01-30 12:00"), calendar: calendar),
+               "thirty-day cards load older records until all thirty days fit in the retained year")
+        let thirtyDayBounds = WeeklyUsageSnapshot.make(buckets: [.codex: [
+            DailyTokenBucket(dayStart: date("2026-08-11 00:00"), tokens: 999, billableTokens: 999, dollars: 999, unpricedTokens: 0),
+            DailyTokenBucket(dayStart: date("2026-08-12 00:00"), tokens: 10, billableTokens: 10, dollars: 1, unpricedTokens: 0),
+            DailyTokenBucket(dayStart: date("2026-09-10 00:00"), tokens: 20, billableTokens: 20, dollars: 2, unpricedTokens: 0),
+            DailyTokenBucket(dayStart: date("2026-09-11 00:00"), tokens: 999, billableTokens: 999, dollars: 999, unpricedTokens: 0)
+        ]], period: .lastThirtyDays, now: now, calendar: calendar)
+        expect(thirtyDayBounds.totalTokens == 30 && thirtyDayBounds.totalDollars == 3 && thirtyDayBounds.activeDays == 2,
+               "token and API totals include both local-date boundaries and exclude older and future dates")
+        expect(thirtyDayBounds.days.count == 30 && thirtyDayBounds.dateLabel == "Aug 12 – Sep 10, 2026"
+            && thirtyDayBounds.durationLabel == "30 days",
+               "headline dates and chart duration describe the same thirty-day window")
+        expect(thirtyDayBounds.shareText().contains("30 days with AI")
+            && thirtyDayBounds.shareText().contains("2 active days out of 30")
+            && thirtyDayBounds.shareText(metric: .apiValue).contains("in 30 days"),
+               "both sharing captions identify the rolling thirty-day period")
         expect(year.start == date("2026-01-01 00:00") && year.end == date("2026-09-11 00:00"),
                "this year begins January first and ends after today")
-        expect(WeeklyCardPeriod.allCases.map(\.title) == ["Last 7 days", "This month", "Last 3 months", "This year", "All time"],
+        expect(WeeklyCardPeriod.allCases.map(\.title) == ["Last 7 days", "Last 30 days", "Last 3 months", "This year", "All time"],
                "period selection contains exactly the five agreed ranges")
         expect(WeeklyUsageSnapshot.make(buckets: [:], now: now, calendar: calendar).interval == recent,
                "the default snapshot covers the rolling seven-day window")
@@ -89,10 +124,11 @@ struct WeeklyUsageSnapshotTests {
                                             now: date("2024-03-01 12:00"), calendar: calendar)
         expect(leap.days.count == 61 && leap.days.contains { $0.date == date("2024-02-29 00:00") },
                "year-to-date retains leap day")
-        let dstMonth = WeeklyUsageSnapshot.make(buckets: [:], period: .thisMonth,
+        let dstMonth = WeeklyUsageSnapshot.make(buckets: [:], period: .lastThirtyDays,
                                                 now: date("2026-03-09 12:00"), calendar: calendar)
-        expect(dstMonth.days.count == 9 && dstMonth.days.allSatisfy { calendar.component(.hour, from: $0.date) == 0 },
-               "month-to-date stays on local midnights across daylight saving")
+        expect(dstMonth.days.count == 30 && Set(dstMonth.days.map(\.date)).count == 30
+            && dstMonth.days.allSatisfy { calendar.component(.hour, from: $0.date) == 0 },
+               "thirty distinct daily buckets stay on local midnights across daylight saving")
         let longHistory: [IslandProvider: [DailyTokenBucket]] = [
             .claude: [bucket("2022-01-01 00:00", 0), bucket("2024-02-29 12:00", 100),
                       bucket("2025-12-31 12:00", 200), bucket("2026-01-01 00:00", 300),
@@ -101,14 +137,14 @@ struct WeeklyUsageSnapshotTests {
             .codex: [bucket("2026-09-05 00:00", 700)]
         ]
         let allTime = WeeklyUsageSnapshot.make(buckets: longHistory, period: .allTime, now: now, calendar: calendar)
-        let monthCard = WeeklyUsageSnapshot.make(buckets: longHistory, period: .thisMonth, now: now, calendar: calendar)
+        let monthCard = WeeklyUsageSnapshot.make(buckets: longHistory, period: .lastThirtyDays, now: now, calendar: calendar)
         let yearCard = WeeklyUsageSnapshot.make(buckets: longHistory, period: .thisYear, now: now, calendar: calendar)
         expect(allTime.interval.start == date("2024-02-29 00:00") && allTime.totalTokens == 2800,
                "all time starts at the oldest positive record and rejects future data")
         expect(allTime.days.last?.date == date("2026-09-10 00:00") && allTime.activeDays == 7,
                "all-time activity counts only days with usage")
-        expect(monthCard.days.count == 10 && monthCard.totalTokens == 1800 && monthCard.activeDays == 3,
-               "month totals exclude previous months and use the actual day count")
+        expect(monthCard.days.count == 30 && monthCard.totalTokens == 2200 && monthCard.activeDays == 4,
+               "thirty-day totals include the previous month and today's usage")
         expect(yearCard.days.count == 253 && yearCard.totalTokens == 2500,
                "year totals exclude prior years without losing January usage")
         let filteredHistory = WeeklyUsageSnapshot.make(buckets: longHistory, included: [.codex], period: .allTime,
@@ -132,9 +168,9 @@ struct WeeklyUsageSnapshotTests {
             expect(!card.shareText().contains("My week") && !card.shareText(metric: .apiValue).contains("in 7 days"),
                    "longer-period captions never describe a seven-day result")
         }
-        expect(monthCard.shareText().contains("3/10 active days") && yearCard.shareText().contains("My year with AI"),
+        expect(monthCard.shareText().contains("4 active days out of 30") && yearCard.shareText().contains("My year with AI"),
                "captions identify the selected range and active-day denominator")
-        expect(WeeklyValueMilestone.earned(dollars: 1000)?.headline(for: .thisMonth) == "Four-figure month."
+        expect(WeeklyValueMilestone.earned(dollars: 1000)?.headline(for: .lastThirtyDays) == "Four figures. 30 days."
             && WeeklyValueMilestone.earned(dollars: 1000)?.headline(for: .allTime) == "Four-figure total.",
                "earned money headlines identify the selected period")
         let historicalEvent = TokenEvent(provider: .codex, timestamp: date("2024-02-29 12:00"), model: "gpt-5",
@@ -261,7 +297,7 @@ struct WeeklyUsageSnapshotTests {
         }
         expect([Double.nan, .infinity, -1, 0, 99.99].allSatisfy { WeeklyValueMilestone.earned(dollars: $0) == nil },
                "invalid prices and amounts below the first threshold never earn a badge")
-        expect(priced.shareText(metric: .apiValue).hasPrefix("Four-figure week. $1,280.06 in 7 days."),
+        expect(priced.shareText(metric: .apiValue).hasPrefix("Four-figure week. My AI usage: $1,280.06 at API rates in 7 days."),
                "caption leads with the same earned title and amount as the image")
         var partialBuckets = pricedBuckets
         partialBuckets[.grok] = [DailyTokenBucket(dayStart: date("2026-09-06 00:00"), tokens: 500, billableTokens: 500,

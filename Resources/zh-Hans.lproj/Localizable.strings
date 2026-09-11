@@ -228,7 +228,7 @@
 "Open Claude Code and run /login." = "打开 Claude Code 并运行 /login。";
 
 "A fresh page for your week." = "新一周，从这里开始。";
-"Caption copied. Add it to your post." = "文案已复制，可添加到帖子中。";
+"Caption copied." = "文案已复制。";
 "Copy caption" = "复制文案";
 "Copy image" = "复制图片";
 "Could not copy the caption. Try again." = "无法复制文案，请重试。";
@@ -278,12 +278,12 @@
 "Color is earned from your weekly API value." = "配色由本周 API 换算价值决定。";
 "Color is earned from your weekly tokens, including cache." = "配色由本周 token 用量决定，包含缓存。";
 "Put your AI tab on display." = "晒出你的 AI 用量账单。";
-"Spotlight" = "主角";
+"Show" = "展示";
 "API value" = "API 换算价值";
 "Your usage at API rates in USD. An estimate, not your subscription bill." = "按 API 费率换算为美元的使用价值，仅为估算，并非订阅账单。";
 "Every token, including cache reads and writes." = "统计所有 token，包括缓存读取和写入。";
-"Your tokens need a price." = "这些 token 还没有价格。";
-"Refresh records to load API prices, or switch the spotlight to tokens." = "刷新记录以载入 API 价格，或选择展示 token。";
+"API prices are unavailable." = "API 价格暂不可用。";
+"Refresh to load API prices, or choose Tokens." = "刷新以加载 API 价格，或选择 Token。";
 "Some tokens have no known price. The + marks a partial value." = "部分 token 暂无已知价格，+ 表示价值估算不完整。";
 
 "Weekly card" = "每周卡片";
@@ -297,14 +297,14 @@
 "Some local records could not be read. Totals may be incomplete." = "部分本地记录无法读取，总量可能不完整。";
 "Usage card" = "用量卡片";
 "Period" = "时间范围";
-"This month" = "本月";
+"Last 30 days" = "最近 30 天";
 "This year" = "今年";
 "All time" = "全部时间";
-"Last 7 days includes today and the previous six days. Month and year also run through today. All time includes all saved usage records on this Mac." = "最近 7 天包含今天及之前六天。本月和今年也统计至今天。全部时间包含此 Mac 上保存的所有用量记录。";
+"Last 7 days and Last 30 days include today plus the previous 6 or 29 days. This year runs through today. All time includes all saved usage records on this Mac." = "最近 7 天和最近 30 天包含今天，以及之前的 6 天或 29 天。今年统计至今天。全部时间包含此 Mac 上保存的所有用量记录。";
 "Gathering your usage…" = "正在汇总用量…";
-"A fresh page for your usage." = "开始记录你的使用历程。";
+"No usage in this period." = "此时间段内没有使用记录。";
 "No recorded tokens in this period. Try another period or include more providers." = "此时间范围内没有 token 记录。请尝试其他时间范围或选择更多服务商。";
-"PNG saved. Your card is ready to share." = "PNG 已保存，卡片可以分享了。";
+"Card saved." = "卡片已保存。";
 "Share usage" = "分享用量";
 "Create your usage card" = "创建用量卡片";
 "Save usage card" = "保存用量卡片";

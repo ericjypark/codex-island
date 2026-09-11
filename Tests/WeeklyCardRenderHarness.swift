@@ -85,7 +85,7 @@ struct WeeklyCardRenderHarness {
             }
             return (provider, records)
         })
-        for period in [WeeklyCardPeriod.thisMonth, .lastThreeMonths, .thisYear, .allTime] {
+        for period in [WeeklyCardPeriod.lastThirtyDays, .lastThreeMonths, .thisYear, .allTime] {
             let card = WeeklyUsageSnapshot.make(buckets: history, period: period, now: now, calendar: calendar, isDemo: true)
             for metric in WeeklyCardMetric.allCases {
                 for format in WeeklyCardFormat.allCases {

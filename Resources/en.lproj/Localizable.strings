@@ -228,7 +228,7 @@
 "Open Claude Code and run /login." = "Open Claude Code and run /login.";
 
 "A fresh page for your week." = "A fresh page for your week.";
-"Caption copied. Add it to your post." = "Caption copied. Add it to your post.";
+"Caption copied." = "Caption copied.";
 "Copy caption" = "Copy caption";
 "Copy image" = "Copy image";
 "Could not copy the caption. Try again." = "Could not copy the caption. Try again.";
@@ -278,12 +278,12 @@
 "Color is earned from your weekly API value." = "Color is earned from your weekly API value.";
 "Color is earned from your weekly tokens, including cache." = "Color is earned from your weekly tokens, including cache.";
 "Put your AI tab on display." = "Put your AI tab on display.";
-"Spotlight" = "Spotlight";
+"Show" = "Show";
 "API value" = "API value";
 "Your usage at API rates in USD. An estimate, not your subscription bill." = "Your usage at API rates in USD. An estimate, not your subscription bill.";
 "Every token, including cache reads and writes." = "Every token, including cache reads and writes.";
-"Your tokens need a price." = "Your tokens need a price.";
-"Refresh records to load API prices, or switch the spotlight to tokens." = "Refresh records to load API prices, or switch the spotlight to tokens.";
+"API prices are unavailable." = "API prices are unavailable.";
+"Refresh to load API prices, or choose Tokens." = "Refresh to load API prices, or choose Tokens.";
 "Some tokens have no known price. The + marks a partial value." = "Some tokens have no known price. The + marks a partial value.";
 
 "Weekly card" = "Weekly card";
@@ -297,14 +297,14 @@
 "Some local records could not be read. Totals may be incomplete." = "Some local records could not be read. Totals may be incomplete.";
 "Usage card" = "Usage card";
 "Period" = "Period";
-"This month" = "This month";
+"Last 30 days" = "Last 30 days";
 "This year" = "This year";
 "All time" = "All time";
-"Last 7 days includes today and the previous six days. Month and year also run through today. All time includes all saved usage records on this Mac." = "Last 7 days includes today and the previous six days. Month and year also run through today. All time includes all saved usage records on this Mac.";
+"Last 7 days and Last 30 days include today plus the previous 6 or 29 days. This year runs through today. All time includes all saved usage records on this Mac." = "Last 7 days and Last 30 days include today plus the previous 6 or 29 days. This year runs through today. All time includes all saved usage records on this Mac.";
 "Gathering your usage…" = "Gathering your usage…";
-"A fresh page for your usage." = "A fresh page for your usage.";
+"No usage in this period." = "No usage in this period.";
 "No recorded tokens in this period. Try another period or include more providers." = "No recorded tokens in this period. Try another period or include more providers.";
-"PNG saved. Your card is ready to share." = "PNG saved. Your card is ready to share.";
+"Card saved." = "Card saved.";
 "Share usage" = "Share usage";
 "Create your usage card" = "Create your usage card";
 "Save usage card" = "Save usage card";

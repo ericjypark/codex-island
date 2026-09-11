@@ -17,7 +17,7 @@ struct WeeklyUsageCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
-                Text(snapshot.dateLabel)
+                Text(snapshot.isDemo ? "Demo · \(snapshot.dateLabel)" : snapshot.dateLabel)
                     .lineLimit(1)
                     .layoutPriority(1)
                 Spacer(minLength: 12)
@@ -25,21 +25,27 @@ struct WeeklyUsageCard: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
-            .font(.system(size: 12, weight: .medium, design: .monospaced))
+            .font(.system(size: 12, weight: .medium))
             .foregroundStyle(theme.secondary)
 
             heading
-                .padding(.top, compact ? 16 : 26)
+                .padding(.top, compact ? 12 : 26)
 
             WeeklyValueFlow(snapshot: snapshot, theme: theme, metric: metric)
                 .frame(maxHeight: .infinity)
-                .padding(.top, compact ? 18 : 28)
-                .padding(.bottom, compact ? 18 : 24)
+                .padding(.top, compact ? 14 : 28)
+                .padding(.bottom, compact ? 14 : 24)
 
             providerLegend
+            if metric == .apiValue {
+                Text("API-rate estimate, not a bill.")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(theme.secondary)
+                    .padding(.top, compact ? 8 : 12)
+            }
 
             footer
-                .padding(.top, compact ? 18 : 24)
+                .padding(.top, compact ? 14 : 24)
         }
         .padding(.horizontal, 36)
         .padding(.vertical, format == .story ? 88 : 32)
@@ -61,22 +67,24 @@ struct WeeklyUsageCard: View {
                     .minimumScaleFactor(0.7)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 if metric == .apiValue, let milestone = snapshot.valueMilestone {
-                    WeeklyMilestoneSeal(milestone: milestone, theme: theme)
+                    WeeklyMilestoneSeal(milestone: milestone, theme: theme, compact: compact)
                 }
             }
 
             if metric == .apiValue {
                 moneyHeadline
+                    .frame(height: compact ? 82 : 126, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, compact ? 2 : 8)
                 HStack(alignment: .firstTextBaseline) {
-                    Text(snapshot.hasPartialPricing ? "Known API-equivalent value · USD" : "API-equivalent value · USD")
+                    Text(snapshot.hasPartialPricing ? "Known API value · USD" : "API value · USD")
                         .foregroundStyle(theme.secondary)
                     Spacer(minLength: 8)
                     Text(snapshot.period.valueQualifier)
                 }
                     .font(.system(size: 12, weight: .medium))
                     .padding(.top, 2)
-                    .padding(.bottom, compact ? 12 : 18)
+                    .padding(.bottom, compact ? 8 : 18)
             } else {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(tokens.value).tracking(-3)
@@ -89,9 +97,9 @@ struct WeeklyUsageCard: View {
             }
 
             HStack(spacing: 0) {
-                Text(metric == .apiValue ? "\(tokens.value)\(tokens.unit) tokens" : "tokens")
+                Text(metric == .apiValue ? snapshot.tokenLabel : snapshot.totalTokens == 1 ? "token" : "tokens")
                     .foregroundStyle(theme.foreground)
-                Text("  /  \(snapshot.activeDays) of \(snapshot.durationLabel) active")
+                Text("  ·  \(snapshot.activityLabel)")
                     .foregroundStyle(theme.secondary)
                 Spacer()
             }
@@ -121,20 +129,23 @@ struct WeeklyUsageCard: View {
     }
 
     private var providerLegend: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading),
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 24, alignment: .leading),
                             GridItem(.flexible(), alignment: .leading)],
-                  alignment: .leading, spacing: 8) {
+                  alignment: .leading, spacing: 10) {
             ForEach(snapshot.rankedProviders(for: metric)) { item in
                 HStack(spacing: 7) {
                     Circle().fill(theme.color(for: item.provider))
                         .frame(width: 7, height: 7)
                     Text(item.provider.name)
                         .foregroundStyle(theme.foreground)
+                    Spacer(minLength: 8)
                     Text(providerValue(item))
                         .foregroundStyle(theme.secondary)
                         .monospacedDigit()
                 }
                 .font(.system(size: 12, weight: .medium))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
             }
         }
     }
@@ -164,7 +175,8 @@ struct WeeklyUsageCard: View {
                     }
                     .font(.system(size: 11, weight: .medium))
                     Text("codexisland.com")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(theme.secondary)
                 }
             }
         }
@@ -175,6 +187,7 @@ struct WeeklyUsageCard: View {
 private struct WeeklyMilestoneSeal: View {
     let milestone: WeeklyValueMilestone
     let theme: WeeklyCardTheme
+    let compact: Bool
 
     var body: some View {
         VStack(spacing: 1) {
@@ -188,7 +201,7 @@ private struct WeeklyMilestoneSeal: View {
                 .tracking(2.5)
         }
         .padding(9)
-        .frame(width: 76, height: 66)
+        .frame(width: compact ? 68 : 76, height: compact ? 56 : 66)
         .background {
             WeeklySealOutline().stroke(theme.foreground.opacity(0.65), lineWidth: 0.75)
             WeeklySealOutline().stroke(theme.rule, lineWidth: 0.5).padding(4)

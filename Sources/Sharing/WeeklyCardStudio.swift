@@ -84,6 +84,7 @@ struct WeeklyCardStudio: View {
         .onChange(of: store.lastUpdated) { _ in
             now = Date()
             status = nil
+            if usesFullHistory { history.loadIfNeeded() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .codexIslandUsageHistoryRecovered)) { _ in
             status = nil
@@ -104,9 +105,6 @@ struct WeeklyCardStudio: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            Text(L10n.tr("Usage card"))
-                .font(Typography.rowTitle)
-                .foregroundStyle(.white.opacity(0.90))
             Spacer()
             Button { refresh() } label: {
                 Image(systemName: "arrow.clockwise").frame(width: 28, height: 28)
@@ -124,7 +122,7 @@ struct WeeklyCardStudio: View {
                     Text(L10n.tr("About this card")).font(Typography.providerTitle)
                     Text(L10n.tr("API value estimates your usage at API rates in USD, not your subscription bill. Tokens include cache reads and writes."))
                     Text(L10n.tr("The card includes daily usage, provider totals, active days, and your signature. It does not include prompts or conversations."))
-                    Text(L10n.tr("Last 7 days includes today and the previous six days. Month and year also run through today. All time includes all saved usage records on this Mac."))
+                    Text(L10n.tr("Last 7 days and Last 30 days include today plus the previous 6 or 29 days. This year runs through today. All time includes all saved usage records on this Mac."))
                     Text(L10n.tr("Captured token counts are saved on this Mac even if provider logs are removed. Records deleted before capture may still be missing."))
                 }
                 .font(Typography.tabLabel)
@@ -148,11 +146,11 @@ struct WeeklyCardStudio: View {
                     placeholder(icon: "", title: "Gathering your usage…",
                                 detail: "Reading usage records on this Mac.", loading: true)
                 } else if snapshot.totalTokens == 0 {
-                    placeholder(icon: "chart.bar.xaxis", title: "A fresh page for your usage.",
+                    placeholder(icon: "chart.bar.xaxis", title: "No usage in this period.",
                                 detail: "No recorded tokens in this period. Try another period or include more providers.")
                 } else if metric == .apiValue && !snapshot.hasPricedUsage {
-                    placeholder(icon: "dollarsign.circle", title: "Your tokens need a price.",
-                                detail: "Refresh records to load API prices, or switch the spotlight to tokens.")
+                    placeholder(icon: "dollarsign.circle", title: "API prices are unavailable.",
+                                detail: "Refresh to load API prices, or choose Tokens.")
                 } else if actualSize {
                     ScrollView([.horizontal, .vertical]) {
                         card.padding(24)
@@ -215,12 +213,12 @@ struct WeeklyCardStudio: View {
     private var essentialControls: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 8) {
-                controlLabel("Spotlight")
+                controlLabel("Show")
                 SegmentedControl(
                     items: WeeklyCardMetric.allCases.map(\.rawValue),
                     selected: $metricRaw,
                     label: { WeeklyCardMetric(rawValue: $0)?.title ?? $0 },
-                    accessibilityPrefix: "Spotlight",
+                    accessibilityPrefix: "Show",
                     labelFont: Typography.tabLabel
                 )
             }
@@ -373,7 +371,7 @@ struct WeeklyCardStudio: View {
     private func copyCaption() {
         NSPasteboard.general.clearContents()
         if NSPasteboard.general.setString(snapshot.shareText(metric: metric), forType: .string) {
-            status = L10n.tr("Caption copied. Add it to your post.")
+            status = L10n.tr("Caption copied.")
         } else {
             exportError = L10n.tr("Could not copy the caption. Try again.")
         }
@@ -392,7 +390,7 @@ struct WeeklyCardStudio: View {
                     exporting = false
                     switch result {
                     case .success(let url):
-                        if url != nil { status = L10n.tr("PNG saved. Your card is ready to share.") }
+                        if url != nil { status = L10n.tr("Card saved.") }
                     case .failure(let error): exportError = error.localizedDescription
                     }
                 }
