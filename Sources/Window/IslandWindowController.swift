@@ -195,11 +195,9 @@ final class IslandWindowController {
         }
     }
 
-    /// Pauses the LoadingSweep when the user can't see the island —
+    /// Pauses an active LoadingSweep when the user can't see the island —
     /// fullscreen apps on a separate Space, the screen going to sleep,
     /// or anything else macOS reports as making the window invisible.
-    /// The 30Hz TimelineView is the dominant idle-CPU cost; pausing it
-    /// while occluded drops idle to ~0%.
     private func observeOcclusion() {
         // Seed the initial state — the notification doesn't fire on launch.
         WindowOcclusionStore.shared.update(

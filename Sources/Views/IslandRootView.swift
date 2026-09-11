@@ -359,7 +359,7 @@ private struct GlowLayer: View {
         ZStack {
             LoadingSweep(
                 active: !occlusion.isOccluded
-                    && (lowPower.effectiveEnabled ? glowEventActive : true),
+                    && (usageStore.loading || costStore.loading),
                 tint: glowColor
             )
 
@@ -393,10 +393,10 @@ private struct GlowLayer: View {
         }
     }
 
-    /// Under Low Power Mode the halo + sweep are gated on this predicate:
+    /// Under Low Power Mode the ambient halo is gated on this predicate:
     /// the user sees glow only when something is happening (a fetch is in
-    /// flight, the cursor is hovering, or an alert is active). Off-LPM it's
-    /// ignored — both surfaces run continuously.
+    /// flight, the cursor is hovering, or an alert is active). The loading
+    /// sweep is independently limited to in-flight refreshes in all modes.
     private var glowEventActive: Bool {
         hovering
             || usageStore.loading
@@ -528,10 +528,9 @@ private struct PeekPillOverlay: View {
 ///
 /// Tick rate is 30Hz (was 120Hz). 3.6s/revolution at 30Hz = 12° per frame,
 /// indistinguishable from 120Hz to the eye for a slow continuous orbit but
-/// 4× cheaper on the main thread. The bigger CPU saving comes from gating
-/// `active` on `!isWindowOccluded` upstream — when a fullscreen app or
-/// another window covers the menu bar entirely, the sweep stops rendering
-/// (the user can't see it anyway), dropping idle CPU to ~0%.
+/// 4× cheaper on the main thread. `active` is true only during an in-flight
+/// refresh and while the island is visible, so this per-frame work has no
+/// idle cost.
 ///
 /// Earlier attempts to push rotation into Core Animation (CAGradientLayer or
 /// `.rotationEffect` over a static gradient) all subtly changed the glow
