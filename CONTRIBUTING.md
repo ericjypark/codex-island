@@ -24,6 +24,20 @@ open build/CodexIsland.app
 
 No Xcode project, no SwiftPM. Just `swiftc Sources/**/*.swift`.
 
+## Pull request checks and reviews
+
+Every pull request runs the Swift regression suite, builds the universal macOS
+app, and validates the GitHub Actions workflows. These checks run again after
+new commits and also run on `main`. Forks use the same checks without repository
+secrets. Run `bash scripts/run-tests.sh` and `./build.sh` locally before opening
+a PR; workflow edits can be checked with `actionlint`.
+
+Codex reviews pull requests through the GitHub integration and follows the
+`Code Review Rules` in `AGENTS.md`. To request another review, comment
+`@codex review` on the PR. Resolve findings and wait for checks on the latest
+commit before merging. A review service being unavailable does not establish
+whether the app builds or passes tests.
+
 ## Code style
 
 - **Lowercase Conventional Commits.** `feat(scope): summary`, `fix(scope): summary`, `chore: summary`. Body explains the *why*, not the *what*. The diff is the what. See git log for examples.

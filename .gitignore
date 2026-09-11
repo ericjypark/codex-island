@@ -34,3 +34,5 @@ notes/
 .agents/
 skills-lock.json
 AGENTS.md
+# Root guidance is shared with Codex code review.
+!/AGENTS.md
