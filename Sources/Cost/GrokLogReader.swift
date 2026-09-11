@@ -6,14 +6,14 @@ enum GrokLogReader {
         let event: TokenEvent
     }
 
-    static func scan(lookbackDays: Int = 30, root: URL? = nil, now: Date = Date()) -> LocalCostScan {
+    static func scan(lookbackDays: Int? = 30, root: URL? = nil, now: Date = Date()) -> LocalCostScan {
         let home = ProcessInfo.processInfo.environment["GROK_HOME"].flatMap { $0.isEmpty ? nil : $0 }
             .map { URL(fileURLWithPath: $0) }
             ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".grok")
         let root = root ?? home.appendingPathComponent("sessions", isDirectory: true)
         var result = LocalCostScan()
         guard FileManager.default.fileExists(atPath: root.path) else { return result }
-        let cutoff = now.addingTimeInterval(-Double(lookbackDays) * 86400)
+        let cutoff = lookbackDays.map { now.addingTimeInterval(-Double($0) * 86400) } ?? .distantPast
         var records: [String: TokenEvent] = [:]
         let files = LogParseCache.jsonlFiles(under: root, modifiedAfter: cutoff) { $0.lastPathComponent == "updates.jsonl" }
         for file in files {
@@ -52,7 +52,8 @@ enum GrokLogReader {
             // ACP PromptUsage input includes cache; TokenEvent buckets are disjoint.
             return Record(id: "\(prompt):\(model)", event: TokenEvent(provider: .grok,
                 timestamp: timestamp, model: model, inputTokens: fullInput - cacheRead - cacheWrite,
-                outputTokens: output, cacheCreationTokens: cacheWrite, cacheReadTokens: cacheRead))
+                outputTokens: output, cacheCreationTokens: cacheWrite, cacheReadTokens: cacheRead,
+                recordID: "\(prompt):\(model)"))
         }
     }
 

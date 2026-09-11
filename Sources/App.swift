@@ -2,6 +2,16 @@ import SwiftUI
 import AppKit
 
 @main
+enum CodexIslandEntryPoint {
+    @MainActor
+    static func main() {
+        if CommandLine.arguments.dropFirst().first == "--recover-claude" {
+            exit(ClaudeUsageRecovery.run(arguments: Array(CommandLine.arguments.dropFirst(2))))
+        }
+        CodexIslandApp.main()
+    }
+}
+
 struct CodexIslandApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     var body: some Scene {

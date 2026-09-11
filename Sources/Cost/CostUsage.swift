@@ -74,6 +74,10 @@ struct DailyTokenBucket: Codable {
     let dayStart: Date
     let tokens: Int
     let billableTokens: Int
+    // Optional so older caches stay readable without inventing a $0 price.
+    var dollars: Double? = nil
+    var unpricedTokens: Int? = nil
+    var recoveredTokens: Int? = nil
 }
 
 /// Per-provider cost summary: today + month-to-date in calendar-local time.

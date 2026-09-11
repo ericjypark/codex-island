@@ -16,8 +16,8 @@ enum OpenCodeLogReader {
 
     // MARK: - Public
 
-    static func scan(lookbackDays: Int = 30) -> [TokenEvent] {
-        let cutoff = Date().addingTimeInterval(-Double(lookbackDays) * 86400)
+    static func scan(lookbackDays: Int? = 30) -> [TokenEvent] {
+        let cutoff = lookbackDays.map { Date().addingTimeInterval(-Double($0) * 86400) } ?? .distantPast
         var seenIds = Set<String>()
         var seenFingerprints = Set<String>()
         var out: [TokenEvent] = []
@@ -32,7 +32,9 @@ enum OpenCodeLogReader {
             // so cost totals match tokscale's hash-based dedup.
             let fp = "\(Int64(ev.timestamp.timeIntervalSince1970 * 1000)):\(ev.model):\(ev.inputTokens):\(ev.outputTokens):\(ev.cacheReadTokens):\(ev.cacheCreationTokens)"
             guard seenFingerprints.insert(fp).inserted else { return }
-            guard let token = ev.tokenEvent() else { return }
+            guard var token = ev.tokenEvent() else { return }
+            token.recordID = ev.messageId.isEmpty ? "fingerprint:\(fp)" : ev.messageId
+            token.recordAliases = ["fingerprint:\(fp)"]
             out.append(token)
         }
 

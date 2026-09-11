@@ -8,14 +8,24 @@ import Foundation
 /// it off the main actor without touching `@MainActor` state. `now` is
 /// injectable so the window boundaries are testable.
 enum CostSummary {
-    static func summarize(events: [TokenEvent], now: Date = Date()) -> ProviderCost {
+    static func summarize(events: [TokenEvent], now: Date = Date(), includeAllHistory: Bool = false,
+                          historicalDays: [HistoricalUsageDay] = []) -> ProviderCost {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = .current
         let startOfDay = cal.startOfDay(for: now)
         let monthStart = cal.date(from: cal.dateComponents([.year, .month], from: now)) ?? startOfDay
         let currentHour = cal.dateComponents([.hour], from: now).hour ?? 0
         let currentDay = (cal.dateComponents([.day], from: now).day ?? 1) - 1
-        let historyDays = yearHistoryDays(now: now)
+        let recovered = HistoricalUsageDay.supplements(historicalDays, events: events.filter { $0.timestamp <= now }, calendar: cal)
+        var historyDays = localHistoryDays(now: now)
+        let earliestEvent = events.lazy.filter({
+            $0.timestamp <= now && $0.inputTokens + $0.outputTokens + $0.cacheCreationTokens + $0.cacheReadTokens > 0
+        }).map(\.timestamp).min()
+        let earliestRecovered = recovered.filter { $0.dayStart <= now }.map(\.dayStart).min()
+        if includeAllHistory, let earliest = [earliestEvent, earliestRecovered].compactMap({ $0 }).min() {
+            let recordedDays = (cal.dateComponents([.day], from: cal.startOfDay(for: earliest), to: startOfDay).day ?? 0) + 1
+            historyDays = max(historyDays, recordedDays)
+        }
         let historyStart = cal.date(
             byAdding: .day,
             value: -(historyDays - 1),
@@ -35,6 +45,9 @@ enum CostSummary {
         var dailyBuckets = Array(repeating: 0.0, count: currentDay + 1)
         var historyTokenBuckets = Array(repeating: 0, count: historyDays)
         var historyBillableBuckets = Array(repeating: 0, count: historyDays)
+        var historyDollarBuckets = Array(repeating: 0.0, count: historyDays)
+        var historyUnpricedBuckets = Array(repeating: 0, count: historyDays)
+        var historyRecoveredBuckets = Array(repeating: 0, count: historyDays)
         // Filtered to non-zero token events so handshake/stub rows don't
         // show up as "unpriced" warnings — the user only cares about
         // models that actually moved tokens.
@@ -61,7 +74,7 @@ enum CostSummary {
         // assumption — keep the broader guard.
         let earliestStart = min(monthStart, weekStart, historyStart)
         for event in events {
-            guard event.timestamp >= earliestStart else { continue }
+            guard event.timestamp >= earliestStart, event.timestamp <= now else { continue }
             let cost = Pricing.cost(for: event)
             // Two parallel running totals: `tokens` is the wire-level sum
             // (ccusage parity); `billable` is input + output only, matching
@@ -78,6 +91,8 @@ enum CostSummary {
                 if historyTokenBuckets.indices.contains(dayOffset) {
                     historyTokenBuckets[dayOffset] += tokens
                     historyBillableBuckets[dayOffset] += billable
+                    historyDollarBuckets[dayOffset] += cost
+                    if isUnpriced { historyUnpricedBuckets[dayOffset] += tokens }
                 }
             }
 
@@ -127,6 +142,25 @@ enum CostSummary {
             }
         }
 
+        for bucket in recovered where bucket.dayStart >= historyStart && bucket.dayStart <= now {
+            let offset = cal.dateComponents([.day], from: historyStart, to: bucket.dayStart).day ?? -1
+            guard historyTokenBuckets.indices.contains(offset) else { continue }
+            historyTokenBuckets[offset] += bucket.tokens
+            historyBillableBuckets[offset] += bucket.billableTokens
+            historyUnpricedBuckets[offset] += bucket.tokens
+            historyRecoveredBuckets[offset] += bucket.tokens
+            if bucket.dayStart >= monthStart {
+                monthTokens += bucket.tokens
+                monthBillable += bucket.billableTokens
+                monthUnknown.insert("Recovered daily totals")
+            }
+            if bucket.dayStart == startOfDay {
+                todayTokens += bucket.tokens
+                todayBillable += bucket.billableTokens
+                todayUnknown.insert("Recovered daily totals")
+            }
+        }
+
         let recentRows = modelRows(
             tokensByModel: recentTokensByModel,
             dollarsByModel: recentDollarsByModel
@@ -161,9 +195,17 @@ enum CostSummary {
                 start: historyStart,
                 tokens: historyTokenBuckets,
                 billableTokens: historyBillableBuckets,
+                dollars: historyDollarBuckets,
+                unpricedTokens: historyUnpricedBuckets,
+                recoveredTokens: historyRecoveredBuckets,
                 calendar: cal
             )
         )
+    }
+
+    static func localHistoryDays(now: Date = Date()) -> Int {
+        // A complete previous week can cross New Year's Day.
+        max(14, yearHistoryDays(now: now))
     }
 
     static func yearHistoryDays(now: Date = Date()) -> Int {
@@ -179,6 +221,9 @@ enum CostSummary {
         start: Date,
         tokens: [Int],
         billableTokens: [Int],
+        dollars: [Double],
+        unpricedTokens: [Int],
+        recoveredTokens: [Int],
         calendar: Calendar
     ) -> [DailyTokenBucket] {
         tokens.indices.map { index in
@@ -186,7 +231,10 @@ enum CostSummary {
             return DailyTokenBucket(
                 dayStart: day,
                 tokens: tokens[index],
-                billableTokens: billableTokens[index]
+                billableTokens: billableTokens[index],
+                dollars: dollars[index],
+                unpricedTokens: unpricedTokens[index],
+                recoveredTokens: recoveredTokens[index]
             )
         }
     }

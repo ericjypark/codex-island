@@ -46,6 +46,14 @@ providers' own usage endpoints.
   calendar using logs from every supported provider, regardless of which
   providers are selected for the usage pills. Click a provider in the calendar
   legend to filter its history; click it again to show all providers.
+- **Usage history that stays yours.** CodexIsland saves captured token counts
+  in its own local database, including older records still available when it
+  scans. Provider log cleanup no longer erases captured history. Repeated
+  scans update the same calls instead of counting them again. See
+  [usage-history storage](docs/USAGE-HISTORY.md) for coverage details. Open
+  **Settings → General → Recover Claude usage…** to preview verified counts
+  from surviving logs, backups, and old daily snapshots before importing them.
+  A [terminal script](docs/USAGE-HISTORY.md#recover-your-claude-usage) is also included.
 - **Used or remaining quota.** Display provider windows as usage consumed or
   quota remaining.
 - **Approaching-limit alerts.** Optional warning and critical thresholds tint

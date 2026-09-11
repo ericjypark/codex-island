@@ -78,6 +78,13 @@ struct LocalProviderCostTests {
         let stream = dir.appendingPathComponent("updates.jsonl")
         try (grok + Data([10]) + grok + Data([10])).write(to: stream)
         expect(GrokLogReader.scan(root: dir, now: now).events.count == 1, "repeated Grok prompt totals deduplicated")
+        let nextYear = now.addingTimeInterval(400 * 86400)
+        expect(AntigravityLogReader.scan(root: dir, now: nextYear).events.isEmpty
+            && AntigravityLogReader.scan(lookbackDays: nil, root: dir, now: nextYear).events.count == 1,
+               "all-time Antigravity scan includes records outside the normal lookback")
+        expect(GrokLogReader.scan(root: dir, now: nextYear).events.isEmpty
+            && GrokLogReader.scan(lookbackDays: nil, root: dir, now: nextYear).events.count == 1,
+               "all-time Grok scan includes records outside the normal lookback")
         let incomplete = Data(String(decoding: grok, as: UTF8.self).replacingOccurrences(of: "\"promptId\"", with: "\"usageIsIncomplete\":true,\"promptId\"").utf8)
         expect(GrokLogReader.parse(incomplete).isEmpty, "incomplete Grok aggregate never presented as complete cost")
         expect(Pricing.canonicalModelName("claude-opus-4-6-thinking") == "claude-opus-4-6", "Antigravity thinking alias shares base model pricing")

@@ -24,6 +24,7 @@ final class CostStore: ObservableObject {
     @Published private(set) var connectedLoading: Set<IslandProvider> = []
     @Published private(set) var connectedUpdated: [IslandProvider: Date] = [:]
     @Published private(set) var localNotices: [IslandProvider: String] = [:]
+    @Published private(set) var historySaveErrors: [IslandProvider: String] = [:]
 
     func cost(for provider: IslandProvider) -> ProviderCost {
         switch provider {
@@ -76,23 +77,29 @@ final class CostStore: ObservableObject {
             loadDemoData()
             return
         }
-        let days = CostSummary.yearHistoryDays()
         for provider in [IslandProvider.antigravity, .grok] where !connectedLoading.contains(provider) {
             connectedLoading.insert(provider)
             Task.detached(priority: .utility) { [weak self] in
-                let scan = provider == .antigravity
-                    ? AntigravityLogReader.scan(lookbackDays: days)
-                    : GrokLogReader.scan(lookbackDays: days)
-                let cost = CostSummary.summarize(events: scan.events)
-                await self?.commitLocal(cost, scan: scan, provider: provider)
+                let observedAt = Date()
+                var scan = provider == .antigravity
+                    ? AntigravityLogReader.scan(lookbackDays: nil)
+                    : GrokLogReader.scan(lookbackDays: nil)
+                let saved = UsageLedger.shared.retain(scan.events,
+                                                      source: provider == .antigravity ? .antigravity : .grok,
+                                                      observedAt: observedAt)
+                scan.events = saved.events
+                let cost = CostSummary.summarize(events: scan.events, historicalDays: saved.historicalDays)
+                await self?.commitLocal(cost, scan: scan, provider: provider, saveError: saved.saveError)
             }
         }
         // Only scan OpenCode when at least one provider will consume
         // the result; avoids wasted I/O when both are already loading.
-        let openCodeTask: Task<[TokenEvent], Never>?
+        let openCodeTask: Task<UsageLedger.Snapshot, Never>?
         if !claudeLoading || !codexLoading {
             openCodeTask = Task.detached(priority: .userInitiated) {
-                OpenCodeLogReader.scan(lookbackDays: days)
+                let observedAt = Date()
+                return UsageLedger.shared.retain(OpenCodeLogReader.scan(lookbackDays: nil),
+                                                 source: .openCode, observedAt: observedAt)
             }
         } else {
             openCodeTask = nil
@@ -102,28 +109,33 @@ final class CostStore: ObservableObject {
         if !claudeLoading {
             claudeLoading = true
             Task.detached(priority: .userInitiated) { [weak self] in
-                let openCodeEvents = await openCodeTask?.value ?? []
-                let events = ClaudeLogReader.scan(lookbackDays: days)
-                    + openCodeEvents.filter { $0.provider == .claude }
-                let cost = CostSummary.summarize(events: events)
-                await self?.commitClaude(cost)
+                let openCode = await openCodeTask?.value
+                let observedAt = Date()
+                let saved = UsageLedger.shared.retain(ClaudeLogReader.scan(lookbackDays: nil),
+                                                      source: .claude, observedAt: observedAt)
+                let events = saved.events + (openCode?.events.filter { $0.provider == .claude } ?? [])
+                let cost = CostSummary.summarize(events: events, historicalDays: saved.historicalDays)
+                await self?.commitClaude(cost, saveError: saved.saveError ?? openCode?.saveError)
             }
         }
         if !codexLoading {
             codexLoading = true
             Task.detached(priority: .userInitiated) { [weak self] in
-                let openCodeEvents = await openCodeTask?.value ?? []
-                let events = CodexLogReader.scan(lookbackDays: days)
-                    + openCodeEvents.filter { $0.provider == .codex }
-                let cost = CostSummary.summarize(events: events)
-                await self?.commitCodex(cost)
+                let openCode = await openCodeTask?.value
+                let observedAt = Date()
+                let saved = UsageLedger.shared.retain(CodexLogReader.scan(lookbackDays: nil),
+                                                      source: .codex, observedAt: observedAt)
+                let events = saved.events + (openCode?.events.filter { $0.provider == .codex } ?? [])
+                let cost = CostSummary.summarize(events: events, historicalDays: saved.historicalDays)
+                await self?.commitCodex(cost, saveError: saved.saveError ?? openCode?.saveError)
             }
         }
     }
 
-    private func commitLocal(_ cost: ProviderCost, scan: LocalCostScan, provider: IslandProvider) {
+    private func commitLocal(_ cost: ProviderCost, scan: LocalCostScan, provider: IslandProvider, saveError: String?) {
         connectedLoading.remove(provider)
-        localNotices[provider] = scan.notice
+        historySaveErrors[provider] = saveError
+        localNotices[provider] = saveError ?? scan.notice
         if scan.unreadableFiles > 0 && scan.events.isEmpty { return }
         var displayed = cost
         if scan.events.isEmpty {
@@ -134,15 +146,19 @@ final class CostStore: ObservableObject {
         connectedUpdated[provider] = Date()
     }
 
-    private func commitClaude(_ cost: ProviderCost) {
+    private func commitClaude(_ cost: ProviderCost, saveError: String?) {
         self.claude = cost
+        historySaveErrors[.claude] = saveError
+        localNotices[.claude] = saveError
         self.claudeLoading = false
         self.lastUpdated = Date()
         persist()
     }
 
-    private func commitCodex(_ cost: ProviderCost) {
+    private func commitCodex(_ cost: ProviderCost, saveError: String?) {
         self.codex = cost
+        historySaveErrors[.codex] = saveError
+        localNotices[.codex] = saveError
         self.codexLoading = false
         self.lastUpdated = Date()
         persist()

@@ -13,18 +13,20 @@ import Foundation
 /// keyed by (path, mtime, size). Between two 5/15/30-minute polls almost no
 /// rollout file has changed, so the steady-state refresh skips re-parsing.
 enum CodexLogReader {
-    static func scan(lookbackDays: Int = 30) -> [TokenEvent] {
-        let cutoff = Date().addingTimeInterval(-Double(lookbackDays) * 86400)
+    static func scan(lookbackDays: Int? = 30, root: URL? = nil) -> [TokenEvent] {
+        let cutoff = lookbackDays.map { Date().addingTimeInterval(-Double($0) * 86400) } ?? .distantPast
         var out: [TokenEvent] = []
+        var occurrences: [String: Int] = [:]
 
         LogParseCache.walk(
-            roots: [sessionsRoot()],
+            roots: [root ?? sessionsRoot()],
             cutoff: cutoff,
             cacheFilename: "codex-parse-cache.v1.json",
             cacheVersion: cacheVersion,
+            useCache: root == nil,
             fileFilter: { $0.lastPathComponent.hasPrefix("rollout-") },
             parse: parseFile(at:),
-            emit: { (ev: CachedEvent) in
+            emit: { (ev: CachedEvent, file: URL) in
                 guard ev.timestamp >= cutoff else { return }
                 out.append(TokenEvent(
                     provider: .codex,
@@ -33,7 +35,8 @@ enum CodexLogReader {
                     inputTokens: ev.inputTokens,
                     outputTokens: ev.outputTokens,
                     cacheCreationTokens: 0,
-                    cacheReadTokens: ev.cacheReadTokens
+                    cacheReadTokens: ev.cacheReadTokens,
+                    recordID: LogParseCache.recordID(file: file, timestamp: ev.timestamp, occurrences: &occurrences)
                 ))
             }
         )

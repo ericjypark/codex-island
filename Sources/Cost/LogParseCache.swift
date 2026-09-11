@@ -6,6 +6,13 @@ import Foundation
 /// files. Each provider supplies only its `Event` Codable shape and a
 /// `parseFile` closure that consumes lines one at a time.
 enum LogParseCache {
+    static func recordID(file: URL, timestamp: Date, occurrences: inout [String: Int]) -> String {
+        let base = "\(file.lastPathComponent):\(Int64((timestamp.timeIntervalSince1970 * 1000).rounded()))"
+        let occurrence = occurrences[base, default: 0]
+        occurrences[base] = occurrence + 1
+        return "\(base):\(occurrence)"
+    }
+
     struct FileEntry {
         let url: URL
         let mtime: Date
@@ -173,11 +180,13 @@ enum LogParseCache {
         cutoff: Date,
         cacheFilename: String,
         cacheVersion: Int,
+        useCache: Bool = true,
         fileFilter: (URL) -> Bool = { _ in true },
         parse: (URL) -> [Event],
-        emit: (Event) -> Void
+        emit: (Event, URL) -> Void
     ) {
-        var cache = loadCache(filename: cacheFilename, version: cacheVersion, eventType: Event.self)
+        var cache = useCache ? loadCache(filename: cacheFilename, version: cacheVersion, eventType: Event.self)
+            : ParseCache<Event>(version: cacheVersion, files: [:])
         var visited = Set<String>()
         var cacheChanged = false
 
@@ -194,7 +203,7 @@ enum LogParseCache {
                     cache.files[path] = CachedFile(mtime: entry.mtime, size: entry.size, events: events)
                     cacheChanged = true
                 }
-                for ev in events { emit(ev) }
+                for ev in events { emit(ev, entry.url) }
             }
         }
 
@@ -204,6 +213,6 @@ enum LogParseCache {
         cache.files = cache.files.filter { visited.contains($0.key) }
         if cache.files.count != preCount { cacheChanged = true }
 
-        if cacheChanged { saveCache(cache, filename: cacheFilename) }
+        if useCache && cacheChanged { saveCache(cache, filename: cacheFilename) }
     }
 }

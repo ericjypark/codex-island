@@ -7,7 +7,7 @@ enum AntigravityLogReader {
         let event: TokenEvent
     }
 
-    static func scan(lookbackDays: Int = 30, root: URL? = nil, now: Date = Date()) -> LocalCostScan {
+    static func scan(lookbackDays: Int? = 30, root: URL? = nil, now: Date = Date()) -> LocalCostScan {
         let root = root ?? FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".gemini/antigravity-cli/conversations", isDirectory: true)
         var result = LocalCostScan()
@@ -16,7 +16,7 @@ enum AntigravityLogReader {
             result.unreadableFiles = 1
             return result
         }
-        let cutoff = now.addingTimeInterval(-Double(lookbackDays) * 86400)
+        let cutoff = lookbackDays.map { now.addingTimeInterval(-Double($0) * 86400) } ?? .distantPast
         var seen = Set<String>()
         for file in files.filter({ $0.pathExtension == "db" }).sorted(by: { $0.path < $1.path }) {
             do {
@@ -49,7 +49,7 @@ enum AntigravityLogReader {
         let id = messageID.flatMap { $0.isEmpty ? nil : $0 } ?? fallbackID
         return Record(id: id, event: TokenEvent(provider: .antigravity, timestamp: date,
             model: model, inputTokens: input, outputTokens: output,
-            cacheCreationTokens: cacheWrite, cacheReadTokens: cacheRead))
+            cacheCreationTokens: cacheWrite, cacheReadTokens: cacheRead, recordID: id))
     }
 
     private enum ReadError: Error { case database }
