@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/ericjypark/codex-island/discussions
+    about: Open-ended questions, ideas, or "is this expected?" — start a discussion instead of an issue.
+  - name: Security disclosure
+    url: https://github.com/ericjypark/codex-island/security/advisories/new
+    about: Report a vulnerability privately. Do NOT open a public issue.

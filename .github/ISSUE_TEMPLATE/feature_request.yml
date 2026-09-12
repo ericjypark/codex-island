@@ -1,0 +1,55 @@
+name: Feature request
+description: Suggest a new capability or a change to existing behavior.
+title: "feat: <short summary>"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: search [existing issues](https://github.com/ericjypark/codex-island/issues?q=is%3Aissue) and the [Things that need work](https://github.com/ericjypark/codex-island/blob/main/CONTRIBUTING.md#things-that-need-work) list — your idea might already be tracked.
+
+        For open-ended "what if" ideas, a [Discussion](https://github.com/ericjypark/codex-island/discussions) is a better starting point than an issue.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the user-facing pain. Skip the proposed solution for now — focus on the symptom.
+      placeholder: "I have two notched displays and only one shows the panel, so I can't see usage when I'm working on the other monitor."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like the app to do? UI sketches, mock chip text, or rough behavior is fine.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you thought about and why you rejected them. Keeps the discussion focused.
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Rough scope
+      description: Best guess — maintainer will adjust.
+      options:
+        - Small (a setting, a label, a one-file change)
+        - Medium (a new view or a refactor inside one subsystem)
+        - Large (touches build, Sparkle, or multiple subsystems)
+        - Not sure
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: Are you willing to help?
+      options:
+        - label: I can help test a build
+        - label: I can open a PR for this
