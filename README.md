@@ -16,8 +16,8 @@
 
 CodexIsland is a native macOS overlay that turns the MacBook notch into a
 Dynamic-Island-style live activity for Claude Code and Codex usage limits. It
-sits quietly over the notch, peeks on hover with the 5-hour headline, and
-expands on click to show both providers' 5-hour and weekly windows with reset
+sits quietly over the notch and expands on hover to show both providers'
+5-hour and weekly windows with reset
 timing, chart controls, local-log cost estimates, and a year-at-a-glance usage
 history.
 
@@ -36,10 +36,10 @@ providers' own usage endpoints.
   physical notch, drawn with continuous (squircle) corners that match the
   hardware. On non-notched displays it falls back to a configurable menu-bar
   pill.
-- **Hover to peek.** The silhouette widens just enough to show each visible
-  provider's 5-hour percentage and reset headline, or keep those headlines
-  visible at rest with **Always show usage**.
-- **Three swipeable screens.** Click to expand, then swipe between **Usage**,
+- **Hover to expand.** Hovering opens the full panel; moving away collapses it
+  after a 1.5-second grace period. Clicking remains available as a fallback.
+  **Always show usage** keeps the usage headlines visible at rest.
+- **Three swipeable screens.** Expand the panel, then swipe between **Usage**,
   **Cost**, and **Overview**. Cost estimates today and month-to-date spend and
   token throughput from local Claude Code, Codex CLI, and OpenCode session
   data. Overview renders the current year's activity as a contribution-style
@@ -187,8 +187,9 @@ the first peek. Opening Settings also triggers a fresh fetch.
 
 ## Using the app
 
-- Hover the notch to peek at the current 5-hour usage.
-- Click the island to expand the full panel.
+- Hover over the island to expand the full panel. Moving the pointer away
+  collapses it after a 1.5-second grace period; clicking remains available as
+  a fallback.
 - Swipe horizontally on the panel (or use the indicator dots) to move between
   **Usage**, **Cost**, and **Overview**.
 - Move away to collapse it.
