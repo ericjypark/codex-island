@@ -1,0 +1,25 @@
+<Window x:Class="IslandPrototype.MainWindow"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:local="clr-namespace:IslandPrototype"
+ Title="CodexIsland" Width="900" Height="420"
+ WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True"
+ Background="Transparent" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
+ KeyDown="OnKeyDown">
+ <Grid Background="{x:Null}" ClipToBounds="True">
+  <Grid x:Name="Island" Width="192" Height="52" HorizontalAlignment="Center" VerticalAlignment="Top"
+        MouseLeftButtonDown="OnIslandClick" Cursor="Hand">
+   <Grid.RenderTransform><TranslateTransform x:Name="Slide" Y="-420" /></Grid.RenderTransform>
+   <Grid x:Name="Shell">
+   <local:GlowSweep x:Name="Sweep" />
+   <Path x:Name="ShadowShape" Fill="Black" IsHitTestVisible="False">
+    <Path.Effect><DropShadowEffect x:Name="PanelShadow" Color="Black" Opacity="0" BlurRadius="40" ShadowDepth="10" Direction="270" /></Path.Effect>
+   </Path>
+   <Path x:Name="HaloShape" Fill="Black" IsHitTestVisible="False">
+    <Path.Effect><DropShadowEffect x:Name="Halo" Color="#0047AB" Opacity="0.35" BlurRadius="28" ShadowDepth="0" /></Path.Effect>
+   </Path>
+   <local:IslandVisual x:Name="Surface" />
+   </Grid>
+  </Grid>
+ </Grid>
+</Window>
