@@ -217,9 +217,9 @@ enum ClaudeCredentials {
     /// Last successful keychain read, held so ordinary polls don't re-trigger
     /// the keychain ACL prompt every cycle. Only a successful read is cached
     /// (nil results retry on the next poll). Invalidation: an unauthorized or
-    /// scope-insufficient probe clears it in `resolveUsage` — the token was
-    /// rotated or re-minted externally and the cached copy is stale — and the
-    /// in-app re-auth poll loop clears it once the store fingerprint changes.
+    /// scope-insufficient probe clears it in `resolveUsage` - the token was
+    /// rotated or re-minted externally and the cached copy is stale - and the
+    /// credential-store watcher clears it once the fingerprint changes.
     /// Lock-guarded: the poll-timer fetch and the re-auth poll fetch run as
     /// separate tasks off the main actor and can interleave here. Internal
     /// (not private) so ResolveUsageTests can prime it and assert clearing.
@@ -378,6 +378,16 @@ enum ClaudeCredentials {
             dates.append(modified)
         }
         return dates.max()
+    }
+
+    /// Invalidate a previously read secret only after a prompt-free metadata
+    /// snapshot proves Claude Code changed its store. The old access token can
+    /// remain valid after an account switch, so HTTP auth failures alone are
+    /// not a sufficient invalidation signal (issue #103).
+    static func invalidateCachedCredentialsIfStoreChanged(from baseline: Date?) -> Bool {
+        guard credentialStoreFingerprint() != baseline else { return false }
+        clearCache()
+        return true
     }
 
     private static func claudeKeychainModificationDates() -> [Date] {

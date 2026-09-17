@@ -198,13 +198,13 @@ final class UsageStore: ObservableObject {
                     : UsageStore.seeded(
                         AppUsage.merged(fetched: cl, retaining: priorClaude, at: now),
                         prior: priorClaude, provider: .claude, fillUnreported: false)
-                // "token expired" outlives its cause by up to a full poll
-                // interval: Claude Code rotates the token seconds after the
-                // user runs it, but the next scheduled poll is 5–30 min out.
-                // Watch the credential store's metadata and refetch the
-                // moment it changes.
+                // Watch the credential store even after success: an account
+                // switch leaves the old account's token valid, so a 401/403
+                // may never arrive to invalidate the in-memory credential.
+                // The watch is metadata-only and refetches only after an
+                // actual external store write.
+                self.watchCredentialStore()
                 if terminal {
-                    self.watchCredentialStore()
                     // The one terminal failure a CLI ping can fix: an expired
                     // token in a store nothing else maintains (desktop-app
                     // Claude Code brings its own host-refreshed token and
@@ -219,8 +219,6 @@ final class UsageStore: ObservableObject {
                         ClaudeCredentials.spawnTokenRefreshPing()
                     }
                 } else if cl.fiveHour.error == nil || cl.weekly.error == nil {
-                    self.credWatchTask?.cancel()
-                    self.credWatchTask = nil
                     self.tokenRefreshPingAttempted = false
                 }
             }
@@ -384,10 +382,11 @@ final class UsageStore: ObservableObject {
                         self?.lastUpdated = Date()
                         self?.claudeReauthInProgress = false
                         // This poll owned the store write — retire the
-                        // credential watch (its baseline is stale now) and
-                        // re-arm the ping for the next expiry episode.
+                        // credential watch with its stale baseline, then
+                        // restart it from the new store state.
                         self?.credWatchTask?.cancel()
                         self?.credWatchTask = nil
+                        self?.watchCredentialStore()
                         self?.tokenRefreshPingAttempted = false
                     }
                     return
@@ -531,14 +530,12 @@ final class UsageStore: ObservableObject {
         }
     }
 
-    /// Recover from a terminal auth failure the moment the credential store
-    /// actually changes, instead of at the next scheduled poll up to 30 min
-    /// out. The fingerprint is metadata-only (keychain attribute query +
-    /// file mtime — never trips the ACL prompt, no network), so the 5s tick
-    /// costs nothing; the secret read and the probe happen only once Claude
-    /// Code (or `claude /login`) has written new credentials. The baseline
-    /// is taken after the failing walk's own store re-read, so a rotation
-    /// landing in the microseconds between them is caught by the next poll.
+    /// Recover from any external credential-store change, including an account
+    /// switch whose old token remains valid. The fingerprint is metadata-only
+    /// (keychain attribute query + file mtime - never an ACL prompt or network
+    /// request), so the 5s tick does not lower the usage endpoint's five-minute
+    /// polling floor. A secret read and event-driven probe happen only after
+    /// Claude Code (or `claude /login`) writes new credentials.
     private func watchCredentialStore() {
         guard credWatchTask == nil else { return }
         let baseline = ClaudeCredentials.credentialStoreFingerprint()
@@ -551,8 +548,7 @@ final class UsageStore: ObservableObject {
                 // reacting here too would double-probe the usage endpoint
                 // on the same store write.
                 if self.claudeReauthInProgress { continue }
-                if ClaudeCredentials.credentialStoreFingerprint() != baseline {
-                    ClaudeCredentials.clearCache()
+                if ClaudeCredentials.invalidateCachedCredentialsIfStoreChanged(from: baseline) {
                     self.credWatchTask = nil
                     await self.waitOutWakeGrace()
                     if Task.isCancelled { return }

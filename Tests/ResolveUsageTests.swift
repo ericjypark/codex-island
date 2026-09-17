@@ -414,6 +414,59 @@ struct ResolveUsageTests {
         expect(ClaudeCredentials.decodeClaudeKeychainBlob(Data("not json at all".utf8)) == nil,
                "T12 garbage yields nil")
 
+        // T13 - account switch while the old access token is still valid
+        // (issue #103). A successful old-token probe must not leave that
+        // credential cached after Claude Code rewrites its external store.
+        // The metadata watcher invalidates the cache without reading or
+        // writing secrets, so the next usage fetch selects the new account.
+        var t13Modified = Date(timeIntervalSince1970: 1_700_001_000)
+        var t13StoreToken = "old-account-token"
+        ClaudeCredentials.keychainModificationDatesProvider = { [t13Modified] }
+        ClaudeCredentials.keychainCandidatesProvider = { [
+            ClaudeCredentials.KeychainCandidate(account: "active", blob: [
+                "claudeAiOauth": ["accessToken": t13StoreToken, "subscriptionType": "max"],
+            ]),
+        ] }
+        ClaudeCredentials.cachedClaudeCreds = ClaudeCredentials.ClaudeCreds(
+            account: "old", accessToken: "old-account-token", subscriptionType: "max")
+        let t13Baseline = ClaudeCredentials.credentialStoreFingerprint()
+        var t13ProbedTokens: [String] = []
+        let t13Old = await ClaudeCredentials.resolveUsage { token, _ in
+            t13ProbedTokens.append(token)
+            return token == "test-stub-token" ? .unauthorized : .success(fetched)
+        }
+        if case .usage = t13Old {
+            expect(t13ProbedTokens.last == "old-account-token",
+                   "T13 old account token can remain valid before the store switch")
+        } else {
+            expect(false, "T13 old account token can remain valid before the store switch")
+        }
+        expect(!ClaudeCredentials.invalidateCachedCredentialsIfStoreChanged(from: t13Baseline),
+               "T13 unchanged store keeps the valid cached token")
+        expect(ClaudeCredentials.cachedClaudeCreds?.accessToken == "old-account-token",
+               "T13 metadata checks do not reread an unchanged secret")
+
+        t13StoreToken = "new-account-token"
+        t13Modified = t13Modified.addingTimeInterval(60)
+        expect(ClaudeCredentials.invalidateCachedCredentialsIfStoreChanged(from: t13Baseline),
+               "T13 external credential-store change invalidates the valid old-token cache")
+        t13ProbedTokens = []
+        let t13New = await ClaudeCredentials.resolveUsage { token, _ in
+            t13ProbedTokens.append(token)
+            return token == "test-stub-token" ? .unauthorized : .success(fetched)
+        }
+        if case .usage = t13New {
+            expect(t13ProbedTokens.last == "new-account-token",
+                   "T13 next fetch selects the externally switched account")
+        } else {
+            expect(false, "T13 next fetch selects the externally switched account")
+        }
+        expect(ClaudeCredentials.cachedClaudeCreds?.accessToken == "new-account-token",
+               "T13 cache now holds the switched account token")
+        ClaudeCredentials.keychainCandidatesProvider = { [] }
+        ClaudeCredentials.keychainModificationDatesProvider = { [] }
+        ClaudeCredentials.clearCache()
+
         // The store and views match these exact strings; a reword is a
         // breaking change for them, not a copy edit.
         expect(ClaudeCredentials.rateLimitedMessage == "rate limited", "rateLimitedMessage literal is stable")
