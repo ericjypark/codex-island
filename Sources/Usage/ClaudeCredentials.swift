@@ -380,14 +380,28 @@ enum ClaudeCredentials {
         return dates.max()
     }
 
-    /// Invalidate a previously read secret only after a prompt-free metadata
-    /// snapshot proves Claude Code changed its store. The old access token can
-    /// remain valid after an account switch, so HTTP auth failures alone are
-    /// not a sufficient invalidation signal (issue #103).
-    static func invalidateCachedCredentialsIfStoreChanged(from baseline: Date?) -> Bool {
-        guard credentialStoreFingerprint() != baseline else { return false }
-        clearCache()
-        return true
+    /// Metadata-only watch state whose baseline is captured synchronously
+    /// before a usage fetch can read the credential cache. Advancing the
+    /// baseline before clearing makes one watcher safe to keep across
+    /// event-driven refetches and later external account switches.
+    final class CredentialStoreWatch {
+        private var baseline: Date?
+
+        init() {
+            baseline = ClaudeCredentials.credentialStoreFingerprint()
+        }
+
+        /// Invalidate a previously read secret only after a prompt-free
+        /// metadata snapshot proves Claude Code changed its store. The old
+        /// access token can remain valid after an account switch, so HTTP auth
+        /// failures alone are not a sufficient invalidation signal (#103).
+        func invalidateCachedCredentialsIfStoreChanged() -> Bool {
+            let current = ClaudeCredentials.credentialStoreFingerprint()
+            guard current != baseline else { return false }
+            baseline = current
+            ClaudeCredentials.clearCache()
+            return true
+        }
     }
 
     private static func claudeKeychainModificationDates() -> [Date] {

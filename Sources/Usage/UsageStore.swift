@@ -124,6 +124,14 @@ final class UsageStore: ObservableObject {
             return
         }
 
+        let selection = ProviderVisibilityStore.shared.selected
+        if selection.contains(.claude) {
+            // Capture the metadata baseline before resolveUsage can read the
+            // cached token. A store rewrite during an otherwise successful
+            // old-token request must still differ from this baseline.
+            watchCredentialStore()
+        }
+
         loading = true
         refreshTask?.cancel()
         refreshTask = Task {
@@ -134,7 +142,6 @@ final class UsageStore: ObservableObject {
                     self.refresh()
                 }
             }
-            let selection = ProviderVisibilityStore.shared.selected
             async let codexResult: AppUsage? = selection.contains(.codex) ? UsageFetcher.fetchCodex() : nil
             async let codexResetCreditsResult = selection.contains(.codex) ? UsageFetcher.fetchCodexResetCredits() : nil
             let coolingDown = claudeCooldownUntil.map { Date() < $0 } ?? false
@@ -198,12 +205,6 @@ final class UsageStore: ObservableObject {
                     : UsageStore.seeded(
                         AppUsage.merged(fetched: cl, retaining: priorClaude, at: now),
                         prior: priorClaude, provider: .claude, fillUnreported: false)
-                // Watch the credential store even after success: an account
-                // switch leaves the old account's token valid, so a 401/403
-                // may never arrive to invalidate the in-memory credential.
-                // The watch is metadata-only and refetches only after an
-                // actual external store write.
-                self.watchCredentialStore()
                 if terminal {
                     // The one terminal failure a CLI ping can fix: an expired
                     // token in a store nothing else maintains (desktop-app
@@ -538,7 +539,7 @@ final class UsageStore: ObservableObject {
     /// Claude Code (or `claude /login`) writes new credentials.
     private func watchCredentialStore() {
         guard credWatchTask == nil else { return }
-        let baseline = ClaudeCredentials.credentialStoreFingerprint()
+        let watch = ClaudeCredentials.CredentialStoreWatch()
         credWatchTask = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
@@ -548,14 +549,12 @@ final class UsageStore: ObservableObject {
                 // reacting here too would double-probe the usage endpoint
                 // on the same store write.
                 if self.claudeReauthInProgress { continue }
-                if ClaudeCredentials.invalidateCachedCredentialsIfStoreChanged(from: baseline) {
-                    self.credWatchTask = nil
+                if watch.invalidateCachedCredentialsIfStoreChanged() {
                     await self.waitOutWakeGrace()
                     if Task.isCancelled { return }
                     self.refreshTask?.cancel()
                     await self.refreshTask?.value
                     if !Task.isCancelled { self.refresh() }
-                    return
                 }
             }
             // Deliberately no cleanup on the cancelled path: cancellers nil

@@ -414,11 +414,11 @@ struct ResolveUsageTests {
         expect(ClaudeCredentials.decodeClaudeKeychainBlob(Data("not json at all".utf8)) == nil,
                "T12 garbage yields nil")
 
-        // T13 - account switch while the old access token is still valid
-        // (issue #103). A successful old-token probe must not leave that
-        // credential cached after Claude Code rewrites its external store.
-        // The metadata watcher invalidates the cache without reading or
-        // writing secrets, so the next usage fetch selects the new account.
+        // T13 - account switch while an old-token request is in flight and
+        // succeeds (issue #103). The watcher baseline must exist before the
+        // credential is read and requested. Otherwise a store rewrite during
+        // that request becomes the watcher's new baseline while the cache
+        // still holds the old account forever.
         var t13Modified = Date(timeIntervalSince1970: 1_700_001_000)
         var t13StoreToken = "old-account-token"
         ClaudeCredentials.keychainModificationDatesProvider = { [t13Modified] }
@@ -429,27 +429,30 @@ struct ResolveUsageTests {
         ] }
         ClaudeCredentials.cachedClaudeCreds = ClaudeCredentials.ClaudeCreds(
             account: "old", accessToken: "old-account-token", subscriptionType: "max")
-        let t13Baseline = ClaudeCredentials.credentialStoreFingerprint()
+        let t13Watch = ClaudeCredentials.CredentialStoreWatch()
+        expect(!t13Watch.invalidateCachedCredentialsIfStoreChanged(),
+               "T13 unchanged store keeps the valid cached token")
+        expect(ClaudeCredentials.cachedClaudeCreds?.accessToken == "old-account-token",
+               "T13 metadata checks do not reread an unchanged secret")
         var t13ProbedTokens: [String] = []
         let t13Old = await ClaudeCredentials.resolveUsage { token, _ in
             t13ProbedTokens.append(token)
+            if token == "old-account-token" {
+                t13StoreToken = "new-account-token"
+                t13Modified = t13Modified.addingTimeInterval(60)
+            }
             return token == "test-stub-token" ? .unauthorized : .success(fetched)
         }
         if case .usage = t13Old {
             expect(t13ProbedTokens.last == "old-account-token",
-                   "T13 old account token can remain valid before the store switch")
+                   "T13 old account token remains valid while the store switches")
         } else {
-            expect(false, "T13 old account token can remain valid before the store switch")
+            expect(false, "T13 old account token remains valid while the store switches")
         }
-        expect(!ClaudeCredentials.invalidateCachedCredentialsIfStoreChanged(from: t13Baseline),
-               "T13 unchanged store keeps the valid cached token")
         expect(ClaudeCredentials.cachedClaudeCreds?.accessToken == "old-account-token",
-               "T13 metadata checks do not reread an unchanged secret")
-
-        t13StoreToken = "new-account-token"
-        t13Modified = t13Modified.addingTimeInterval(60)
-        expect(ClaudeCredentials.invalidateCachedCredentialsIfStoreChanged(from: t13Baseline),
-               "T13 external credential-store change invalidates the valid old-token cache")
+               "T13 successful old-token response does not invalidate itself")
+        expect(t13Watch.invalidateCachedCredentialsIfStoreChanged(),
+               "T13 in-flight credential-store change invalidates the valid old-token cache")
         t13ProbedTokens = []
         let t13New = await ClaudeCredentials.resolveUsage { token, _ in
             t13ProbedTokens.append(token)
