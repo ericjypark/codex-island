@@ -9,6 +9,7 @@ struct IslandRootView: View {
     @State private var contentVisible = false
     @State private var pillsVisible = false
     @State private var pulseToken: UUID?
+    @State private var collapseRequest = UUID()
 
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
@@ -114,31 +115,9 @@ struct IslandRootView: View {
                         }
                         return
                     }
-                    // Plain click: enter the full panel. Works from .peek
-                    // (the common case after hover) or .compact (cold click).
-                    // Pills travel outward with the growing shape under the
-                    // single openMorph spring, then quietly retire after the
-                    // expanded content has settled.
-                    guard model.state == .peek || model.state == .compact else { return }
-                    withAnimation(.openMorph) {
-                        model.setState(.expanded)
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
-                        guard model.state == .expanded else { return }
-                        withAnimation(.strongEaseOut) {
-                            contentVisible = true
-                        }
-                    }
-                    // Guard against a hover-out landing inside the 250ms
-                    // wait: under always-show it restores the pills at peek,
-                    // and this stale callback would hide them again — leaving
-                    // the rest state pill-less until the next hover cycle.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                        guard model.state == .expanded else { return }
-                        withAnimation(.easeOut(duration: 0.18)) {
-                            pillsVisible = false
-                        }
-                    }
+                    // Keep click as an accessibility/fallback path; ordinary
+                    // pointer use expands immediately on hover.
+                    expandPanel()
                 }
                 .onHover { h in
                     hovering = h
@@ -149,60 +128,9 @@ struct IslandRootView: View {
                         NSHapticFeedbackManager.defaultPerformer.perform(
                             .levelChange, performanceTime: .now
                         )
-                        // PEEK ENTER: shape morphs out to peek width. Pills
-                        // fade in 60ms later so the eye sees the shape commit
-                        // first, then content arrives. Hover does NOT open
-                        // the full panel — that requires a click.
-                        if model.state == .compact {
-                            withAnimation(.openMorph) {
-                                model.setState(.peek)
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
-                                guard model.state == .peek else { return }
-                                withAnimation(.easeOut(duration: 0.18)) {
-                                    pillsVisible = true
-                                }
-                            }
-                        }
+                        expandPanel()
                     } else {
-                        // EXIT: pills fade first (unless we're pinning peek),
-                        // then the shape settles at the rest state — `.compact`
-                        // normally, `.peek` under always-show.
-                        if !alwaysShow.enabled {
-                            withAnimation(.easeOut(duration: 0.08)) {
-                                pillsVisible = false
-                            }
-                        }
-                        withAnimation(.easeOut(duration: 0.10)) {
-                            contentVisible = false
-                        }
-                        // Start the shape morph after only 20ms — overlapping
-                        // with the content fade — so the silhouette begins
-                        // shrinking while the content is still fading out.
-                        // The original 100ms wait caused a visible "flash black"
-                        // because the full-size black shape was exposed for the
-                        // entire fade before the closeMorph fired.
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
-                            guard !hovering else { return }
-                            // Re-read restState here — the user may have flipped
-                            // the always-show toggle during the 20ms wait, and
-                            // a captured-at-creation-time `target` would settle
-                            // at the wrong state for them.
-                            let target = restState
-                            if model.state != target {
-                                withAnimation(.closeMorph) {
-                                    model.setState(target)
-                                }
-                            }
-                            // Coming out of `.expanded` under always-show, the
-                            // pills were hidden by the open-panel branch — bring
-                            // them back as the shape resettles at peek.
-                            if alwaysShow.enabled && !pillsVisible {
-                                withAnimation(.easeOut(duration: 0.18)) {
-                                    pillsVisible = true
-                                }
-                            }
-                        }
+                        scheduleCollapseAfterHoverExit()
                     }
                 }
             Spacer(minLength: 0)
@@ -312,13 +240,65 @@ struct IslandRootView: View {
         alwaysShow.enabled ? .peek : .compact
     }
 
+    private func expandPanel() {
+        // Invalidates any delayed collapse that was scheduled on a brief
+        // pointer exit while the shape was morphing.
+        collapseRequest = UUID()
+        if model.state == .expanded {
+            if !contentVisible {
+                withAnimation(.strongEaseOut) {
+                    contentVisible = true
+                }
+            }
+            return
+        }
+
+        withAnimation(.easeOut(duration: 0.08)) {
+            pillsVisible = false
+        }
+        withAnimation(.openMorph) {
+            model.setState(.expanded)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.14) {
+            guard model.state == .expanded else { return }
+            withAnimation(.strongEaseOut) {
+                contentVisible = true
+            }
+        }
+    }
+
+    private func scheduleCollapseAfterHoverExit() {
+        // 1.5s is long enough to cross a small pointer gap or return after an
+        // accidental exit, without leaving the expanded dashboard hanging.
+        let request = UUID()
+        collapseRequest = request
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            guard collapseRequest == request, !hovering else { return }
+            withAnimation(.easeOut(duration: 0.12)) {
+                contentVisible = false
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                guard collapseRequest == request, !hovering else { return }
+                let target = restState
+                withAnimation(.closeMorph) {
+                    model.setState(target)
+                }
+                if target == .peek {
+                    withAnimation(.easeOut(duration: 0.18)) {
+                        pillsVisible = true
+                    }
+                }
+            }
+        }
+    }
+
     private var accessibilityHintForState: String {
         switch model.state {
         case .compact:
             return alwaysShow.enabled
-                ? L10n.tr("Click to expand. Command-click to cycle visualization.")
-                : L10n.tr("Hover to peek usage. Click to expand. Command-click to cycle visualization.")
-        case .peek:     return L10n.tr("Click to expand. Command-click to cycle visualization.")
+                ? L10n.tr("Hover or activate to expand. Move away to collapse.")
+                : L10n.tr("Hover or activate to expand. Move away to collapse.")
+        case .peek:     return L10n.tr("Hover or activate to expand. Move away to collapse.")
         case .expanded:
             return ScreenPref.shared.screen == .overview
                 ? L10n.tr("Swipe to change pages.")

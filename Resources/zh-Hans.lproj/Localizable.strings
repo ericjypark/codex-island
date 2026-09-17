@@ -154,6 +154,8 @@
 "Click to expand. Command-click to cycle visualization." = "点击展开。Command 点击可切换可视化。";
 "Command-click to cycle visualization." = "Command 点击可切换可视化。";
 "Hover to peek usage. Click to expand. Command-click to cycle visualization." = "悬停预览用量。点击展开。Command 点击可切换可视化。";
+"Hover to expand. Move away to collapse." = "悬停即可展开，移开后自动收起。";
+"Hover or activate to expand. Move away to collapse." = "悬停或激活即可展开，移开后自动收起。";
 "Hover to show reset expiration details" = "悬停查看重置到期详情";
 "How often to refresh." = "刷新频率。";
 "Percentages" = "百分比";
