@@ -14,21 +14,30 @@ final class UpdaterController: ObservableObject {
     static let shared = UpdaterController()
 
     private let controller: SPUStandardUpdaterController
+    let updatesEnabled: Bool
 
     @Published var automaticallyChecks: Bool {
-        didSet { controller.updater.automaticallyChecksForUpdates = automaticallyChecks }
+        didSet {
+            guard updatesEnabled else {
+                if automaticallyChecks { automaticallyChecks = false }
+                return
+            }
+            controller.updater.automaticallyChecksForUpdates = automaticallyChecks
+        }
     }
 
     private init() {
+        updatesEnabled = Bundle.main.object(forInfoDictionaryKey: "CodexIslandLocalBuild") as? Bool != true
         controller = SPUStandardUpdaterController(
-            startingUpdater: true,
+            startingUpdater: updatesEnabled,
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
-        automaticallyChecks = controller.updater.automaticallyChecksForUpdates
+        automaticallyChecks = updatesEnabled && controller.updater.automaticallyChecksForUpdates
     }
 
     func checkForUpdates() {
+        guard updatesEnabled else { return }
         controller.checkForUpdates(nil)
     }
 }
