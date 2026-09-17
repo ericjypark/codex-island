@@ -58,7 +58,7 @@ final class UsageStore: ObservableObject {
     /// After a rate-limited fetch, skip Claude fetches for this long.
     /// Deliberately in-memory only — a quit+relaunch retries immediately.
     private static let rateLimitCooldown: TimeInterval = 900
-    private var claudeCooldownUntil: Date?
+    private var claudeCooldown = ClaudeUsageCooldown()
 
     func refreshForSelectionChange() {
         if loading { refreshRequestedAfterSelection = true }
@@ -144,7 +144,7 @@ final class UsageStore: ObservableObject {
             }
             async let codexResult: AppUsage? = selection.contains(.codex) ? UsageFetcher.fetchCodex() : nil
             async let codexResetCreditsResult = selection.contains(.codex) ? UsageFetcher.fetchCodexResetCredits() : nil
-            let coolingDown = claudeCooldownUntil.map { Date() < $0 } ?? false
+            let coolingDown = claudeCooldown.isActive(at: Date())
             var cl: AppUsage?
             if !coolingDown && selection.contains(.claude) {
                 cl = await UsageFetcher.fetchClaude()
@@ -183,11 +183,11 @@ final class UsageStore: ObservableObject {
             }
             if let cl {
                 if UsageStore.isRateLimited(cl) {
-                    self.claudeCooldownUntil = Date().addingTimeInterval(UsageStore.rateLimitCooldown)
+                    self.claudeCooldown.arm(now: Date(), duration: UsageStore.rateLimitCooldown)
                     NSLog("CodexIsland: Claude usage rate-limited; skipping Claude fetches for %.0fs", UsageStore.rateLimitCooldown)
                     self.scheduleCooldownRetry()
                 } else {
-                    self.claudeCooldownUntil = nil
+                    self.claudeCooldown.clear()
                 }
                 // A terminal auth failure (expired token / missing scope)
                 // REPLACES the retained reading rather than carrying it: the
@@ -550,6 +550,9 @@ final class UsageStore: ObservableObject {
                 // on the same store write.
                 if self.claudeReauthInProgress { continue }
                 if watch.invalidateCachedCredentialsIfStoreChanged() {
+                    self.claudeCooldown.clear()
+                    self.cooldownRetryTask?.cancel()
+                    self.cooldownRetryTask = nil
                     await self.waitOutWakeGrace()
                     if Task.isCancelled { return }
                     self.refreshTask?.cancel()

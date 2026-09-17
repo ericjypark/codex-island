@@ -29,6 +29,14 @@ CLAUDE_CODE_OAUTH_TOKEN="test-stub-token" "$OUT_DIR/resolve-usage-tests"
 
 swiftc \
   -parse-as-library \
+  -o "$OUT_DIR/claude-usage-cooldown-tests" \
+  Sources/Usage/ClaudeUsageCooldown.swift \
+  Tests/ClaudeUsageCooldownTests.swift
+
+"$OUT_DIR/claude-usage-cooldown-tests"
+
+swiftc \
+  -parse-as-library \
   -o "$OUT_DIR/notch-height-tests" \
   Sources/Model/NotchInfo.swift \
   Sources/Model/IslandSpacingStore.swift \
