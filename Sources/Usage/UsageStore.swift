@@ -37,6 +37,7 @@ final class UsageStore: ObservableObject {
     private var wakeGraceUntil: Date?
     private var wakeRefreshTask: Task<Void, Never>?
     private var credWatchTask: Task<Void, Never>?
+    private var deferredClaudeRefreshTask: Task<Void, Never>?
     private var cooldownRetryTask: Task<Void, Never>?
     private var sleepWakeObservers: [NSObjectProtocol] = []
     /// One CLI refresh ping per expiry episode: armed when the expired-token
@@ -59,10 +60,16 @@ final class UsageStore: ObservableObject {
     /// Deliberately in-memory only — a quit+relaunch retries immediately.
     private static let rateLimitCooldown: TimeInterval = 900
     private var claudeCooldown = ClaudeUsageCooldown()
+    private var claudeRequestGate = ClaudeRequestGate()
 
     func refreshForSelectionChange() {
-        if loading { refreshRequestedAfterSelection = true }
-        else { refresh() }
+        if loading {
+            updateCredentialStoreWatch(
+                claudeSelected: ProviderVisibilityStore.shared.selected.contains(.claude))
+            refreshRequestedAfterSelection = true
+        } else {
+            refresh()
+        }
     }
 
     func refresh() {
@@ -125,12 +132,7 @@ final class UsageStore: ObservableObject {
         }
 
         let selection = ProviderVisibilityStore.shared.selected
-        if selection.contains(.claude) {
-            // Capture the metadata baseline before resolveUsage can read the
-            // cached token. A store rewrite during an otherwise successful
-            // old-token request must still differ from this baseline.
-            watchCredentialStore()
-        }
+        updateCredentialStoreWatch(claudeSelected: selection.contains(.claude))
 
         loading = true
         refreshTask?.cancel()
@@ -147,7 +149,7 @@ final class UsageStore: ObservableObject {
             let coolingDown = claudeCooldown.isActive(at: Date())
             var cl: AppUsage?
             if !coolingDown && selection.contains(.claude) {
-                cl = await UsageFetcher.fetchClaude()
+                cl = await fetchClaudeIfAllowed()
             }
             let c = await codexResult
             let codexResetCredits = await codexResetCreditsResult
@@ -371,7 +373,7 @@ final class UsageStore: ObservableObject {
                     ClaudeCredentials.clearCache()
                 }
                 guard sawStoreWrite else { continue }
-                let cl = await UsageFetcher.fetchClaude()
+                guard let cl = await self?.fetchClaudeIfAllowed() else { continue }
                 if Task.isCancelled { return }
                 // The usage limiter is sticky once tripped (see
                 // rateLimitCooldown) — retrying every 5s only feeds it. Bail
@@ -387,7 +389,8 @@ final class UsageStore: ObservableObject {
                         // restart it from the new store state.
                         self?.credWatchTask?.cancel()
                         self?.credWatchTask = nil
-                        self?.watchCredentialStore()
+                        self?.updateCredentialStoreWatch(
+                            claudeSelected: ProviderVisibilityStore.shared.selected.contains(.claude))
                         self?.tokenRefreshPingAttempted = false
                     }
                     return
@@ -431,6 +434,8 @@ final class UsageStore: ObservableObject {
         wakeGraceUntil = nil
         credWatchTask?.cancel()
         credWatchTask = nil
+        deferredClaudeRefreshTask?.cancel()
+        deferredClaudeRefreshTask = nil
         cooldownRetryTask?.cancel()
         cooldownRetryTask = nil
     }
@@ -531,12 +536,33 @@ final class UsageStore: ObservableObject {
         }
     }
 
-    /// Recover from any external credential-store change, including an account
-    /// switch whose old token remains valid. The fingerprint is metadata-only
-    /// (keychain attribute query + file mtime - never an ACL prompt or network
-    /// request), so the 5s tick does not lower the usage endpoint's five-minute
-    /// polling floor. A secret read and event-driven probe happen only after
-    /// Claude Code (or `claude /login`) writes new credentials.
+    private func updateCredentialStoreWatch(claudeSelected: Bool) {
+        let action = ClaudeCredentialWatchPolicy.action(
+            claudeSelected: claudeSelected,
+            watchRunning: credWatchTask != nil)
+        switch action {
+        case .start:
+            // Capture the baseline before broad discovery so a store rewrite
+            // cannot land between discovery and watcher creation.
+            watchCredentialStore()
+            ClaudeCredentials.refreshCredentialStoreTargets()
+        case .keep:
+            // Broad keychain discovery stays on the ordinary refresh path;
+            // the 5-second watcher only queries these Claude item identities.
+            ClaudeCredentials.refreshCredentialStoreTargets()
+        case .stop:
+            credWatchTask?.cancel()
+            credWatchTask = nil
+            deferredClaudeRefreshTask?.cancel()
+            deferredClaudeRefreshTask = nil
+        case .none:
+            break
+        }
+    }
+
+    /// Detect external credential changes promptly without turning metadata
+    /// checks into network polling. The request is separately coalesced at the
+    /// endpoint's five-minute minimum.
     private func watchCredentialStore() {
         guard credWatchTask == nil else { return }
         let watch = ClaudeCredentials.CredentialStoreWatch()
@@ -553,16 +579,49 @@ final class UsageStore: ObservableObject {
                     self.claudeCooldown.clear()
                     self.cooldownRetryTask?.cancel()
                     self.cooldownRetryTask = nil
-                    await self.waitOutWakeGrace()
-                    if Task.isCancelled { return }
-                    self.refreshTask?.cancel()
-                    await self.refreshTask?.value
-                    if !Task.isCancelled { self.refresh() }
+                    self.scheduleClaudeRefreshAtSafeBoundary()
                 }
             }
             // Deliberately no cleanup on the cancelled path: cancellers nil
             // the property themselves, and nilling here would clobber a
             // successor watch's reference.
+        }
+    }
+
+    private func fetchClaudeIfAllowed() async -> AppUsage? {
+        guard claudeRequestGate.claim(at: Date()) else {
+            scheduleClaudeRefreshAtSafeBoundary()
+            return nil
+        }
+        // A timer or manual refresh reached the safe boundary first. It owns
+        // the new credential fetch, so retire the deferred duplicate.
+        deferredClaudeRefreshTask?.cancel()
+        deferredClaudeRefreshTask = nil
+        return await UsageFetcher.fetchClaude()
+    }
+
+    private func scheduleClaudeRefreshAtSafeBoundary() {
+        deferredClaudeRefreshTask?.cancel()
+        deferredClaudeRefreshTask = Task { [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                let delay = self.claudeRequestGate.delayUntilAllowed(at: Date())
+                if delay > 0 {
+                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                    continue
+                }
+                await self.waitOutWakeGrace()
+                guard !Task.isCancelled,
+                      ProviderVisibilityStore.shared.selected.contains(.claude) else { return }
+                // A timer or manual refresh may have claimed the gate while
+                // this task waited through wake grace.
+                if self.claudeRequestGate.delayUntilAllowed(at: Date()) > 0 { continue }
+                self.deferredClaudeRefreshTask = nil
+                self.refreshTask?.cancel()
+                await self.refreshTask?.value
+                if !Task.isCancelled { self.refresh() }
+                return
+            }
         }
     }
 

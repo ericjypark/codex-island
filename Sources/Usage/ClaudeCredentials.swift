@@ -235,9 +235,19 @@ enum ClaudeCredentials {
     /// pops the ACL prompt on the machine running the tests.
     static var keychainCandidatesProvider: () -> [KeychainCandidate] = readClaudeKeychainCandidates
     static var keychainModificationDatesProvider: () -> [Date] = claudeKeychainModificationDates
+    private struct KeychainTarget: Hashable {
+        let service: String
+        let account: String
+    }
+    private static let keychainTargetsLock = NSLock()
+    private static var _keychainTargets: [KeychainTarget] = []
 
     static func clearCache() {
         cachedClaudeCreds = nil
+    }
+
+    static func refreshCredentialStoreTargets() {
+        _ = claudeKeychainItems()
     }
 
     /// Reads Claude Code's login from the keychain or file store, or nil if
@@ -352,7 +362,7 @@ enum ClaudeCredentials {
         var result: CFTypeRef?
         guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
               let items = result as? [[String: Any]] else { return [] }
-        return items
+        let claudeItems = items
             .compactMap { item -> (service: String, account: String, modified: Date?)? in
                 guard let service = item[kSecAttrService as String] as? String,
                       isClaudeCredentialService(service),
@@ -363,14 +373,15 @@ enum ClaudeCredentials {
                 (lhs.service == claudeServiceBase ? 0 : 1, lhs.service)
                     < (rhs.service == claudeServiceBase ? 0 : 1, rhs.service)
             }
+        let targets = claudeItems.map { KeychainTarget(service: $0.service, account: $0.account) }
+        keychainTargetsLock.withLock { _keychainTargets = targets }
+        return claudeItems
     }
 
     /// Prompt-free "has the credential store changed?" snapshot: the newest
-    /// of the credentials file's mtime and the keychain items' modification
-    /// dates, both from metadata-only reads that never trip the ACL prompt.
-    /// The re-auth poll loop compares snapshots so it pays the secret read
-    /// (and its possible prompt) only once `claude auth login` has actually
-    /// written new credentials — not on every 5s tick.
+    /// of the credentials file's mtime and targeted metadata queries for the
+    /// Claude items discovered at a normal refresh boundary. It never reads
+    /// every generic-password item on the watcher's 5-second tick.
     static func credentialStoreFingerprint() -> Date? {
         var dates = keychainModificationDatesProvider()
         if let attrs = try? FileManager.default.attributesOfItem(atPath: claudeCredentialsFilePath()),
@@ -405,7 +416,20 @@ enum ClaudeCredentials {
     }
 
     private static func claudeKeychainModificationDates() -> [Date] {
-        claudeKeychainItems().compactMap { $0.modified }
+        let targets = keychainTargetsLock.withLock { _keychainTargets }
+        return targets.compactMap { target in
+            let query: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: target.service,
+                kSecAttrAccount as String: target.account,
+                kSecMatchLimit as String: kSecMatchLimitOne,
+                kSecReturnAttributes as String: true,
+            ]
+            var result: CFTypeRef?
+            guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+                  let item = result as? [String: Any] else { return nil }
+            return item[kSecAttrModificationDate as String] as? Date
+        }
     }
 
     /// Decoded JSON blob of one account's item, or nil on any read/parse error.

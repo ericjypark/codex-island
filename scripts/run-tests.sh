@@ -37,6 +37,14 @@ swiftc \
 
 swiftc \
   -parse-as-library \
+  -o "$OUT_DIR/claude-usage-scheduling-tests" \
+  Sources/Usage/ClaudeUsageScheduling.swift \
+  Tests/ClaudeUsageSchedulingTests.swift
+
+"$OUT_DIR/claude-usage-scheduling-tests"
+
+swiftc \
+  -parse-as-library \
   -o "$OUT_DIR/notch-height-tests" \
   Sources/Model/NotchInfo.swift \
   Sources/Model/IslandSpacingStore.swift \
