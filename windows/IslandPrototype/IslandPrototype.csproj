@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <ApplicationIcon>Assets/CodexIsland.ico</ApplicationIcon>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>CodexIslandPrototype</AssemblyName>
+    <StartupObject>IslandPrototype.App</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+    <PackageReference Include="Velopack" Version="1.2.0" />
+    <AssemblyMetadata Include="WindowsUpdateTestFeed" Value="$(WindowsUpdateTestFeed)" Condition="'$(WindowsUpdateTestFeed)' != ''" />
+    <Resource Include="Assets/*.png" />
+    <Resource Include="Assets/*.ico" />
+    <Resource Include="Assets/*.json" />
+    <Resource Include="Assets/Fonts/*.ttf" />
+    <None Update="Assets/Fonts/*-OFL.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
