@@ -26,14 +26,9 @@ final class IslandModel: ObservableObject {
     /// Side extension that houses each brand logo in compact state.
     let tabWidth: CGFloat = 38
 
-    /// Per-side outboard slot that houses the peek-state percentage pill.
-    /// Sized for "100% · Nd Nh" worst case at the chosen pill typography
-    /// (weekly Codex windows can land at e.g. `6d 23h`). Fixed (not
-    /// text-measured) so percentage updates don't jitter the silhouette
-    /// width during refresh. Grown symmetrically on both sides regardless
-    /// of which provider is visible — keeps the silhouette balanced over
-    /// the physical notch.
-    let pillSlotWidth: CGFloat = 96
+    /// Stacked labels share the same fixed space as a single-provider gauge,
+    /// so changing providers or live readings never shifts the silhouette.
+    let pillSlotWidth: CGFloat = 56
 
     /// Visible expanded panel width.
     private let expandedWidth: CGFloat = 800
