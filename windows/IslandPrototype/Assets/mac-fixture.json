@@ -1,0 +1,6646 @@
+{
+  "date" : "2026-09-12T00:37:55Z",
+  "monospacedFont" : ".AppleSystemUIFontMonospaced-Semibold",
+  "proportionalFont" : ".AppleSystemUIFontDemi",
+  "providers" : [
+    {
+      "days" : [
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-01-01T06:00:00Z",
+          "dollars" : 16.704000000000001,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 3100000,
+          "date" : "2026-01-02T06:00:00Z",
+          "dollars" : 21.575999999999997,
+          "tokens" : 31000000
+        },
+        {
+          "billableTokens" : 12800000,
+          "date" : "2026-01-03T06:00:00Z",
+          "dollars" : 89.087999999999994,
+          "tokens" : 128000000
+        },
+        {
+          "billableTokens" : 4400000,
+          "date" : "2026-01-04T06:00:00Z",
+          "dollars" : 30.623999999999999,
+          "tokens" : 44000000
+        },
+        {
+          "billableTokens" : 8200000,
+          "date" : "2026-01-05T06:00:00Z",
+          "dollars" : 57.071999999999996,
+          "tokens" : 82000000
+        },
+        {
+          "billableTokens" : 7600000,
+          "date" : "2026-01-06T06:00:00Z",
+          "dollars" : 52.895999999999994,
+          "tokens" : 76000000
+        },
+        {
+          "billableTokens" : 31000000,
+          "date" : "2026-01-07T06:00:00Z",
+          "dollars" : 215.75999999999999,
+          "tokens" : 310000000
+        },
+        {
+          "billableTokens" : 12200000,
+          "date" : "2026-01-08T06:00:00Z",
+          "dollars" : 84.911999999999992,
+          "tokens" : 122000000
+        },
+        {
+          "billableTokens" : 21800000,
+          "date" : "2026-01-09T06:00:00Z",
+          "dollars" : 151.72799999999998,
+          "tokens" : 218000000
+        },
+        {
+          "billableTokens" : 23600000,
+          "date" : "2026-01-10T06:00:00Z",
+          "dollars" : 164.256,
+          "tokens" : 236000000
+        },
+        {
+          "billableTokens" : 9800000,
+          "date" : "2026-01-11T06:00:00Z",
+          "dollars" : 68.207999999999998,
+          "tokens" : 98000000
+        },
+        {
+          "billableTokens" : 6400000,
+          "date" : "2026-01-12T06:00:00Z",
+          "dollars" : 44.543999999999997,
+          "tokens" : 64000000
+        },
+        {
+          "billableTokens" : 4700000,
+          "date" : "2026-01-13T06:00:00Z",
+          "dollars" : 32.711999999999996,
+          "tokens" : 47000000
+        },
+        {
+          "billableTokens" : 28600000,
+          "date" : "2026-01-14T06:00:00Z",
+          "dollars" : 199.05599999999998,
+          "tokens" : 286000000
+        },
+        {
+          "billableTokens" : 14000000,
+          "date" : "2026-01-15T06:00:00Z",
+          "dollars" : 97.439999999999998,
+          "tokens" : 140000000
+        },
+        {
+          "billableTokens" : 20500000,
+          "date" : "2026-01-16T06:00:00Z",
+          "dollars" : 142.67999999999998,
+          "tokens" : 205000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-01-17T06:00:00Z",
+          "dollars" : 41.064,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 27600000,
+          "date" : "2026-01-18T06:00:00Z",
+          "dollars" : 192.09599999999998,
+          "tokens" : 276000000
+        },
+        {
+          "billableTokens" : 11900000,
+          "date" : "2026-01-19T06:00:00Z",
+          "dollars" : 82.823999999999998,
+          "tokens" : 119000000
+        },
+        {
+          "billableTokens" : 4800000,
+          "date" : "2026-01-20T06:00:00Z",
+          "dollars" : 33.408000000000001,
+          "tokens" : 48000000
+        },
+        {
+          "billableTokens" : 0,
+          "date" : "2026-01-21T06:00:00Z",
+          "dollars" : 0,
+          "tokens" : 0
+        },
+        {
+          "billableTokens" : 8600000,
+          "date" : "2026-01-22T06:00:00Z",
+          "dollars" : 59.855999999999995,
+          "tokens" : 86000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-01-23T06:00:00Z",
+          "dollars" : 94.655999999999992,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 15400000,
+          "date" : "2026-01-24T06:00:00Z",
+          "dollars" : 107.184,
+          "tokens" : 154000000
+        },
+        {
+          "billableTokens" : 16800000,
+          "date" : "2026-01-25T06:00:00Z",
+          "dollars" : 116.928,
+          "tokens" : 168000000
+        },
+        {
+          "billableTokens" : 14800000,
+          "date" : "2026-01-26T06:00:00Z",
+          "dollars" : 103.008,
+          "tokens" : 148000000
+        },
+        {
+          "billableTokens" : 13200000,
+          "date" : "2026-01-27T06:00:00Z",
+          "dollars" : 91.872,
+          "tokens" : 132000000
+        },
+        {
+          "billableTokens" : 9400000,
+          "date" : "2026-01-28T06:00:00Z",
+          "dollars" : 65.423999999999992,
+          "tokens" : 94000000
+        },
+        {
+          "billableTokens" : 40200000,
+          "date" : "2026-01-29T06:00:00Z",
+          "dollars" : 279.79199999999997,
+          "tokens" : 402000000
+        },
+        {
+          "billableTokens" : 21100000,
+          "date" : "2026-01-30T06:00:00Z",
+          "dollars" : 146.85599999999999,
+          "tokens" : 211000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-01-31T06:00:00Z",
+          "dollars" : 16.704000000000001,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 3100000,
+          "date" : "2026-02-01T06:00:00Z",
+          "dollars" : 21.575999999999997,
+          "tokens" : 31000000
+        },
+        {
+          "billableTokens" : 12800000,
+          "date" : "2026-02-02T06:00:00Z",
+          "dollars" : 89.087999999999994,
+          "tokens" : 128000000
+        },
+        {
+          "billableTokens" : 4400000,
+          "date" : "2026-02-03T06:00:00Z",
+          "dollars" : 30.623999999999999,
+          "tokens" : 44000000
+        },
+        {
+          "billableTokens" : 8200000,
+          "date" : "2026-02-04T06:00:00Z",
+          "dollars" : 57.071999999999996,
+          "tokens" : 82000000
+        },
+        {
+          "billableTokens" : 7600000,
+          "date" : "2026-02-05T06:00:00Z",
+          "dollars" : 52.895999999999994,
+          "tokens" : 76000000
+        },
+        {
+          "billableTokens" : 31000000,
+          "date" : "2026-02-06T06:00:00Z",
+          "dollars" : 215.75999999999999,
+          "tokens" : 310000000
+        },
+        {
+          "billableTokens" : 12200000,
+          "date" : "2026-02-07T06:00:00Z",
+          "dollars" : 84.911999999999992,
+          "tokens" : 122000000
+        },
+        {
+          "billableTokens" : 21800000,
+          "date" : "2026-02-08T06:00:00Z",
+          "dollars" : 151.72799999999998,
+          "tokens" : 218000000
+        },
+        {
+          "billableTokens" : 23600000,
+          "date" : "2026-02-09T06:00:00Z",
+          "dollars" : 164.256,
+          "tokens" : 236000000
+        },
+        {
+          "billableTokens" : 9800000,
+          "date" : "2026-02-10T06:00:00Z",
+          "dollars" : 68.207999999999998,
+          "tokens" : 98000000
+        },
+        {
+          "billableTokens" : 6400000,
+          "date" : "2026-02-11T06:00:00Z",
+          "dollars" : 44.543999999999997,
+          "tokens" : 64000000
+        },
+        {
+          "billableTokens" : 4700000,
+          "date" : "2026-02-12T06:00:00Z",
+          "dollars" : 32.711999999999996,
+          "tokens" : 47000000
+        },
+        {
+          "billableTokens" : 28600000,
+          "date" : "2026-02-13T06:00:00Z",
+          "dollars" : 199.05599999999998,
+          "tokens" : 286000000
+        },
+        {
+          "billableTokens" : 14000000,
+          "date" : "2026-02-14T06:00:00Z",
+          "dollars" : 97.439999999999998,
+          "tokens" : 140000000
+        },
+        {
+          "billableTokens" : 20500000,
+          "date" : "2026-02-15T06:00:00Z",
+          "dollars" : 142.67999999999998,
+          "tokens" : 205000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-02-16T06:00:00Z",
+          "dollars" : 41.064,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 27600000,
+          "date" : "2026-02-17T06:00:00Z",
+          "dollars" : 192.09599999999998,
+          "tokens" : 276000000
+        },
+        {
+          "billableTokens" : 11900000,
+          "date" : "2026-02-18T06:00:00Z",
+          "dollars" : 82.823999999999998,
+          "tokens" : 119000000
+        },
+        {
+          "billableTokens" : 4800000,
+          "date" : "2026-02-19T06:00:00Z",
+          "dollars" : 33.408000000000001,
+          "tokens" : 48000000
+        },
+        {
+          "billableTokens" : 0,
+          "date" : "2026-02-20T06:00:00Z",
+          "dollars" : 0,
+          "tokens" : 0
+        },
+        {
+          "billableTokens" : 8600000,
+          "date" : "2026-02-21T06:00:00Z",
+          "dollars" : 59.855999999999995,
+          "tokens" : 86000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-02-22T06:00:00Z",
+          "dollars" : 94.655999999999992,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 15400000,
+          "date" : "2026-02-23T06:00:00Z",
+          "dollars" : 107.184,
+          "tokens" : 154000000
+        },
+        {
+          "billableTokens" : 16800000,
+          "date" : "2026-02-24T06:00:00Z",
+          "dollars" : 116.928,
+          "tokens" : 168000000
+        },
+        {
+          "billableTokens" : 14800000,
+          "date" : "2026-02-25T06:00:00Z",
+          "dollars" : 103.008,
+          "tokens" : 148000000
+        },
+        {
+          "billableTokens" : 13200000,
+          "date" : "2026-02-26T06:00:00Z",
+          "dollars" : 91.872,
+          "tokens" : 132000000
+        },
+        {
+          "billableTokens" : 9400000,
+          "date" : "2026-02-27T06:00:00Z",
+          "dollars" : 65.423999999999992,
+          "tokens" : 94000000
+        },
+        {
+          "billableTokens" : 40200000,
+          "date" : "2026-02-28T06:00:00Z",
+          "dollars" : 279.79199999999997,
+          "tokens" : 402000000
+        },
+        {
+          "billableTokens" : 21100000,
+          "date" : "2026-03-01T06:00:00Z",
+          "dollars" : 146.85599999999999,
+          "tokens" : 211000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-03-02T06:00:00Z",
+          "dollars" : 16.704000000000001,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 3100000,
+          "date" : "2026-03-03T06:00:00Z",
+          "dollars" : 21.575999999999997,
+          "tokens" : 31000000
+        },
+        {
+          "billableTokens" : 12800000,
+          "date" : "2026-03-04T06:00:00Z",
+          "dollars" : 89.087999999999994,
+          "tokens" : 128000000
+        },
+        {
+          "billableTokens" : 4400000,
+          "date" : "2026-03-05T06:00:00Z",
+          "dollars" : 30.623999999999999,
+          "tokens" : 44000000
+        },
+        {
+          "billableTokens" : 8200000,
+          "date" : "2026-03-06T06:00:00Z",
+          "dollars" : 57.071999999999996,
+          "tokens" : 82000000
+        },
+        {
+          "billableTokens" : 7600000,
+          "date" : "2026-03-07T06:00:00Z",
+          "dollars" : 52.895999999999994,
+          "tokens" : 76000000
+        },
+        {
+          "billableTokens" : 31000000,
+          "date" : "2026-03-08T06:00:00Z",
+          "dollars" : 215.75999999999999,
+          "tokens" : 310000000
+        },
+        {
+          "billableTokens" : 12200000,
+          "date" : "2026-03-09T05:00:00Z",
+          "dollars" : 84.911999999999992,
+          "tokens" : 122000000
+        },
+        {
+          "billableTokens" : 21800000,
+          "date" : "2026-03-10T05:00:00Z",
+          "dollars" : 151.72799999999998,
+          "tokens" : 218000000
+        },
+        {
+          "billableTokens" : 23600000,
+          "date" : "2026-03-11T05:00:00Z",
+          "dollars" : 164.256,
+          "tokens" : 236000000
+        },
+        {
+          "billableTokens" : 9800000,
+          "date" : "2026-03-12T05:00:00Z",
+          "dollars" : 68.207999999999998,
+          "tokens" : 98000000
+        },
+        {
+          "billableTokens" : 6400000,
+          "date" : "2026-03-13T05:00:00Z",
+          "dollars" : 44.543999999999997,
+          "tokens" : 64000000
+        },
+        {
+          "billableTokens" : 4700000,
+          "date" : "2026-03-14T05:00:00Z",
+          "dollars" : 32.711999999999996,
+          "tokens" : 47000000
+        },
+        {
+          "billableTokens" : 28600000,
+          "date" : "2026-03-15T05:00:00Z",
+          "dollars" : 199.05599999999998,
+          "tokens" : 286000000
+        },
+        {
+          "billableTokens" : 14000000,
+          "date" : "2026-03-16T05:00:00Z",
+          "dollars" : 97.439999999999998,
+          "tokens" : 140000000
+        },
+        {
+          "billableTokens" : 20500000,
+          "date" : "2026-03-17T05:00:00Z",
+          "dollars" : 142.67999999999998,
+          "tokens" : 205000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-03-18T05:00:00Z",
+          "dollars" : 41.064,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 27600000,
+          "date" : "2026-03-19T05:00:00Z",
+          "dollars" : 192.09599999999998,
+          "tokens" : 276000000
+        },
+        {
+          "billableTokens" : 11900000,
+          "date" : "2026-03-20T05:00:00Z",
+          "dollars" : 82.823999999999998,
+          "tokens" : 119000000
+        },
+        {
+          "billableTokens" : 4800000,
+          "date" : "2026-03-21T05:00:00Z",
+          "dollars" : 33.408000000000001,
+          "tokens" : 48000000
+        },
+        {
+          "billableTokens" : 0,
+          "date" : "2026-03-22T05:00:00Z",
+          "dollars" : 0,
+          "tokens" : 0
+        },
+        {
+          "billableTokens" : 8600000,
+          "date" : "2026-03-23T05:00:00Z",
+          "dollars" : 59.855999999999995,
+          "tokens" : 86000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-03-24T05:00:00Z",
+          "dollars" : 94.655999999999992,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 15400000,
+          "date" : "2026-03-25T05:00:00Z",
+          "dollars" : 107.184,
+          "tokens" : 154000000
+        },
+        {
+          "billableTokens" : 16800000,
+          "date" : "2026-03-26T05:00:00Z",
+          "dollars" : 116.928,
+          "tokens" : 168000000
+        },
+        {
+          "billableTokens" : 14800000,
+          "date" : "2026-03-27T05:00:00Z",
+          "dollars" : 103.008,
+          "tokens" : 148000000
+        },
+        {
+          "billableTokens" : 13200000,
+          "date" : "2026-03-28T05:00:00Z",
+          "dollars" : 91.872,
+          "tokens" : 132000000
+        },
+        {
+          "billableTokens" : 9400000,
+          "date" : "2026-03-29T05:00:00Z",
+          "dollars" : 65.423999999999992,
+          "tokens" : 94000000
+        },
+        {
+          "billableTokens" : 40200000,
+          "date" : "2026-03-30T05:00:00Z",
+          "dollars" : 279.79199999999997,
+          "tokens" : 402000000
+        },
+        {
+          "billableTokens" : 21100000,
+          "date" : "2026-03-31T05:00:00Z",
+          "dollars" : 146.85599999999999,
+          "tokens" : 211000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-04-01T05:00:00Z",
+          "dollars" : 16.704000000000001,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 3100000,
+          "date" : "2026-04-02T05:00:00Z",
+          "dollars" : 21.575999999999997,
+          "tokens" : 31000000
+        },
+        {
+          "billableTokens" : 12800000,
+          "date" : "2026-04-03T05:00:00Z",
+          "dollars" : 89.087999999999994,
+          "tokens" : 128000000
+        },
+        {
+          "billableTokens" : 4400000,
+          "date" : "2026-04-04T05:00:00Z",
+          "dollars" : 30.623999999999999,
+          "tokens" : 44000000
+        },
+        {
+          "billableTokens" : 8200000,
+          "date" : "2026-04-05T05:00:00Z",
+          "dollars" : 57.071999999999996,
+          "tokens" : 82000000
+        },
+        {
+          "billableTokens" : 7600000,
+          "date" : "2026-04-06T05:00:00Z",
+          "dollars" : 52.895999999999994,
+          "tokens" : 76000000
+        },
+        {
+          "billableTokens" : 31000000,
+          "date" : "2026-04-07T05:00:00Z",
+          "dollars" : 215.75999999999999,
+          "tokens" : 310000000
+        },
+        {
+          "billableTokens" : 12200000,
+          "date" : "2026-04-08T05:00:00Z",
+          "dollars" : 84.911999999999992,
+          "tokens" : 122000000
+        },
+        {
+          "billableTokens" : 21800000,
+          "date" : "2026-04-09T05:00:00Z",
+          "dollars" : 151.72799999999998,
+          "tokens" : 218000000
+        },
+        {
+          "billableTokens" : 23600000,
+          "date" : "2026-04-10T05:00:00Z",
+          "dollars" : 164.256,
+          "tokens" : 236000000
+        },
+        {
+          "billableTokens" : 9800000,
+          "date" : "2026-04-11T05:00:00Z",
+          "dollars" : 68.207999999999998,
+          "tokens" : 98000000
+        },
+        {
+          "billableTokens" : 6400000,
+          "date" : "2026-04-12T05:00:00Z",
+          "dollars" : 44.543999999999997,
+          "tokens" : 64000000
+        },
+        {
+          "billableTokens" : 4700000,
+          "date" : "2026-04-13T05:00:00Z",
+          "dollars" : 32.711999999999996,
+          "tokens" : 47000000
+        },
+        {
+          "billableTokens" : 28600000,
+          "date" : "2026-04-14T05:00:00Z",
+          "dollars" : 199.05599999999998,
+          "tokens" : 286000000
+        },
+        {
+          "billableTokens" : 14000000,
+          "date" : "2026-04-15T05:00:00Z",
+          "dollars" : 97.439999999999998,
+          "tokens" : 140000000
+        },
+        {
+          "billableTokens" : 20500000,
+          "date" : "2026-04-16T05:00:00Z",
+          "dollars" : 142.67999999999998,
+          "tokens" : 205000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-04-17T05:00:00Z",
+          "dollars" : 41.064,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 27600000,
+          "date" : "2026-04-18T05:00:00Z",
+          "dollars" : 192.09599999999998,
+          "tokens" : 276000000
+        },
+        {
+          "billableTokens" : 11900000,
+          "date" : "2026-04-19T05:00:00Z",
+          "dollars" : 82.823999999999998,
+          "tokens" : 119000000
+        },
+        {
+          "billableTokens" : 4800000,
+          "date" : "2026-04-20T05:00:00Z",
+          "dollars" : 33.408000000000001,
+          "tokens" : 48000000
+        },
+        {
+          "billableTokens" : 0,
+          "date" : "2026-04-21T05:00:00Z",
+          "dollars" : 0,
+          "tokens" : 0
+        },
+        {
+          "billableTokens" : 8600000,
+          "date" : "2026-04-22T05:00:00Z",
+          "dollars" : 59.855999999999995,
+          "tokens" : 86000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-04-23T05:00:00Z",
+          "dollars" : 94.655999999999992,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 15400000,
+          "date" : "2026-04-24T05:00:00Z",
+          "dollars" : 107.184,
+          "tokens" : 154000000
+        },
+        {
+          "billableTokens" : 16800000,
+          "date" : "2026-04-25T05:00:00Z",
+          "dollars" : 116.928,
+          "tokens" : 168000000
+        },
+        {
+          "billableTokens" : 14800000,
+          "date" : "2026-04-26T05:00:00Z",
+          "dollars" : 103.008,
+          "tokens" : 148000000
+        },
+        {
+          "billableTokens" : 13200000,
+          "date" : "2026-04-27T05:00:00Z",
+          "dollars" : 91.872,
+          "tokens" : 132000000
+        },
+        {
+          "billableTokens" : 9400000,
+          "date" : "2026-04-28T05:00:00Z",
+          "dollars" : 65.423999999999992,
+          "tokens" : 94000000
+        },
+        {
+          "billableTokens" : 40200000,
+          "date" : "2026-04-29T05:00:00Z",
+          "dollars" : 279.79199999999997,
+          "tokens" : 402000000
+        },
+        {
+          "billableTokens" : 21100000,
+          "date" : "2026-04-30T05:00:00Z",
+          "dollars" : 146.85599999999999,
+          "tokens" : 211000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-05-01T05:00:00Z",
+          "dollars" : 16.704000000000001,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 3100000,
+          "date" : "2026-05-02T05:00:00Z",
+          "dollars" : 21.575999999999997,
+          "tokens" : 31000000
+        },
+        {
+          "billableTokens" : 12800000,
+          "date" : "2026-05-03T05:00:00Z",
+          "dollars" : 89.087999999999994,
+          "tokens" : 128000000
+        },
+        {
+          "billableTokens" : 4400000,
+          "date" : "2026-05-04T05:00:00Z",
+          "dollars" : 30.623999999999999,
+          "tokens" : 44000000
+        },
+        {
+          "billableTokens" : 8200000,
+          "date" : "2026-05-05T05:00:00Z",
+          "dollars" : 57.071999999999996,
+          "tokens" : 82000000
+        },
+        {
+          "billableTokens" : 7600000,
+          "date" : "2026-05-06T05:00:00Z",
+          "dollars" : 52.895999999999994,
+          "tokens" : 76000000
+        },
+        {
+          "billableTokens" : 31000000,
+          "date" : "2026-05-07T05:00:00Z",
+          "dollars" : 215.75999999999999,
+          "tokens" : 310000000
+        },
+        {
+          "billableTokens" : 12200000,
+          "date" : "2026-05-08T05:00:00Z",
+          "dollars" : 84.911999999999992,
+          "tokens" : 122000000
+        },
+        {
+          "billableTokens" : 21800000,
+          "date" : "2026-05-09T05:00:00Z",
+          "dollars" : 151.72799999999998,
+          "tokens" : 218000000
+        },
+        {
+          "billableTokens" : 23600000,
+          "date" : "2026-05-10T05:00:00Z",
+          "dollars" : 164.256,
+          "tokens" : 236000000
+        },
+        {
+          "billableTokens" : 9800000,
+          "date" : "2026-05-11T05:00:00Z",
+          "dollars" : 68.207999999999998,
+          "tokens" : 98000000
+        },
+        {
+          "billableTokens" : 6400000,
+          "date" : "2026-05-12T05:00:00Z",
+          "dollars" : 44.543999999999997,
+          "tokens" : 64000000
+        },
+        {
+          "billableTokens" : 4700000,
+          "date" : "2026-05-13T05:00:00Z",
+          "dollars" : 32.711999999999996,
+          "tokens" : 47000000
+        },
+        {
+          "billableTokens" : 28600000,
+          "date" : "2026-05-14T05:00:00Z",
+          "dollars" : 199.05599999999998,
+          "tokens" : 286000000
+        },
+        {
+          "billableTokens" : 14000000,
+          "date" : "2026-05-15T05:00:00Z",
+          "dollars" : 97.439999999999998,
+          "tokens" : 140000000
+        },
+        {
+          "billableTokens" : 20500000,
+          "date" : "2026-05-16T05:00:00Z",
+          "dollars" : 142.67999999999998,
+          "tokens" : 205000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-05-17T05:00:00Z",
+          "dollars" : 41.064,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 27600000,
+          "date" : "2026-05-18T05:00:00Z",
+          "dollars" : 192.09599999999998,
+          "tokens" : 276000000
+        },
+        {
+          "billableTokens" : 11900000,
+          "date" : "2026-05-19T05:00:00Z",
+          "dollars" : 82.823999999999998,
+          "tokens" : 119000000
+        },
+        {
+          "billableTokens" : 4800000,
+          "date" : "2026-05-20T05:00:00Z",
+          "dollars" : 33.408000000000001,
+          "tokens" : 48000000
+        },
+        {
+          "billableTokens" : 0,
+          "date" : "2026-05-21T05:00:00Z",
+          "dollars" : 0,
+          "tokens" : 0
+        },
+        {
+          "billableTokens" : 8600000,
+          "date" : "2026-05-22T05:00:00Z",
+          "dollars" : 59.855999999999995,
+          "tokens" : 86000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-05-23T05:00:00Z",
+          "dollars" : 94.655999999999992,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 15400000,
+          "date" : "2026-05-24T05:00:00Z",
+          "dollars" : 107.184,
+          "tokens" : 154000000
+        },
+        {
+          "billableTokens" : 16800000,
+          "date" : "2026-05-25T05:00:00Z",
+          "dollars" : 116.928,
+          "tokens" : 168000000
+        },
+        {
+          "billableTokens" : 14800000,
+          "date" : "2026-05-26T05:00:00Z",
+          "dollars" : 103.008,
+          "tokens" : 148000000
+        },
+        {
+          "billableTokens" : 13200000,
+          "date" : "2026-05-27T05:00:00Z",
+          "dollars" : 91.872,
+          "tokens" : 132000000
+        },
+        {
+          "billableTokens" : 9400000,
+          "date" : "2026-05-28T05:00:00Z",
+          "dollars" : 65.423999999999992,
+          "tokens" : 94000000
+        },
+        {
+          "billableTokens" : 40200000,
+          "date" : "2026-05-29T05:00:00Z",
+          "dollars" : 279.79199999999997,
+          "tokens" : 402000000
+        },
+        {
+          "billableTokens" : 21100000,
+          "date" : "2026-05-30T05:00:00Z",
+          "dollars" : 146.85599999999999,
+          "tokens" : 211000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-05-31T05:00:00Z",
+          "dollars" : 16.704000000000001,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 3100000,
+          "date" : "2026-06-01T05:00:00Z",
+          "dollars" : 21.575999999999997,
+          "tokens" : 31000000
+        },
+        {
+          "billableTokens" : 12800000,
+          "date" : "2026-06-02T05:00:00Z",
+          "dollars" : 89.087999999999994,
+          "tokens" : 128000000
+        },
+        {
+          "billableTokens" : 4400000,
+          "date" : "2026-06-03T05:00:00Z",
+          "dollars" : 30.623999999999999,
+          "tokens" : 44000000
+        },
+        {
+          "billableTokens" : 8200000,
+          "date" : "2026-06-04T05:00:00Z",
+          "dollars" : 57.071999999999996,
+          "tokens" : 82000000
+        },
+        {
+          "billableTokens" : 7600000,
+          "date" : "2026-06-05T05:00:00Z",
+          "dollars" : 52.895999999999994,
+          "tokens" : 76000000
+        },
+        {
+          "billableTokens" : 31000000,
+          "date" : "2026-06-06T05:00:00Z",
+          "dollars" : 215.75999999999999,
+          "tokens" : 310000000
+        },
+        {
+          "billableTokens" : 12200000,
+          "date" : "2026-06-07T05:00:00Z",
+          "dollars" : 84.911999999999992,
+          "tokens" : 122000000
+        },
+        {
+          "billableTokens" : 21800000,
+          "date" : "2026-06-08T05:00:00Z",
+          "dollars" : 151.72799999999998,
+          "tokens" : 218000000
+        },
+        {
+          "billableTokens" : 23600000,
+          "date" : "2026-06-09T05:00:00Z",
+          "dollars" : 164.256,
+          "tokens" : 236000000
+        },
+        {
+          "billableTokens" : 9800000,
+          "date" : "2026-06-10T05:00:00Z",
+          "dollars" : 68.207999999999998,
+          "tokens" : 98000000
+        },
+        {
+          "billableTokens" : 6400000,
+          "date" : "2026-06-11T05:00:00Z",
+          "dollars" : 44.543999999999997,
+          "tokens" : 64000000
+        },
+        {
+          "billableTokens" : 4700000,
+          "date" : "2026-06-12T05:00:00Z",
+          "dollars" : 32.711999999999996,
+          "tokens" : 47000000
+        },
+        {
+          "billableTokens" : 28600000,
+          "date" : "2026-06-13T05:00:00Z",
+          "dollars" : 199.05599999999998,
+          "tokens" : 286000000
+        },
+        {
+          "billableTokens" : 14000000,
+          "date" : "2026-06-14T05:00:00Z",
+          "dollars" : 97.439999999999998,
+          "tokens" : 140000000
+        },
+        {
+          "billableTokens" : 20500000,
+          "date" : "2026-06-15T05:00:00Z",
+          "dollars" : 142.67999999999998,
+          "tokens" : 205000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-06-16T05:00:00Z",
+          "dollars" : 41.064,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 27600000,
+          "date" : "2026-06-17T05:00:00Z",
+          "dollars" : 192.09599999999998,
+          "tokens" : 276000000
+        },
+        {
+          "billableTokens" : 11900000,
+          "date" : "2026-06-18T05:00:00Z",
+          "dollars" : 82.823999999999998,
+          "tokens" : 119000000
+        },
+        {
+          "billableTokens" : 4800000,
+          "date" : "2026-06-19T05:00:00Z",
+          "dollars" : 33.408000000000001,
+          "tokens" : 48000000
+        },
+        {
+          "billableTokens" : 0,
+          "date" : "2026-06-20T05:00:00Z",
+          "dollars" : 0,
+          "tokens" : 0
+        },
+        {
+          "billableTokens" : 8600000,
+          "date" : "2026-06-21T05:00:00Z",
+          "dollars" : 59.855999999999995,
+          "tokens" : 86000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-06-22T05:00:00Z",
+          "dollars" : 94.655999999999992,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 15400000,
+          "date" : "2026-06-23T05:00:00Z",
+          "dollars" : 107.184,
+          "tokens" : 154000000
+        },
+        {
+          "billableTokens" : 16800000,
+          "date" : "2026-06-24T05:00:00Z",
+          "dollars" : 116.928,
+          "tokens" : 168000000
+        },
+        {
+          "billableTokens" : 14800000,
+          "date" : "2026-06-25T05:00:00Z",
+          "dollars" : 103.008,
+          "tokens" : 148000000
+        },
+        {
+          "billableTokens" : 13200000,
+          "date" : "2026-06-26T05:00:00Z",
+          "dollars" : 91.872,
+          "tokens" : 132000000
+        },
+        {
+          "billableTokens" : 9400000,
+          "date" : "2026-06-27T05:00:00Z",
+          "dollars" : 65.423999999999992,
+          "tokens" : 94000000
+        },
+        {
+          "billableTokens" : 40200000,
+          "date" : "2026-06-28T05:00:00Z",
+          "dollars" : 279.79199999999997,
+          "tokens" : 402000000
+        },
+        {
+          "billableTokens" : 21100000,
+          "date" : "2026-06-29T05:00:00Z",
+          "dollars" : 146.85599999999999,
+          "tokens" : 211000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-06-30T05:00:00Z",
+          "dollars" : 16.704000000000001,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 3100000,
+          "date" : "2026-07-01T05:00:00Z",
+          "dollars" : 21.575999999999997,
+          "tokens" : 31000000
+        },
+        {
+          "billableTokens" : 12800000,
+          "date" : "2026-07-02T05:00:00Z",
+          "dollars" : 89.087999999999994,
+          "tokens" : 128000000
+        },
+        {
+          "billableTokens" : 4400000,
+          "date" : "2026-07-03T05:00:00Z",
+          "dollars" : 30.623999999999999,
+          "tokens" : 44000000
+        },
+        {
+          "billableTokens" : 8200000,
+          "date" : "2026-07-04T05:00:00Z",
+          "dollars" : 57.071999999999996,
+          "tokens" : 82000000
+        },
+        {
+          "billableTokens" : 7600000,
+          "date" : "2026-07-05T05:00:00Z",
+          "dollars" : 52.895999999999994,
+          "tokens" : 76000000
+        },
+        {
+          "billableTokens" : 31000000,
+          "date" : "2026-07-06T05:00:00Z",
+          "dollars" : 215.75999999999999,
+          "tokens" : 310000000
+        },
+        {
+          "billableTokens" : 12200000,
+          "date" : "2026-07-07T05:00:00Z",
+          "dollars" : 84.911999999999992,
+          "tokens" : 122000000
+        },
+        {
+          "billableTokens" : 21800000,
+          "date" : "2026-07-08T05:00:00Z",
+          "dollars" : 151.72799999999998,
+          "tokens" : 218000000
+        },
+        {
+          "billableTokens" : 23600000,
+          "date" : "2026-07-09T05:00:00Z",
+          "dollars" : 164.256,
+          "tokens" : 236000000
+        },
+        {
+          "billableTokens" : 9800000,
+          "date" : "2026-07-10T05:00:00Z",
+          "dollars" : 68.207999999999998,
+          "tokens" : 98000000
+        },
+        {
+          "billableTokens" : 6400000,
+          "date" : "2026-07-11T05:00:00Z",
+          "dollars" : 44.543999999999997,
+          "tokens" : 64000000
+        },
+        {
+          "billableTokens" : 4700000,
+          "date" : "2026-07-12T05:00:00Z",
+          "dollars" : 32.711999999999996,
+          "tokens" : 47000000
+        },
+        {
+          "billableTokens" : 28600000,
+          "date" : "2026-07-13T05:00:00Z",
+          "dollars" : 199.05599999999998,
+          "tokens" : 286000000
+        },
+        {
+          "billableTokens" : 14000000,
+          "date" : "2026-07-14T05:00:00Z",
+          "dollars" : 97.439999999999998,
+          "tokens" : 140000000
+        },
+        {
+          "billableTokens" : 20500000,
+          "date" : "2026-07-15T05:00:00Z",
+          "dollars" : 142.67999999999998,
+          "tokens" : 205000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-07-16T05:00:00Z",
+          "dollars" : 41.064,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 27600000,
+          "date" : "2026-07-17T05:00:00Z",
+          "dollars" : 192.09599999999998,
+          "tokens" : 276000000
+        },
+        {
+          "billableTokens" : 11900000,
+          "date" : "2026-07-18T05:00:00Z",
+          "dollars" : 82.823999999999998,
+          "tokens" : 119000000
+        },
+        {
+          "billableTokens" : 4800000,
+          "date" : "2026-07-19T05:00:00Z",
+          "dollars" : 33.408000000000001,
+          "tokens" : 48000000
+        },
+        {
+          "billableTokens" : 0,
+          "date" : "2026-07-20T05:00:00Z",
+          "dollars" : 0,
+          "tokens" : 0
+        },
+        {
+          "billableTokens" : 8600000,
+          "date" : "2026-07-21T05:00:00Z",
+          "dollars" : 59.855999999999995,
+          "tokens" : 86000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-07-22T05:00:00Z",
+          "dollars" : 94.655999999999992,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 15400000,
+          "date" : "2026-07-23T05:00:00Z",
+          "dollars" : 107.184,
+          "tokens" : 154000000
+        },
+        {
+          "billableTokens" : 16800000,
+          "date" : "2026-07-24T05:00:00Z",
+          "dollars" : 116.928,
+          "tokens" : 168000000
+        },
+        {
+          "billableTokens" : 14800000,
+          "date" : "2026-07-25T05:00:00Z",
+          "dollars" : 103.008,
+          "tokens" : 148000000
+        },
+        {
+          "billableTokens" : 13200000,
+          "date" : "2026-07-26T05:00:00Z",
+          "dollars" : 91.872,
+          "tokens" : 132000000
+        },
+        {
+          "billableTokens" : 9400000,
+          "date" : "2026-07-27T05:00:00Z",
+          "dollars" : 65.423999999999992,
+          "tokens" : 94000000
+        },
+        {
+          "billableTokens" : 40200000,
+          "date" : "2026-07-28T05:00:00Z",
+          "dollars" : 279.79199999999997,
+          "tokens" : 402000000
+        },
+        {
+          "billableTokens" : 21100000,
+          "date" : "2026-07-29T05:00:00Z",
+          "dollars" : 146.85599999999999,
+          "tokens" : 211000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-07-30T05:00:00Z",
+          "dollars" : 16.704000000000001,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 3100000,
+          "date" : "2026-07-31T05:00:00Z",
+          "dollars" : 21.575999999999997,
+          "tokens" : 31000000
+        },
+        {
+          "billableTokens" : 12800000,
+          "date" : "2026-08-01T05:00:00Z",
+          "dollars" : 89.087999999999994,
+          "tokens" : 128000000
+        },
+        {
+          "billableTokens" : 4400000,
+          "date" : "2026-08-02T05:00:00Z",
+          "dollars" : 30.623999999999999,
+          "tokens" : 44000000
+        },
+        {
+          "billableTokens" : 8200000,
+          "date" : "2026-08-03T05:00:00Z",
+          "dollars" : 57.071999999999996,
+          "tokens" : 82000000
+        },
+        {
+          "billableTokens" : 7600000,
+          "date" : "2026-08-04T05:00:00Z",
+          "dollars" : 52.895999999999994,
+          "tokens" : 76000000
+        },
+        {
+          "billableTokens" : 31000000,
+          "date" : "2026-08-05T05:00:00Z",
+          "dollars" : 215.75999999999999,
+          "tokens" : 310000000
+        },
+        {
+          "billableTokens" : 12200000,
+          "date" : "2026-08-06T05:00:00Z",
+          "dollars" : 84.911999999999992,
+          "tokens" : 122000000
+        },
+        {
+          "billableTokens" : 21800000,
+          "date" : "2026-08-07T05:00:00Z",
+          "dollars" : 151.72799999999998,
+          "tokens" : 218000000
+        },
+        {
+          "billableTokens" : 23600000,
+          "date" : "2026-08-08T05:00:00Z",
+          "dollars" : 164.256,
+          "tokens" : 236000000
+        },
+        {
+          "billableTokens" : 9800000,
+          "date" : "2026-08-09T05:00:00Z",
+          "dollars" : 68.207999999999998,
+          "tokens" : 98000000
+        },
+        {
+          "billableTokens" : 6400000,
+          "date" : "2026-08-10T05:00:00Z",
+          "dollars" : 44.543999999999997,
+          "tokens" : 64000000
+        },
+        {
+          "billableTokens" : 4700000,
+          "date" : "2026-08-11T05:00:00Z",
+          "dollars" : 32.711999999999996,
+          "tokens" : 47000000
+        },
+        {
+          "billableTokens" : 28600000,
+          "date" : "2026-08-12T05:00:00Z",
+          "dollars" : 199.05599999999998,
+          "tokens" : 286000000
+        },
+        {
+          "billableTokens" : 14000000,
+          "date" : "2026-08-13T05:00:00Z",
+          "dollars" : 97.439999999999998,
+          "tokens" : 140000000
+        },
+        {
+          "billableTokens" : 20500000,
+          "date" : "2026-08-14T05:00:00Z",
+          "dollars" : 142.67999999999998,
+          "tokens" : 205000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-08-15T05:00:00Z",
+          "dollars" : 41.064,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 27600000,
+          "date" : "2026-08-16T05:00:00Z",
+          "dollars" : 192.09599999999998,
+          "tokens" : 276000000
+        },
+        {
+          "billableTokens" : 11900000,
+          "date" : "2026-08-17T05:00:00Z",
+          "dollars" : 82.823999999999998,
+          "tokens" : 119000000
+        },
+        {
+          "billableTokens" : 4800000,
+          "date" : "2026-08-18T05:00:00Z",
+          "dollars" : 33.408000000000001,
+          "tokens" : 48000000
+        },
+        {
+          "billableTokens" : 0,
+          "date" : "2026-08-19T05:00:00Z",
+          "dollars" : 0,
+          "tokens" : 0
+        },
+        {
+          "billableTokens" : 8600000,
+          "date" : "2026-08-20T05:00:00Z",
+          "dollars" : 59.855999999999995,
+          "tokens" : 86000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-08-21T05:00:00Z",
+          "dollars" : 94.655999999999992,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 15400000,
+          "date" : "2026-08-22T05:00:00Z",
+          "dollars" : 107.184,
+          "tokens" : 154000000
+        },
+        {
+          "billableTokens" : 16800000,
+          "date" : "2026-08-23T05:00:00Z",
+          "dollars" : 116.928,
+          "tokens" : 168000000
+        },
+        {
+          "billableTokens" : 14800000,
+          "date" : "2026-08-24T05:00:00Z",
+          "dollars" : 103.008,
+          "tokens" : 148000000
+        },
+        {
+          "billableTokens" : 13200000,
+          "date" : "2026-08-25T05:00:00Z",
+          "dollars" : 91.872,
+          "tokens" : 132000000
+        },
+        {
+          "billableTokens" : 9400000,
+          "date" : "2026-08-26T05:00:00Z",
+          "dollars" : 65.423999999999992,
+          "tokens" : 94000000
+        },
+        {
+          "billableTokens" : 40200000,
+          "date" : "2026-08-27T05:00:00Z",
+          "dollars" : 279.79199999999997,
+          "tokens" : 402000000
+        },
+        {
+          "billableTokens" : 21100000,
+          "date" : "2026-08-28T05:00:00Z",
+          "dollars" : 146.85599999999999,
+          "tokens" : 211000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-08-29T05:00:00Z",
+          "dollars" : 16.704000000000001,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 3100000,
+          "date" : "2026-08-30T05:00:00Z",
+          "dollars" : 21.575999999999997,
+          "tokens" : 31000000
+        },
+        {
+          "billableTokens" : 12800000,
+          "date" : "2026-08-31T05:00:00Z",
+          "dollars" : 89.087999999999994,
+          "tokens" : 128000000
+        },
+        {
+          "billableTokens" : 4400000,
+          "date" : "2026-09-01T05:00:00Z",
+          "dollars" : 30.623999999999999,
+          "tokens" : 44000000
+        },
+        {
+          "billableTokens" : 8200000,
+          "date" : "2026-09-02T05:00:00Z",
+          "dollars" : 57.071999999999996,
+          "tokens" : 82000000
+        },
+        {
+          "billableTokens" : 7600000,
+          "date" : "2026-09-03T05:00:00Z",
+          "dollars" : 52.895999999999994,
+          "tokens" : 76000000
+        },
+        {
+          "billableTokens" : 31000000,
+          "date" : "2026-09-04T05:00:00Z",
+          "dollars" : 215.75999999999999,
+          "tokens" : 310000000
+        },
+        {
+          "billableTokens" : 12200000,
+          "date" : "2026-09-05T05:00:00Z",
+          "dollars" : 84.911999999999992,
+          "tokens" : 122000000
+        },
+        {
+          "billableTokens" : 21800000,
+          "date" : "2026-09-06T05:00:00Z",
+          "dollars" : 151.72799999999998,
+          "tokens" : 218000000
+        },
+        {
+          "billableTokens" : 23600000,
+          "date" : "2026-09-07T05:00:00Z",
+          "dollars" : 164.256,
+          "tokens" : 236000000
+        },
+        {
+          "billableTokens" : 9800000,
+          "date" : "2026-09-08T05:00:00Z",
+          "dollars" : 68.207999999999998,
+          "tokens" : 98000000
+        },
+        {
+          "billableTokens" : 6400000,
+          "date" : "2026-09-09T05:00:00Z",
+          "dollars" : 44.543999999999997,
+          "tokens" : 64000000
+        },
+        {
+          "billableTokens" : 4700000,
+          "date" : "2026-09-10T05:00:00Z",
+          "dollars" : 32.711999999999996,
+          "tokens" : 47000000
+        },
+        {
+          "billableTokens" : 28600000,
+          "date" : "2026-09-11T05:00:00Z",
+          "dollars" : 199.05599999999998,
+          "tokens" : 286000000
+        }
+      ],
+      "id" : "claude",
+      "limits" : [
+        {
+          "label" : "5h",
+          "resetSeconds" : 6390.7750449180603,
+          "seed" : 1,
+          "used" : 73
+        },
+        {
+          "label" : "week",
+          "resetSeconds" : 385170.7750428915,
+          "seed" : 2,
+          "used" : 81
+        }
+      ],
+      "models" : [
+
+      ],
+      "month" : {
+        "billableTokens" : 217097094,
+        "dollars" : 1510.8,
+        "label" : "April",
+        "series" : [
+          4.3200000000000003,
+          11.52,
+          41.469999999999999,
+          47.799999999999997,
+          67.989999999999995,
+          88.680000000000007,
+          208.13999999999999,
+          249.74000000000001,
+          327.75999999999999,
+          406.08999999999997,
+          438.14999999999998,
+          462.89999999999998,
+          477.82999999999998,
+          576.15999999999997,
+          618.02999999999997,
+          689.90999999999997,
+          710.34000000000003,
+          805.92999999999995,
+          851.28999999999996,
+          866.94000000000005,
+          866.94000000000005,
+          902.46000000000004,
+          951.90999999999997,
+          1010.17,
+          1073.8,
+          1128.9200000000001,
+          1182.6900000000001,
+          1219.6900000000001,
+          1366.3099999999999,
+          1510.8
+        ],
+        "tokens" : 2170970947
+      },
+      "name" : "Claude",
+      "plan" : "max",
+      "today" : {
+        "billableTokens" : 21124000,
+        "dollars" : 146.61000000000001,
+        "label" : "Today",
+        "series" : [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.80000000000000004,
+          4.5,
+          18.199999999999999,
+          38.700000000000003,
+          58.299999999999997,
+          71.400000000000006,
+          73.799999999999997,
+          76.5,
+          87.200000000000003,
+          102.8,
+          117.40000000000001,
+          128.59999999999999,
+          135.19999999999999,
+          140.69999999999999,
+          144.5,
+          146,
+          146.40000000000001,
+          146.61000000000001
+        ],
+        "tokens" : 211240000
+      }
+    },
+    {
+      "days" : [
+        {
+          "billableTokens" : 1200000,
+          "date" : "2026-01-01T06:00:00Z",
+          "dollars" : 9.984,
+          "tokens" : 12000000
+        },
+        {
+          "billableTokens" : 1800000,
+          "date" : "2026-01-02T06:00:00Z",
+          "dollars" : 14.975999999999999,
+          "tokens" : 18000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-01-03T06:00:00Z",
+          "dollars" : 19.968,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 2900000,
+          "date" : "2026-01-04T06:00:00Z",
+          "dollars" : 24.128,
+          "tokens" : 29000000
+        },
+        {
+          "billableTokens" : 3700000,
+          "date" : "2026-01-05T06:00:00Z",
+          "dollars" : 30.783999999999999,
+          "tokens" : 37000000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-01-06T06:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 5100000,
+          "date" : "2026-01-07T06:00:00Z",
+          "dollars" : 42.431999999999995,
+          "tokens" : 51000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-01-08T06:00:00Z",
+          "dollars" : 49.088000000000001,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 6600000,
+          "date" : "2026-01-09T06:00:00Z",
+          "dollars" : 54.911999999999999,
+          "tokens" : 66000000
+        },
+        {
+          "billableTokens" : 7400000,
+          "date" : "2026-01-10T06:00:00Z",
+          "dollars" : 61.567999999999998,
+          "tokens" : 74000000
+        },
+        {
+          "billableTokens" : 8300000,
+          "date" : "2026-01-11T06:00:00Z",
+          "dollars" : 69.055999999999997,
+          "tokens" : 83000000
+        },
+        {
+          "billableTokens" : 9000000,
+          "date" : "2026-01-12T06:00:00Z",
+          "dollars" : 74.879999999999995,
+          "tokens" : 90000000
+        },
+        {
+          "billableTokens" : 9900000,
+          "date" : "2026-01-13T06:00:00Z",
+          "dollars" : 82.367999999999995,
+          "tokens" : 99000000
+        },
+        {
+          "billableTokens" : 10800000,
+          "date" : "2026-01-14T06:00:00Z",
+          "dollars" : 89.855999999999995,
+          "tokens" : 108000000
+        },
+        {
+          "billableTokens" : 11700000,
+          "date" : "2026-01-15T06:00:00Z",
+          "dollars" : 97.343999999999994,
+          "tokens" : 117000000
+        },
+        {
+          "billableTokens" : 12400000,
+          "date" : "2026-01-16T06:00:00Z",
+          "dollars" : 103.16799999999999,
+          "tokens" : 124000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-01-17T06:00:00Z",
+          "dollars" : 113.152,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 14500000,
+          "date" : "2026-01-18T06:00:00Z",
+          "dollars" : 120.64,
+          "tokens" : 145000000
+        },
+        {
+          "billableTokens" : 15700000,
+          "date" : "2026-01-19T06:00:00Z",
+          "dollars" : 130.624,
+          "tokens" : 157000000
+        },
+        {
+          "billableTokens" : 16600000,
+          "date" : "2026-01-20T06:00:00Z",
+          "dollars" : 138.11199999999999,
+          "tokens" : 166000000
+        },
+        {
+          "billableTokens" : 17500000,
+          "date" : "2026-01-21T06:00:00Z",
+          "dollars" : 145.59999999999999,
+          "tokens" : 175000000
+        },
+        {
+          "billableTokens" : 18800000,
+          "date" : "2026-01-22T06:00:00Z",
+          "dollars" : 156.416,
+          "tokens" : 188000000
+        },
+        {
+          "billableTokens" : 20100000,
+          "date" : "2026-01-23T06:00:00Z",
+          "dollars" : 167.232,
+          "tokens" : 201000000
+        },
+        {
+          "billableTokens" : 21400000,
+          "date" : "2026-01-24T06:00:00Z",
+          "dollars" : 178.048,
+          "tokens" : 214000000
+        },
+        {
+          "billableTokens" : 22800000,
+          "date" : "2026-01-25T06:00:00Z",
+          "dollars" : 189.696,
+          "tokens" : 228000000
+        },
+        {
+          "billableTokens" : 23900000,
+          "date" : "2026-01-26T06:00:00Z",
+          "dollars" : 198.84799999999998,
+          "tokens" : 239000000
+        },
+        {
+          "billableTokens" : 25400000,
+          "date" : "2026-01-27T06:00:00Z",
+          "dollars" : 211.328,
+          "tokens" : 254000000
+        },
+        {
+          "billableTokens" : 26800000,
+          "date" : "2026-01-28T06:00:00Z",
+          "dollars" : 222.976,
+          "tokens" : 268000000
+        },
+        {
+          "billableTokens" : 28200000,
+          "date" : "2026-01-29T06:00:00Z",
+          "dollars" : 234.624,
+          "tokens" : 282000000
+        },
+        {
+          "billableTokens" : 16400000,
+          "date" : "2026-01-30T06:00:00Z",
+          "dollars" : 136.44800000000001,
+          "tokens" : 164000000
+        },
+        {
+          "billableTokens" : 1200000,
+          "date" : "2026-01-31T06:00:00Z",
+          "dollars" : 9.984,
+          "tokens" : 12000000
+        },
+        {
+          "billableTokens" : 1800000,
+          "date" : "2026-02-01T06:00:00Z",
+          "dollars" : 14.975999999999999,
+          "tokens" : 18000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-02-02T06:00:00Z",
+          "dollars" : 19.968,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 2900000,
+          "date" : "2026-02-03T06:00:00Z",
+          "dollars" : 24.128,
+          "tokens" : 29000000
+        },
+        {
+          "billableTokens" : 3700000,
+          "date" : "2026-02-04T06:00:00Z",
+          "dollars" : 30.783999999999999,
+          "tokens" : 37000000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-02-05T06:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 5100000,
+          "date" : "2026-02-06T06:00:00Z",
+          "dollars" : 42.431999999999995,
+          "tokens" : 51000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-02-07T06:00:00Z",
+          "dollars" : 49.088000000000001,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 6600000,
+          "date" : "2026-02-08T06:00:00Z",
+          "dollars" : 54.911999999999999,
+          "tokens" : 66000000
+        },
+        {
+          "billableTokens" : 7400000,
+          "date" : "2026-02-09T06:00:00Z",
+          "dollars" : 61.567999999999998,
+          "tokens" : 74000000
+        },
+        {
+          "billableTokens" : 8300000,
+          "date" : "2026-02-10T06:00:00Z",
+          "dollars" : 69.055999999999997,
+          "tokens" : 83000000
+        },
+        {
+          "billableTokens" : 9000000,
+          "date" : "2026-02-11T06:00:00Z",
+          "dollars" : 74.879999999999995,
+          "tokens" : 90000000
+        },
+        {
+          "billableTokens" : 9900000,
+          "date" : "2026-02-12T06:00:00Z",
+          "dollars" : 82.367999999999995,
+          "tokens" : 99000000
+        },
+        {
+          "billableTokens" : 10800000,
+          "date" : "2026-02-13T06:00:00Z",
+          "dollars" : 89.855999999999995,
+          "tokens" : 108000000
+        },
+        {
+          "billableTokens" : 11700000,
+          "date" : "2026-02-14T06:00:00Z",
+          "dollars" : 97.343999999999994,
+          "tokens" : 117000000
+        },
+        {
+          "billableTokens" : 12400000,
+          "date" : "2026-02-15T06:00:00Z",
+          "dollars" : 103.16799999999999,
+          "tokens" : 124000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-02-16T06:00:00Z",
+          "dollars" : 113.152,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 14500000,
+          "date" : "2026-02-17T06:00:00Z",
+          "dollars" : 120.64,
+          "tokens" : 145000000
+        },
+        {
+          "billableTokens" : 15700000,
+          "date" : "2026-02-18T06:00:00Z",
+          "dollars" : 130.624,
+          "tokens" : 157000000
+        },
+        {
+          "billableTokens" : 16600000,
+          "date" : "2026-02-19T06:00:00Z",
+          "dollars" : 138.11199999999999,
+          "tokens" : 166000000
+        },
+        {
+          "billableTokens" : 17500000,
+          "date" : "2026-02-20T06:00:00Z",
+          "dollars" : 145.59999999999999,
+          "tokens" : 175000000
+        },
+        {
+          "billableTokens" : 18800000,
+          "date" : "2026-02-21T06:00:00Z",
+          "dollars" : 156.416,
+          "tokens" : 188000000
+        },
+        {
+          "billableTokens" : 20100000,
+          "date" : "2026-02-22T06:00:00Z",
+          "dollars" : 167.232,
+          "tokens" : 201000000
+        },
+        {
+          "billableTokens" : 21400000,
+          "date" : "2026-02-23T06:00:00Z",
+          "dollars" : 178.048,
+          "tokens" : 214000000
+        },
+        {
+          "billableTokens" : 22800000,
+          "date" : "2026-02-24T06:00:00Z",
+          "dollars" : 189.696,
+          "tokens" : 228000000
+        },
+        {
+          "billableTokens" : 23900000,
+          "date" : "2026-02-25T06:00:00Z",
+          "dollars" : 198.84799999999998,
+          "tokens" : 239000000
+        },
+        {
+          "billableTokens" : 25400000,
+          "date" : "2026-02-26T06:00:00Z",
+          "dollars" : 211.328,
+          "tokens" : 254000000
+        },
+        {
+          "billableTokens" : 26800000,
+          "date" : "2026-02-27T06:00:00Z",
+          "dollars" : 222.976,
+          "tokens" : 268000000
+        },
+        {
+          "billableTokens" : 28200000,
+          "date" : "2026-02-28T06:00:00Z",
+          "dollars" : 234.624,
+          "tokens" : 282000000
+        },
+        {
+          "billableTokens" : 16400000,
+          "date" : "2026-03-01T06:00:00Z",
+          "dollars" : 136.44800000000001,
+          "tokens" : 164000000
+        },
+        {
+          "billableTokens" : 1200000,
+          "date" : "2026-03-02T06:00:00Z",
+          "dollars" : 9.984,
+          "tokens" : 12000000
+        },
+        {
+          "billableTokens" : 1800000,
+          "date" : "2026-03-03T06:00:00Z",
+          "dollars" : 14.975999999999999,
+          "tokens" : 18000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-03-04T06:00:00Z",
+          "dollars" : 19.968,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 2900000,
+          "date" : "2026-03-05T06:00:00Z",
+          "dollars" : 24.128,
+          "tokens" : 29000000
+        },
+        {
+          "billableTokens" : 3700000,
+          "date" : "2026-03-06T06:00:00Z",
+          "dollars" : 30.783999999999999,
+          "tokens" : 37000000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-03-07T06:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 5100000,
+          "date" : "2026-03-08T06:00:00Z",
+          "dollars" : 42.431999999999995,
+          "tokens" : 51000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-03-09T05:00:00Z",
+          "dollars" : 49.088000000000001,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 6600000,
+          "date" : "2026-03-10T05:00:00Z",
+          "dollars" : 54.911999999999999,
+          "tokens" : 66000000
+        },
+        {
+          "billableTokens" : 7400000,
+          "date" : "2026-03-11T05:00:00Z",
+          "dollars" : 61.567999999999998,
+          "tokens" : 74000000
+        },
+        {
+          "billableTokens" : 8300000,
+          "date" : "2026-03-12T05:00:00Z",
+          "dollars" : 69.055999999999997,
+          "tokens" : 83000000
+        },
+        {
+          "billableTokens" : 9000000,
+          "date" : "2026-03-13T05:00:00Z",
+          "dollars" : 74.879999999999995,
+          "tokens" : 90000000
+        },
+        {
+          "billableTokens" : 9900000,
+          "date" : "2026-03-14T05:00:00Z",
+          "dollars" : 82.367999999999995,
+          "tokens" : 99000000
+        },
+        {
+          "billableTokens" : 10800000,
+          "date" : "2026-03-15T05:00:00Z",
+          "dollars" : 89.855999999999995,
+          "tokens" : 108000000
+        },
+        {
+          "billableTokens" : 11700000,
+          "date" : "2026-03-16T05:00:00Z",
+          "dollars" : 97.343999999999994,
+          "tokens" : 117000000
+        },
+        {
+          "billableTokens" : 12400000,
+          "date" : "2026-03-17T05:00:00Z",
+          "dollars" : 103.16799999999999,
+          "tokens" : 124000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-03-18T05:00:00Z",
+          "dollars" : 113.152,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 14500000,
+          "date" : "2026-03-19T05:00:00Z",
+          "dollars" : 120.64,
+          "tokens" : 145000000
+        },
+        {
+          "billableTokens" : 15700000,
+          "date" : "2026-03-20T05:00:00Z",
+          "dollars" : 130.624,
+          "tokens" : 157000000
+        },
+        {
+          "billableTokens" : 16600000,
+          "date" : "2026-03-21T05:00:00Z",
+          "dollars" : 138.11199999999999,
+          "tokens" : 166000000
+        },
+        {
+          "billableTokens" : 17500000,
+          "date" : "2026-03-22T05:00:00Z",
+          "dollars" : 145.59999999999999,
+          "tokens" : 175000000
+        },
+        {
+          "billableTokens" : 18800000,
+          "date" : "2026-03-23T05:00:00Z",
+          "dollars" : 156.416,
+          "tokens" : 188000000
+        },
+        {
+          "billableTokens" : 20100000,
+          "date" : "2026-03-24T05:00:00Z",
+          "dollars" : 167.232,
+          "tokens" : 201000000
+        },
+        {
+          "billableTokens" : 21400000,
+          "date" : "2026-03-25T05:00:00Z",
+          "dollars" : 178.048,
+          "tokens" : 214000000
+        },
+        {
+          "billableTokens" : 22800000,
+          "date" : "2026-03-26T05:00:00Z",
+          "dollars" : 189.696,
+          "tokens" : 228000000
+        },
+        {
+          "billableTokens" : 23900000,
+          "date" : "2026-03-27T05:00:00Z",
+          "dollars" : 198.84799999999998,
+          "tokens" : 239000000
+        },
+        {
+          "billableTokens" : 25400000,
+          "date" : "2026-03-28T05:00:00Z",
+          "dollars" : 211.328,
+          "tokens" : 254000000
+        },
+        {
+          "billableTokens" : 26800000,
+          "date" : "2026-03-29T05:00:00Z",
+          "dollars" : 222.976,
+          "tokens" : 268000000
+        },
+        {
+          "billableTokens" : 28200000,
+          "date" : "2026-03-30T05:00:00Z",
+          "dollars" : 234.624,
+          "tokens" : 282000000
+        },
+        {
+          "billableTokens" : 16400000,
+          "date" : "2026-03-31T05:00:00Z",
+          "dollars" : 136.44800000000001,
+          "tokens" : 164000000
+        },
+        {
+          "billableTokens" : 1200000,
+          "date" : "2026-04-01T05:00:00Z",
+          "dollars" : 9.984,
+          "tokens" : 12000000
+        },
+        {
+          "billableTokens" : 1800000,
+          "date" : "2026-04-02T05:00:00Z",
+          "dollars" : 14.975999999999999,
+          "tokens" : 18000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-04-03T05:00:00Z",
+          "dollars" : 19.968,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 2900000,
+          "date" : "2026-04-04T05:00:00Z",
+          "dollars" : 24.128,
+          "tokens" : 29000000
+        },
+        {
+          "billableTokens" : 3700000,
+          "date" : "2026-04-05T05:00:00Z",
+          "dollars" : 30.783999999999999,
+          "tokens" : 37000000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-04-06T05:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 5100000,
+          "date" : "2026-04-07T05:00:00Z",
+          "dollars" : 42.431999999999995,
+          "tokens" : 51000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-04-08T05:00:00Z",
+          "dollars" : 49.088000000000001,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 6600000,
+          "date" : "2026-04-09T05:00:00Z",
+          "dollars" : 54.911999999999999,
+          "tokens" : 66000000
+        },
+        {
+          "billableTokens" : 7400000,
+          "date" : "2026-04-10T05:00:00Z",
+          "dollars" : 61.567999999999998,
+          "tokens" : 74000000
+        },
+        {
+          "billableTokens" : 8300000,
+          "date" : "2026-04-11T05:00:00Z",
+          "dollars" : 69.055999999999997,
+          "tokens" : 83000000
+        },
+        {
+          "billableTokens" : 9000000,
+          "date" : "2026-04-12T05:00:00Z",
+          "dollars" : 74.879999999999995,
+          "tokens" : 90000000
+        },
+        {
+          "billableTokens" : 9900000,
+          "date" : "2026-04-13T05:00:00Z",
+          "dollars" : 82.367999999999995,
+          "tokens" : 99000000
+        },
+        {
+          "billableTokens" : 10800000,
+          "date" : "2026-04-14T05:00:00Z",
+          "dollars" : 89.855999999999995,
+          "tokens" : 108000000
+        },
+        {
+          "billableTokens" : 11700000,
+          "date" : "2026-04-15T05:00:00Z",
+          "dollars" : 97.343999999999994,
+          "tokens" : 117000000
+        },
+        {
+          "billableTokens" : 12400000,
+          "date" : "2026-04-16T05:00:00Z",
+          "dollars" : 103.16799999999999,
+          "tokens" : 124000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-04-17T05:00:00Z",
+          "dollars" : 113.152,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 14500000,
+          "date" : "2026-04-18T05:00:00Z",
+          "dollars" : 120.64,
+          "tokens" : 145000000
+        },
+        {
+          "billableTokens" : 15700000,
+          "date" : "2026-04-19T05:00:00Z",
+          "dollars" : 130.624,
+          "tokens" : 157000000
+        },
+        {
+          "billableTokens" : 16600000,
+          "date" : "2026-04-20T05:00:00Z",
+          "dollars" : 138.11199999999999,
+          "tokens" : 166000000
+        },
+        {
+          "billableTokens" : 17500000,
+          "date" : "2026-04-21T05:00:00Z",
+          "dollars" : 145.59999999999999,
+          "tokens" : 175000000
+        },
+        {
+          "billableTokens" : 18800000,
+          "date" : "2026-04-22T05:00:00Z",
+          "dollars" : 156.416,
+          "tokens" : 188000000
+        },
+        {
+          "billableTokens" : 20100000,
+          "date" : "2026-04-23T05:00:00Z",
+          "dollars" : 167.232,
+          "tokens" : 201000000
+        },
+        {
+          "billableTokens" : 21400000,
+          "date" : "2026-04-24T05:00:00Z",
+          "dollars" : 178.048,
+          "tokens" : 214000000
+        },
+        {
+          "billableTokens" : 22800000,
+          "date" : "2026-04-25T05:00:00Z",
+          "dollars" : 189.696,
+          "tokens" : 228000000
+        },
+        {
+          "billableTokens" : 23900000,
+          "date" : "2026-04-26T05:00:00Z",
+          "dollars" : 198.84799999999998,
+          "tokens" : 239000000
+        },
+        {
+          "billableTokens" : 25400000,
+          "date" : "2026-04-27T05:00:00Z",
+          "dollars" : 211.328,
+          "tokens" : 254000000
+        },
+        {
+          "billableTokens" : 26800000,
+          "date" : "2026-04-28T05:00:00Z",
+          "dollars" : 222.976,
+          "tokens" : 268000000
+        },
+        {
+          "billableTokens" : 28200000,
+          "date" : "2026-04-29T05:00:00Z",
+          "dollars" : 234.624,
+          "tokens" : 282000000
+        },
+        {
+          "billableTokens" : 16400000,
+          "date" : "2026-04-30T05:00:00Z",
+          "dollars" : 136.44800000000001,
+          "tokens" : 164000000
+        },
+        {
+          "billableTokens" : 1200000,
+          "date" : "2026-05-01T05:00:00Z",
+          "dollars" : 9.984,
+          "tokens" : 12000000
+        },
+        {
+          "billableTokens" : 1800000,
+          "date" : "2026-05-02T05:00:00Z",
+          "dollars" : 14.975999999999999,
+          "tokens" : 18000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-05-03T05:00:00Z",
+          "dollars" : 19.968,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 2900000,
+          "date" : "2026-05-04T05:00:00Z",
+          "dollars" : 24.128,
+          "tokens" : 29000000
+        },
+        {
+          "billableTokens" : 3700000,
+          "date" : "2026-05-05T05:00:00Z",
+          "dollars" : 30.783999999999999,
+          "tokens" : 37000000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-05-06T05:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 5100000,
+          "date" : "2026-05-07T05:00:00Z",
+          "dollars" : 42.431999999999995,
+          "tokens" : 51000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-05-08T05:00:00Z",
+          "dollars" : 49.088000000000001,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 6600000,
+          "date" : "2026-05-09T05:00:00Z",
+          "dollars" : 54.911999999999999,
+          "tokens" : 66000000
+        },
+        {
+          "billableTokens" : 7400000,
+          "date" : "2026-05-10T05:00:00Z",
+          "dollars" : 61.567999999999998,
+          "tokens" : 74000000
+        },
+        {
+          "billableTokens" : 8300000,
+          "date" : "2026-05-11T05:00:00Z",
+          "dollars" : 69.055999999999997,
+          "tokens" : 83000000
+        },
+        {
+          "billableTokens" : 9000000,
+          "date" : "2026-05-12T05:00:00Z",
+          "dollars" : 74.879999999999995,
+          "tokens" : 90000000
+        },
+        {
+          "billableTokens" : 9900000,
+          "date" : "2026-05-13T05:00:00Z",
+          "dollars" : 82.367999999999995,
+          "tokens" : 99000000
+        },
+        {
+          "billableTokens" : 10800000,
+          "date" : "2026-05-14T05:00:00Z",
+          "dollars" : 89.855999999999995,
+          "tokens" : 108000000
+        },
+        {
+          "billableTokens" : 11700000,
+          "date" : "2026-05-15T05:00:00Z",
+          "dollars" : 97.343999999999994,
+          "tokens" : 117000000
+        },
+        {
+          "billableTokens" : 12400000,
+          "date" : "2026-05-16T05:00:00Z",
+          "dollars" : 103.16799999999999,
+          "tokens" : 124000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-05-17T05:00:00Z",
+          "dollars" : 113.152,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 14500000,
+          "date" : "2026-05-18T05:00:00Z",
+          "dollars" : 120.64,
+          "tokens" : 145000000
+        },
+        {
+          "billableTokens" : 15700000,
+          "date" : "2026-05-19T05:00:00Z",
+          "dollars" : 130.624,
+          "tokens" : 157000000
+        },
+        {
+          "billableTokens" : 16600000,
+          "date" : "2026-05-20T05:00:00Z",
+          "dollars" : 138.11199999999999,
+          "tokens" : 166000000
+        },
+        {
+          "billableTokens" : 17500000,
+          "date" : "2026-05-21T05:00:00Z",
+          "dollars" : 145.59999999999999,
+          "tokens" : 175000000
+        },
+        {
+          "billableTokens" : 18800000,
+          "date" : "2026-05-22T05:00:00Z",
+          "dollars" : 156.416,
+          "tokens" : 188000000
+        },
+        {
+          "billableTokens" : 20100000,
+          "date" : "2026-05-23T05:00:00Z",
+          "dollars" : 167.232,
+          "tokens" : 201000000
+        },
+        {
+          "billableTokens" : 21400000,
+          "date" : "2026-05-24T05:00:00Z",
+          "dollars" : 178.048,
+          "tokens" : 214000000
+        },
+        {
+          "billableTokens" : 22800000,
+          "date" : "2026-05-25T05:00:00Z",
+          "dollars" : 189.696,
+          "tokens" : 228000000
+        },
+        {
+          "billableTokens" : 23900000,
+          "date" : "2026-05-26T05:00:00Z",
+          "dollars" : 198.84799999999998,
+          "tokens" : 239000000
+        },
+        {
+          "billableTokens" : 25400000,
+          "date" : "2026-05-27T05:00:00Z",
+          "dollars" : 211.328,
+          "tokens" : 254000000
+        },
+        {
+          "billableTokens" : 26800000,
+          "date" : "2026-05-28T05:00:00Z",
+          "dollars" : 222.976,
+          "tokens" : 268000000
+        },
+        {
+          "billableTokens" : 28200000,
+          "date" : "2026-05-29T05:00:00Z",
+          "dollars" : 234.624,
+          "tokens" : 282000000
+        },
+        {
+          "billableTokens" : 16400000,
+          "date" : "2026-05-30T05:00:00Z",
+          "dollars" : 136.44800000000001,
+          "tokens" : 164000000
+        },
+        {
+          "billableTokens" : 1200000,
+          "date" : "2026-05-31T05:00:00Z",
+          "dollars" : 9.984,
+          "tokens" : 12000000
+        },
+        {
+          "billableTokens" : 1800000,
+          "date" : "2026-06-01T05:00:00Z",
+          "dollars" : 14.975999999999999,
+          "tokens" : 18000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-06-02T05:00:00Z",
+          "dollars" : 19.968,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 2900000,
+          "date" : "2026-06-03T05:00:00Z",
+          "dollars" : 24.128,
+          "tokens" : 29000000
+        },
+        {
+          "billableTokens" : 3700000,
+          "date" : "2026-06-04T05:00:00Z",
+          "dollars" : 30.783999999999999,
+          "tokens" : 37000000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-06-05T05:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 5100000,
+          "date" : "2026-06-06T05:00:00Z",
+          "dollars" : 42.431999999999995,
+          "tokens" : 51000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-06-07T05:00:00Z",
+          "dollars" : 49.088000000000001,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 6600000,
+          "date" : "2026-06-08T05:00:00Z",
+          "dollars" : 54.911999999999999,
+          "tokens" : 66000000
+        },
+        {
+          "billableTokens" : 7400000,
+          "date" : "2026-06-09T05:00:00Z",
+          "dollars" : 61.567999999999998,
+          "tokens" : 74000000
+        },
+        {
+          "billableTokens" : 8300000,
+          "date" : "2026-06-10T05:00:00Z",
+          "dollars" : 69.055999999999997,
+          "tokens" : 83000000
+        },
+        {
+          "billableTokens" : 9000000,
+          "date" : "2026-06-11T05:00:00Z",
+          "dollars" : 74.879999999999995,
+          "tokens" : 90000000
+        },
+        {
+          "billableTokens" : 9900000,
+          "date" : "2026-06-12T05:00:00Z",
+          "dollars" : 82.367999999999995,
+          "tokens" : 99000000
+        },
+        {
+          "billableTokens" : 10800000,
+          "date" : "2026-06-13T05:00:00Z",
+          "dollars" : 89.855999999999995,
+          "tokens" : 108000000
+        },
+        {
+          "billableTokens" : 11700000,
+          "date" : "2026-06-14T05:00:00Z",
+          "dollars" : 97.343999999999994,
+          "tokens" : 117000000
+        },
+        {
+          "billableTokens" : 12400000,
+          "date" : "2026-06-15T05:00:00Z",
+          "dollars" : 103.16799999999999,
+          "tokens" : 124000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-06-16T05:00:00Z",
+          "dollars" : 113.152,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 14500000,
+          "date" : "2026-06-17T05:00:00Z",
+          "dollars" : 120.64,
+          "tokens" : 145000000
+        },
+        {
+          "billableTokens" : 15700000,
+          "date" : "2026-06-18T05:00:00Z",
+          "dollars" : 130.624,
+          "tokens" : 157000000
+        },
+        {
+          "billableTokens" : 16600000,
+          "date" : "2026-06-19T05:00:00Z",
+          "dollars" : 138.11199999999999,
+          "tokens" : 166000000
+        },
+        {
+          "billableTokens" : 17500000,
+          "date" : "2026-06-20T05:00:00Z",
+          "dollars" : 145.59999999999999,
+          "tokens" : 175000000
+        },
+        {
+          "billableTokens" : 18800000,
+          "date" : "2026-06-21T05:00:00Z",
+          "dollars" : 156.416,
+          "tokens" : 188000000
+        },
+        {
+          "billableTokens" : 20100000,
+          "date" : "2026-06-22T05:00:00Z",
+          "dollars" : 167.232,
+          "tokens" : 201000000
+        },
+        {
+          "billableTokens" : 21400000,
+          "date" : "2026-06-23T05:00:00Z",
+          "dollars" : 178.048,
+          "tokens" : 214000000
+        },
+        {
+          "billableTokens" : 22800000,
+          "date" : "2026-06-24T05:00:00Z",
+          "dollars" : 189.696,
+          "tokens" : 228000000
+        },
+        {
+          "billableTokens" : 23900000,
+          "date" : "2026-06-25T05:00:00Z",
+          "dollars" : 198.84799999999998,
+          "tokens" : 239000000
+        },
+        {
+          "billableTokens" : 25400000,
+          "date" : "2026-06-26T05:00:00Z",
+          "dollars" : 211.328,
+          "tokens" : 254000000
+        },
+        {
+          "billableTokens" : 26800000,
+          "date" : "2026-06-27T05:00:00Z",
+          "dollars" : 222.976,
+          "tokens" : 268000000
+        },
+        {
+          "billableTokens" : 28200000,
+          "date" : "2026-06-28T05:00:00Z",
+          "dollars" : 234.624,
+          "tokens" : 282000000
+        },
+        {
+          "billableTokens" : 16400000,
+          "date" : "2026-06-29T05:00:00Z",
+          "dollars" : 136.44800000000001,
+          "tokens" : 164000000
+        },
+        {
+          "billableTokens" : 1200000,
+          "date" : "2026-06-30T05:00:00Z",
+          "dollars" : 9.984,
+          "tokens" : 12000000
+        },
+        {
+          "billableTokens" : 1800000,
+          "date" : "2026-07-01T05:00:00Z",
+          "dollars" : 14.975999999999999,
+          "tokens" : 18000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-07-02T05:00:00Z",
+          "dollars" : 19.968,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 2900000,
+          "date" : "2026-07-03T05:00:00Z",
+          "dollars" : 24.128,
+          "tokens" : 29000000
+        },
+        {
+          "billableTokens" : 3700000,
+          "date" : "2026-07-04T05:00:00Z",
+          "dollars" : 30.783999999999999,
+          "tokens" : 37000000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-07-05T05:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 5100000,
+          "date" : "2026-07-06T05:00:00Z",
+          "dollars" : 42.431999999999995,
+          "tokens" : 51000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-07-07T05:00:00Z",
+          "dollars" : 49.088000000000001,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 6600000,
+          "date" : "2026-07-08T05:00:00Z",
+          "dollars" : 54.911999999999999,
+          "tokens" : 66000000
+        },
+        {
+          "billableTokens" : 7400000,
+          "date" : "2026-07-09T05:00:00Z",
+          "dollars" : 61.567999999999998,
+          "tokens" : 74000000
+        },
+        {
+          "billableTokens" : 8300000,
+          "date" : "2026-07-10T05:00:00Z",
+          "dollars" : 69.055999999999997,
+          "tokens" : 83000000
+        },
+        {
+          "billableTokens" : 9000000,
+          "date" : "2026-07-11T05:00:00Z",
+          "dollars" : 74.879999999999995,
+          "tokens" : 90000000
+        },
+        {
+          "billableTokens" : 9900000,
+          "date" : "2026-07-12T05:00:00Z",
+          "dollars" : 82.367999999999995,
+          "tokens" : 99000000
+        },
+        {
+          "billableTokens" : 10800000,
+          "date" : "2026-07-13T05:00:00Z",
+          "dollars" : 89.855999999999995,
+          "tokens" : 108000000
+        },
+        {
+          "billableTokens" : 11700000,
+          "date" : "2026-07-14T05:00:00Z",
+          "dollars" : 97.343999999999994,
+          "tokens" : 117000000
+        },
+        {
+          "billableTokens" : 12400000,
+          "date" : "2026-07-15T05:00:00Z",
+          "dollars" : 103.16799999999999,
+          "tokens" : 124000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-07-16T05:00:00Z",
+          "dollars" : 113.152,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 14500000,
+          "date" : "2026-07-17T05:00:00Z",
+          "dollars" : 120.64,
+          "tokens" : 145000000
+        },
+        {
+          "billableTokens" : 15700000,
+          "date" : "2026-07-18T05:00:00Z",
+          "dollars" : 130.624,
+          "tokens" : 157000000
+        },
+        {
+          "billableTokens" : 16600000,
+          "date" : "2026-07-19T05:00:00Z",
+          "dollars" : 138.11199999999999,
+          "tokens" : 166000000
+        },
+        {
+          "billableTokens" : 17500000,
+          "date" : "2026-07-20T05:00:00Z",
+          "dollars" : 145.59999999999999,
+          "tokens" : 175000000
+        },
+        {
+          "billableTokens" : 18800000,
+          "date" : "2026-07-21T05:00:00Z",
+          "dollars" : 156.416,
+          "tokens" : 188000000
+        },
+        {
+          "billableTokens" : 20100000,
+          "date" : "2026-07-22T05:00:00Z",
+          "dollars" : 167.232,
+          "tokens" : 201000000
+        },
+        {
+          "billableTokens" : 21400000,
+          "date" : "2026-07-23T05:00:00Z",
+          "dollars" : 178.048,
+          "tokens" : 214000000
+        },
+        {
+          "billableTokens" : 22800000,
+          "date" : "2026-07-24T05:00:00Z",
+          "dollars" : 189.696,
+          "tokens" : 228000000
+        },
+        {
+          "billableTokens" : 23900000,
+          "date" : "2026-07-25T05:00:00Z",
+          "dollars" : 198.84799999999998,
+          "tokens" : 239000000
+        },
+        {
+          "billableTokens" : 25400000,
+          "date" : "2026-07-26T05:00:00Z",
+          "dollars" : 211.328,
+          "tokens" : 254000000
+        },
+        {
+          "billableTokens" : 26800000,
+          "date" : "2026-07-27T05:00:00Z",
+          "dollars" : 222.976,
+          "tokens" : 268000000
+        },
+        {
+          "billableTokens" : 28200000,
+          "date" : "2026-07-28T05:00:00Z",
+          "dollars" : 234.624,
+          "tokens" : 282000000
+        },
+        {
+          "billableTokens" : 16400000,
+          "date" : "2026-07-29T05:00:00Z",
+          "dollars" : 136.44800000000001,
+          "tokens" : 164000000
+        },
+        {
+          "billableTokens" : 1200000,
+          "date" : "2026-07-30T05:00:00Z",
+          "dollars" : 9.984,
+          "tokens" : 12000000
+        },
+        {
+          "billableTokens" : 1800000,
+          "date" : "2026-07-31T05:00:00Z",
+          "dollars" : 14.975999999999999,
+          "tokens" : 18000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-08-01T05:00:00Z",
+          "dollars" : 19.968,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 2900000,
+          "date" : "2026-08-02T05:00:00Z",
+          "dollars" : 24.128,
+          "tokens" : 29000000
+        },
+        {
+          "billableTokens" : 3700000,
+          "date" : "2026-08-03T05:00:00Z",
+          "dollars" : 30.783999999999999,
+          "tokens" : 37000000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-08-04T05:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 5100000,
+          "date" : "2026-08-05T05:00:00Z",
+          "dollars" : 42.431999999999995,
+          "tokens" : 51000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-08-06T05:00:00Z",
+          "dollars" : 49.088000000000001,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 6600000,
+          "date" : "2026-08-07T05:00:00Z",
+          "dollars" : 54.911999999999999,
+          "tokens" : 66000000
+        },
+        {
+          "billableTokens" : 7400000,
+          "date" : "2026-08-08T05:00:00Z",
+          "dollars" : 61.567999999999998,
+          "tokens" : 74000000
+        },
+        {
+          "billableTokens" : 8300000,
+          "date" : "2026-08-09T05:00:00Z",
+          "dollars" : 69.055999999999997,
+          "tokens" : 83000000
+        },
+        {
+          "billableTokens" : 9000000,
+          "date" : "2026-08-10T05:00:00Z",
+          "dollars" : 74.879999999999995,
+          "tokens" : 90000000
+        },
+        {
+          "billableTokens" : 9900000,
+          "date" : "2026-08-11T05:00:00Z",
+          "dollars" : 82.367999999999995,
+          "tokens" : 99000000
+        },
+        {
+          "billableTokens" : 10800000,
+          "date" : "2026-08-12T05:00:00Z",
+          "dollars" : 89.855999999999995,
+          "tokens" : 108000000
+        },
+        {
+          "billableTokens" : 11700000,
+          "date" : "2026-08-13T05:00:00Z",
+          "dollars" : 97.343999999999994,
+          "tokens" : 117000000
+        },
+        {
+          "billableTokens" : 12400000,
+          "date" : "2026-08-14T05:00:00Z",
+          "dollars" : 103.16799999999999,
+          "tokens" : 124000000
+        },
+        {
+          "billableTokens" : 13600000,
+          "date" : "2026-08-15T05:00:00Z",
+          "dollars" : 113.152,
+          "tokens" : 136000000
+        },
+        {
+          "billableTokens" : 14500000,
+          "date" : "2026-08-16T05:00:00Z",
+          "dollars" : 120.64,
+          "tokens" : 145000000
+        },
+        {
+          "billableTokens" : 15700000,
+          "date" : "2026-08-17T05:00:00Z",
+          "dollars" : 130.624,
+          "tokens" : 157000000
+        },
+        {
+          "billableTokens" : 16600000,
+          "date" : "2026-08-18T05:00:00Z",
+          "dollars" : 138.11199999999999,
+          "tokens" : 166000000
+        },
+        {
+          "billableTokens" : 17500000,
+          "date" : "2026-08-19T05:00:00Z",
+          "dollars" : 145.59999999999999,
+          "tokens" : 175000000
+        },
+        {
+          "billableTokens" : 18800000,
+          "date" : "2026-08-20T05:00:00Z",
+          "dollars" : 156.416,
+          "tokens" : 188000000
+        },
+        {
+          "billableTokens" : 20100000,
+          "date" : "2026-08-21T05:00:00Z",
+          "dollars" : 167.232,
+          "tokens" : 201000000
+        },
+        {
+          "billableTokens" : 21400000,
+          "date" : "2026-08-22T05:00:00Z",
+          "dollars" : 178.048,
+          "tokens" : 214000000
+        },
+        {
+          "billableTokens" : 22800000,
+          "date" : "2026-08-23T05:00:00Z",
+          "dollars" : 189.696,
+          "tokens" : 228000000
+        },
+        {
+          "billableTokens" : 23900000,
+          "date" : "2026-08-24T05:00:00Z",
+          "dollars" : 198.84799999999998,
+          "tokens" : 239000000
+        },
+        {
+          "billableTokens" : 25400000,
+          "date" : "2026-08-25T05:00:00Z",
+          "dollars" : 211.328,
+          "tokens" : 254000000
+        },
+        {
+          "billableTokens" : 26800000,
+          "date" : "2026-08-26T05:00:00Z",
+          "dollars" : 222.976,
+          "tokens" : 268000000
+        },
+        {
+          "billableTokens" : 28200000,
+          "date" : "2026-08-27T05:00:00Z",
+          "dollars" : 234.624,
+          "tokens" : 282000000
+        },
+        {
+          "billableTokens" : 16400000,
+          "date" : "2026-08-28T05:00:00Z",
+          "dollars" : 136.44800000000001,
+          "tokens" : 164000000
+        },
+        {
+          "billableTokens" : 1200000,
+          "date" : "2026-08-29T05:00:00Z",
+          "dollars" : 9.984,
+          "tokens" : 12000000
+        },
+        {
+          "billableTokens" : 1800000,
+          "date" : "2026-08-30T05:00:00Z",
+          "dollars" : 14.975999999999999,
+          "tokens" : 18000000
+        },
+        {
+          "billableTokens" : 2400000,
+          "date" : "2026-08-31T05:00:00Z",
+          "dollars" : 19.968,
+          "tokens" : 24000000
+        },
+        {
+          "billableTokens" : 2900000,
+          "date" : "2026-09-01T05:00:00Z",
+          "dollars" : 24.128,
+          "tokens" : 29000000
+        },
+        {
+          "billableTokens" : 3700000,
+          "date" : "2026-09-02T05:00:00Z",
+          "dollars" : 30.783999999999999,
+          "tokens" : 37000000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-09-03T05:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 5100000,
+          "date" : "2026-09-04T05:00:00Z",
+          "dollars" : 42.431999999999995,
+          "tokens" : 51000000
+        },
+        {
+          "billableTokens" : 5900000,
+          "date" : "2026-09-05T05:00:00Z",
+          "dollars" : 49.088000000000001,
+          "tokens" : 59000000
+        },
+        {
+          "billableTokens" : 6600000,
+          "date" : "2026-09-06T05:00:00Z",
+          "dollars" : 54.911999999999999,
+          "tokens" : 66000000
+        },
+        {
+          "billableTokens" : 7400000,
+          "date" : "2026-09-07T05:00:00Z",
+          "dollars" : 61.567999999999998,
+          "tokens" : 74000000
+        },
+        {
+          "billableTokens" : 8300000,
+          "date" : "2026-09-08T05:00:00Z",
+          "dollars" : 69.055999999999997,
+          "tokens" : 83000000
+        },
+        {
+          "billableTokens" : 9000000,
+          "date" : "2026-09-09T05:00:00Z",
+          "dollars" : 74.879999999999995,
+          "tokens" : 90000000
+        },
+        {
+          "billableTokens" : 9900000,
+          "date" : "2026-09-10T05:00:00Z",
+          "dollars" : 82.367999999999995,
+          "tokens" : 99000000
+        },
+        {
+          "billableTokens" : 10800000,
+          "date" : "2026-09-11T05:00:00Z",
+          "dollars" : 89.855999999999995,
+          "tokens" : 108000000
+        }
+      ],
+      "id" : "codex",
+      "limits" : [
+        {
+          "label" : "5h",
+          "resetSeconds" : 8550.7596778869629,
+          "seed" : 3,
+          "used" : 67
+        },
+        {
+          "label" : "week",
+          "resetSeconds" : 410370.75967597961,
+          "seed" : 4,
+          "used" : 76
+        }
+      ],
+      "models" : [
+
+      ],
+      "month" : {
+        "billableTokens" : 322860000,
+        "dollars" : 1342.5999999999999,
+        "label" : "April",
+        "series" : [
+          12.199999999999999,
+          26.699999999999999,
+          43.5,
+          62.399999999999999,
+          83.700000000000003,
+          107.09999999999999,
+          132.80000000000001,
+          160.69999999999999,
+          190.90000000000001,
+          223.30000000000001,
+          257.89999999999998,
+          294.80000000000001,
+          333.89999999999998,
+          375.30000000000001,
+          418.89999999999998,
+          464.69999999999999,
+          512.79999999999995,
+          563.10000000000002,
+          615.70000000000005,
+          670.5,
+          727.5,
+          786.79999999999995,
+          848.29999999999995,
+          912,
+          978,
+          1046.2,
+          1116.7,
+          1189.4000000000001,
+          1264.3,
+          1342.5999999999999
+        ],
+        "tokens" : 1614300000
+      },
+      "name" : "Codex",
+      "plan" : "Pro",
+      "today" : {
+        "billableTokens" : 32824000,
+        "dollars" : 136.5,
+        "label" : "Today",
+        "series" : [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2.3999999999999999,
+          6.7999999999999998,
+          11.5,
+          17.199999999999999,
+          22.800000000000001,
+          28.399999999999999,
+          38.5,
+          51.700000000000003,
+          67.400000000000006,
+          84.599999999999994,
+          102.3,
+          118.8,
+          130.40000000000001,
+          136.5
+        ],
+        "tokens" : 164120000
+      }
+    },
+    {
+      "days" : [
+        {
+          "billableTokens" : 384000,
+          "date" : "2026-01-01T06:00:00Z",
+          "dollars" : 3.1948799999999999,
+          "tokens" : 3840000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-01-02T06:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 768000,
+          "date" : "2026-01-03T06:00:00Z",
+          "dollars" : 6.3897599999999999,
+          "tokens" : 7680000
+        },
+        {
+          "billableTokens" : 928000,
+          "date" : "2026-01-04T06:00:00Z",
+          "dollars" : 7.7209599999999998,
+          "tokens" : 9280000
+        },
+        {
+          "billableTokens" : 1184000,
+          "date" : "2026-01-05T06:00:00Z",
+          "dollars" : 9.8508800000000001,
+          "tokens" : 11840000
+        },
+        {
+          "billableTokens" : 1344000,
+          "date" : "2026-01-06T06:00:00Z",
+          "dollars" : 11.182079999999999,
+          "tokens" : 13440000
+        },
+        {
+          "billableTokens" : 1632000,
+          "date" : "2026-01-07T06:00:00Z",
+          "dollars" : 13.578239999999999,
+          "tokens" : 16320000
+        },
+        {
+          "billableTokens" : 1888000,
+          "date" : "2026-01-08T06:00:00Z",
+          "dollars" : 15.708160000000001,
+          "tokens" : 18880000
+        },
+        {
+          "billableTokens" : 2112000,
+          "date" : "2026-01-09T06:00:00Z",
+          "dollars" : 17.571840000000002,
+          "tokens" : 21120000
+        },
+        {
+          "billableTokens" : 2368000,
+          "date" : "2026-01-10T06:00:00Z",
+          "dollars" : 19.70176,
+          "tokens" : 23680000
+        },
+        {
+          "billableTokens" : 2656000,
+          "date" : "2026-01-11T06:00:00Z",
+          "dollars" : 22.097919999999998,
+          "tokens" : 26560000
+        },
+        {
+          "billableTokens" : 2880000,
+          "date" : "2026-01-12T06:00:00Z",
+          "dollars" : 23.961600000000001,
+          "tokens" : 28800000
+        },
+        {
+          "billableTokens" : 3168000,
+          "date" : "2026-01-13T06:00:00Z",
+          "dollars" : 26.357759999999999,
+          "tokens" : 31680000
+        },
+        {
+          "billableTokens" : 3456000,
+          "date" : "2026-01-14T06:00:00Z",
+          "dollars" : 28.753919999999997,
+          "tokens" : 34560000
+        },
+        {
+          "billableTokens" : 3744000,
+          "date" : "2026-01-15T06:00:00Z",
+          "dollars" : 31.150079999999999,
+          "tokens" : 37440000
+        },
+        {
+          "billableTokens" : 3968000,
+          "date" : "2026-01-16T06:00:00Z",
+          "dollars" : 33.013759999999998,
+          "tokens" : 39680000
+        },
+        {
+          "billableTokens" : 4352000,
+          "date" : "2026-01-17T06:00:00Z",
+          "dollars" : 36.208640000000003,
+          "tokens" : 43520000
+        },
+        {
+          "billableTokens" : 4640000,
+          "date" : "2026-01-18T06:00:00Z",
+          "dollars" : 38.604800000000004,
+          "tokens" : 46400000
+        },
+        {
+          "billableTokens" : 5024000,
+          "date" : "2026-01-19T06:00:00Z",
+          "dollars" : 41.799680000000002,
+          "tokens" : 50240000
+        },
+        {
+          "billableTokens" : 5312000,
+          "date" : "2026-01-20T06:00:00Z",
+          "dollars" : 44.195839999999997,
+          "tokens" : 53120000
+        },
+        {
+          "billableTokens" : 5600000,
+          "date" : "2026-01-21T06:00:00Z",
+          "dollars" : 46.591999999999999,
+          "tokens" : 56000000
+        },
+        {
+          "billableTokens" : 6016000,
+          "date" : "2026-01-22T06:00:00Z",
+          "dollars" : 50.05312,
+          "tokens" : 60160000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-01-23T06:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6848000,
+          "date" : "2026-01-24T06:00:00Z",
+          "dollars" : 56.975360000000002,
+          "tokens" : 68480000
+        },
+        {
+          "billableTokens" : 7296000,
+          "date" : "2026-01-25T06:00:00Z",
+          "dollars" : 60.702719999999999,
+          "tokens" : 72960000
+        },
+        {
+          "billableTokens" : 7648000,
+          "date" : "2026-01-26T06:00:00Z",
+          "dollars" : 63.631359999999994,
+          "tokens" : 76480000
+        },
+        {
+          "billableTokens" : 8128000,
+          "date" : "2026-01-27T06:00:00Z",
+          "dollars" : 67.624960000000002,
+          "tokens" : 81280000
+        },
+        {
+          "billableTokens" : 8576000,
+          "date" : "2026-01-28T06:00:00Z",
+          "dollars" : 71.352320000000006,
+          "tokens" : 85760000
+        },
+        {
+          "billableTokens" : 9024000,
+          "date" : "2026-01-29T06:00:00Z",
+          "dollars" : 75.079679999999996,
+          "tokens" : 90240000
+        },
+        {
+          "billableTokens" : 5248000,
+          "date" : "2026-01-30T06:00:00Z",
+          "dollars" : 43.663360000000004,
+          "tokens" : 52480000
+        },
+        {
+          "billableTokens" : 384000,
+          "date" : "2026-01-31T06:00:00Z",
+          "dollars" : 3.1948799999999999,
+          "tokens" : 3840000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-02-01T06:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 768000,
+          "date" : "2026-02-02T06:00:00Z",
+          "dollars" : 6.3897599999999999,
+          "tokens" : 7680000
+        },
+        {
+          "billableTokens" : 928000,
+          "date" : "2026-02-03T06:00:00Z",
+          "dollars" : 7.7209599999999998,
+          "tokens" : 9280000
+        },
+        {
+          "billableTokens" : 1184000,
+          "date" : "2026-02-04T06:00:00Z",
+          "dollars" : 9.8508800000000001,
+          "tokens" : 11840000
+        },
+        {
+          "billableTokens" : 1344000,
+          "date" : "2026-02-05T06:00:00Z",
+          "dollars" : 11.182079999999999,
+          "tokens" : 13440000
+        },
+        {
+          "billableTokens" : 1632000,
+          "date" : "2026-02-06T06:00:00Z",
+          "dollars" : 13.578239999999999,
+          "tokens" : 16320000
+        },
+        {
+          "billableTokens" : 1888000,
+          "date" : "2026-02-07T06:00:00Z",
+          "dollars" : 15.708160000000001,
+          "tokens" : 18880000
+        },
+        {
+          "billableTokens" : 2112000,
+          "date" : "2026-02-08T06:00:00Z",
+          "dollars" : 17.571840000000002,
+          "tokens" : 21120000
+        },
+        {
+          "billableTokens" : 2368000,
+          "date" : "2026-02-09T06:00:00Z",
+          "dollars" : 19.70176,
+          "tokens" : 23680000
+        },
+        {
+          "billableTokens" : 2656000,
+          "date" : "2026-02-10T06:00:00Z",
+          "dollars" : 22.097919999999998,
+          "tokens" : 26560000
+        },
+        {
+          "billableTokens" : 2880000,
+          "date" : "2026-02-11T06:00:00Z",
+          "dollars" : 23.961600000000001,
+          "tokens" : 28800000
+        },
+        {
+          "billableTokens" : 3168000,
+          "date" : "2026-02-12T06:00:00Z",
+          "dollars" : 26.357759999999999,
+          "tokens" : 31680000
+        },
+        {
+          "billableTokens" : 3456000,
+          "date" : "2026-02-13T06:00:00Z",
+          "dollars" : 28.753919999999997,
+          "tokens" : 34560000
+        },
+        {
+          "billableTokens" : 3744000,
+          "date" : "2026-02-14T06:00:00Z",
+          "dollars" : 31.150079999999999,
+          "tokens" : 37440000
+        },
+        {
+          "billableTokens" : 3968000,
+          "date" : "2026-02-15T06:00:00Z",
+          "dollars" : 33.013759999999998,
+          "tokens" : 39680000
+        },
+        {
+          "billableTokens" : 4352000,
+          "date" : "2026-02-16T06:00:00Z",
+          "dollars" : 36.208640000000003,
+          "tokens" : 43520000
+        },
+        {
+          "billableTokens" : 4640000,
+          "date" : "2026-02-17T06:00:00Z",
+          "dollars" : 38.604800000000004,
+          "tokens" : 46400000
+        },
+        {
+          "billableTokens" : 5024000,
+          "date" : "2026-02-18T06:00:00Z",
+          "dollars" : 41.799680000000002,
+          "tokens" : 50240000
+        },
+        {
+          "billableTokens" : 5312000,
+          "date" : "2026-02-19T06:00:00Z",
+          "dollars" : 44.195839999999997,
+          "tokens" : 53120000
+        },
+        {
+          "billableTokens" : 5600000,
+          "date" : "2026-02-20T06:00:00Z",
+          "dollars" : 46.591999999999999,
+          "tokens" : 56000000
+        },
+        {
+          "billableTokens" : 6016000,
+          "date" : "2026-02-21T06:00:00Z",
+          "dollars" : 50.05312,
+          "tokens" : 60160000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-02-22T06:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6848000,
+          "date" : "2026-02-23T06:00:00Z",
+          "dollars" : 56.975360000000002,
+          "tokens" : 68480000
+        },
+        {
+          "billableTokens" : 7296000,
+          "date" : "2026-02-24T06:00:00Z",
+          "dollars" : 60.702719999999999,
+          "tokens" : 72960000
+        },
+        {
+          "billableTokens" : 7648000,
+          "date" : "2026-02-25T06:00:00Z",
+          "dollars" : 63.631359999999994,
+          "tokens" : 76480000
+        },
+        {
+          "billableTokens" : 8128000,
+          "date" : "2026-02-26T06:00:00Z",
+          "dollars" : 67.624960000000002,
+          "tokens" : 81280000
+        },
+        {
+          "billableTokens" : 8576000,
+          "date" : "2026-02-27T06:00:00Z",
+          "dollars" : 71.352320000000006,
+          "tokens" : 85760000
+        },
+        {
+          "billableTokens" : 9024000,
+          "date" : "2026-02-28T06:00:00Z",
+          "dollars" : 75.079679999999996,
+          "tokens" : 90240000
+        },
+        {
+          "billableTokens" : 5248000,
+          "date" : "2026-03-01T06:00:00Z",
+          "dollars" : 43.663360000000004,
+          "tokens" : 52480000
+        },
+        {
+          "billableTokens" : 384000,
+          "date" : "2026-03-02T06:00:00Z",
+          "dollars" : 3.1948799999999999,
+          "tokens" : 3840000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-03-03T06:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 768000,
+          "date" : "2026-03-04T06:00:00Z",
+          "dollars" : 6.3897599999999999,
+          "tokens" : 7680000
+        },
+        {
+          "billableTokens" : 928000,
+          "date" : "2026-03-05T06:00:00Z",
+          "dollars" : 7.7209599999999998,
+          "tokens" : 9280000
+        },
+        {
+          "billableTokens" : 1184000,
+          "date" : "2026-03-06T06:00:00Z",
+          "dollars" : 9.8508800000000001,
+          "tokens" : 11840000
+        },
+        {
+          "billableTokens" : 1344000,
+          "date" : "2026-03-07T06:00:00Z",
+          "dollars" : 11.182079999999999,
+          "tokens" : 13440000
+        },
+        {
+          "billableTokens" : 1632000,
+          "date" : "2026-03-08T06:00:00Z",
+          "dollars" : 13.578239999999999,
+          "tokens" : 16320000
+        },
+        {
+          "billableTokens" : 1888000,
+          "date" : "2026-03-09T05:00:00Z",
+          "dollars" : 15.708160000000001,
+          "tokens" : 18880000
+        },
+        {
+          "billableTokens" : 2112000,
+          "date" : "2026-03-10T05:00:00Z",
+          "dollars" : 17.571840000000002,
+          "tokens" : 21120000
+        },
+        {
+          "billableTokens" : 2368000,
+          "date" : "2026-03-11T05:00:00Z",
+          "dollars" : 19.70176,
+          "tokens" : 23680000
+        },
+        {
+          "billableTokens" : 2656000,
+          "date" : "2026-03-12T05:00:00Z",
+          "dollars" : 22.097919999999998,
+          "tokens" : 26560000
+        },
+        {
+          "billableTokens" : 2880000,
+          "date" : "2026-03-13T05:00:00Z",
+          "dollars" : 23.961600000000001,
+          "tokens" : 28800000
+        },
+        {
+          "billableTokens" : 3168000,
+          "date" : "2026-03-14T05:00:00Z",
+          "dollars" : 26.357759999999999,
+          "tokens" : 31680000
+        },
+        {
+          "billableTokens" : 3456000,
+          "date" : "2026-03-15T05:00:00Z",
+          "dollars" : 28.753919999999997,
+          "tokens" : 34560000
+        },
+        {
+          "billableTokens" : 3744000,
+          "date" : "2026-03-16T05:00:00Z",
+          "dollars" : 31.150079999999999,
+          "tokens" : 37440000
+        },
+        {
+          "billableTokens" : 3968000,
+          "date" : "2026-03-17T05:00:00Z",
+          "dollars" : 33.013759999999998,
+          "tokens" : 39680000
+        },
+        {
+          "billableTokens" : 4352000,
+          "date" : "2026-03-18T05:00:00Z",
+          "dollars" : 36.208640000000003,
+          "tokens" : 43520000
+        },
+        {
+          "billableTokens" : 4640000,
+          "date" : "2026-03-19T05:00:00Z",
+          "dollars" : 38.604800000000004,
+          "tokens" : 46400000
+        },
+        {
+          "billableTokens" : 5024000,
+          "date" : "2026-03-20T05:00:00Z",
+          "dollars" : 41.799680000000002,
+          "tokens" : 50240000
+        },
+        {
+          "billableTokens" : 5312000,
+          "date" : "2026-03-21T05:00:00Z",
+          "dollars" : 44.195839999999997,
+          "tokens" : 53120000
+        },
+        {
+          "billableTokens" : 5600000,
+          "date" : "2026-03-22T05:00:00Z",
+          "dollars" : 46.591999999999999,
+          "tokens" : 56000000
+        },
+        {
+          "billableTokens" : 6016000,
+          "date" : "2026-03-23T05:00:00Z",
+          "dollars" : 50.05312,
+          "tokens" : 60160000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-03-24T05:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6848000,
+          "date" : "2026-03-25T05:00:00Z",
+          "dollars" : 56.975360000000002,
+          "tokens" : 68480000
+        },
+        {
+          "billableTokens" : 7296000,
+          "date" : "2026-03-26T05:00:00Z",
+          "dollars" : 60.702719999999999,
+          "tokens" : 72960000
+        },
+        {
+          "billableTokens" : 7648000,
+          "date" : "2026-03-27T05:00:00Z",
+          "dollars" : 63.631359999999994,
+          "tokens" : 76480000
+        },
+        {
+          "billableTokens" : 8128000,
+          "date" : "2026-03-28T05:00:00Z",
+          "dollars" : 67.624960000000002,
+          "tokens" : 81280000
+        },
+        {
+          "billableTokens" : 8576000,
+          "date" : "2026-03-29T05:00:00Z",
+          "dollars" : 71.352320000000006,
+          "tokens" : 85760000
+        },
+        {
+          "billableTokens" : 9024000,
+          "date" : "2026-03-30T05:00:00Z",
+          "dollars" : 75.079679999999996,
+          "tokens" : 90240000
+        },
+        {
+          "billableTokens" : 5248000,
+          "date" : "2026-03-31T05:00:00Z",
+          "dollars" : 43.663360000000004,
+          "tokens" : 52480000
+        },
+        {
+          "billableTokens" : 384000,
+          "date" : "2026-04-01T05:00:00Z",
+          "dollars" : 3.1948799999999999,
+          "tokens" : 3840000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-04-02T05:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 768000,
+          "date" : "2026-04-03T05:00:00Z",
+          "dollars" : 6.3897599999999999,
+          "tokens" : 7680000
+        },
+        {
+          "billableTokens" : 928000,
+          "date" : "2026-04-04T05:00:00Z",
+          "dollars" : 7.7209599999999998,
+          "tokens" : 9280000
+        },
+        {
+          "billableTokens" : 1184000,
+          "date" : "2026-04-05T05:00:00Z",
+          "dollars" : 9.8508800000000001,
+          "tokens" : 11840000
+        },
+        {
+          "billableTokens" : 1344000,
+          "date" : "2026-04-06T05:00:00Z",
+          "dollars" : 11.182079999999999,
+          "tokens" : 13440000
+        },
+        {
+          "billableTokens" : 1632000,
+          "date" : "2026-04-07T05:00:00Z",
+          "dollars" : 13.578239999999999,
+          "tokens" : 16320000
+        },
+        {
+          "billableTokens" : 1888000,
+          "date" : "2026-04-08T05:00:00Z",
+          "dollars" : 15.708160000000001,
+          "tokens" : 18880000
+        },
+        {
+          "billableTokens" : 2112000,
+          "date" : "2026-04-09T05:00:00Z",
+          "dollars" : 17.571840000000002,
+          "tokens" : 21120000
+        },
+        {
+          "billableTokens" : 2368000,
+          "date" : "2026-04-10T05:00:00Z",
+          "dollars" : 19.70176,
+          "tokens" : 23680000
+        },
+        {
+          "billableTokens" : 2656000,
+          "date" : "2026-04-11T05:00:00Z",
+          "dollars" : 22.097919999999998,
+          "tokens" : 26560000
+        },
+        {
+          "billableTokens" : 2880000,
+          "date" : "2026-04-12T05:00:00Z",
+          "dollars" : 23.961600000000001,
+          "tokens" : 28800000
+        },
+        {
+          "billableTokens" : 3168000,
+          "date" : "2026-04-13T05:00:00Z",
+          "dollars" : 26.357759999999999,
+          "tokens" : 31680000
+        },
+        {
+          "billableTokens" : 3456000,
+          "date" : "2026-04-14T05:00:00Z",
+          "dollars" : 28.753919999999997,
+          "tokens" : 34560000
+        },
+        {
+          "billableTokens" : 3744000,
+          "date" : "2026-04-15T05:00:00Z",
+          "dollars" : 31.150079999999999,
+          "tokens" : 37440000
+        },
+        {
+          "billableTokens" : 3968000,
+          "date" : "2026-04-16T05:00:00Z",
+          "dollars" : 33.013759999999998,
+          "tokens" : 39680000
+        },
+        {
+          "billableTokens" : 4352000,
+          "date" : "2026-04-17T05:00:00Z",
+          "dollars" : 36.208640000000003,
+          "tokens" : 43520000
+        },
+        {
+          "billableTokens" : 4640000,
+          "date" : "2026-04-18T05:00:00Z",
+          "dollars" : 38.604800000000004,
+          "tokens" : 46400000
+        },
+        {
+          "billableTokens" : 5024000,
+          "date" : "2026-04-19T05:00:00Z",
+          "dollars" : 41.799680000000002,
+          "tokens" : 50240000
+        },
+        {
+          "billableTokens" : 5312000,
+          "date" : "2026-04-20T05:00:00Z",
+          "dollars" : 44.195839999999997,
+          "tokens" : 53120000
+        },
+        {
+          "billableTokens" : 5600000,
+          "date" : "2026-04-21T05:00:00Z",
+          "dollars" : 46.591999999999999,
+          "tokens" : 56000000
+        },
+        {
+          "billableTokens" : 6016000,
+          "date" : "2026-04-22T05:00:00Z",
+          "dollars" : 50.05312,
+          "tokens" : 60160000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-04-23T05:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6848000,
+          "date" : "2026-04-24T05:00:00Z",
+          "dollars" : 56.975360000000002,
+          "tokens" : 68480000
+        },
+        {
+          "billableTokens" : 7296000,
+          "date" : "2026-04-25T05:00:00Z",
+          "dollars" : 60.702719999999999,
+          "tokens" : 72960000
+        },
+        {
+          "billableTokens" : 7648000,
+          "date" : "2026-04-26T05:00:00Z",
+          "dollars" : 63.631359999999994,
+          "tokens" : 76480000
+        },
+        {
+          "billableTokens" : 8128000,
+          "date" : "2026-04-27T05:00:00Z",
+          "dollars" : 67.624960000000002,
+          "tokens" : 81280000
+        },
+        {
+          "billableTokens" : 8576000,
+          "date" : "2026-04-28T05:00:00Z",
+          "dollars" : 71.352320000000006,
+          "tokens" : 85760000
+        },
+        {
+          "billableTokens" : 9024000,
+          "date" : "2026-04-29T05:00:00Z",
+          "dollars" : 75.079679999999996,
+          "tokens" : 90240000
+        },
+        {
+          "billableTokens" : 5248000,
+          "date" : "2026-04-30T05:00:00Z",
+          "dollars" : 43.663360000000004,
+          "tokens" : 52480000
+        },
+        {
+          "billableTokens" : 384000,
+          "date" : "2026-05-01T05:00:00Z",
+          "dollars" : 3.1948799999999999,
+          "tokens" : 3840000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-05-02T05:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 768000,
+          "date" : "2026-05-03T05:00:00Z",
+          "dollars" : 6.3897599999999999,
+          "tokens" : 7680000
+        },
+        {
+          "billableTokens" : 928000,
+          "date" : "2026-05-04T05:00:00Z",
+          "dollars" : 7.7209599999999998,
+          "tokens" : 9280000
+        },
+        {
+          "billableTokens" : 1184000,
+          "date" : "2026-05-05T05:00:00Z",
+          "dollars" : 9.8508800000000001,
+          "tokens" : 11840000
+        },
+        {
+          "billableTokens" : 1344000,
+          "date" : "2026-05-06T05:00:00Z",
+          "dollars" : 11.182079999999999,
+          "tokens" : 13440000
+        },
+        {
+          "billableTokens" : 1632000,
+          "date" : "2026-05-07T05:00:00Z",
+          "dollars" : 13.578239999999999,
+          "tokens" : 16320000
+        },
+        {
+          "billableTokens" : 1888000,
+          "date" : "2026-05-08T05:00:00Z",
+          "dollars" : 15.708160000000001,
+          "tokens" : 18880000
+        },
+        {
+          "billableTokens" : 2112000,
+          "date" : "2026-05-09T05:00:00Z",
+          "dollars" : 17.571840000000002,
+          "tokens" : 21120000
+        },
+        {
+          "billableTokens" : 2368000,
+          "date" : "2026-05-10T05:00:00Z",
+          "dollars" : 19.70176,
+          "tokens" : 23680000
+        },
+        {
+          "billableTokens" : 2656000,
+          "date" : "2026-05-11T05:00:00Z",
+          "dollars" : 22.097919999999998,
+          "tokens" : 26560000
+        },
+        {
+          "billableTokens" : 2880000,
+          "date" : "2026-05-12T05:00:00Z",
+          "dollars" : 23.961600000000001,
+          "tokens" : 28800000
+        },
+        {
+          "billableTokens" : 3168000,
+          "date" : "2026-05-13T05:00:00Z",
+          "dollars" : 26.357759999999999,
+          "tokens" : 31680000
+        },
+        {
+          "billableTokens" : 3456000,
+          "date" : "2026-05-14T05:00:00Z",
+          "dollars" : 28.753919999999997,
+          "tokens" : 34560000
+        },
+        {
+          "billableTokens" : 3744000,
+          "date" : "2026-05-15T05:00:00Z",
+          "dollars" : 31.150079999999999,
+          "tokens" : 37440000
+        },
+        {
+          "billableTokens" : 3968000,
+          "date" : "2026-05-16T05:00:00Z",
+          "dollars" : 33.013759999999998,
+          "tokens" : 39680000
+        },
+        {
+          "billableTokens" : 4352000,
+          "date" : "2026-05-17T05:00:00Z",
+          "dollars" : 36.208640000000003,
+          "tokens" : 43520000
+        },
+        {
+          "billableTokens" : 4640000,
+          "date" : "2026-05-18T05:00:00Z",
+          "dollars" : 38.604800000000004,
+          "tokens" : 46400000
+        },
+        {
+          "billableTokens" : 5024000,
+          "date" : "2026-05-19T05:00:00Z",
+          "dollars" : 41.799680000000002,
+          "tokens" : 50240000
+        },
+        {
+          "billableTokens" : 5312000,
+          "date" : "2026-05-20T05:00:00Z",
+          "dollars" : 44.195839999999997,
+          "tokens" : 53120000
+        },
+        {
+          "billableTokens" : 5600000,
+          "date" : "2026-05-21T05:00:00Z",
+          "dollars" : 46.591999999999999,
+          "tokens" : 56000000
+        },
+        {
+          "billableTokens" : 6016000,
+          "date" : "2026-05-22T05:00:00Z",
+          "dollars" : 50.05312,
+          "tokens" : 60160000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-05-23T05:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6848000,
+          "date" : "2026-05-24T05:00:00Z",
+          "dollars" : 56.975360000000002,
+          "tokens" : 68480000
+        },
+        {
+          "billableTokens" : 7296000,
+          "date" : "2026-05-25T05:00:00Z",
+          "dollars" : 60.702719999999999,
+          "tokens" : 72960000
+        },
+        {
+          "billableTokens" : 7648000,
+          "date" : "2026-05-26T05:00:00Z",
+          "dollars" : 63.631359999999994,
+          "tokens" : 76480000
+        },
+        {
+          "billableTokens" : 8128000,
+          "date" : "2026-05-27T05:00:00Z",
+          "dollars" : 67.624960000000002,
+          "tokens" : 81280000
+        },
+        {
+          "billableTokens" : 8576000,
+          "date" : "2026-05-28T05:00:00Z",
+          "dollars" : 71.352320000000006,
+          "tokens" : 85760000
+        },
+        {
+          "billableTokens" : 9024000,
+          "date" : "2026-05-29T05:00:00Z",
+          "dollars" : 75.079679999999996,
+          "tokens" : 90240000
+        },
+        {
+          "billableTokens" : 5248000,
+          "date" : "2026-05-30T05:00:00Z",
+          "dollars" : 43.663360000000004,
+          "tokens" : 52480000
+        },
+        {
+          "billableTokens" : 384000,
+          "date" : "2026-05-31T05:00:00Z",
+          "dollars" : 3.1948799999999999,
+          "tokens" : 3840000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-06-01T05:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 768000,
+          "date" : "2026-06-02T05:00:00Z",
+          "dollars" : 6.3897599999999999,
+          "tokens" : 7680000
+        },
+        {
+          "billableTokens" : 928000,
+          "date" : "2026-06-03T05:00:00Z",
+          "dollars" : 7.7209599999999998,
+          "tokens" : 9280000
+        },
+        {
+          "billableTokens" : 1184000,
+          "date" : "2026-06-04T05:00:00Z",
+          "dollars" : 9.8508800000000001,
+          "tokens" : 11840000
+        },
+        {
+          "billableTokens" : 1344000,
+          "date" : "2026-06-05T05:00:00Z",
+          "dollars" : 11.182079999999999,
+          "tokens" : 13440000
+        },
+        {
+          "billableTokens" : 1632000,
+          "date" : "2026-06-06T05:00:00Z",
+          "dollars" : 13.578239999999999,
+          "tokens" : 16320000
+        },
+        {
+          "billableTokens" : 1888000,
+          "date" : "2026-06-07T05:00:00Z",
+          "dollars" : 15.708160000000001,
+          "tokens" : 18880000
+        },
+        {
+          "billableTokens" : 2112000,
+          "date" : "2026-06-08T05:00:00Z",
+          "dollars" : 17.571840000000002,
+          "tokens" : 21120000
+        },
+        {
+          "billableTokens" : 2368000,
+          "date" : "2026-06-09T05:00:00Z",
+          "dollars" : 19.70176,
+          "tokens" : 23680000
+        },
+        {
+          "billableTokens" : 2656000,
+          "date" : "2026-06-10T05:00:00Z",
+          "dollars" : 22.097919999999998,
+          "tokens" : 26560000
+        },
+        {
+          "billableTokens" : 2880000,
+          "date" : "2026-06-11T05:00:00Z",
+          "dollars" : 23.961600000000001,
+          "tokens" : 28800000
+        },
+        {
+          "billableTokens" : 3168000,
+          "date" : "2026-06-12T05:00:00Z",
+          "dollars" : 26.357759999999999,
+          "tokens" : 31680000
+        },
+        {
+          "billableTokens" : 3456000,
+          "date" : "2026-06-13T05:00:00Z",
+          "dollars" : 28.753919999999997,
+          "tokens" : 34560000
+        },
+        {
+          "billableTokens" : 3744000,
+          "date" : "2026-06-14T05:00:00Z",
+          "dollars" : 31.150079999999999,
+          "tokens" : 37440000
+        },
+        {
+          "billableTokens" : 3968000,
+          "date" : "2026-06-15T05:00:00Z",
+          "dollars" : 33.013759999999998,
+          "tokens" : 39680000
+        },
+        {
+          "billableTokens" : 4352000,
+          "date" : "2026-06-16T05:00:00Z",
+          "dollars" : 36.208640000000003,
+          "tokens" : 43520000
+        },
+        {
+          "billableTokens" : 4640000,
+          "date" : "2026-06-17T05:00:00Z",
+          "dollars" : 38.604800000000004,
+          "tokens" : 46400000
+        },
+        {
+          "billableTokens" : 5024000,
+          "date" : "2026-06-18T05:00:00Z",
+          "dollars" : 41.799680000000002,
+          "tokens" : 50240000
+        },
+        {
+          "billableTokens" : 5312000,
+          "date" : "2026-06-19T05:00:00Z",
+          "dollars" : 44.195839999999997,
+          "tokens" : 53120000
+        },
+        {
+          "billableTokens" : 5600000,
+          "date" : "2026-06-20T05:00:00Z",
+          "dollars" : 46.591999999999999,
+          "tokens" : 56000000
+        },
+        {
+          "billableTokens" : 6016000,
+          "date" : "2026-06-21T05:00:00Z",
+          "dollars" : 50.05312,
+          "tokens" : 60160000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-06-22T05:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6848000,
+          "date" : "2026-06-23T05:00:00Z",
+          "dollars" : 56.975360000000002,
+          "tokens" : 68480000
+        },
+        {
+          "billableTokens" : 7296000,
+          "date" : "2026-06-24T05:00:00Z",
+          "dollars" : 60.702719999999999,
+          "tokens" : 72960000
+        },
+        {
+          "billableTokens" : 7648000,
+          "date" : "2026-06-25T05:00:00Z",
+          "dollars" : 63.631359999999994,
+          "tokens" : 76480000
+        },
+        {
+          "billableTokens" : 8128000,
+          "date" : "2026-06-26T05:00:00Z",
+          "dollars" : 67.624960000000002,
+          "tokens" : 81280000
+        },
+        {
+          "billableTokens" : 8576000,
+          "date" : "2026-06-27T05:00:00Z",
+          "dollars" : 71.352320000000006,
+          "tokens" : 85760000
+        },
+        {
+          "billableTokens" : 9024000,
+          "date" : "2026-06-28T05:00:00Z",
+          "dollars" : 75.079679999999996,
+          "tokens" : 90240000
+        },
+        {
+          "billableTokens" : 5248000,
+          "date" : "2026-06-29T05:00:00Z",
+          "dollars" : 43.663360000000004,
+          "tokens" : 52480000
+        },
+        {
+          "billableTokens" : 384000,
+          "date" : "2026-06-30T05:00:00Z",
+          "dollars" : 3.1948799999999999,
+          "tokens" : 3840000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-07-01T05:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 768000,
+          "date" : "2026-07-02T05:00:00Z",
+          "dollars" : 6.3897599999999999,
+          "tokens" : 7680000
+        },
+        {
+          "billableTokens" : 928000,
+          "date" : "2026-07-03T05:00:00Z",
+          "dollars" : 7.7209599999999998,
+          "tokens" : 9280000
+        },
+        {
+          "billableTokens" : 1184000,
+          "date" : "2026-07-04T05:00:00Z",
+          "dollars" : 9.8508800000000001,
+          "tokens" : 11840000
+        },
+        {
+          "billableTokens" : 1344000,
+          "date" : "2026-07-05T05:00:00Z",
+          "dollars" : 11.182079999999999,
+          "tokens" : 13440000
+        },
+        {
+          "billableTokens" : 1632000,
+          "date" : "2026-07-06T05:00:00Z",
+          "dollars" : 13.578239999999999,
+          "tokens" : 16320000
+        },
+        {
+          "billableTokens" : 1888000,
+          "date" : "2026-07-07T05:00:00Z",
+          "dollars" : 15.708160000000001,
+          "tokens" : 18880000
+        },
+        {
+          "billableTokens" : 2112000,
+          "date" : "2026-07-08T05:00:00Z",
+          "dollars" : 17.571840000000002,
+          "tokens" : 21120000
+        },
+        {
+          "billableTokens" : 2368000,
+          "date" : "2026-07-09T05:00:00Z",
+          "dollars" : 19.70176,
+          "tokens" : 23680000
+        },
+        {
+          "billableTokens" : 2656000,
+          "date" : "2026-07-10T05:00:00Z",
+          "dollars" : 22.097919999999998,
+          "tokens" : 26560000
+        },
+        {
+          "billableTokens" : 2880000,
+          "date" : "2026-07-11T05:00:00Z",
+          "dollars" : 23.961600000000001,
+          "tokens" : 28800000
+        },
+        {
+          "billableTokens" : 3168000,
+          "date" : "2026-07-12T05:00:00Z",
+          "dollars" : 26.357759999999999,
+          "tokens" : 31680000
+        },
+        {
+          "billableTokens" : 3456000,
+          "date" : "2026-07-13T05:00:00Z",
+          "dollars" : 28.753919999999997,
+          "tokens" : 34560000
+        },
+        {
+          "billableTokens" : 3744000,
+          "date" : "2026-07-14T05:00:00Z",
+          "dollars" : 31.150079999999999,
+          "tokens" : 37440000
+        },
+        {
+          "billableTokens" : 3968000,
+          "date" : "2026-07-15T05:00:00Z",
+          "dollars" : 33.013759999999998,
+          "tokens" : 39680000
+        },
+        {
+          "billableTokens" : 4352000,
+          "date" : "2026-07-16T05:00:00Z",
+          "dollars" : 36.208640000000003,
+          "tokens" : 43520000
+        },
+        {
+          "billableTokens" : 4640000,
+          "date" : "2026-07-17T05:00:00Z",
+          "dollars" : 38.604800000000004,
+          "tokens" : 46400000
+        },
+        {
+          "billableTokens" : 5024000,
+          "date" : "2026-07-18T05:00:00Z",
+          "dollars" : 41.799680000000002,
+          "tokens" : 50240000
+        },
+        {
+          "billableTokens" : 5312000,
+          "date" : "2026-07-19T05:00:00Z",
+          "dollars" : 44.195839999999997,
+          "tokens" : 53120000
+        },
+        {
+          "billableTokens" : 5600000,
+          "date" : "2026-07-20T05:00:00Z",
+          "dollars" : 46.591999999999999,
+          "tokens" : 56000000
+        },
+        {
+          "billableTokens" : 6016000,
+          "date" : "2026-07-21T05:00:00Z",
+          "dollars" : 50.05312,
+          "tokens" : 60160000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-07-22T05:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6848000,
+          "date" : "2026-07-23T05:00:00Z",
+          "dollars" : 56.975360000000002,
+          "tokens" : 68480000
+        },
+        {
+          "billableTokens" : 7296000,
+          "date" : "2026-07-24T05:00:00Z",
+          "dollars" : 60.702719999999999,
+          "tokens" : 72960000
+        },
+        {
+          "billableTokens" : 7648000,
+          "date" : "2026-07-25T05:00:00Z",
+          "dollars" : 63.631359999999994,
+          "tokens" : 76480000
+        },
+        {
+          "billableTokens" : 8128000,
+          "date" : "2026-07-26T05:00:00Z",
+          "dollars" : 67.624960000000002,
+          "tokens" : 81280000
+        },
+        {
+          "billableTokens" : 8576000,
+          "date" : "2026-07-27T05:00:00Z",
+          "dollars" : 71.352320000000006,
+          "tokens" : 85760000
+        },
+        {
+          "billableTokens" : 9024000,
+          "date" : "2026-07-28T05:00:00Z",
+          "dollars" : 75.079679999999996,
+          "tokens" : 90240000
+        },
+        {
+          "billableTokens" : 5248000,
+          "date" : "2026-07-29T05:00:00Z",
+          "dollars" : 43.663360000000004,
+          "tokens" : 52480000
+        },
+        {
+          "billableTokens" : 384000,
+          "date" : "2026-07-30T05:00:00Z",
+          "dollars" : 3.1948799999999999,
+          "tokens" : 3840000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-07-31T05:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 768000,
+          "date" : "2026-08-01T05:00:00Z",
+          "dollars" : 6.3897599999999999,
+          "tokens" : 7680000
+        },
+        {
+          "billableTokens" : 928000,
+          "date" : "2026-08-02T05:00:00Z",
+          "dollars" : 7.7209599999999998,
+          "tokens" : 9280000
+        },
+        {
+          "billableTokens" : 1184000,
+          "date" : "2026-08-03T05:00:00Z",
+          "dollars" : 9.8508800000000001,
+          "tokens" : 11840000
+        },
+        {
+          "billableTokens" : 1344000,
+          "date" : "2026-08-04T05:00:00Z",
+          "dollars" : 11.182079999999999,
+          "tokens" : 13440000
+        },
+        {
+          "billableTokens" : 1632000,
+          "date" : "2026-08-05T05:00:00Z",
+          "dollars" : 13.578239999999999,
+          "tokens" : 16320000
+        },
+        {
+          "billableTokens" : 1888000,
+          "date" : "2026-08-06T05:00:00Z",
+          "dollars" : 15.708160000000001,
+          "tokens" : 18880000
+        },
+        {
+          "billableTokens" : 2112000,
+          "date" : "2026-08-07T05:00:00Z",
+          "dollars" : 17.571840000000002,
+          "tokens" : 21120000
+        },
+        {
+          "billableTokens" : 2368000,
+          "date" : "2026-08-08T05:00:00Z",
+          "dollars" : 19.70176,
+          "tokens" : 23680000
+        },
+        {
+          "billableTokens" : 2656000,
+          "date" : "2026-08-09T05:00:00Z",
+          "dollars" : 22.097919999999998,
+          "tokens" : 26560000
+        },
+        {
+          "billableTokens" : 2880000,
+          "date" : "2026-08-10T05:00:00Z",
+          "dollars" : 23.961600000000001,
+          "tokens" : 28800000
+        },
+        {
+          "billableTokens" : 3168000,
+          "date" : "2026-08-11T05:00:00Z",
+          "dollars" : 26.357759999999999,
+          "tokens" : 31680000
+        },
+        {
+          "billableTokens" : 3456000,
+          "date" : "2026-08-12T05:00:00Z",
+          "dollars" : 28.753919999999997,
+          "tokens" : 34560000
+        },
+        {
+          "billableTokens" : 3744000,
+          "date" : "2026-08-13T05:00:00Z",
+          "dollars" : 31.150079999999999,
+          "tokens" : 37440000
+        },
+        {
+          "billableTokens" : 3968000,
+          "date" : "2026-08-14T05:00:00Z",
+          "dollars" : 33.013759999999998,
+          "tokens" : 39680000
+        },
+        {
+          "billableTokens" : 4352000,
+          "date" : "2026-08-15T05:00:00Z",
+          "dollars" : 36.208640000000003,
+          "tokens" : 43520000
+        },
+        {
+          "billableTokens" : 4640000,
+          "date" : "2026-08-16T05:00:00Z",
+          "dollars" : 38.604800000000004,
+          "tokens" : 46400000
+        },
+        {
+          "billableTokens" : 5024000,
+          "date" : "2026-08-17T05:00:00Z",
+          "dollars" : 41.799680000000002,
+          "tokens" : 50240000
+        },
+        {
+          "billableTokens" : 5312000,
+          "date" : "2026-08-18T05:00:00Z",
+          "dollars" : 44.195839999999997,
+          "tokens" : 53120000
+        },
+        {
+          "billableTokens" : 5600000,
+          "date" : "2026-08-19T05:00:00Z",
+          "dollars" : 46.591999999999999,
+          "tokens" : 56000000
+        },
+        {
+          "billableTokens" : 6016000,
+          "date" : "2026-08-20T05:00:00Z",
+          "dollars" : 50.05312,
+          "tokens" : 60160000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-08-21T05:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6848000,
+          "date" : "2026-08-22T05:00:00Z",
+          "dollars" : 56.975360000000002,
+          "tokens" : 68480000
+        },
+        {
+          "billableTokens" : 7296000,
+          "date" : "2026-08-23T05:00:00Z",
+          "dollars" : 60.702719999999999,
+          "tokens" : 72960000
+        },
+        {
+          "billableTokens" : 7648000,
+          "date" : "2026-08-24T05:00:00Z",
+          "dollars" : 63.631359999999994,
+          "tokens" : 76480000
+        },
+        {
+          "billableTokens" : 8128000,
+          "date" : "2026-08-25T05:00:00Z",
+          "dollars" : 67.624960000000002,
+          "tokens" : 81280000
+        },
+        {
+          "billableTokens" : 8576000,
+          "date" : "2026-08-26T05:00:00Z",
+          "dollars" : 71.352320000000006,
+          "tokens" : 85760000
+        },
+        {
+          "billableTokens" : 9024000,
+          "date" : "2026-08-27T05:00:00Z",
+          "dollars" : 75.079679999999996,
+          "tokens" : 90240000
+        },
+        {
+          "billableTokens" : 5248000,
+          "date" : "2026-08-28T05:00:00Z",
+          "dollars" : 43.663360000000004,
+          "tokens" : 52480000
+        },
+        {
+          "billableTokens" : 384000,
+          "date" : "2026-08-29T05:00:00Z",
+          "dollars" : 3.1948799999999999,
+          "tokens" : 3840000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-08-30T05:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 768000,
+          "date" : "2026-08-31T05:00:00Z",
+          "dollars" : 6.3897599999999999,
+          "tokens" : 7680000
+        },
+        {
+          "billableTokens" : 928000,
+          "date" : "2026-09-01T05:00:00Z",
+          "dollars" : 7.7209599999999998,
+          "tokens" : 9280000
+        },
+        {
+          "billableTokens" : 1184000,
+          "date" : "2026-09-02T05:00:00Z",
+          "dollars" : 9.8508800000000001,
+          "tokens" : 11840000
+        },
+        {
+          "billableTokens" : 1344000,
+          "date" : "2026-09-03T05:00:00Z",
+          "dollars" : 11.182079999999999,
+          "tokens" : 13440000
+        },
+        {
+          "billableTokens" : 1632000,
+          "date" : "2026-09-04T05:00:00Z",
+          "dollars" : 13.578239999999999,
+          "tokens" : 16320000
+        },
+        {
+          "billableTokens" : 1888000,
+          "date" : "2026-09-05T05:00:00Z",
+          "dollars" : 15.708160000000001,
+          "tokens" : 18880000
+        },
+        {
+          "billableTokens" : 2112000,
+          "date" : "2026-09-06T05:00:00Z",
+          "dollars" : 17.571840000000002,
+          "tokens" : 21120000
+        },
+        {
+          "billableTokens" : 2368000,
+          "date" : "2026-09-07T05:00:00Z",
+          "dollars" : 19.70176,
+          "tokens" : 23680000
+        },
+        {
+          "billableTokens" : 2656000,
+          "date" : "2026-09-08T05:00:00Z",
+          "dollars" : 22.097919999999998,
+          "tokens" : 26560000
+        },
+        {
+          "billableTokens" : 2880000,
+          "date" : "2026-09-09T05:00:00Z",
+          "dollars" : 23.961600000000001,
+          "tokens" : 28800000
+        },
+        {
+          "billableTokens" : 3168000,
+          "date" : "2026-09-10T05:00:00Z",
+          "dollars" : 26.357759999999999,
+          "tokens" : 31680000
+        },
+        {
+          "billableTokens" : 3456000,
+          "date" : "2026-09-11T05:00:00Z",
+          "dollars" : 28.753919999999997,
+          "tokens" : 34560000
+        }
+      ],
+      "id" : "grok",
+      "limits" : [
+        {
+          "label" : "Credits",
+          "resetSeconds" : 7199.9997799396515,
+          "seed" : 5,
+          "used" : 38
+        }
+      ],
+      "models" : [
+
+      ],
+      "month" : {
+        "billableTokens" : 103315200,
+        "dollars" : 429.63200000000001,
+        "label" : "April",
+        "series" : [
+          3.9039999999999999,
+          8.5440000000000005,
+          13.92,
+          19.968,
+          26.784000000000002,
+          34.271999999999998,
+          42.496000000000002,
+          51.423999999999999,
+          61.088000000000001,
+          71.456000000000003,
+          82.527999999999992,
+          94.335999999999999,
+          106.848,
+          120.096,
+          134.048,
+          148.70400000000001,
+          164.09599999999998,
+          180.19200000000001,
+          197.02400000000003,
+          214.56,
+          232.80000000000001,
+          251.77599999999998,
+          271.45600000000002,
+          291.84000000000003,
+          312.95999999999998,
+          334.78400000000005,
+          357.34399999999999,
+          380.60800000000006,
+          404.57600000000002,
+          429.63200000000001
+        ],
+        "tokens" : 516576000
+      },
+      "name" : "Grok",
+      "plan" : "SuperGrok",
+      "today" : {
+        "billableTokens" : 10503680,
+        "dollars" : 43.68,
+        "label" : "Today",
+        "series" : [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.76800000000000002,
+          2.1760000000000002,
+          3.6800000000000002,
+          5.5039999999999996,
+          7.2960000000000003,
+          9.0879999999999992,
+          12.32,
+          16.544,
+          21.568000000000001,
+          27.071999999999999,
+          32.735999999999997,
+          38.015999999999998,
+          41.728000000000002,
+          43.68
+        ],
+        "tokens" : 52518400
+      }
+    },
+    {
+      "days" : [
+        {
+          "billableTokens" : 288000,
+          "date" : "2026-01-01T06:00:00Z",
+          "dollars" : 2.3961600000000001,
+          "tokens" : 2880000
+        },
+        {
+          "billableTokens" : 432000,
+          "date" : "2026-01-02T06:00:00Z",
+          "dollars" : 3.5942399999999997,
+          "tokens" : 4320000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-01-03T06:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 696000,
+          "date" : "2026-01-04T06:00:00Z",
+          "dollars" : 5.7907199999999994,
+          "tokens" : 6960000
+        },
+        {
+          "billableTokens" : 888000,
+          "date" : "2026-01-05T06:00:00Z",
+          "dollars" : 7.3881599999999992,
+          "tokens" : 8880000
+        },
+        {
+          "billableTokens" : 1008000,
+          "date" : "2026-01-06T06:00:00Z",
+          "dollars" : 8.3865599999999993,
+          "tokens" : 10080000
+        },
+        {
+          "billableTokens" : 1224000,
+          "date" : "2026-01-07T06:00:00Z",
+          "dollars" : 10.183679999999999,
+          "tokens" : 12240000
+        },
+        {
+          "billableTokens" : 1416000,
+          "date" : "2026-01-08T06:00:00Z",
+          "dollars" : 11.78112,
+          "tokens" : 14160000
+        },
+        {
+          "billableTokens" : 1584000,
+          "date" : "2026-01-09T06:00:00Z",
+          "dollars" : 13.178879999999999,
+          "tokens" : 15840000
+        },
+        {
+          "billableTokens" : 1776000,
+          "date" : "2026-01-10T06:00:00Z",
+          "dollars" : 14.776319999999998,
+          "tokens" : 17760000
+        },
+        {
+          "billableTokens" : 1992000,
+          "date" : "2026-01-11T06:00:00Z",
+          "dollars" : 16.573439999999998,
+          "tokens" : 19920000
+        },
+        {
+          "billableTokens" : 2160000,
+          "date" : "2026-01-12T06:00:00Z",
+          "dollars" : 17.9712,
+          "tokens" : 21600000
+        },
+        {
+          "billableTokens" : 2376000,
+          "date" : "2026-01-13T06:00:00Z",
+          "dollars" : 19.768319999999999,
+          "tokens" : 23760000
+        },
+        {
+          "billableTokens" : 2592000,
+          "date" : "2026-01-14T06:00:00Z",
+          "dollars" : 21.565439999999999,
+          "tokens" : 25920000
+        },
+        {
+          "billableTokens" : 2808000,
+          "date" : "2026-01-15T06:00:00Z",
+          "dollars" : 23.362559999999998,
+          "tokens" : 28080000
+        },
+        {
+          "billableTokens" : 2976000,
+          "date" : "2026-01-16T06:00:00Z",
+          "dollars" : 24.760319999999997,
+          "tokens" : 29760000
+        },
+        {
+          "billableTokens" : 3264000,
+          "date" : "2026-01-17T06:00:00Z",
+          "dollars" : 27.156479999999998,
+          "tokens" : 32640000
+        },
+        {
+          "billableTokens" : 3480000,
+          "date" : "2026-01-18T06:00:00Z",
+          "dollars" : 28.953599999999998,
+          "tokens" : 34800000
+        },
+        {
+          "billableTokens" : 3768000,
+          "date" : "2026-01-19T06:00:00Z",
+          "dollars" : 31.349759999999996,
+          "tokens" : 37680000
+        },
+        {
+          "billableTokens" : 3984000,
+          "date" : "2026-01-20T06:00:00Z",
+          "dollars" : 33.146879999999996,
+          "tokens" : 39840000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-01-21T06:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 4512000,
+          "date" : "2026-01-22T06:00:00Z",
+          "dollars" : 37.539839999999998,
+          "tokens" : 45120000
+        },
+        {
+          "billableTokens" : 4824000,
+          "date" : "2026-01-23T06:00:00Z",
+          "dollars" : 40.135680000000001,
+          "tokens" : 48240000
+        },
+        {
+          "billableTokens" : 5136000,
+          "date" : "2026-01-24T06:00:00Z",
+          "dollars" : 42.731519999999996,
+          "tokens" : 51360000
+        },
+        {
+          "billableTokens" : 5472000,
+          "date" : "2026-01-25T06:00:00Z",
+          "dollars" : 45.52704,
+          "tokens" : 54720000
+        },
+        {
+          "billableTokens" : 5736000,
+          "date" : "2026-01-26T06:00:00Z",
+          "dollars" : 47.723519999999994,
+          "tokens" : 57360000
+        },
+        {
+          "billableTokens" : 6096000,
+          "date" : "2026-01-27T06:00:00Z",
+          "dollars" : 50.718719999999998,
+          "tokens" : 60960000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-01-28T06:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6768000,
+          "date" : "2026-01-29T06:00:00Z",
+          "dollars" : 56.309759999999997,
+          "tokens" : 67680000
+        },
+        {
+          "billableTokens" : 3936000,
+          "date" : "2026-01-30T06:00:00Z",
+          "dollars" : 32.747520000000002,
+          "tokens" : 39360000
+        },
+        {
+          "billableTokens" : 288000,
+          "date" : "2026-01-31T06:00:00Z",
+          "dollars" : 2.3961600000000001,
+          "tokens" : 2880000
+        },
+        {
+          "billableTokens" : 432000,
+          "date" : "2026-02-01T06:00:00Z",
+          "dollars" : 3.5942399999999997,
+          "tokens" : 4320000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-02-02T06:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 696000,
+          "date" : "2026-02-03T06:00:00Z",
+          "dollars" : 5.7907199999999994,
+          "tokens" : 6960000
+        },
+        {
+          "billableTokens" : 888000,
+          "date" : "2026-02-04T06:00:00Z",
+          "dollars" : 7.3881599999999992,
+          "tokens" : 8880000
+        },
+        {
+          "billableTokens" : 1008000,
+          "date" : "2026-02-05T06:00:00Z",
+          "dollars" : 8.3865599999999993,
+          "tokens" : 10080000
+        },
+        {
+          "billableTokens" : 1224000,
+          "date" : "2026-02-06T06:00:00Z",
+          "dollars" : 10.183679999999999,
+          "tokens" : 12240000
+        },
+        {
+          "billableTokens" : 1416000,
+          "date" : "2026-02-07T06:00:00Z",
+          "dollars" : 11.78112,
+          "tokens" : 14160000
+        },
+        {
+          "billableTokens" : 1584000,
+          "date" : "2026-02-08T06:00:00Z",
+          "dollars" : 13.178879999999999,
+          "tokens" : 15840000
+        },
+        {
+          "billableTokens" : 1776000,
+          "date" : "2026-02-09T06:00:00Z",
+          "dollars" : 14.776319999999998,
+          "tokens" : 17760000
+        },
+        {
+          "billableTokens" : 1992000,
+          "date" : "2026-02-10T06:00:00Z",
+          "dollars" : 16.573439999999998,
+          "tokens" : 19920000
+        },
+        {
+          "billableTokens" : 2160000,
+          "date" : "2026-02-11T06:00:00Z",
+          "dollars" : 17.9712,
+          "tokens" : 21600000
+        },
+        {
+          "billableTokens" : 2376000,
+          "date" : "2026-02-12T06:00:00Z",
+          "dollars" : 19.768319999999999,
+          "tokens" : 23760000
+        },
+        {
+          "billableTokens" : 2592000,
+          "date" : "2026-02-13T06:00:00Z",
+          "dollars" : 21.565439999999999,
+          "tokens" : 25920000
+        },
+        {
+          "billableTokens" : 2808000,
+          "date" : "2026-02-14T06:00:00Z",
+          "dollars" : 23.362559999999998,
+          "tokens" : 28080000
+        },
+        {
+          "billableTokens" : 2976000,
+          "date" : "2026-02-15T06:00:00Z",
+          "dollars" : 24.760319999999997,
+          "tokens" : 29760000
+        },
+        {
+          "billableTokens" : 3264000,
+          "date" : "2026-02-16T06:00:00Z",
+          "dollars" : 27.156479999999998,
+          "tokens" : 32640000
+        },
+        {
+          "billableTokens" : 3480000,
+          "date" : "2026-02-17T06:00:00Z",
+          "dollars" : 28.953599999999998,
+          "tokens" : 34800000
+        },
+        {
+          "billableTokens" : 3768000,
+          "date" : "2026-02-18T06:00:00Z",
+          "dollars" : 31.349759999999996,
+          "tokens" : 37680000
+        },
+        {
+          "billableTokens" : 3984000,
+          "date" : "2026-02-19T06:00:00Z",
+          "dollars" : 33.146879999999996,
+          "tokens" : 39840000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-02-20T06:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 4512000,
+          "date" : "2026-02-21T06:00:00Z",
+          "dollars" : 37.539839999999998,
+          "tokens" : 45120000
+        },
+        {
+          "billableTokens" : 4824000,
+          "date" : "2026-02-22T06:00:00Z",
+          "dollars" : 40.135680000000001,
+          "tokens" : 48240000
+        },
+        {
+          "billableTokens" : 5136000,
+          "date" : "2026-02-23T06:00:00Z",
+          "dollars" : 42.731519999999996,
+          "tokens" : 51360000
+        },
+        {
+          "billableTokens" : 5472000,
+          "date" : "2026-02-24T06:00:00Z",
+          "dollars" : 45.52704,
+          "tokens" : 54720000
+        },
+        {
+          "billableTokens" : 5736000,
+          "date" : "2026-02-25T06:00:00Z",
+          "dollars" : 47.723519999999994,
+          "tokens" : 57360000
+        },
+        {
+          "billableTokens" : 6096000,
+          "date" : "2026-02-26T06:00:00Z",
+          "dollars" : 50.718719999999998,
+          "tokens" : 60960000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-02-27T06:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6768000,
+          "date" : "2026-02-28T06:00:00Z",
+          "dollars" : 56.309759999999997,
+          "tokens" : 67680000
+        },
+        {
+          "billableTokens" : 3936000,
+          "date" : "2026-03-01T06:00:00Z",
+          "dollars" : 32.747520000000002,
+          "tokens" : 39360000
+        },
+        {
+          "billableTokens" : 288000,
+          "date" : "2026-03-02T06:00:00Z",
+          "dollars" : 2.3961600000000001,
+          "tokens" : 2880000
+        },
+        {
+          "billableTokens" : 432000,
+          "date" : "2026-03-03T06:00:00Z",
+          "dollars" : 3.5942399999999997,
+          "tokens" : 4320000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-03-04T06:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 696000,
+          "date" : "2026-03-05T06:00:00Z",
+          "dollars" : 5.7907199999999994,
+          "tokens" : 6960000
+        },
+        {
+          "billableTokens" : 888000,
+          "date" : "2026-03-06T06:00:00Z",
+          "dollars" : 7.3881599999999992,
+          "tokens" : 8880000
+        },
+        {
+          "billableTokens" : 1008000,
+          "date" : "2026-03-07T06:00:00Z",
+          "dollars" : 8.3865599999999993,
+          "tokens" : 10080000
+        },
+        {
+          "billableTokens" : 1224000,
+          "date" : "2026-03-08T06:00:00Z",
+          "dollars" : 10.183679999999999,
+          "tokens" : 12240000
+        },
+        {
+          "billableTokens" : 1416000,
+          "date" : "2026-03-09T05:00:00Z",
+          "dollars" : 11.78112,
+          "tokens" : 14160000
+        },
+        {
+          "billableTokens" : 1584000,
+          "date" : "2026-03-10T05:00:00Z",
+          "dollars" : 13.178879999999999,
+          "tokens" : 15840000
+        },
+        {
+          "billableTokens" : 1776000,
+          "date" : "2026-03-11T05:00:00Z",
+          "dollars" : 14.776319999999998,
+          "tokens" : 17760000
+        },
+        {
+          "billableTokens" : 1992000,
+          "date" : "2026-03-12T05:00:00Z",
+          "dollars" : 16.573439999999998,
+          "tokens" : 19920000
+        },
+        {
+          "billableTokens" : 2160000,
+          "date" : "2026-03-13T05:00:00Z",
+          "dollars" : 17.9712,
+          "tokens" : 21600000
+        },
+        {
+          "billableTokens" : 2376000,
+          "date" : "2026-03-14T05:00:00Z",
+          "dollars" : 19.768319999999999,
+          "tokens" : 23760000
+        },
+        {
+          "billableTokens" : 2592000,
+          "date" : "2026-03-15T05:00:00Z",
+          "dollars" : 21.565439999999999,
+          "tokens" : 25920000
+        },
+        {
+          "billableTokens" : 2808000,
+          "date" : "2026-03-16T05:00:00Z",
+          "dollars" : 23.362559999999998,
+          "tokens" : 28080000
+        },
+        {
+          "billableTokens" : 2976000,
+          "date" : "2026-03-17T05:00:00Z",
+          "dollars" : 24.760319999999997,
+          "tokens" : 29760000
+        },
+        {
+          "billableTokens" : 3264000,
+          "date" : "2026-03-18T05:00:00Z",
+          "dollars" : 27.156479999999998,
+          "tokens" : 32640000
+        },
+        {
+          "billableTokens" : 3480000,
+          "date" : "2026-03-19T05:00:00Z",
+          "dollars" : 28.953599999999998,
+          "tokens" : 34800000
+        },
+        {
+          "billableTokens" : 3768000,
+          "date" : "2026-03-20T05:00:00Z",
+          "dollars" : 31.349759999999996,
+          "tokens" : 37680000
+        },
+        {
+          "billableTokens" : 3984000,
+          "date" : "2026-03-21T05:00:00Z",
+          "dollars" : 33.146879999999996,
+          "tokens" : 39840000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-03-22T05:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 4512000,
+          "date" : "2026-03-23T05:00:00Z",
+          "dollars" : 37.539839999999998,
+          "tokens" : 45120000
+        },
+        {
+          "billableTokens" : 4824000,
+          "date" : "2026-03-24T05:00:00Z",
+          "dollars" : 40.135680000000001,
+          "tokens" : 48240000
+        },
+        {
+          "billableTokens" : 5136000,
+          "date" : "2026-03-25T05:00:00Z",
+          "dollars" : 42.731519999999996,
+          "tokens" : 51360000
+        },
+        {
+          "billableTokens" : 5472000,
+          "date" : "2026-03-26T05:00:00Z",
+          "dollars" : 45.52704,
+          "tokens" : 54720000
+        },
+        {
+          "billableTokens" : 5736000,
+          "date" : "2026-03-27T05:00:00Z",
+          "dollars" : 47.723519999999994,
+          "tokens" : 57360000
+        },
+        {
+          "billableTokens" : 6096000,
+          "date" : "2026-03-28T05:00:00Z",
+          "dollars" : 50.718719999999998,
+          "tokens" : 60960000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-03-29T05:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6768000,
+          "date" : "2026-03-30T05:00:00Z",
+          "dollars" : 56.309759999999997,
+          "tokens" : 67680000
+        },
+        {
+          "billableTokens" : 3936000,
+          "date" : "2026-03-31T05:00:00Z",
+          "dollars" : 32.747520000000002,
+          "tokens" : 39360000
+        },
+        {
+          "billableTokens" : 288000,
+          "date" : "2026-04-01T05:00:00Z",
+          "dollars" : 2.3961600000000001,
+          "tokens" : 2880000
+        },
+        {
+          "billableTokens" : 432000,
+          "date" : "2026-04-02T05:00:00Z",
+          "dollars" : 3.5942399999999997,
+          "tokens" : 4320000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-04-03T05:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 696000,
+          "date" : "2026-04-04T05:00:00Z",
+          "dollars" : 5.7907199999999994,
+          "tokens" : 6960000
+        },
+        {
+          "billableTokens" : 888000,
+          "date" : "2026-04-05T05:00:00Z",
+          "dollars" : 7.3881599999999992,
+          "tokens" : 8880000
+        },
+        {
+          "billableTokens" : 1008000,
+          "date" : "2026-04-06T05:00:00Z",
+          "dollars" : 8.3865599999999993,
+          "tokens" : 10080000
+        },
+        {
+          "billableTokens" : 1224000,
+          "date" : "2026-04-07T05:00:00Z",
+          "dollars" : 10.183679999999999,
+          "tokens" : 12240000
+        },
+        {
+          "billableTokens" : 1416000,
+          "date" : "2026-04-08T05:00:00Z",
+          "dollars" : 11.78112,
+          "tokens" : 14160000
+        },
+        {
+          "billableTokens" : 1584000,
+          "date" : "2026-04-09T05:00:00Z",
+          "dollars" : 13.178879999999999,
+          "tokens" : 15840000
+        },
+        {
+          "billableTokens" : 1776000,
+          "date" : "2026-04-10T05:00:00Z",
+          "dollars" : 14.776319999999998,
+          "tokens" : 17760000
+        },
+        {
+          "billableTokens" : 1992000,
+          "date" : "2026-04-11T05:00:00Z",
+          "dollars" : 16.573439999999998,
+          "tokens" : 19920000
+        },
+        {
+          "billableTokens" : 2160000,
+          "date" : "2026-04-12T05:00:00Z",
+          "dollars" : 17.9712,
+          "tokens" : 21600000
+        },
+        {
+          "billableTokens" : 2376000,
+          "date" : "2026-04-13T05:00:00Z",
+          "dollars" : 19.768319999999999,
+          "tokens" : 23760000
+        },
+        {
+          "billableTokens" : 2592000,
+          "date" : "2026-04-14T05:00:00Z",
+          "dollars" : 21.565439999999999,
+          "tokens" : 25920000
+        },
+        {
+          "billableTokens" : 2808000,
+          "date" : "2026-04-15T05:00:00Z",
+          "dollars" : 23.362559999999998,
+          "tokens" : 28080000
+        },
+        {
+          "billableTokens" : 2976000,
+          "date" : "2026-04-16T05:00:00Z",
+          "dollars" : 24.760319999999997,
+          "tokens" : 29760000
+        },
+        {
+          "billableTokens" : 3264000,
+          "date" : "2026-04-17T05:00:00Z",
+          "dollars" : 27.156479999999998,
+          "tokens" : 32640000
+        },
+        {
+          "billableTokens" : 3480000,
+          "date" : "2026-04-18T05:00:00Z",
+          "dollars" : 28.953599999999998,
+          "tokens" : 34800000
+        },
+        {
+          "billableTokens" : 3768000,
+          "date" : "2026-04-19T05:00:00Z",
+          "dollars" : 31.349759999999996,
+          "tokens" : 37680000
+        },
+        {
+          "billableTokens" : 3984000,
+          "date" : "2026-04-20T05:00:00Z",
+          "dollars" : 33.146879999999996,
+          "tokens" : 39840000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-04-21T05:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 4512000,
+          "date" : "2026-04-22T05:00:00Z",
+          "dollars" : 37.539839999999998,
+          "tokens" : 45120000
+        },
+        {
+          "billableTokens" : 4824000,
+          "date" : "2026-04-23T05:00:00Z",
+          "dollars" : 40.135680000000001,
+          "tokens" : 48240000
+        },
+        {
+          "billableTokens" : 5136000,
+          "date" : "2026-04-24T05:00:00Z",
+          "dollars" : 42.731519999999996,
+          "tokens" : 51360000
+        },
+        {
+          "billableTokens" : 5472000,
+          "date" : "2026-04-25T05:00:00Z",
+          "dollars" : 45.52704,
+          "tokens" : 54720000
+        },
+        {
+          "billableTokens" : 5736000,
+          "date" : "2026-04-26T05:00:00Z",
+          "dollars" : 47.723519999999994,
+          "tokens" : 57360000
+        },
+        {
+          "billableTokens" : 6096000,
+          "date" : "2026-04-27T05:00:00Z",
+          "dollars" : 50.718719999999998,
+          "tokens" : 60960000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-04-28T05:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6768000,
+          "date" : "2026-04-29T05:00:00Z",
+          "dollars" : 56.309759999999997,
+          "tokens" : 67680000
+        },
+        {
+          "billableTokens" : 3936000,
+          "date" : "2026-04-30T05:00:00Z",
+          "dollars" : 32.747520000000002,
+          "tokens" : 39360000
+        },
+        {
+          "billableTokens" : 288000,
+          "date" : "2026-05-01T05:00:00Z",
+          "dollars" : 2.3961600000000001,
+          "tokens" : 2880000
+        },
+        {
+          "billableTokens" : 432000,
+          "date" : "2026-05-02T05:00:00Z",
+          "dollars" : 3.5942399999999997,
+          "tokens" : 4320000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-05-03T05:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 696000,
+          "date" : "2026-05-04T05:00:00Z",
+          "dollars" : 5.7907199999999994,
+          "tokens" : 6960000
+        },
+        {
+          "billableTokens" : 888000,
+          "date" : "2026-05-05T05:00:00Z",
+          "dollars" : 7.3881599999999992,
+          "tokens" : 8880000
+        },
+        {
+          "billableTokens" : 1008000,
+          "date" : "2026-05-06T05:00:00Z",
+          "dollars" : 8.3865599999999993,
+          "tokens" : 10080000
+        },
+        {
+          "billableTokens" : 1224000,
+          "date" : "2026-05-07T05:00:00Z",
+          "dollars" : 10.183679999999999,
+          "tokens" : 12240000
+        },
+        {
+          "billableTokens" : 1416000,
+          "date" : "2026-05-08T05:00:00Z",
+          "dollars" : 11.78112,
+          "tokens" : 14160000
+        },
+        {
+          "billableTokens" : 1584000,
+          "date" : "2026-05-09T05:00:00Z",
+          "dollars" : 13.178879999999999,
+          "tokens" : 15840000
+        },
+        {
+          "billableTokens" : 1776000,
+          "date" : "2026-05-10T05:00:00Z",
+          "dollars" : 14.776319999999998,
+          "tokens" : 17760000
+        },
+        {
+          "billableTokens" : 1992000,
+          "date" : "2026-05-11T05:00:00Z",
+          "dollars" : 16.573439999999998,
+          "tokens" : 19920000
+        },
+        {
+          "billableTokens" : 2160000,
+          "date" : "2026-05-12T05:00:00Z",
+          "dollars" : 17.9712,
+          "tokens" : 21600000
+        },
+        {
+          "billableTokens" : 2376000,
+          "date" : "2026-05-13T05:00:00Z",
+          "dollars" : 19.768319999999999,
+          "tokens" : 23760000
+        },
+        {
+          "billableTokens" : 2592000,
+          "date" : "2026-05-14T05:00:00Z",
+          "dollars" : 21.565439999999999,
+          "tokens" : 25920000
+        },
+        {
+          "billableTokens" : 2808000,
+          "date" : "2026-05-15T05:00:00Z",
+          "dollars" : 23.362559999999998,
+          "tokens" : 28080000
+        },
+        {
+          "billableTokens" : 2976000,
+          "date" : "2026-05-16T05:00:00Z",
+          "dollars" : 24.760319999999997,
+          "tokens" : 29760000
+        },
+        {
+          "billableTokens" : 3264000,
+          "date" : "2026-05-17T05:00:00Z",
+          "dollars" : 27.156479999999998,
+          "tokens" : 32640000
+        },
+        {
+          "billableTokens" : 3480000,
+          "date" : "2026-05-18T05:00:00Z",
+          "dollars" : 28.953599999999998,
+          "tokens" : 34800000
+        },
+        {
+          "billableTokens" : 3768000,
+          "date" : "2026-05-19T05:00:00Z",
+          "dollars" : 31.349759999999996,
+          "tokens" : 37680000
+        },
+        {
+          "billableTokens" : 3984000,
+          "date" : "2026-05-20T05:00:00Z",
+          "dollars" : 33.146879999999996,
+          "tokens" : 39840000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-05-21T05:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 4512000,
+          "date" : "2026-05-22T05:00:00Z",
+          "dollars" : 37.539839999999998,
+          "tokens" : 45120000
+        },
+        {
+          "billableTokens" : 4824000,
+          "date" : "2026-05-23T05:00:00Z",
+          "dollars" : 40.135680000000001,
+          "tokens" : 48240000
+        },
+        {
+          "billableTokens" : 5136000,
+          "date" : "2026-05-24T05:00:00Z",
+          "dollars" : 42.731519999999996,
+          "tokens" : 51360000
+        },
+        {
+          "billableTokens" : 5472000,
+          "date" : "2026-05-25T05:00:00Z",
+          "dollars" : 45.52704,
+          "tokens" : 54720000
+        },
+        {
+          "billableTokens" : 5736000,
+          "date" : "2026-05-26T05:00:00Z",
+          "dollars" : 47.723519999999994,
+          "tokens" : 57360000
+        },
+        {
+          "billableTokens" : 6096000,
+          "date" : "2026-05-27T05:00:00Z",
+          "dollars" : 50.718719999999998,
+          "tokens" : 60960000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-05-28T05:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6768000,
+          "date" : "2026-05-29T05:00:00Z",
+          "dollars" : 56.309759999999997,
+          "tokens" : 67680000
+        },
+        {
+          "billableTokens" : 3936000,
+          "date" : "2026-05-30T05:00:00Z",
+          "dollars" : 32.747520000000002,
+          "tokens" : 39360000
+        },
+        {
+          "billableTokens" : 288000,
+          "date" : "2026-05-31T05:00:00Z",
+          "dollars" : 2.3961600000000001,
+          "tokens" : 2880000
+        },
+        {
+          "billableTokens" : 432000,
+          "date" : "2026-06-01T05:00:00Z",
+          "dollars" : 3.5942399999999997,
+          "tokens" : 4320000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-06-02T05:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 696000,
+          "date" : "2026-06-03T05:00:00Z",
+          "dollars" : 5.7907199999999994,
+          "tokens" : 6960000
+        },
+        {
+          "billableTokens" : 888000,
+          "date" : "2026-06-04T05:00:00Z",
+          "dollars" : 7.3881599999999992,
+          "tokens" : 8880000
+        },
+        {
+          "billableTokens" : 1008000,
+          "date" : "2026-06-05T05:00:00Z",
+          "dollars" : 8.3865599999999993,
+          "tokens" : 10080000
+        },
+        {
+          "billableTokens" : 1224000,
+          "date" : "2026-06-06T05:00:00Z",
+          "dollars" : 10.183679999999999,
+          "tokens" : 12240000
+        },
+        {
+          "billableTokens" : 1416000,
+          "date" : "2026-06-07T05:00:00Z",
+          "dollars" : 11.78112,
+          "tokens" : 14160000
+        },
+        {
+          "billableTokens" : 1584000,
+          "date" : "2026-06-08T05:00:00Z",
+          "dollars" : 13.178879999999999,
+          "tokens" : 15840000
+        },
+        {
+          "billableTokens" : 1776000,
+          "date" : "2026-06-09T05:00:00Z",
+          "dollars" : 14.776319999999998,
+          "tokens" : 17760000
+        },
+        {
+          "billableTokens" : 1992000,
+          "date" : "2026-06-10T05:00:00Z",
+          "dollars" : 16.573439999999998,
+          "tokens" : 19920000
+        },
+        {
+          "billableTokens" : 2160000,
+          "date" : "2026-06-11T05:00:00Z",
+          "dollars" : 17.9712,
+          "tokens" : 21600000
+        },
+        {
+          "billableTokens" : 2376000,
+          "date" : "2026-06-12T05:00:00Z",
+          "dollars" : 19.768319999999999,
+          "tokens" : 23760000
+        },
+        {
+          "billableTokens" : 2592000,
+          "date" : "2026-06-13T05:00:00Z",
+          "dollars" : 21.565439999999999,
+          "tokens" : 25920000
+        },
+        {
+          "billableTokens" : 2808000,
+          "date" : "2026-06-14T05:00:00Z",
+          "dollars" : 23.362559999999998,
+          "tokens" : 28080000
+        },
+        {
+          "billableTokens" : 2976000,
+          "date" : "2026-06-15T05:00:00Z",
+          "dollars" : 24.760319999999997,
+          "tokens" : 29760000
+        },
+        {
+          "billableTokens" : 3264000,
+          "date" : "2026-06-16T05:00:00Z",
+          "dollars" : 27.156479999999998,
+          "tokens" : 32640000
+        },
+        {
+          "billableTokens" : 3480000,
+          "date" : "2026-06-17T05:00:00Z",
+          "dollars" : 28.953599999999998,
+          "tokens" : 34800000
+        },
+        {
+          "billableTokens" : 3768000,
+          "date" : "2026-06-18T05:00:00Z",
+          "dollars" : 31.349759999999996,
+          "tokens" : 37680000
+        },
+        {
+          "billableTokens" : 3984000,
+          "date" : "2026-06-19T05:00:00Z",
+          "dollars" : 33.146879999999996,
+          "tokens" : 39840000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-06-20T05:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 4512000,
+          "date" : "2026-06-21T05:00:00Z",
+          "dollars" : 37.539839999999998,
+          "tokens" : 45120000
+        },
+        {
+          "billableTokens" : 4824000,
+          "date" : "2026-06-22T05:00:00Z",
+          "dollars" : 40.135680000000001,
+          "tokens" : 48240000
+        },
+        {
+          "billableTokens" : 5136000,
+          "date" : "2026-06-23T05:00:00Z",
+          "dollars" : 42.731519999999996,
+          "tokens" : 51360000
+        },
+        {
+          "billableTokens" : 5472000,
+          "date" : "2026-06-24T05:00:00Z",
+          "dollars" : 45.52704,
+          "tokens" : 54720000
+        },
+        {
+          "billableTokens" : 5736000,
+          "date" : "2026-06-25T05:00:00Z",
+          "dollars" : 47.723519999999994,
+          "tokens" : 57360000
+        },
+        {
+          "billableTokens" : 6096000,
+          "date" : "2026-06-26T05:00:00Z",
+          "dollars" : 50.718719999999998,
+          "tokens" : 60960000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-06-27T05:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6768000,
+          "date" : "2026-06-28T05:00:00Z",
+          "dollars" : 56.309759999999997,
+          "tokens" : 67680000
+        },
+        {
+          "billableTokens" : 3936000,
+          "date" : "2026-06-29T05:00:00Z",
+          "dollars" : 32.747520000000002,
+          "tokens" : 39360000
+        },
+        {
+          "billableTokens" : 288000,
+          "date" : "2026-06-30T05:00:00Z",
+          "dollars" : 2.3961600000000001,
+          "tokens" : 2880000
+        },
+        {
+          "billableTokens" : 432000,
+          "date" : "2026-07-01T05:00:00Z",
+          "dollars" : 3.5942399999999997,
+          "tokens" : 4320000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-07-02T05:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 696000,
+          "date" : "2026-07-03T05:00:00Z",
+          "dollars" : 5.7907199999999994,
+          "tokens" : 6960000
+        },
+        {
+          "billableTokens" : 888000,
+          "date" : "2026-07-04T05:00:00Z",
+          "dollars" : 7.3881599999999992,
+          "tokens" : 8880000
+        },
+        {
+          "billableTokens" : 1008000,
+          "date" : "2026-07-05T05:00:00Z",
+          "dollars" : 8.3865599999999993,
+          "tokens" : 10080000
+        },
+        {
+          "billableTokens" : 1224000,
+          "date" : "2026-07-06T05:00:00Z",
+          "dollars" : 10.183679999999999,
+          "tokens" : 12240000
+        },
+        {
+          "billableTokens" : 1416000,
+          "date" : "2026-07-07T05:00:00Z",
+          "dollars" : 11.78112,
+          "tokens" : 14160000
+        },
+        {
+          "billableTokens" : 1584000,
+          "date" : "2026-07-08T05:00:00Z",
+          "dollars" : 13.178879999999999,
+          "tokens" : 15840000
+        },
+        {
+          "billableTokens" : 1776000,
+          "date" : "2026-07-09T05:00:00Z",
+          "dollars" : 14.776319999999998,
+          "tokens" : 17760000
+        },
+        {
+          "billableTokens" : 1992000,
+          "date" : "2026-07-10T05:00:00Z",
+          "dollars" : 16.573439999999998,
+          "tokens" : 19920000
+        },
+        {
+          "billableTokens" : 2160000,
+          "date" : "2026-07-11T05:00:00Z",
+          "dollars" : 17.9712,
+          "tokens" : 21600000
+        },
+        {
+          "billableTokens" : 2376000,
+          "date" : "2026-07-12T05:00:00Z",
+          "dollars" : 19.768319999999999,
+          "tokens" : 23760000
+        },
+        {
+          "billableTokens" : 2592000,
+          "date" : "2026-07-13T05:00:00Z",
+          "dollars" : 21.565439999999999,
+          "tokens" : 25920000
+        },
+        {
+          "billableTokens" : 2808000,
+          "date" : "2026-07-14T05:00:00Z",
+          "dollars" : 23.362559999999998,
+          "tokens" : 28080000
+        },
+        {
+          "billableTokens" : 2976000,
+          "date" : "2026-07-15T05:00:00Z",
+          "dollars" : 24.760319999999997,
+          "tokens" : 29760000
+        },
+        {
+          "billableTokens" : 3264000,
+          "date" : "2026-07-16T05:00:00Z",
+          "dollars" : 27.156479999999998,
+          "tokens" : 32640000
+        },
+        {
+          "billableTokens" : 3480000,
+          "date" : "2026-07-17T05:00:00Z",
+          "dollars" : 28.953599999999998,
+          "tokens" : 34800000
+        },
+        {
+          "billableTokens" : 3768000,
+          "date" : "2026-07-18T05:00:00Z",
+          "dollars" : 31.349759999999996,
+          "tokens" : 37680000
+        },
+        {
+          "billableTokens" : 3984000,
+          "date" : "2026-07-19T05:00:00Z",
+          "dollars" : 33.146879999999996,
+          "tokens" : 39840000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-07-20T05:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 4512000,
+          "date" : "2026-07-21T05:00:00Z",
+          "dollars" : 37.539839999999998,
+          "tokens" : 45120000
+        },
+        {
+          "billableTokens" : 4824000,
+          "date" : "2026-07-22T05:00:00Z",
+          "dollars" : 40.135680000000001,
+          "tokens" : 48240000
+        },
+        {
+          "billableTokens" : 5136000,
+          "date" : "2026-07-23T05:00:00Z",
+          "dollars" : 42.731519999999996,
+          "tokens" : 51360000
+        },
+        {
+          "billableTokens" : 5472000,
+          "date" : "2026-07-24T05:00:00Z",
+          "dollars" : 45.52704,
+          "tokens" : 54720000
+        },
+        {
+          "billableTokens" : 5736000,
+          "date" : "2026-07-25T05:00:00Z",
+          "dollars" : 47.723519999999994,
+          "tokens" : 57360000
+        },
+        {
+          "billableTokens" : 6096000,
+          "date" : "2026-07-26T05:00:00Z",
+          "dollars" : 50.718719999999998,
+          "tokens" : 60960000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-07-27T05:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6768000,
+          "date" : "2026-07-28T05:00:00Z",
+          "dollars" : 56.309759999999997,
+          "tokens" : 67680000
+        },
+        {
+          "billableTokens" : 3936000,
+          "date" : "2026-07-29T05:00:00Z",
+          "dollars" : 32.747520000000002,
+          "tokens" : 39360000
+        },
+        {
+          "billableTokens" : 288000,
+          "date" : "2026-07-30T05:00:00Z",
+          "dollars" : 2.3961600000000001,
+          "tokens" : 2880000
+        },
+        {
+          "billableTokens" : 432000,
+          "date" : "2026-07-31T05:00:00Z",
+          "dollars" : 3.5942399999999997,
+          "tokens" : 4320000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-08-01T05:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 696000,
+          "date" : "2026-08-02T05:00:00Z",
+          "dollars" : 5.7907199999999994,
+          "tokens" : 6960000
+        },
+        {
+          "billableTokens" : 888000,
+          "date" : "2026-08-03T05:00:00Z",
+          "dollars" : 7.3881599999999992,
+          "tokens" : 8880000
+        },
+        {
+          "billableTokens" : 1008000,
+          "date" : "2026-08-04T05:00:00Z",
+          "dollars" : 8.3865599999999993,
+          "tokens" : 10080000
+        },
+        {
+          "billableTokens" : 1224000,
+          "date" : "2026-08-05T05:00:00Z",
+          "dollars" : 10.183679999999999,
+          "tokens" : 12240000
+        },
+        {
+          "billableTokens" : 1416000,
+          "date" : "2026-08-06T05:00:00Z",
+          "dollars" : 11.78112,
+          "tokens" : 14160000
+        },
+        {
+          "billableTokens" : 1584000,
+          "date" : "2026-08-07T05:00:00Z",
+          "dollars" : 13.178879999999999,
+          "tokens" : 15840000
+        },
+        {
+          "billableTokens" : 1776000,
+          "date" : "2026-08-08T05:00:00Z",
+          "dollars" : 14.776319999999998,
+          "tokens" : 17760000
+        },
+        {
+          "billableTokens" : 1992000,
+          "date" : "2026-08-09T05:00:00Z",
+          "dollars" : 16.573439999999998,
+          "tokens" : 19920000
+        },
+        {
+          "billableTokens" : 2160000,
+          "date" : "2026-08-10T05:00:00Z",
+          "dollars" : 17.9712,
+          "tokens" : 21600000
+        },
+        {
+          "billableTokens" : 2376000,
+          "date" : "2026-08-11T05:00:00Z",
+          "dollars" : 19.768319999999999,
+          "tokens" : 23760000
+        },
+        {
+          "billableTokens" : 2592000,
+          "date" : "2026-08-12T05:00:00Z",
+          "dollars" : 21.565439999999999,
+          "tokens" : 25920000
+        },
+        {
+          "billableTokens" : 2808000,
+          "date" : "2026-08-13T05:00:00Z",
+          "dollars" : 23.362559999999998,
+          "tokens" : 28080000
+        },
+        {
+          "billableTokens" : 2976000,
+          "date" : "2026-08-14T05:00:00Z",
+          "dollars" : 24.760319999999997,
+          "tokens" : 29760000
+        },
+        {
+          "billableTokens" : 3264000,
+          "date" : "2026-08-15T05:00:00Z",
+          "dollars" : 27.156479999999998,
+          "tokens" : 32640000
+        },
+        {
+          "billableTokens" : 3480000,
+          "date" : "2026-08-16T05:00:00Z",
+          "dollars" : 28.953599999999998,
+          "tokens" : 34800000
+        },
+        {
+          "billableTokens" : 3768000,
+          "date" : "2026-08-17T05:00:00Z",
+          "dollars" : 31.349759999999996,
+          "tokens" : 37680000
+        },
+        {
+          "billableTokens" : 3984000,
+          "date" : "2026-08-18T05:00:00Z",
+          "dollars" : 33.146879999999996,
+          "tokens" : 39840000
+        },
+        {
+          "billableTokens" : 4200000,
+          "date" : "2026-08-19T05:00:00Z",
+          "dollars" : 34.943999999999996,
+          "tokens" : 42000000
+        },
+        {
+          "billableTokens" : 4512000,
+          "date" : "2026-08-20T05:00:00Z",
+          "dollars" : 37.539839999999998,
+          "tokens" : 45120000
+        },
+        {
+          "billableTokens" : 4824000,
+          "date" : "2026-08-21T05:00:00Z",
+          "dollars" : 40.135680000000001,
+          "tokens" : 48240000
+        },
+        {
+          "billableTokens" : 5136000,
+          "date" : "2026-08-22T05:00:00Z",
+          "dollars" : 42.731519999999996,
+          "tokens" : 51360000
+        },
+        {
+          "billableTokens" : 5472000,
+          "date" : "2026-08-23T05:00:00Z",
+          "dollars" : 45.52704,
+          "tokens" : 54720000
+        },
+        {
+          "billableTokens" : 5736000,
+          "date" : "2026-08-24T05:00:00Z",
+          "dollars" : 47.723519999999994,
+          "tokens" : 57360000
+        },
+        {
+          "billableTokens" : 6096000,
+          "date" : "2026-08-25T05:00:00Z",
+          "dollars" : 50.718719999999998,
+          "tokens" : 60960000
+        },
+        {
+          "billableTokens" : 6432000,
+          "date" : "2026-08-26T05:00:00Z",
+          "dollars" : 53.514240000000001,
+          "tokens" : 64320000
+        },
+        {
+          "billableTokens" : 6768000,
+          "date" : "2026-08-27T05:00:00Z",
+          "dollars" : 56.309759999999997,
+          "tokens" : 67680000
+        },
+        {
+          "billableTokens" : 3936000,
+          "date" : "2026-08-28T05:00:00Z",
+          "dollars" : 32.747520000000002,
+          "tokens" : 39360000
+        },
+        {
+          "billableTokens" : 288000,
+          "date" : "2026-08-29T05:00:00Z",
+          "dollars" : 2.3961600000000001,
+          "tokens" : 2880000
+        },
+        {
+          "billableTokens" : 432000,
+          "date" : "2026-08-30T05:00:00Z",
+          "dollars" : 3.5942399999999997,
+          "tokens" : 4320000
+        },
+        {
+          "billableTokens" : 576000,
+          "date" : "2026-08-31T05:00:00Z",
+          "dollars" : 4.7923200000000001,
+          "tokens" : 5760000
+        },
+        {
+          "billableTokens" : 696000,
+          "date" : "2026-09-01T05:00:00Z",
+          "dollars" : 5.7907199999999994,
+          "tokens" : 6960000
+        },
+        {
+          "billableTokens" : 888000,
+          "date" : "2026-09-02T05:00:00Z",
+          "dollars" : 7.3881599999999992,
+          "tokens" : 8880000
+        },
+        {
+          "billableTokens" : 1008000,
+          "date" : "2026-09-03T05:00:00Z",
+          "dollars" : 8.3865599999999993,
+          "tokens" : 10080000
+        },
+        {
+          "billableTokens" : 1224000,
+          "date" : "2026-09-04T05:00:00Z",
+          "dollars" : 10.183679999999999,
+          "tokens" : 12240000
+        },
+        {
+          "billableTokens" : 1416000,
+          "date" : "2026-09-05T05:00:00Z",
+          "dollars" : 11.78112,
+          "tokens" : 14160000
+        },
+        {
+          "billableTokens" : 1584000,
+          "date" : "2026-09-06T05:00:00Z",
+          "dollars" : 13.178879999999999,
+          "tokens" : 15840000
+        },
+        {
+          "billableTokens" : 1776000,
+          "date" : "2026-09-07T05:00:00Z",
+          "dollars" : 14.776319999999998,
+          "tokens" : 17760000
+        },
+        {
+          "billableTokens" : 1992000,
+          "date" : "2026-09-08T05:00:00Z",
+          "dollars" : 16.573439999999998,
+          "tokens" : 19920000
+        },
+        {
+          "billableTokens" : 2160000,
+          "date" : "2026-09-09T05:00:00Z",
+          "dollars" : 17.9712,
+          "tokens" : 21600000
+        },
+        {
+          "billableTokens" : 2376000,
+          "date" : "2026-09-10T05:00:00Z",
+          "dollars" : 19.768319999999999,
+          "tokens" : 23760000
+        },
+        {
+          "billableTokens" : 2592000,
+          "date" : "2026-09-11T05:00:00Z",
+          "dollars" : 21.565439999999999,
+          "tokens" : 25920000
+        }
+      ],
+      "id" : "antigravity",
+      "limits" : [
+        {
+          "label" : "5h",
+          "resetSeconds" : 7199.9997769594193,
+          "seed" : 7,
+          "used" : 38
+        },
+        {
+          "label" : "week",
+          "resetSeconds" : 86399.999850034714,
+          "seed" : 8,
+          "used" : 62
+        }
+      ],
+      "models" : [
+
+      ],
+      "month" : {
+        "billableTokens" : 77486400,
+        "dollars" : 322.22399999999999,
+        "label" : "April",
+        "series" : [
+          2.9279999999999999,
+          6.4079999999999995,
+          10.44,
+          14.975999999999999,
+          20.088000000000001,
+          25.703999999999997,
+          31.872,
+          38.567999999999998,
+          45.816000000000003,
+          53.591999999999999,
+          61.895999999999994,
+          70.751999999999995,
+          80.135999999999996,
+          90.072000000000003,
+          100.53599999999999,
+          111.52799999999999,
+          123.07199999999999,
+          135.14400000000001,
+          147.768,
+          160.91999999999999,
+          174.59999999999999,
+          188.83199999999999,
+          203.59199999999998,
+          218.88,
+          234.72,
+          251.08799999999999,
+          268.00799999999998,
+          285.45600000000002,
+          303.43199999999996,
+          322.22399999999999
+        ],
+        "tokens" : 387432000
+      },
+      "name" : "Antigravity",
+      "plan" : "AI Pro",
+      "today" : {
+        "billableTokens" : 7877760,
+        "dollars" : 32.759999999999998,
+        "label" : "Today",
+        "series" : [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.57599999999999996,
+          1.6319999999999999,
+          2.7599999999999998,
+          4.1280000000000001,
+          5.4719999999999995,
+          6.8159999999999998,
+          9.2400000000000002,
+          12.407999999999999,
+          16.176000000000002,
+          20.303999999999998,
+          24.552,
+          28.511999999999997,
+          31.295999999999999,
+          32.759999999999998
+        ],
+        "tokens" : 39388800
+      }
+    }
+  ],
+  "shape" : [
+    {
+      "points" : [
+        800,
+        106
+      ],
+      "type" : "M"
+    },
+    {
+      "points" : [
+        800,
+        204.59869074821472
+      ],
+      "type" : "L"
+    },
+    {
+      "points" : [
+        800,
+        210.76113986968994,
+        800,
+        213.84230184555054,
+        798.95124039053917,
+        217.15908420085907
+      ],
+      "type" : "C"
+    },
+    {
+      "points" : [
+        797.63315990567207,
+        220.78046381473541,
+        794.78046381473541,
+        223.63315990567207,
+        791.15908420085907,
+        224.95124039053917
+      ],
+      "type" : "C"
+    },
+    {
+      "points" : [
+        787.84230184555054,
+        226,
+        784.76113986968994,
+        226,
+        778.59869074821472,
+        226
+      ],
+      "type" : "C"
+    },
+    {
+      "points" : [
+        21.401309251785278,
+        226
+      ],
+      "type" : "L"
+    },
+    {
+      "points" : [
+        15.238860130310059,
+        226,
+        12.157698154449463,
+        226,
+        8.8409157991409302,
+        224.95124039053917
+      ],
+      "type" : "C"
+    },
+    {
+      "points" : [
+        5.2195361852645874,
+        223.63315990567207,
+        2.3668400943279266,
+        220.78046381473541,
+        1.0487596094608307,
+        217.15908420085907
+      ],
+      "type" : "C"
+    },
+    {
+      "points" : [
+        0,
+        213.84230184555054,
+        0,
+        210.76113986968994,
+        0,
+        204.59869074821472
+      ],
+      "type" : "C"
+    },
+    {
+      "points" : [
+        0,
+        0
+      ],
+      "type" : "L"
+    },
+    {
+      "points" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "type" : "C"
+    },
+    {
+      "points" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "type" : "C"
+    },
+    {
+      "points" : [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "type" : "C"
+    },
+    {
+      "points" : [
+        800,
+        0
+      ],
+      "type" : "L"
+    },
+    {
+      "points" : [
+        800,
+        0,
+        800,
+        0,
+        800,
+        0
+      ],
+      "type" : "C"
+    },
+    {
+      "points" : [
+        800,
+        0,
+        800,
+        0,
+        800,
+        0
+      ],
+      "type" : "C"
+    },
+    {
+      "points" : [
+        800,
+        0,
+        800,
+        0,
+        800,
+        0
+      ],
+      "type" : "C"
+    },
+    {
+      "type" : "Z"
+    }
+  ],
+  "source" : "CodexIsland SwiftUI demo"
+}

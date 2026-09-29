@@ -161,6 +161,9 @@
 "Show usage as used or remaining quota." = "Show usage as used or remaining quota.";
 "Usage display" = "Usage display";
 "Used" = "Used";
+"Quota left" = "Left";
+"Reset" = "Reset";
+"Window" = "Window";
 "Keep the percentage and time remaining visible without hovering." = "Keep the percentage and time remaining visible without hovering.";
 "Inject test percentages. Visible only when launched with CODEXISLAND_DEBUG=1." = "Inject test percentages. Visible only when launched with CODEXISLAND_DEBUG=1.";
 "Preview" = "Preview";

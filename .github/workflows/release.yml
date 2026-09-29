@@ -16,6 +16,15 @@ jobs:
           # against the previous tag. Default shallow checkout sees only HEAD.
           fetch-depth: 0
 
+      - name: Validate production release version
+        run: |
+          set -euo pipefail
+          VERSION=$(tr -d '\n\r' < VERSION)
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ || "$GITHUB_REF_NAME" != "v$VERSION" ]]; then
+            echo "::error::Production releases require an exact vX.Y.Z tag matching VERSION. Share beta installers privately."
+            exit 1
+          fi
+
       - name: Install create-dmg
         run: npm install --global create-dmg
 
