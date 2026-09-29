@@ -201,6 +201,12 @@ enum Pricing {
         resolvedRates(for: canonicalModel(rawModel)) != nil
     }
 
+    /// Codex can log internal routing labels in the model field even though
+    /// they are not public API models with published token rates.
+    static func isInternalUsage(_ rawModel: String) -> Bool {
+        canonicalModel(rawModel) == "codex-auto-review"
+    }
+
     /// Remote catalog first, embedded seed second. The seed is what keeps a
     /// catalog that omits a model from silently pricing it at $0.
     private static func resolvedRates(for canonical: String, at date: Date = Date()) -> Rates? {

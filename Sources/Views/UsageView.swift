@@ -85,7 +85,7 @@ struct ChartsBlock: View {
                     } else {
                         UsageChartsRow(color: color, style: style, seed: seed,
                             metrics: usage.visibleWindows.map { kind in
-                                UsageChartMetric(id: kind.rawValue, label: kind == .fiveHour ? "5h" : "week",
+                                UsageChartMetric(id: kind.rawValue, label: windowLabel(kind),
                                                  window: usage.window(kind),
                                                  historyKey: "\(provider.rawValue).\(kind.rawValue)")
                             })
@@ -97,6 +97,14 @@ struct ChartsBlock: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, IslandPanelLayout.columnInset)
         .animation(.chartSwap, value: usage.visibleWindows)
+    }
+
+    private func windowLabel(_ kind: UsageWindow) -> String {
+        switch kind {
+        case .fiveHour: return "5h"
+        case .weekly: return "week"
+        case .monthly: return "Usage credits"
+        }
     }
 }
 
@@ -188,7 +196,7 @@ struct UsageChartsRow: View {
     /// spacers instead so all three gaps match. A window with no reading
     /// falls back to NoReadingChart, which does stretch, so it keeps tiles.
     private var ringsHugContent: Bool {
-        style == .ring && metrics.allSatisfy { $0.window.hasReading }
+        style == .ring && metrics.allSatisfy { $0.window.hasPercentageReading }
     }
 
     var body: some View {
@@ -228,7 +236,7 @@ struct ChartTile: View {
         // confident "0% used" — or a full 100% ring under the `remaining`
         // toggle — for a window we know nothing about. Gate on `hasReading`
         // and hand the tile to NoReadingChart instead.
-        let value: Double? = window.hasReading
+        let value: Double? = window.hasPercentageReading
             ? window.displayedFraction(mode: usageDisplay.mode) * 100   // 0-100
             : nil
         let sub = subCaption()
@@ -243,6 +251,12 @@ struct ChartTile: View {
                 case .spark:   SparkChart(value: value, color: color, label: label, sub: sub,
                                           seed: seed, history: historyPoints())
                 }
+            } else if window.isUnlimitedAmount, let amount = window.usedAmount {
+                UsageAmountChart(
+                    label: label,
+                    amount: Self.currency(amount, code: window.currencyCode),
+                    sub: sub
+                )
             } else {
                 NoReadingChart(label: label, sub: sub)
             }
@@ -257,11 +271,16 @@ struct ChartTile: View {
         .frame(maxHeight: .infinity, alignment: .center)
         .frame(height: Self.tileHeight)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            value.map { L10n.tr("%@, %d%%", label, Int($0)) }
-                ?? L10n.tr("%@, no reading", label)
-        )
+        .accessibilityLabel(accessibilityLabel(value: value, label: label))
         .accessibilityValue(subCaption())
+    }
+
+    private func accessibilityLabel(value: Double?, label: String) -> String {
+        if let value { return L10n.tr("%@, %d%%", label, Int(value)) }
+        if window.isUnlimitedAmount, let amount = window.usedAmount {
+            return L10n.tr("%@, %@ spent, unlimited", label, Self.currency(amount, code: window.currencyCode))
+        }
+        return L10n.tr("%@, no reading", label)
     }
 
     /// Recorded readings for this window, mapped through the active
@@ -276,6 +295,17 @@ struct ChartTile: View {
     }
 
     private func subCaption() -> String {
+        if let used = window.usedAmount, let limit = window.limitAmount {
+            let amounts = L10n.tr("%@ / %@ spent", Self.currency(used, code: window.currencyCode),
+                                  Self.currency(limit, code: window.currencyCode))
+            guard let resetAt = window.resetAt else { return amounts }
+            return amounts + " · " + L10n.tr("resets in %@", Duration.compact(max(0, resetAt.timeIntervalSinceNow)))
+        }
+        if let used = window.usedAmount {
+            let amount = L10n.tr("%@ spent · unlimited", Self.currency(used, code: window.currencyCode))
+            guard let resetAt = window.resetAt else { return amount }
+            return amount + " · " + L10n.tr("resets in %@", Duration.compact(max(0, resetAt.timeIntervalSinceNow)))
+        }
         if let r = window.resetAt {
             let delta = max(0, r.timeIntervalSinceNow)
             return L10n.tr("resets in %@", Duration.compact(delta))
@@ -294,4 +324,31 @@ struct ChartTile: View {
         return ""
     }
 
+    private static func currency(_ amount: Double, code: String?) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = code ?? "USD"
+        return formatter.string(from: NSNumber(value: amount)) ?? "\(amount)"
+    }
+}
+
+private struct UsageAmountChart: View {
+    let label: String
+    let amount: String
+    let sub: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(Typography.label)
+                .foregroundStyle(.white.opacity(0.6))
+            Text(amount)
+                .font(Typography.bigNumber)
+                .foregroundStyle(.white.opacity(0.9))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            ChartFoot(caption: sub)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+    }
 }

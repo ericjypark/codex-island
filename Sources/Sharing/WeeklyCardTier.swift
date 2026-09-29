@@ -25,4 +25,15 @@ enum WeeklyCardTier: String, CaseIterable, Identifiable {
         guard value.isFinite else { return .white }
         return allCases.reversed().first { value >= $0.minimum(for: metric) } ?? .white
     }
+
+    static func earned(usdDollars: Double, quote: CurrencyQuote) -> Self {
+        guard let club = WeeklyValueMilestone.earned(amount: quote.converted(usd: usdDollars)) else {
+            return .white
+        }
+        // Color changes at a displayed club boundary, never within the same club.
+        let thresholds = quote.currency.colorClubThresholds
+        if club.minimumAmount >= thresholds.blue { return .blue }
+        if club.minimumAmount >= thresholds.black { return .black }
+        return .white
+    }
 }

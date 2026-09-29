@@ -37,6 +37,11 @@ swiftc \
 
 "$OUT_DIR/notch-height-tests"
 
+swiftc -parse-as-library -o "$OUT_DIR/quota-gauge-tests" \
+  Sources/Views/UnrollingQuotaShape.swift \
+  Tests/QuotaGaugeGeometryTests.swift
+"$OUT_DIR/quota-gauge-tests"
+
 swiftc \
   -parse-as-library \
   -o "$OUT_DIR/usage-merge-tests" \
@@ -192,3 +197,4 @@ swiftc \
 bash scripts/test-weekly-card.sh
 bash scripts/test-usage-ledger.sh
 bash scripts/test-claude-recovery.sh
+bash scripts/test-sparkline.sh

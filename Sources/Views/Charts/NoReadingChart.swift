@@ -17,23 +17,22 @@ struct NoReadingChart: View {
     let sub: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text(label)
                     .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(.white.opacity(0.6))
                     .textCase(.lowercase)
                 Spacer()
-                Text(verbatim: "—")
-                    .font(Typography.chartValue)
+                Text(verbatim: "-")
+                    .font(Typography.quotaValue)
                     .foregroundStyle(.white.opacity(0.3))
             }
             // Empty track, no fill: the scale is still there, we just have
             // nothing to put on it.
             Capsule()
-                .fill(.white.opacity(0.06))
-                .frame(height: 4)
-                .frame(height: 8)
+                .fill(.white.opacity(0.12))
+                .frame(height: 6)
             ChartFoot(caption: sub)
         }
     }

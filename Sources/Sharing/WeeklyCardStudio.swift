@@ -3,9 +3,11 @@ import SwiftUI
 
 struct WeeklyCardStudio: View {
     @ObservedObject private var store = CostStore.shared
+    @ObservedObject private var currencyStore = CurrencyStore.shared
     @StateObject private var history = WeeklyCardHistoryStore()
     @AppStorage("WeeklyCard.format") private var formatRaw = WeeklyCardFormat.feed.rawValue
     @AppStorage("WeeklyCard.metric") private var metricRaw = WeeklyCardMetric.apiValue.rawValue
+    @AppStorage("WeeklyCard.currency") private var currencyRaw = ""
     @State private var period = WeeklyCardPeriod.lastSevenDays
     @State private var included = Set(IslandProvider.allCases)
     @State private var signature = ""
@@ -18,9 +20,16 @@ struct WeeklyCardStudio: View {
 
     private let surface = Color(red: 0.020, green: 0.020, blue: 0.027)
     private let canvas = Color(red: 0.065, green: 0.067, blue: 0.080)
-    private var tier: WeeklyCardTier { snapshot.tier(for: metric) }
+    private var tier: WeeklyCardTier { snapshot.tier(for: metric, quote: quote ?? .usd) }
     private var format: WeeklyCardFormat { WeeklyCardFormat(rawValue: formatRaw) ?? .feed }
     private var metric: WeeklyCardMetric { WeeklyCardMetric(rawValue: metricRaw) ?? .apiValue }
+    private var selectedCurrency: DisplayCurrency {
+        DisplayCurrency(rawValue: currencyRaw) ?? currencyStore.currency
+    }
+    private var currencySelection: Binding<DisplayCurrency> {
+        Binding(get: { selectedCurrency }, set: { currencyRaw = $0.rawValue })
+    }
+    private var quote: CurrencyQuote? { currencyStore.quote(for: selectedCurrency) }
     private var usesFullHistory: Bool {
         !AppEnvironment.isDemo && period.needsExtendedHistory(now: now, calendar: .current)
     }
@@ -41,7 +50,7 @@ struct WeeklyCardStudio: View {
     }
     private var canExport: Bool {
         !isLoading && !exporting && snapshot.totalTokens > 0
-            && (metric == .tokens || snapshot.hasPricedUsage)
+            && (metric == .tokens || (snapshot.hasPricedUsage && quote != nil))
     }
 
     var body: some View {
@@ -76,6 +85,7 @@ struct WeeklyCardStudio: View {
         }
         .onChange(of: formatRaw) { _ in status = nil }
         .onChange(of: metricRaw) { _ in status = nil }
+        .onChange(of: currencyRaw) { _ in status = nil }
         .onChange(of: period) { _ in
             status = nil
             if usesFullHistory { history.loadIfNeeded() }
@@ -90,6 +100,7 @@ struct WeeklyCardStudio: View {
             status = nil
             if usesFullHistory { history.refresh() }
         }
+        .task { await currencyStore.refreshIfNeeded() }
         .alert(L10n.tr("Could not export card"), isPresented: Binding(
             get: { exportError != nil }, set: { if !$0 { exportError = nil } }
         )) {
@@ -120,7 +131,7 @@ struct WeeklyCardStudio: View {
             .popover(isPresented: $showingCardDetails, arrowEdge: .bottom) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(L10n.tr("About this card")).font(Typography.providerTitle)
-                    Text(L10n.tr("API value estimates your usage at API rates in USD, not your subscription bill. Tokens include cache reads and writes."))
+                    Text(L10n.tr("API value estimates your usage at API rates in USD, not your subscription bill. Other currencies use a reference exchange rate. Tokens include cache reads and writes."))
                     Text(L10n.tr("The card includes daily usage, provider totals, active days, and your signature. It does not include prompts or conversations."))
                     Text(L10n.tr("Last 7 days and Last 30 days include today plus the previous 6 or 29 days. This year runs through today. All time includes all saved usage records on this Mac."))
                     Text(L10n.tr("Captured token counts are saved on this Mac even if provider logs are removed. Records deleted before capture may still be missing."))
@@ -151,6 +162,9 @@ struct WeeklyCardStudio: View {
                 } else if metric == .apiValue && !snapshot.hasPricedUsage {
                     placeholder(icon: "dollarsign.circle", title: "API prices are unavailable.",
                                 detail: "Refresh to load API prices, or choose Tokens.")
+                } else if metric == .apiValue && quote == nil {
+                    placeholder(icon: "arrow.left.arrow.right.circle", title: "Exchange rate unavailable.",
+                                detail: "Refresh the rate or choose USD.")
                 } else if actualSize {
                     ScrollView([.horizontal, .vertical]) {
                         card.padding(24)
@@ -186,7 +200,8 @@ struct WeeklyCardStudio: View {
     }
 
     private var card: some View {
-        WeeklyUsageCard(snapshot: snapshot, format: format, signature: signature, metric: metric)
+        WeeklyUsageCard(snapshot: snapshot, format: format, signature: signature,
+                        metric: metric, quote: quote ?? .usd)
     }
 
     private func placeholder(icon: String, title: String, detail: String, loading: Bool = false) -> some View {
@@ -221,6 +236,21 @@ struct WeeklyCardStudio: View {
                     accessibilityPrefix: "Show",
                     labelFont: Typography.tabLabel
                 )
+            }
+            if metric == .apiValue {
+                HStack {
+                    controlLabel("Currency")
+                    Spacer()
+                    Picker(L10n.tr("Currency"), selection: currencySelection) {
+                        ForEach(DisplayCurrency.allCases) { option in
+                            Text(option.menuLabel).tag(option)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .fixedSize()
+                    .accessibilityLabel(L10n.tr("Card currency"))
+                }
             }
             HStack {
                 controlLabel("Period")
@@ -327,8 +357,10 @@ struct WeeklyCardStudio: View {
                     status = nil
                     let card = snapshot
                     let png = try WeeklyCardExporter.png(snapshot: card, format: format,
-                                                          signature: signature, metric: metric)
-                    return try WeeklyCardShareContent(png: png, caption: card.shareText(metric: metric))
+                                                          signature: signature, metric: metric,
+                                                          quote: quote ?? .usd)
+                    return try WeeklyCardShareContent(png: png,
+                                                      caption: card.shareText(metric: metric, quote: quote ?? .usd))
                 }, onError: { error in
                     exportError = error.localizedDescription
                 })
@@ -366,11 +398,12 @@ struct WeeklyCardStudio: View {
         now = Date()
         status = nil
         if usesFullHistory { history.refresh() } else { store.refresh() }
+        currencyStore.refresh()
     }
 
     private func copyCaption() {
         NSPasteboard.general.clearContents()
-        if NSPasteboard.general.setString(snapshot.shareText(metric: metric), forType: .string) {
+        if NSPasteboard.general.setString(snapshot.shareText(metric: metric, quote: quote ?? .usd), forType: .string) {
             status = L10n.tr("Caption copied.")
         } else {
             exportError = L10n.tr("Could not copy the caption. Try again.")
@@ -383,7 +416,8 @@ struct WeeklyCardStudio: View {
         status = nil
         do {
             let data = try WeeklyCardExporter.png(snapshot: snapshot,
-                                                  format: format, signature: signature, metric: metric)
+                                                  format: format, signature: signature,
+                                                  metric: metric, quote: quote ?? .usd)
             if save {
                 let filename = "CodexIsland-\(period.rawValue)-\(snapshot.filenameDate)-\(metric.rawValue)-\(tier.rawValue)-\(format.rawValue).png"
                 WeeklyCardExporter.save(data, filename: filename, window: WeeklyCardWindowController.shared.window) { result in

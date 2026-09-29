@@ -36,6 +36,7 @@ enum Typography {
     // MARK: - Numerics (SF Mono)
 
     static let bigNumber     = Font.system(size: 38, weight: .semibold, design: .monospaced)
+    static let quotaValue    = Font.system(size: 28, weight: .semibold, design: .monospaced)
     static let chartValue    = Font.system(size: 18, weight: .semibold, design: .monospaced)
     static let previewNumber = Font.system(size: 15, weight: .semibold, design: .monospaced)
     static let bodyNumber    = Font.system(size: 11, weight: .semibold, design: .monospaced)

@@ -1,32 +1,26 @@
 import SwiftUI
 
 struct BarChart: View {
-    let value: Double      // 0-100
+    let value: Double
     let color: Color
     let label: String
     let sub: String
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             ChartHead(value: value, label: label)
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(.white.opacity(0.06)).frame(height: 4)
+                    Capsule().fill(.white.opacity(0.12))
                     Capsule()
                         .fill(color)
-                        .frame(width: geo.size.width * CGFloat(value / 100), height: 4)
-                        .animation(.strongEaseOut, value: value)
-                    // Tick marks at quartiles. Subtle (12% white) so they
-                    // hint at scale without competing with the fill.
-                    ForEach([0.25, 0.5, 0.75], id: \.self) { p in
-                        Rectangle()
-                            .fill(.white.opacity(0.12))
-                            .frame(width: 1, height: 8)
-                            .offset(x: geo.size.width * p)
-                    }
+                        .frame(width: geo.size.width * CGFloat(min(1, max(0, value / 100))))
+                        .animation(reduceMotion ? nil : .strongEaseOut, value: value)
                 }
             }
-            .frame(height: 8)
+            .frame(height: 6)
+            .accessibilityHidden(true)
             ChartFoot(caption: sub)
         }
     }

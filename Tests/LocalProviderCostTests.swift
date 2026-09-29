@@ -65,6 +65,15 @@ struct LocalProviderCostTests {
         expect(summary.dailyTokens.reduce(0) { $0 + $1.tokens } == 5200, "new provider feeds activity history")
         expect(summary.recentByModel.first?.tokens == 1200, "model breakdown uses common billable token rule")
         expect(abs(summary.today.dollars - 0.0018) < 0.0000001, "Gemini public rates include cache discount")
+        let internalUsage = TokenEvent(provider: .codex, timestamp: now, model: "codex-auto-review",
+            inputTokens: 100, outputTokens: 10, cacheCreationTokens: 0, cacheReadTokens: 20)
+        let unknownUsage = TokenEvent(provider: .codex, timestamp: now, model: "gpt-future-unknown",
+            inputTokens: 50, outputTokens: 5, cacheCreationTokens: 0, cacheReadTokens: 0)
+        let classified = CostSummary.summarize(events: [internalUsage, unknownUsage], now: now)
+        expect(classified.today.tokens == 55 && classified.today.unknownModels == ["gpt-future-unknown"],
+            "retained auto-review usage is excluded from totals and pricing warnings")
+        expect(classified.recentByModel.map(\.model) == ["gpt-future-unknown"],
+            "retained auto-review usage is excluded from model breakdowns")
         let future = AntigravityLogReader.scan(lookbackDays: 10, root: dir, now: now.addingTimeInterval(-7200))
         expect(future.events.isEmpty, "future-dated calls excluded")
         try Data("not sqlite".utf8).write(to: dir.appendingPathComponent("broken.db"))

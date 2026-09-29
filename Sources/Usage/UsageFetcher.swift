@@ -3,16 +3,23 @@ import Foundation
 enum UsageFetcher {
     // MARK: - Codex
 
-    /// Codex usage lives at chatgpt.com/backend-api/wham/usage and accepts
-    /// the access_token from ~/.codex/auth.json. The endpoint is reliable
-    /// and rarely rate-limited, so this is the easy half of the integration.
+    struct CodexCredentials {
+        let accessToken: String
+        let accountID: String
+    }
+
+    /// Codex usage lives at chatgpt.com/backend-api/wham/usage. The account
+    /// header must accompany the token or the backend can select a different
+    /// quota bucket for the same signed-in user.
     static func fetchCodex() async -> AppUsage {
-        guard let token = readCodexAccessToken() else {
-            return errorPair("no codex auth")
+        guard let credentials = readCodexCredentials() else {
+            return errorPair("codex login required")
         }
 
-        var req = URLRequest(url: URL(string: "https://chatgpt.com/backend-api/wham/usage")!)
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let req = codexRequest(
+            URL(string: "https://chatgpt.com/backend-api/wham/usage")!,
+            credentials: credentials
+        )
 
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
@@ -47,17 +54,31 @@ enum UsageFetcher {
     private static func errorPair(_ message: String) -> AppUsage {
         AppUsage(
             fiveHour: WindowUsage(usedPercent: 0, resetAt: nil, error: message),
-            weekly: WindowUsage(usedPercent: 0, resetAt: nil, error: message)
+            weekly: WindowUsage(usedPercent: 0, resetAt: nil, error: message),
+            monthly: WindowUsage(usedPercent: 0, resetAt: nil, error: message)
         )
     }
 
-    private static func readCodexAccessToken() -> String? {
+    private static func readCodexCredentials() -> CodexCredentials? {
         let path = NSString("~/.codex/auth.json").expandingTildeInPath
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else { return nil }
+        return parseCodexCredentials(data)
+    }
+
+    static func parseCodexCredentials(_ data: Data) -> CodexCredentials? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let tokens = json["tokens"] as? [String: Any],
-              let token = tokens["access_token"] as? String else { return nil }
-        return token
+              let accessToken = tokens["access_token"] as? String, !accessToken.isEmpty,
+              let accountID = tokens["account_id"] as? String, !accountID.isEmpty
+        else { return nil }
+        return CodexCredentials(accessToken: accessToken, accountID: accountID)
+    }
+
+    static func codexRequest(_ url: URL, credentials: CodexCredentials) -> URLRequest {
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(credentials.accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue(credentials.accountID, forHTTPHeaderField: "ChatGPT-Account-Id")
+        return request
     }
 
     /// The window slots stopped being positional in mid-2026: plans with a
@@ -84,6 +105,7 @@ enum UsageFetcher {
             switch kind {
             case .fiveHour: if fiveHour == nil { fiveHour = parseCodexWindow(d) }
             case .weekly:   if weekly == nil { weekly = parseCodexWindow(d) }
+            case .monthly: break
             }
         }
         var reported: [UsageWindow] = []
@@ -100,10 +122,12 @@ enum UsageFetcher {
     }
 
     static func fetchCodexResetCredits() async -> CodexResetCredits? {
-        guard let token = readCodexAccessToken() else { return nil }
+        guard let credentials = readCodexCredentials() else { return nil }
 
-        var req = URLRequest(url: URL(string: "https://chatgpt.com/backend-api/wham/rate-limit-reset-credits")!)
-        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        var req = codexRequest(
+            URL(string: "https://chatgpt.com/backend-api/wham/rate-limit-reset-credits")!,
+            credentials: credentials
+        )
         req.setValue("application/json", forHTTPHeaderField: "Accept")
 
         do {
@@ -192,10 +216,21 @@ enum UsageFetcher {
                    let type = err["type"] as? String, type == "rate_limit_error" {
                     return .rateLimited
                 }
+                let fiveHour = parseClaudeWindow(obj["five_hour"])
+                let weekly = parseClaudeWindow(obj["seven_day"])
+                let monthly = plan?.lowercased() == "enterprise"
+                    ? parseClaudeEnterpriseCredits(obj["extra_usage"])
+                    : nil
+                var reported: [UsageWindow] = []
+                if !fiveHour.isUnreported { reported.append(.fiveHour) }
+                if !weekly.isUnreported { reported.append(.weekly) }
+                if monthly != nil { reported.append(.monthly) }
                 return .success(AppUsage(
-                    fiveHour: parseClaudeWindow(obj["five_hour"]),
-                    weekly: parseClaudeWindow(obj["seven_day"]),
-                    plan: plan
+                    fiveHour: fiveHour,
+                    weekly: weekly,
+                    monthly: monthly ?? .unknown,
+                    plan: plan,
+                    reportedWindows: reported
                 ))
             }
             return .otherError("parse error")
@@ -222,5 +257,33 @@ enum UsageFetcher {
             resetAt = f.date(from: s) ?? ISO8601DateFormatter().date(from: s)
         }
         return WindowUsage(usedPercent: min(1, max(0, normalized)), resetAt: resetAt, error: nil)
+    }
+
+    private static func parseClaudeEnterpriseCredits(_ obj: Any?) -> WindowUsage? {
+        guard let details = obj as? [String: Any],
+              details["is_enabled"] as? Bool == true,
+              let usedCents = details["used_credits"] as? Double,
+              usedCents >= 0 else { return nil }
+
+        // Claude CLI treats these API values as cents (for example, 1600 is
+        // displayed as $16.00). Keep raw cents for utilization, then store
+        // major currency units for the app's currency formatter.
+        let limitCents = details["monthly_limit"] as? Double
+        guard limitCents.map({ $0 >= 0 }) ?? true else { return nil }
+        let reportedUtilization = (details["utilization"] as? Double).map { $0 / 100 }
+        let utilization = reportedUtilization
+            ?? limitCents.flatMap { $0 > 0 ? usedCents / $0 : 1 }
+            ?? 0
+        guard utilization.isFinite else { return nil }
+        let now = Date()
+        let resetAt = Calendar.current.dateInterval(of: .month, for: now)?.end
+        return WindowUsage(
+            usedPercent: min(1, max(0, utilization)),
+            resetAt: resetAt,
+            error: nil,
+            usedAmount: usedCents / 100,
+            limitAmount: limitCents.map { $0 / 100 },
+            currencyCode: details["currency"] as? String ?? "USD"
+        )
     }
 }

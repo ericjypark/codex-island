@@ -14,6 +14,8 @@ struct CountUpDollar: View {
     let wholeUnits: Bool
     let color: Color
     let glowOpacity: Double
+    var font: Font = Typography.bigNumber
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private static let duration: TimeInterval = 0.65
 
@@ -34,7 +36,7 @@ struct CountUpDollar: View {
                     digits(formatted(interpolatedValue(elapsed: elapsed)))
                 }
             } else {
-                digits(formatted(lastSeenTarget))
+                digits(formatted(target))
             }
         }
         .onAppear {
@@ -75,7 +77,7 @@ struct CountUpDollar: View {
     @ViewBuilder
     private func digits(_ text: String) -> some View {
         Text(text)
-            .font(Typography.bigNumber)
+            .font(font)
             .lineLimit(1)
             .minimumScaleFactor(0.5)
             .foregroundStyle(color)
@@ -84,6 +86,10 @@ struct CountUpDollar: View {
     }
 
     private func startAnimation() {
+        guard !reduceMotion else {
+            animating = false
+            return
+        }
         animating = true
         let token = UUID()
         animationToken = token

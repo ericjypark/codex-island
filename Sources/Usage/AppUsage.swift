@@ -1,11 +1,11 @@
 import Foundation
 
-/// Standard rate-limit windows. A provider may report only one. Named here rather than
-/// beside the history store because they name `AppUsage`'s own two fields —
-/// and so the pure value layer stays free of store dependencies.
+/// Usage periods reported by providers. Named beside AppUsage so the pure
+/// value layer can retain rate windows and monthly credit periods together.
 enum UsageWindow: String, Codable {
     case fiveHour
     case weekly
+    case monthly
 
     /// How long the window runs before the provider resets it. Bounds how
     /// long a recorded reading stays meaningful once polling stops working.
@@ -13,16 +13,30 @@ enum UsageWindow: String, Codable {
         switch self {
         case .fiveHour: return 5 * 3600
         case .weekly:   return 7 * 86400
+        case .monthly:  return 31 * 86400
         }
     }
 }
 
-/// One rate-limit window (e.g. Claude's 5h, Codex's 7d). usedPercent is
-/// normalized to 0...1 regardless of what the upstream API returns.
+/// One quota window or credit period. usedPercent is normalized to 0...1
+/// regardless of what the upstream API returns.
 struct WindowUsage {
     let usedPercent: Double
     let resetAt: Date?
     let error: String?
+    let usedAmount: Double?
+    let limitAmount: Double?
+    let currencyCode: String?
+
+    init(usedPercent: Double, resetAt: Date?, error: String?,
+         usedAmount: Double? = nil, limitAmount: Double? = nil, currencyCode: String? = nil) {
+        self.usedPercent = usedPercent
+        self.resetAt = resetAt
+        self.error = error
+        self.usedAmount = usedAmount
+        self.limitAmount = limitAmount
+        self.currencyCode = currencyCode
+    }
 
     static let unknown = WindowUsage(usedPercent: 0, resetAt: nil, error: "no data")
 
@@ -38,7 +52,10 @@ struct WindowUsage {
     /// An error alongside a *non-zero* percentage is the carry-forward shape
     /// from `AppUsage.merged`: a real prior reading with a fresh failure
     /// attached. That still counts as a reading.
-    var hasReading: Bool { !(error != nil && usedPercent == 0) }
+    var hasReading: Bool { !(error != nil && usedPercent == 0 && usedAmount == nil) }
+
+    var hasPercentageReading: Bool { hasReading && !(usedAmount != nil && limitAmount == nil) }
+    var isUnlimitedAmount: Bool { usedAmount != nil && limitAmount == nil }
 
     /// True for the passive sentinel a successfully parsed response leaves on
     /// a window it doesn't include (`WindowUsage.unknown`) — the provider
@@ -68,17 +85,20 @@ struct WindowUsage {
 struct AppUsage {
     var fiveHour: WindowUsage
     var weekly: WindowUsage
-    /// Provider-reported plan tier — Claude's `subscriptionType` (free/pro/max)
+    var monthly: WindowUsage
+    /// Provider-reported plan tier — Claude's `subscriptionType` (free/pro/max/enterprise)
     /// or Codex's `plan_type` (free/plus/pro). nil when unknown.
     var plan: String?
 
     // nil means no successful window discovery yet, not a two-window plan.
     var reportedWindows: [UsageWindow]?
 
-    init(fiveHour: WindowUsage, weekly: WindowUsage, plan: String? = nil,
+    init(fiveHour: WindowUsage, weekly: WindowUsage, monthly: WindowUsage = .unknown,
+         plan: String? = nil,
          reportedWindows: [UsageWindow]? = nil) {
         self.fiveHour = fiveHour
         self.weekly = weekly
+        self.monthly = monthly
         self.plan = plan
         self.reportedWindows = reportedWindows
     }
@@ -86,23 +106,32 @@ struct AppUsage {
     static let empty = AppUsage(fiveHour: .unknown, weekly: .unknown)
 
     var visibleWindows: [UsageWindow] {
-        let order: [UsageWindow] = [.fiveHour, .weekly]
+        let order: [UsageWindow] = [.fiveHour, .weekly, .monthly]
         if let reportedWindows { return order.filter { reportedWindows.contains($0) } }
         return order.filter { !window($0).isUnreported }
     }
 
     func window(_ kind: UsageWindow) -> WindowUsage {
-        kind == .fiveHour ? fiveHour : weekly
+        switch kind {
+        case .fiveHour: return fiveHour
+        case .weekly: return weekly
+        case .monthly: return monthly
+        }
     }
 
-    var peekWindow: WindowUsage { peekWindowIsWeekly ? weekly : fiveHour }
+    var peekWindow: WindowUsage { window(peekWindowKind) }
+
+    var peekWindowKind: UsageWindow {
+        if visibleWindows.contains(.fiveHour) { return .fiveHour }
+        if visibleWindows.contains(.weekly) { return .weekly }
+        if visibleWindows.contains(.monthly) { return .monthly }
+        return .fiveHour
+    }
 
     /// Which window `peekWindow` selected — the peek chrome (VoiceOver label,
     /// window-length fallback glyph) must describe the same window it shows.
     var peekWindowIsWeekly: Bool {
-        if visibleWindows == [.fiveHour] { return false }
-        if visibleWindows == [.weekly] { return true }
-        return !fiveHour.hasReading
+        peekWindowKind == .weekly
     }
 
     /// Fold a fetch result into the values currently on screen.
@@ -122,6 +151,7 @@ struct AppUsage {
         AppUsage(
             fiveHour: carryForward(fetched.fiveHour, prior: prior.fiveHour, at: now),
             weekly: carryForward(fetched.weekly, prior: prior.weekly, at: now),
+            monthly: carryForward(fetched.monthly, prior: prior.monthly, at: now),
             // Plan tier is read from the credential store, not the usage
             // response, so a failed fetch shouldn't blank the chip's badge.
             plan: fetched.plan ?? prior.plan,
@@ -141,7 +171,9 @@ struct AppUsage {
         if fetched.isUnreported { return fetched }
         if let reset = prior.resetAt, reset <= now { return fetched }
         return WindowUsage(
-            usedPercent: prior.usedPercent, resetAt: prior.resetAt, error: fetched.error
+            usedPercent: prior.usedPercent, resetAt: prior.resetAt, error: fetched.error,
+            usedAmount: prior.usedAmount, limitAmount: prior.limitAmount,
+            currencyCode: prior.currencyCode
         )
     }
 

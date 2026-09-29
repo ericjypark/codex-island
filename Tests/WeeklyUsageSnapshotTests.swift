@@ -299,6 +299,41 @@ struct WeeklyUsageSnapshotTests {
                "invalid prices and amounts below the first threshold never earn a badge")
         expect(priced.shareText(metric: .apiValue).hasPrefix("Four-figure week. My AI usage: $1,280.06 at API rates in 7 days."),
                "caption leads with the same earned title and amount as the image")
+        let euroQuote = CurrencyQuote(currency: .eur, usdRate: 0.9)
+        let germanQuote = CurrencyQuote(currency: .eur, usdRate: 0.9, locale: Locale(identifier: "de_DE"))
+        expect(priced.shareText(metric: .apiValue, quote: germanQuote).contains("1.152,05 €")
+            && priced.valueMilestone(for: germanQuote)?.label(in: .eur, locale: germanQuote.locale) == "1000 €",
+               "localized caption and badge keep the currency after the amount")
+        let germanDollars = CurrencyQuote(currency: .usd, usdRate: 1, locale: Locale(identifier: "de_DE"))
+        expect(priced.shareText(metric: .apiValue, quote: germanDollars).contains("1.280,06 $"),
+               "USD respects the selected locale instead of bypassing currency formatting")
+        expect(priced.shareText(metric: .apiValue, quote: euroQuote).contains("€1,152.05")
+            && priced.shareText(metric: .apiValue, quote: euroQuote).contains("converted from USD")
+            && !priced.shareText(metric: .apiValue, quote: euroQuote).contains("Four-figure week"),
+               "converted caption uses selected currency without a misleading USD-sized headline")
+        let wonQuote = CurrencyQuote(currency: .krw, usdRate: 1_300)
+        let poundQuote = CurrencyQuote(currency: .gbp, usdRate: 0.5)
+        expect(priced.valueMilestone(for: .usd)?.label(in: .usd) == "$1K"
+            && priced.valueMilestone(for: wonQuote)?.label(in: .krw) == "₩1M"
+            && priced.valueMilestone(for: poundQuote)?.label(in: .gbp) == "£100",
+               "club badge uses a milestone earned in the displayed currency")
+        expect(priced.tier(for: .apiValue, quote: wonQuote) == .black
+            && priced.tier(for: .apiValue, quote: poundQuote) == .white
+            && priced.tier(for: .tokens, quote: wonQuote) == priced.tier(for: .tokens)
+            && priced.shareText(metric: .apiValue, quote: poundQuote).contains("White card"),
+               "converted card and caption use the same currency-based color")
+        for wonAmount in [10_715_984.0, 17_028_122.0] {
+            expect(WeeklyValueMilestone.earned(amount: wonAmount)?.label(in: .krw) == "₩10M"
+                && WeeklyCardTier.earned(usdDollars: wonAmount / wonQuote.usdRate, quote: wonQuote) == .blue,
+                   "same won club keeps the same color across the old USD threshold")
+        }
+        let differentWonRate = CurrencyQuote(currency: .krw, usdRate: 4_000)
+        expect(WeeklyCardTier.earned(usdDollars: 10_715_984 / differentWonRate.usdRate,
+                                     quote: differentWonRate) == .blue,
+               "a rate change cannot recolor the same displayed club")
+        expect(WeeklyCardTier.earned(usdDollars: 9_999_999 / wonQuote.usdRate, quote: wonQuote) == .black
+            && WeeklyCardTier.earned(usdDollars: 10_000_000 / wonQuote.usdRate, quote: wonQuote) == .blue,
+               "converted color changes at the displayed club boundary")
         var partialBuckets = pricedBuckets
         partialBuckets[.grok] = [DailyTokenBucket(dayStart: date("2026-09-06 00:00"), tokens: 500, billableTokens: 500,
                                                  dollars: 0, unpricedTokens: 500)]

@@ -7,38 +7,44 @@ enum WeeklyCardMetric: String, CaseIterable, Identifiable {
 }
 
 struct WeeklyValueMilestone {
-    let minimumDollars: Double
+    let minimumAmount: Double
     let label: String
     let headline: String
 
     private static let tiers: [Self] = [
-        .init(minimumDollars: 1_000_000_000, label: "$1B", headline: "Billions. One week."),
-        .init(minimumDollars: 100_000_000, label: "$100M", headline: "Nine-figure week."),
-        .init(minimumDollars: 10_000_000, label: "$10M", headline: "Eight-figure week."),
-        .init(minimumDollars: 1_000_000, label: "$1M", headline: "Seven-figure week."),
-        .init(minimumDollars: 100_000, label: "$100K", headline: "Six-figure week."),
-        .init(minimumDollars: 10_000, label: "$10K", headline: "Five-figure week."),
-        .init(minimumDollars: 1_000, label: "$1K", headline: "Four-figure week."),
-        .init(minimumDollars: 100, label: "$100", headline: "Three-figure week.")
+        .init(minimumAmount: 1_000_000_000, label: "$1B", headline: "Billions. One week."),
+        .init(minimumAmount: 100_000_000, label: "$100M", headline: "Nine-figure week."),
+        .init(minimumAmount: 10_000_000, label: "$10M", headline: "Eight-figure week."),
+        .init(minimumAmount: 1_000_000, label: "$1M", headline: "Seven-figure week."),
+        .init(minimumAmount: 100_000, label: "$100K", headline: "Six-figure week."),
+        .init(minimumAmount: 10_000, label: "$10K", headline: "Five-figure week."),
+        .init(minimumAmount: 1_000, label: "$1K", headline: "Four-figure week."),
+        .init(minimumAmount: 100, label: "$100", headline: "Three-figure week.")
     ]
 
-    static func earned(dollars: Double) -> Self? {
-        guard dollars.isFinite else { return nil }
-        return tiers.first { dollars >= $0.minimumDollars }
+    static func earned(amount: Double) -> Self? {
+        guard amount.isFinite else { return nil }
+        return tiers.first { amount >= $0.minimumAmount }
+    }
+
+    static func earned(dollars: Double) -> Self? { earned(amount: dollars) }
+
+    func label(in currency: DisplayCurrency, locale: Locale = L10n.locale) -> String {
+        CurrencyQuote(currency: currency, usdRate: 1, locale: locale).milestoneLabel(amount: minimumAmount)
     }
 
     func headline(for period: WeeklyCardPeriod) -> String {
         switch period {
         case .lastSevenDays: return headline
         case .lastThirtyDays:
-            return minimumDollars >= 1_000_000_000 ? "Billions. 30 days."
+            return minimumAmount >= 1_000_000_000 ? "Billions. 30 days."
                 : headline.replacingOccurrences(of: "-figure week.", with: " figures. 30 days.")
         case .lastThreeMonths:
-            return minimumDollars >= 1_000_000_000 ? "Billions. 3 months."
+            return minimumAmount >= 1_000_000_000 ? "Billions. 3 months."
                 : headline.replacingOccurrences(of: "-figure week.", with: " figures. 3 months.")
         case .thisYear: return headline.replacingOccurrences(of: "week", with: "year")
         case .allTime:
-            return minimumDollars >= 1_000_000_000 ? "Billions. All time."
+            return minimumAmount >= 1_000_000_000 ? "Billions. All time."
                 : headline.replacingOccurrences(of: "week", with: "total")
         }
     }
@@ -149,6 +155,9 @@ struct WeeklyUsageSnapshot {
     var totalTokens: Int { providers.reduce(0) { $0 + $1.tokens } }
     var totalDollars: Double { providers.reduce(0) { $0 + $1.dollars } }
     var valueMilestone: WeeklyValueMilestone? { .earned(dollars: totalDollars) }
+    func valueMilestone(for quote: CurrencyQuote) -> WeeklyValueMilestone? {
+        .earned(amount: quote.converted(usd: totalDollars))
+    }
     var valueHeadline: String { valueMilestone?.headline(for: period) ?? period.tokenHeadline }
     var valueChallenge: String { valueMilestone == nil ? "What does yours look like?" : "Can you top this?" }
     var hasPartialPricing: Bool { providers.contains { $0.unpricedTokens > 0 } }
@@ -241,8 +250,10 @@ struct WeeklyUsageSnapshot {
         }
     }
 
-    func tier(for metric: WeeklyCardMetric) -> WeeklyCardTier {
-        .earned(value: metric == .apiValue ? totalDollars : Double(totalTokens), metric: metric)
+    func tier(for metric: WeeklyCardMetric, quote: CurrencyQuote = .usd) -> WeeklyCardTier {
+        metric == .apiValue
+            ? .earned(usdDollars: totalDollars, quote: quote)
+            : .earned(value: Double(totalTokens), metric: .tokens)
     }
 
     func cumulativeValues(for provider: IslandProvider, metric: WeeklyCardMetric) -> [Double] {
@@ -270,7 +281,7 @@ struct WeeklyUsageSnapshot {
         return dateText(day.date, format: format).uppercased()
     }
 
-    func shareText(metric: WeeklyCardMetric = .tokens) -> String {
+    func shareText(metric: WeeklyCardMetric = .tokens, quote: CurrencyQuote = .usd) -> String {
         let stack = providers.map(\.provider.name).joined(separator: " + ")
         let demoLabel = period == .lastSevenDays ? "Demo week" : "Demo \(period.title.lowercased())"
         let qualifier = isDemo ? demoLabel : String(period.tokenHeadline.dropLast())
@@ -279,12 +290,15 @@ struct WeeklyUsageSnapshot {
         if metric == .apiValue {
             let pricing = hasPartialPricing ? " Some tokens have no known price." : ""
             let timeframe = period == .lastThreeMonths ? "over the last 3 months" : "in \(durationLabel)"
+            let headline = quote.currency == .usd ? valueHeadline : period.tokenHeadline
+            let amount = quote.formatted(usd: totalDollars)
+            let currencyNote = quote.currency == .usd ? "USD" : "\(quote.currency.rawValue), converted from USD"
             return """
-            \(isDemo ? "Demo: " : "")\(valueHeadline) My AI usage: \(Self.money(totalDollars))\(valueSuffix) at API rates \(timeframe).
+            \(isDemo ? "Demo: " : "")\(headline) My AI usage: \(amount)\(valueSuffix) at API rates \(timeframe).
             \(tokenLabel) · \(activityLabel) · \(stack)
-            \(tier(for: metric).title) card
+            \(tier(for: metric, quote: quote).title) card
             \(dateLabel)
-            API-rate estimate (USD), not a bill. Tokens include cache.\(caveat)\(pricing)
+            API-rate estimate (\(currencyNote)), not a bill. Tokens include cache.\(caveat)\(pricing)
 
             \(valueChallenge)
             https://codexisland.com
@@ -292,7 +306,7 @@ struct WeeklyUsageSnapshot {
         }
         return """
         \(qualifier): \(tokenLabel). \(activityLabel) out of \(days.count).
-        \(tier(for: metric).title) card · \(stack)
+        \(tier(for: metric, quote: quote).title) card · \(stack)
         \(dateLabel) · Includes cache tokens.\(caveat)
 
         \(period == .lastSevenDays ? "What does your week look like?" : "What does your AI usage look like?")

@@ -66,6 +66,29 @@ struct CodexWindowRoutingTests {
     """
 
     static func main() {
+        // The account header selects the same quota bucket as Codex itself.
+        // A bearer-only request can return a different percentage with the
+        // same reset timestamp.
+        let auth = UsageFetcher.parseCodexCredentials(Data("""
+        {"tokens":{"access_token":"fixture-token","account_id":"fixture-account"}}
+        """.utf8))
+        expect(auth != nil, "Codex auth includes an account identity")
+        if let auth {
+            for path in ["usage", "rate-limit-reset-credits"] {
+                let request = UsageFetcher.codexRequest(
+                    URL(string: "https://chatgpt.com/backend-api/wham/\(path)")!,
+                    credentials: auth
+                )
+                expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer fixture-token",
+                       "\(path) sends the access token")
+                expect(request.value(forHTTPHeaderField: "ChatGPT-Account-Id") == "fixture-account",
+                       "\(path) selects the signed-in account")
+            }
+        }
+        expect(UsageFetcher.parseCodexCredentials(Data("""
+        {"tokens":{"access_token":"fixture-token"}}
+        """.utf8)) == nil, "missing account ID cannot silently select another quota bucket")
+
         // MARK: the live 2026-08 shape — weekly lives in the primary slot
 
         let weeklyOnly = UsageFetcher.routeCodexWindows(rateLimit(fromResponse: weeklyOnlyResponse))

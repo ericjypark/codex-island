@@ -71,8 +71,6 @@ struct CostTile: View {
             }
             .frame(maxWidth: centered ? 240 : .infinity)
 
-            Spacer(minLength: 0)
-
             Group {
                 if stylePref.style == .multi {
                     multiplierHero
@@ -89,7 +87,7 @@ struct CostTile: View {
             }
             .id(stylePref.style)
             .transition(.chartSwap.animation(.chartSwap))
-            .offset(y: heroYOffset)
+            .frame(maxHeight: .infinity, alignment: .center)
             .frame(maxWidth: centered ? 240 : .infinity, alignment: centered ? .center : .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: centered ? .top : .topLeading)
@@ -131,24 +129,20 @@ struct CostTile: View {
 
     // MARK: - Heroes
 
-    private var heroYOffset: CGFloat {
-        switch stylePref.style {
-        case .dollar, .tokens: return -10
-        case .multi, .spark:   return 0
-        }
-    }
-
     private var dollarHero: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 1) {
-            Text(currencyStore.displaySymbol)
-                .font(Typography.unit)
-                .foregroundStyle(.white.opacity(0.4))
-            CountUpDollar(
-                target: currencyStore.converted(usd: window.dollars),
-                wholeUnits: currencyStore.displayUsesWholeUnits,
-                color: color,
-                glowOpacity: glowOpacity
-            )
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(currencyStore.displaySymbol)
+                    .font(Typography.unit)
+                    .foregroundStyle(.white.opacity(0.6))
+                CountUpDollar(
+                    target: currencyStore.converted(usd: window.dollars),
+                    wholeUnits: currencyStore.displayUsesWholeUnits,
+                    color: color,
+                    glowOpacity: 0,
+                    font: .system(size: 32, weight: .semibold, design: .monospaced)
+                )
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -235,10 +229,6 @@ struct CostTile: View {
                 RoundedRectangle(cornerRadius: 3)
                     .fill(fill)
                     .frame(width: 24, height: height)
-                    .shadow(
-                        color: isYou ? color.opacity(glowOpacity) : .clear,
-                        radius: 5
-                    )
                     .animation(.strongEaseOut, value: amount)
             }
             Text(label)
@@ -249,35 +239,38 @@ struct CostTile: View {
     }
 
     private var tokensHero: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 3) {
-            Text(tokensValue)
-                .font(Typography.bigNumber)
-                .foregroundStyle(color)
-                .shadow(color: color.opacity(glowOpacity), radius: 6)
-                .shadow(color: color.opacity(glowOpacity * 0.5), radius: 14)
-            Text(tokensUnit)
-                .font(Typography.unit)
-                .foregroundStyle(.white.opacity(0.4))
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(tokensValue)
+                    .font(.system(size: 32, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(color)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Text(tokensUnit)
+                    .font(Typography.unit)
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+            Text(L10n.tr("Tokens"))
+                .font(Typography.micro)
+                .foregroundStyle(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var sparkHero: some View {
-        ZStack(alignment: .bottomTrailing) {
-            CostSparkline(series: window.series, color: color)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            // Small dollar overlay anchored to the bottom-right so the
-            // sparkline gets the full cell but the user still has the
-            // numeric anchor they can read at a glance.
-            HStack(alignment: .firstTextBaseline, spacing: 1) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(currencyStore.displaySymbol)
                     .font(Typography.micro)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(.white.opacity(0.6))
                 Text(formattedDollarsCompact)
-                    .font(Typography.bodyNumber)
+                    .font(.system(size: 24, weight: .semibold, design: .monospaced))
                     .foregroundStyle(color)
-                    .shadow(color: color.opacity(0.7), radius: 3)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
+            CostSparkline(series: window.series, color: color)
+                .frame(height: 30)
         }
     }
 
@@ -387,22 +380,11 @@ struct CostTile: View {
         currencyStore.formatted(usd: window.dollars, includesSymbol: false)
     }
 
-    /// Glow intensity scales softly with spend so a quiet day stays calm
-    /// and a heavy month looks luminous. Logarithmic so the curve doesn't
-    /// blow out at the high end. Caps around 0.85 so even at peak the
-    /// glow stays a halo, not a smear.
-    private var glowOpacity: Double {
-        let s = window.dollars
-        if s <= 0 { return 0 }
-        let scale = log(s + 1) / log(2000)
-        return min(0.85, 0.20 + scale * 0.65)
-    }
-
     /// Compact "↻ 5h" / "↻ 12d" countdown — computed at render time from
     /// the current clock so the panel always shows accurate time-remaining
     /// regardless of how stale the last refresh is. Uses the same "↻ 3h"
-    /// caption shape as the usage tiles. When the embedded pricing snapshot is missing models that
-    /// produced real spend in this window, the countdown is replaced with
+    /// caption shape as the usage tiles. When the embedded pricing snapshot is
+    /// missing models that produced real spend in this window, the countdown is replaced with
     /// an "⚠ N unpriced" warning so the user knows the dollar total is an
     /// undercount rather than a clean zero.
     private var resetGlyph: String {

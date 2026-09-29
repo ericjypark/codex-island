@@ -204,6 +204,10 @@ struct UsageLedgerTests {
         let retainedCodex = codexLedger.retain(CodexLogReader.scan(lookbackDays: nil, root: codexRoot), source: .codex, now: now)
         expect(retainedCodex.events.count == 2 && total(retainedCodex.events) == 260,
                "Codex event identity survives truncated source logs")
+        let autoReviewContext = "{\"type\":\"turn_context\",\"payload\":{\"model\":\"codex-auto-review\"}}"
+        try Data([autoReviewContext, codexFirst].joined(separator: "\n").utf8).write(to: codexFile)
+        expect(CodexLogReader.scan(lookbackDays: nil, root: codexRoot).isEmpty,
+               "Codex auto-review usage is excluded at ingestion")
 
         let start = Date(timeIntervalSince1970: 1_767_884_400)
         let historicalDay = HistoricalUsageDay(provider: .claude, sourceIdentity: "verified-old-cache-day",

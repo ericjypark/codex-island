@@ -1,27 +1,32 @@
 import SwiftUI
 
 struct SteppedChart: View {
-    let value: Double      // 0-100
+    let value: Double
     let color: Color
     let label: String
     let sub: String
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             ChartHead(value: value, label: label)
-            HStack(spacing: 2) {
-                let segments = 30
-                let filled = (value / 100) * Double(segments)
-                ForEach(0..<segments, id: \.self) { i in
-                    RoundedRectangle(cornerRadius: 1.5)
-                        .fill(Double(i) < floor(filled) ? color : .white.opacity(0.10))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 16)
-                        // ~7ms stagger across 30 cells = ~210ms sweep when
-                        // a new value arrives. Stays under the 300ms budget.
-                        .animation(.strongEaseOut.delay(Double(i) * 0.007), value: value)
+            HStack(spacing: 3) {
+                let segments = 20
+                let filled = min(100, max(0, value)) / 100 * Double(segments)
+                ForEach(0..<segments, id: \.self) { index in
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            Rectangle().fill(.white.opacity(0.12))
+                            Rectangle().fill(color)
+                                .frame(width: geometry.size.width * min(1, max(0, filled - Double(index))))
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: 1))
+                    }
                 }
             }
+            .frame(height: 12)
+            .animation(reduceMotion ? nil : .strongEaseOut, value: value)
+            .accessibilityHidden(true)
             ChartFoot(caption: sub)
         }
     }

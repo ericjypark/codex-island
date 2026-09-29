@@ -109,6 +109,7 @@ enum CodexLogReader {
             // any turn_context (early Codex CLI builds did this). Better
             // approximation than billing $0.
             let model = currentModel ?? "gpt-5.4"
+            guard !Pricing.isInternalUsage(model) else { return }
 
             out.append(CachedEvent(
                 timestamp: timestamp,

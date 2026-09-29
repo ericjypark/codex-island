@@ -160,6 +160,9 @@
 "Show usage as used or remaining quota." = "Show usage as used or remaining quota.";
 "Usage display" = "Usage display";
 "Used" = "Used";
+"Quota left" = "Left";
+"Reset" = "Reset";
+"Window" = "Window";
 "Keep the percentage and time remaining visible without hovering." = "Keep the percentage and time remaining visible without hovering.";
 "Inject test percentages. Visible only when launched with CODEXISLAND_DEBUG=1." = "Inject test percentages. Visible only when launched with CODEXISLAND_DEBUG=1.";
 "Preview" = "Preview";
@@ -287,6 +290,11 @@
 
 "Weekly card" = "Weekly card";
 "About this card" = "About this card";
+"Currency" = "Currency";
+"Card currency" = "Card currency";
+"Exchange rate unavailable." = "Exchange rate unavailable.";
+"Refresh the rate or choose USD." = "Refresh the rate or choose USD.";
+"API value estimates your usage at API rates in USD, not your subscription bill. Other currencies use a reference exchange rate. Tokens include cache reads and writes." = "API value estimates your usage at API rates in USD, not your subscription bill. Other currencies use a reference exchange rate. Tokens include cache reads and writes.";
 "API value estimates your usage at API rates in USD, not your subscription bill. Tokens include cache reads and writes." = "API value estimates your usage at API rates in USD, not your subscription bill. Tokens include cache reads and writes.";
 "The card includes daily usage, provider totals, active days, and your signature. It does not include prompts or conversations." = "The card includes daily usage, provider totals, active days, and your signature. It does not include prompts or conversations.";
 "Fit" = "Fit";
@@ -363,3 +371,19 @@
 "The usage archive changed. Scan again before saving." = "The usage archive changed. Scan again before saving.";
 "A selected recovery source is no longer available. Choose it again, then scan." = "A selected recovery source is no longer available. Choose it again, then scan.";
 "Saved token counts exceed the supported range. Check the recovery files before trying again." = "Saved token counts exceed the supported range. Check the recovery files before trying again.";
+
+"History appears after more refreshes." = "History appears after more refreshes.";
+
+"Recorded usage" = "Recorded usage";
+
+
+"API equivalent" = "API equivalent";
+"Usage credits" = "Usage credits";
+"%@ / %@ spent" = "%@ / %@ spent";
+"%@ spent · unlimited" = "%@ spent · unlimited";
+"%@, %@ spent, unlimited" = "%@, %@ spent, unlimited";
+"%@: no data for monthly window" = "%@: no data for monthly window";
+"%@: %d percent of monthly credits used" = "%@: %d percent of monthly credits used";
+"%@: %d percent of monthly credits remaining" = "%@: %d percent of monthly credits remaining";
+"%@: %d percent of monthly credits used, %@" = "%@: %d percent of monthly credits used, %@";
+"%@: %d percent of monthly credits remaining, %@" = "%@: %d percent of monthly credits remaining, %@";

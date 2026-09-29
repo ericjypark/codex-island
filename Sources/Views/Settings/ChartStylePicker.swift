@@ -69,18 +69,16 @@ struct ChartStylePicker: View {
 /// across the picker, regardless of the user's actual usage trace.
 private struct SparkPath: Shape {
     func path(in rect: CGRect) -> Path {
-        var p = Path()
         let pts: [(CGFloat, CGFloat)] = [
             (0.00, 0.75), (0.16, 0.55),
             (0.34, 0.70), (0.50, 0.30),
             (0.69, 0.45), (0.84, 0.18),
             (1.00, 0.40)
         ]
-        for (i, pt) in pts.enumerated() {
-            let cgp = CGPoint(x: rect.minX + rect.width * pt.0,
-                              y: rect.minY + rect.height * pt.1)
-            if i == 0 { p.move(to: cgp) } else { p.addLine(to: cgp) }
+        let points = pts.map { pt in
+            CGPoint(x: rect.minX + rect.width * pt.0,
+                    y: rect.minY + rect.height * pt.1)
         }
-        return p
+        return SparklinePath.line(through: points)
     }
 }

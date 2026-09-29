@@ -82,22 +82,39 @@ struct IslandRootView: View {
                     }
                 }
                 .overlay(alignment: .topTrailing) {
-                    if model.state != .expanded, let right = visibility.right {
-                        ProviderMark(provider: right)
-                            .padding(.trailing, logoEdgePadding)
-                            .padding(.top, max(0, (model.notch.height - 20) / 2))
+                    if model.state != .expanded {
+                        if let right = visibility.right {
+                            ProviderMark(provider: right)
+                                .padding(.trailing, logoEdgePadding)
+                                .padding(.top, max(0, (model.notch.height - 20) / 2))
+                        } else {
+                            PeekPillOverlay(provider: visibility.left, isLeft: false,
+                                topPadding: 0, pillsVisible: true,
+                                contents: .gauge, edgePadding: logoEdgePadding, slotWidth: 20,
+                                availableHeight: model.notch.height,
+                                gaugeProgress: model.state == .peek ? 1 : 0)
+                        }
                     }
                 }
                 .overlay(alignment: .topLeading) {
-                    if model.state != .compact {
+                    if model.state != .expanded {
                         PeekPillOverlay(provider: visibility.left, isLeft: true,
-                            topPadding: max(0, (model.notch.height - 14) / 2), pillsVisible: pillsVisible)
+                            topPadding: 0, pillsVisible: true,
+                            contents: visibility.right == nil ? .reset : .stacked,
+                            edgePadding: 9,
+                            slotWidth: model.state == .peek ? model.pillSlotWidth - 14 : 0,
+                            availableHeight: model.notch.height,
+                            showsResetCaption: model.notch.height >= 32,
+                            revealProgress: model.state == .peek ? 1 : 0)
                     }
                 }
                 .overlay(alignment: .topTrailing) {
-                    if model.state != .compact, let right = visibility.right {
+                    if model.state != .expanded, let right = visibility.right {
                         PeekPillOverlay(provider: right, isLeft: false,
-                            topPadding: max(0, (model.notch.height - 14) / 2), pillsVisible: pillsVisible)
+                            topPadding: 0, pillsVisible: true, contents: .stacked, edgePadding: 9,
+                            slotWidth: model.state == .peek ? model.pillSlotWidth - 14 : 0,
+                            availableHeight: model.notch.height,
+                            revealProgress: model.state == .peek ? 1 : 0)
                     }
                 }
                 .contentShape(IslandShape())
@@ -427,6 +444,13 @@ private struct PeekPillOverlay: View {
     let isLeft: Bool
     let topPadding: CGFloat
     let pillsVisible: Bool
+    var contents: NotchPeekPill.Contents = .combined
+    var edgePadding: CGFloat = 14
+    var slotWidth: CGFloat? = nil
+    var availableHeight: CGFloat? = nil
+    var gaugeProgress: CGFloat = 0
+    var showsResetCaption = false
+    var revealProgress: CGFloat = 1
 
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @ObservedObject private var connections = ProviderConnectionStore.shared
@@ -436,15 +460,31 @@ private struct PeekPillOverlay: View {
 
     var body: some View {
         let window = currentWindow
-        NotchPeekPill(
+        let pill = NotchPeekPill(
             usage: window,
             loading: provider.usesLegacyUsage ? usageStore.loading : connections.loading.contains(provider),
             tint: tint,
             alignment: isLeft ? .leading : .trailing,
             severity: severity,
-            windowLengthFallback: provider.usesLegacyUsage ? (currentWindowIsWeekly ? "7d" : "5h") : ""
+            windowLengthFallback: provider.usesLegacyUsage
+                ? (currentWindowIsMonthly ? "mo" : currentWindowIsWeekly ? "7d" : "5h") : "",
+            contents: contents,
+            gaugeProgress: gaugeProgress,
+            gaugeHeight: availableHeight ?? 38,
+            showsResetCaption: showsResetCaption
         )
-        .padding(isLeft ? .leading : .trailing, 14)
+        Group {
+            if contents == .reset || contents == .stacked {
+                pill
+                    .modifier(PeekContentReveal(progress: revealProgress, start: 0.45, end: 1))
+                    .animation(PeekMotion.animation(opening: revealProgress > 0), value: revealProgress)
+                    .frame(width: slotWidth, height: availableHeight, alignment: isLeft ? .trailing : .leading)
+                    .mask { Rectangle().padding(isLeft ? .leading : .trailing, -edgePadding) }
+            } else {
+                pill.frame(width: slotWidth, height: availableHeight, alignment: isLeft ? .trailing : .leading)
+            }
+        }
+        .padding(isLeft ? .leading : .trailing, edgePadding)
         .padding(.top, topPadding)
         // Two opacity bindings stack:
         //   - `pillsVisible` is the peek lifecycle (hover-in / hover-out).
@@ -456,12 +496,15 @@ private struct PeekPillOverlay: View {
         .animation(.openMorph, value: isVisible)
         .offset(x: pillsVisible ? 0 : (isLeft ? -6 : 6))
         .allowsHitTesting(false)
-        .accessibilityLabel(peekLabel(for: window, provider: providerLabel, weekly: currentWindowIsWeekly))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(peekLabel(for: window, provider: providerLabel,
+                                      weekly: currentWindowIsWeekly, monthly: currentWindowIsMonthly))
         // Mirror the visual opacity gate exactly — both `pillsVisible` and
         // `isVisible` must be true for the pill to render. Keying the
         // accessibility hide on only `isVisible` lets VoiceOver reach a
         // pill that is visually invisible during the peek-out lifecycle.
-        .accessibilityHidden(!(pillsVisible && isVisible))
+        .accessibilityHidden(!(pillsVisible && isVisible) || contents == .reset || contents == .percentage
+            || (contents == .stacked && revealProgress == 0))
     }
 
     private var isVisible: Bool {
@@ -470,7 +513,7 @@ private struct PeekPillOverlay: View {
 
     private var currentWindow: WindowUsage {
         switch provider {
-        case .claude: return usageStore.claude.fiveHour
+        case .claude: return usageStore.claude.peekWindow
         case .codex:  return usageStore.codex.peekWindow
         case .grok, .antigravity:
             return connections.primary(provider)?.window ?? .unknown
@@ -478,7 +521,19 @@ private struct PeekPillOverlay: View {
     }
 
     private var currentWindowIsWeekly: Bool {
-        provider == .codex && usageStore.codex.peekWindowIsWeekly
+        currentWindowKind == .weekly
+    }
+
+    private var currentWindowIsMonthly: Bool {
+        currentWindowKind == .monthly
+    }
+
+    private var currentWindowKind: UsageWindow? {
+        switch provider {
+        case .claude: return usageStore.claude.peekWindowKind
+        case .codex: return usageStore.codex.peekWindowKind
+        case .grok, .antigravity: return nil
+        }
     }
 
     private var severity: AlertEngine.Severity {
@@ -488,19 +543,25 @@ private struct PeekPillOverlay: View {
     private var tint: Color { provider.color }
     private var providerLabel: String { provider.name }
 
-    private func peekLabel(for window: WindowUsage, provider: String, weekly: Bool) -> String {
+    private func peekLabel(for window: WindowUsage, provider: String, weekly: Bool,
+                           monthly: Bool) -> String {
         if !self.provider.usesLegacyUsage {
             guard window.hasReading else { return L10n.tr("%@: usage unavailable", provider) }
             return L10n.tr("%@: %d%%", provider, window.displayedPercentInt(mode: UsageDisplayModeStore.shared.mode))
         }
         if !window.hasReading {
-            return weekly
-                ? L10n.tr("%@: no data for weekly window", provider)
+            if monthly { return L10n.tr("%@: no data for monthly window", provider) }
+            return weekly ? L10n.tr("%@: no data for weekly window", provider)
                 : L10n.tr("%@: no data for 5-hour window", provider)
         }
         let mode = UsageDisplayModeStore.shared.mode
         let pct = window.displayedPercentInt(mode: mode)
         guard let resetAt = window.resetAt else {
+            if monthly {
+                return mode == .used
+                    ? L10n.tr("%@: %d percent of monthly credits used", provider, pct)
+                    : L10n.tr("%@: %d percent of monthly credits remaining", provider, pct)
+            }
             switch (mode, weekly) {
             case (.used, false):      return L10n.tr("%@: %d percent of 5-hour window used", provider, pct)
             case (.remaining, false): return L10n.tr("%@: %d percent of 5-hour window remaining", provider, pct)
@@ -512,6 +573,11 @@ private struct PeekPillOverlay: View {
         let resetPhrase: String = remaining >= 3600
             ? L10n.tr("resets in %d hours", Int((remaining / 3600).rounded(.down)))
             : L10n.tr("resets in %d minutes", max(1, Int((remaining / 60).rounded(.down))))
+        if monthly {
+            return mode == .used
+                ? L10n.tr("%@: %d percent of monthly credits used, %@", provider, pct, resetPhrase)
+                : L10n.tr("%@: %d percent of monthly credits remaining, %@", provider, pct, resetPhrase)
+        }
         switch (mode, weekly) {
         case (.used, false):      return L10n.tr("%@: %d percent of 5-hour window used, %@", provider, pct, resetPhrase)
         case (.remaining, false): return L10n.tr("%@: %d percent of 5-hour window remaining, %@", provider, pct, resetPhrase)

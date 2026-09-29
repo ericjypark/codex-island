@@ -43,8 +43,9 @@ final class AlertEngine: ObservableObject {
         let lines: [PulseLine]
     }
 
-    /// Highest severity across visible 5h windows currently at/above their
-    /// respective threshold. Drives the silhouette glow color.
+    /// Highest severity across visible primary windows at/above their
+    /// respective threshold. Drives the silhouette glow color for the provider's
+    /// primary reported window, including Enterprise monthly usage credits.
     @Published private(set) var severity: Severity = .none
     @Published private(set) var providerSeverities: [Provider: Severity] = [:]
 
@@ -114,7 +115,7 @@ final class AlertEngine: ObservableObject {
             AlertDecision.WindowInput(
                 provider: .claude,
                 visible: visibility.claudeVisible,
-                window: usage.claude.fiveHour
+                window: usage.claude.peekWindow
             ),
             AlertDecision.WindowInput(
                 provider: .codex,
@@ -328,4 +329,3 @@ enum AlertDecision {
         return CrossingsEvalResult(next: next, pulse: pulse)
     }
 }
-

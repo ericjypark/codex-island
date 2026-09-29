@@ -75,6 +75,7 @@ enum CostSummary {
         let earliestStart = min(monthStart, weekStart, historyStart)
         for event in events {
             guard event.timestamp >= earliestStart, event.timestamp <= now else { continue }
+            guard !Pricing.isInternalUsage(event.model) else { continue }
             let cost = Pricing.cost(for: event)
             // Two parallel running totals: `tokens` is the wire-level sum
             // (ccusage parity); `billable` is input + output only, matching

@@ -73,6 +73,10 @@ struct PricingTests {
 
         expect(Pricing.prettyModelName("claude-opus-5") == "Opus 5", "opus-5 renders as Opus 5")
 
+        expect(Pricing.isInternalUsage("codex-auto-review"), "auto-review is recognized as internal usage")
+        expect(!Pricing.isInternalUsage("gpt-5.4"), "priced API models are not internal usage")
+        expect(!Pricing.isKnown("codex-auto-review"), "internal usage does not receive a fabricated API price")
+
         // ccusage parity: an id we have no row for costs $0 rather than crashing.
         expect(
             Pricing.cost(for: ev("claude-opus-9", input: 1_000_000)) == 0,

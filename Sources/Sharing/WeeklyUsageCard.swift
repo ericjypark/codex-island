@@ -6,8 +6,9 @@ struct WeeklyUsageCard: View {
     let format: WeeklyCardFormat
     var signature = ""
     var metric: WeeklyCardMetric = .apiValue
+    var quote: CurrencyQuote = .usd
 
-    private var tier: WeeklyCardTier { snapshot.tier(for: metric) }
+    private var tier: WeeklyCardTier { snapshot.tier(for: metric, quote: quote) }
     private var theme: WeeklyCardTheme { tier.theme }
     private var compact: Bool { format == .square }
     private var tokens: (value: String, unit: String) {
@@ -38,7 +39,8 @@ struct WeeklyUsageCard: View {
 
             providerLegend
             if metric == .apiValue {
-                Text("API-rate estimate, not a bill.")
+                Text(quote.currency == .usd ? "API-rate estimate, not a bill."
+                     : "Converted from USD · API-rate estimate, not a bill.")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(theme.secondary)
                     .padding(.top, compact ? 8 : 12)
@@ -54,20 +56,20 @@ struct WeeklyUsageCard: View {
         .foregroundStyle(theme.foreground)
         .environment(\.colorScheme, theme == .paper ? .light : .dark)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(snapshot.shareText(metric: metric))
+        .accessibilityLabel(snapshot.shareText(metric: metric, quote: quote))
     }
 
     private var heading: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center, spacing: 14) {
-                Text(metric == .apiValue ? snapshot.valueHeadline : snapshot.period.tokenHeadline)
+                Text(metric == .apiValue && quote.currency == .usd ? snapshot.valueHeadline : snapshot.period.tokenHeadline)
                     .font(.system(size: compact ? 32 : 36, weight: .medium))
                     .tracking(-1.1)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                if metric == .apiValue, let milestone = snapshot.valueMilestone {
-                    WeeklyMilestoneSeal(milestone: milestone, theme: theme, compact: compact)
+                if metric == .apiValue, let milestone = snapshot.valueMilestone(for: quote) {
+                    WeeklyMilestoneSeal(label: milestone.label(in: quote.currency, locale: quote.locale), theme: theme, compact: compact)
                 }
             }
 
@@ -77,7 +79,7 @@ struct WeeklyUsageCard: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, compact ? 2 : 8)
                 HStack(alignment: .firstTextBaseline) {
-                    Text(snapshot.hasPartialPricing ? "Known API value · USD" : "API value · USD")
+                    Text("\(snapshot.hasPartialPricing ? "Known API value" : "API value") · \(quote.currency.rawValue)")
                         .foregroundStyle(theme.secondary)
                     Spacer(minLength: 8)
                     Text(snapshot.period.valueQualifier)
@@ -108,22 +110,19 @@ struct WeeklyUsageCard: View {
     }
 
     private var moneyHeadline: some View {
-        let formatted = WeeklyUsageSnapshot.money(snapshot.totalDollars)
-        let subcent = formatted.hasPrefix("<")
-        let amount = formatted.dropFirst(subcent ? 2 : 1).split(separator: ".")
-        return HStack(alignment: .firstTextBaseline, spacing: 0) {
-            Text(subcent ? "<$" : "$")
-                .font(.system(size: compact ? 42 : 50, weight: .regular, design: .rounded))
-                .foregroundStyle(theme.secondary)
-                .padding(.trailing, 3)
-            Text(amount.first.map(String.init) ?? "0")
-                .font(.system(size: compact ? 90 : 108, weight: .regular, design: .rounded))
-                .tracking(-3)
-            Text(".\(amount.count > 1 ? String(amount[1]) : "00")\(snapshot.valueSuffix)")
-                .font(.system(size: compact ? 34 : 40, weight: .regular, design: .rounded))
-                .foregroundStyle(theme.secondary)
-                .padding(.leading, 2)
+        var amount = quote.attributed(usd: snapshot.totalDollars)
+        for run in Array(amount.runs) {
+            let isInteger = run.numberPart == .integer
+            let isCurrency = run.numberSymbol == .currency || String(amount[run.range].characters) == "<"
+            let size: CGFloat = isInteger ? (compact ? 90 : 108)
+                : isCurrency ? (compact ? 42 : 50) : (compact ? 34 : 40)
+            amount[run.range].font = .system(size: size, weight: .regular, design: .rounded)
+            amount[run.range].foregroundColor = isInteger ? theme.foreground : theme.secondary
         }
+        var suffix = AttributedString(snapshot.valueSuffix)
+        suffix.font = .system(size: compact ? 34 : 40, weight: .regular, design: .rounded)
+        suffix.foregroundColor = theme.secondary
+        return Text(amount + suffix)
         .lineLimit(1)
         .minimumScaleFactor(0.42)
     }
@@ -153,7 +152,8 @@ struct WeeklyUsageCard: View {
     private func providerValue(_ item: WeeklyUsageSnapshot.ProviderTotal) -> String {
         guard metric == .apiValue else { return snapshot.percentLabel(for: item.tokens) }
         if item.unpricedTokens == item.tokens { return "Unpriced" }
-        return WeeklyUsageSnapshot.money(item.dollars) + (item.unpricedTokens > 0 ? "+" : "")
+        let amount = quote.formatted(usd: item.dollars)
+        return amount + (item.unpricedTokens > 0 ? "+" : "")
     }
 
     private var footer: some View {
@@ -185,17 +185,17 @@ struct WeeklyUsageCard: View {
 }
 
 private struct WeeklyMilestoneSeal: View {
-    let milestone: WeeklyValueMilestone
+    let label: String
     let theme: WeeklyCardTheme
     let compact: Bool
 
     var body: some View {
         VStack(spacing: 1) {
-            Text(milestone.label)
+            Text(label)
                 .font(.system(size: 21, weight: .semibold, design: .rounded))
                 .tracking(-0.5)
                 .lineLimit(1)
-                .minimumScaleFactor(0.75)
+                .minimumScaleFactor(0.5)
             Text("CLUB")
                 .font(.system(size: 8, weight: .semibold))
                 .tracking(2.5)
@@ -206,7 +206,7 @@ private struct WeeklyMilestoneSeal: View {
             WeeklySealOutline().stroke(theme.foreground.opacity(0.65), lineWidth: 0.75)
             WeeklySealOutline().stroke(theme.rule, lineWidth: 0.5).padding(4)
         }
-        .accessibilityLabel("\(milestone.label) API value milestone")
+        .accessibilityLabel("\(label) API value milestone")
     }
 }
 

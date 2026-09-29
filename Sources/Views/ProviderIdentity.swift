@@ -3,10 +3,11 @@ import SwiftUI
 extension IslandProvider {
     func planDisplayName(_ plan: String?) -> String? {
         guard let plan else { return nil }
-        if self == .codex {
+        if self == .codex, plan.lowercased() == "prolite" { return "Pro" }
+        if self == .codex || self == .claude {
             switch plan.lowercased() {
-            case "prolite", "pro": return "Pro"
-            case "plus": return "Plus"
+            case "free", "plus", "pro", "max", "enterprise":
+                return plan.capitalized
             default: break
             }
         }

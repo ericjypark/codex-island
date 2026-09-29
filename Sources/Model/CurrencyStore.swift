@@ -29,6 +29,68 @@ enum DisplayCurrency: String, CaseIterable, Codable, Identifiable {
 
     var menuLabel: String { "\(rawValue)  \(symbol)" }
     var usesWholeUnits: Bool { self == .jpy || self == .krw }
+
+    var colorClubThresholds: (black: Double, blue: Double) {
+        switch self {
+        case .usd, .eur, .gbp, .cad, .aud, .chf: (1_000, 10_000)
+        case .cny: (10_000, 100_000)
+        case .jpy: (100_000, 1_000_000)
+        case .krw: (1_000_000, 10_000_000)
+        }
+    }
+}
+
+struct CurrencyQuote {
+    let currency: DisplayCurrency
+    let usdRate: Double
+    let locale: Locale
+
+    static var usd: CurrencyQuote { CurrencyQuote(currency: .usd, usdRate: 1) }
+
+    init(currency: DisplayCurrency, usdRate: Double, locale: Locale = L10n.locale) {
+        precondition(usdRate.isFinite && usdRate > 0)
+        self.currency = currency
+        self.usdRate = usdRate
+        self.locale = locale
+    }
+
+    func converted(usd: Double) -> Double { usd * usdRate }
+
+    func formatted(usd: Double) -> String {
+        String(attributed(usd: usd).characters)
+    }
+
+    func attributed(usd: Double) -> AttributedString {
+        let value = converted(usd: usd)
+        let amount = max(0, value.isFinite ? value : 0)
+        let minimum = currency.usesWholeUnits ? 1.0 : 0.01
+        var style = FloatingPointFormatStyle<Double>.Currency(code: currency.rawValue).locale(locale)
+        if amount > 0 && amount < minimum {
+            return AttributedString("<") + minimum.formatted(style.attributed)
+        }
+        let precision = currency.usesWholeUnits ? 1.0 : 100.0
+        let rounded = (amount * precision).rounded() / precision
+        let nextMilestone = amount < 100 ? 100 : pow(10, floor(log10(amount)) + 1)
+        if amount < nextMilestone, rounded >= nextMilestone, nextMilestone <= 1_000_000_000 {
+            style = style.rounded(rule: .towardZero)
+        }
+        return amount.formatted(style.attributed)
+    }
+
+    func milestoneLabel(amount: Double) -> String {
+        let style = FloatingPointFormatStyle<Double>.Currency(code: currency.rawValue)
+            .locale(locale).precision(.fractionLength(0))
+        if #available(macOS 15, *) {
+            return amount.formatted(style.notation(.compactName))
+        }
+        var formatted = amount.formatted(style.attributed)
+        let numbers = formatted.runs.filter { $0.numberPart != nil }
+        guard let first = numbers.first, let last = numbers.last else { return String(formatted.characters) }
+        let compact = amount.formatted(FloatingPointFormatStyle<Double>.number
+            .locale(locale).precision(.fractionLength(0)).notation(.compactName))
+        formatted.replaceSubrange(first.range.lowerBound..<last.range.upperBound, with: AttributedString(compact))
+        return String(formatted.characters)
+    }
 }
 
 @MainActor
@@ -87,6 +149,12 @@ final class CurrencyStore: ObservableObject {
 
     func converted(usd: Double) -> Double {
         usd * usdRate
+    }
+
+    func quote(for currency: DisplayCurrency, locale: Locale = L10n.locale) -> CurrencyQuote? {
+        if currency == .usd { return CurrencyQuote(currency: .usd, usdRate: 1, locale: locale) }
+        guard let rate = cache?.rates[currency.rawValue] else { return nil }
+        return CurrencyQuote(currency: currency, usdRate: rate, locale: locale)
     }
 
     var displayCurrency: DisplayCurrency {

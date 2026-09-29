@@ -45,6 +45,7 @@ final class UsageHistoryStore: ObservableObject {
     func record(provider: AlertEngine.Provider, usage: AppUsage, at: Date) {
         var changed = append(provider, .fiveHour, usage.fiveHour, at)
         changed = append(provider, .weekly, usage.weekly, at) || changed
+        changed = append(provider, .monthly, usage.monthly, at) || changed
         if changed {
             persist()
             revision &+= 1

@@ -160,6 +160,9 @@
 "Show usage as used or remaining quota." = "将用量百分比显示为已用或剩余额度。";
 "Usage display" = "用量显示";
 "Used" = "已用";
+"Quota left" = "剩余";
+"Reset" = "重置";
+"Window" = "周期";
 "Keep the percentage and time remaining visible without hovering." = "无需悬停即可始终查看用量百分比和剩余时间。";
 "Inject test percentages. Visible only when launched with CODEXISLAND_DEBUG=1." = "注入测试百分比。仅在使用 CODEXISLAND_DEBUG=1 启动时显示。";
 "Preview" = "预览";
@@ -287,6 +290,11 @@
 
 "Weekly card" = "每周卡片";
 "About this card" = "关于此卡片";
+"Currency" = "币种";
+"Card currency" = "卡片币种";
+"Exchange rate unavailable." = "汇率暂不可用。";
+"Refresh the rate or choose USD." = "请刷新汇率或选择美元。";
+"API value estimates your usage at API rates in USD, not your subscription bill. Other currencies use a reference exchange rate. Tokens include cache reads and writes." = "API 价值按美元 API 费率估算使用量，并非订阅账单。其他币种按参考汇率换算。Token 包含缓存读取与写入。";
 "API value estimates your usage at API rates in USD, not your subscription bill. Tokens include cache reads and writes." = "API 价值按 API 费率以美元估算使用量，并非订阅账单。Token 包含缓存读取与写入。";
 "The card includes daily usage, provider totals, active days, and your signature. It does not include prompts or conversations." = "卡片包含每日使用量、各服务商总量、活跃天数和签名，不包含提示词或对话内容。";
 "Fit" = "适应窗口";
@@ -363,3 +371,19 @@
 "The usage archive changed. Scan again before saving." = "用量存档已更改。请重新扫描后再保存。";
 "A selected recovery source is no longer available. Choose it again, then scan." = "所选恢复来源已不可用。请重新选择后再扫描。";
 "Saved token counts exceed the supported range. Check the recovery files before trying again." = "保存的 token 数量超出了支持范围。请检查恢复文件后重试。";
+
+"History appears after more refreshes." = "更多刷新后将显示历史记录。";
+
+"Recorded usage" = "已记录的用量";
+
+
+"API equivalent" = "API 等值";
+"Usage credits" = "用量额度";
+"%@ / %@ spent" = "已用 %@ / %@";
+"%@ spent · unlimited" = "已用 %@ · 不限额";
+"%@, %@ spent, unlimited" = "%@，已用 %@，不限额";
+"%@: no data for monthly window" = "%@：月度额度暂无数据";
+"%@: %d percent of monthly credits used" = "%@：月度额度已用 %d%%";
+"%@: %d percent of monthly credits remaining" = "%@：月度额度剩余 %d%%";
+"%@: %d percent of monthly credits used, %@" = "%@：月度额度已用 %d%%，%@";
+"%@: %d percent of monthly credits remaining, %@" = "%@：月度额度剩余 %d%%，%@";

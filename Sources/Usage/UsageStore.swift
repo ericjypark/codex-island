@@ -218,7 +218,7 @@ final class UsageStore: ObservableObject {
                         self.tokenRefreshPingAttempted = true
                         ClaudeCredentials.spawnTokenRefreshPing()
                     }
-                } else if cl.fiveHour.error == nil || cl.weekly.error == nil {
+                } else if cl.visibleWindows.contains(where: { cl.window($0).error == nil }) {
                     self.credWatchTask?.cancel()
                     self.credWatchTask = nil
                     self.tokenRefreshPingAttempted = false
@@ -281,6 +281,7 @@ final class UsageStore: ObservableObject {
         return AppUsage(
             fiveHour: fill(.fiveHour, current.fiveHour, prior?.fiveHour),
             weekly: fill(.weekly, current.weekly, prior?.weekly),
+            monthly: fill(.monthly, current.monthly, prior?.monthly),
             plan: current.plan,
             reportedWindows: current.reportedWindows
         )
@@ -378,7 +379,7 @@ final class UsageStore: ObservableObject {
                 // rateLimitCooldown) — retrying every 5s only feeds it. Bail
                 // and let the normal poll's cooldown machinery recover.
                 if cl.fiveHour.error == ClaudeCredentials.rateLimitedMessage { break }
-                if cl.fiveHour.error == nil || cl.weekly.error == nil {
+                if cl.visibleWindows.contains(where: { cl.window($0).error == nil }) {
                     await MainActor.run {
                         self?.claude = cl
                         self?.lastUpdated = Date()
