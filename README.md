@@ -12,21 +12,24 @@
   </a>
 </p>
 
-> Your AI usage limits, living in your notch.
+> Your AI limits. Always in view.
 
-CodexIsland is a native macOS overlay that turns the MacBook notch into a
-Dynamic-Island-style live activity for Claude Code and Codex usage limits. It
-sits quietly over the notch, peeks on hover with the 5-hour headline, and
-expands on click to show both providers' 5-hour and weekly windows with reset
-timing, chart controls, local-log cost estimates, and a year-at-a-glance usage
-history.
+CodexIsland keeps AI usage, reset times, and local token-cost estimates above
+your work. On macOS it lives in the MacBook notch. On Windows 11 it uses a
+floating pill with quota rings, percentages, and reset countdowns. Hover for
+a quick read; click for usage charts, cost history, and shareable usage cards.
+
+Windows builds include x64 and ARM64 installers. See
+[Windows installation and updates](windows/UPDATES.md) and the
+[Windows compatibility notes](windows/PARITY.md).
 
 https://github.com/user-attachments/assets/195beeff-0f70-4d6b-8f3d-9f31d9c0b989
 
 
 The app is free, open source, unsigned, and local-first. It reads credentials
-already written by Claude Code / Claude Desktop and Codex, then calls only the
-providers' own usage endpoints.
+already written by CLI tools such as Claude Code and Codex, and asks providers
+directly for usage. Session logs stay on your computer. Pricing, currency,
+and app-update requests are described in the platform documentation.
 
 ## What it does
 
@@ -113,7 +116,7 @@ providers' own usage endpoints.
 
 ## Install
 
-### Homebrew
+### macOS with Homebrew
 
 ```sh
 brew install --cask ericjypark/tap/codexisland
@@ -123,7 +126,7 @@ The first invocation auto-taps `ericjypark/homebrew-tap`. The cask strips the
 Gatekeeper quarantine attribute automatically (CodexIsland is unsigned by
 Apple — Sparkle handles update verification independently).
 
-### Direct download
+### macOS direct download
 
 Download the current `CodexIsland-X.Y.Z.dmg` from the
 [latest release](https://github.com/ericjypark/codex-island/releases/latest),
@@ -157,6 +160,19 @@ follow.
 5. Click **Open Anyway**, then re-launch the app.
 </details>
 
+### Windows 11
+
+Choose the x64 installer for Intel or AMD PCs, or ARM64 for Snapdragon PCs.
+The Windows installers include their runtime; you do not need the .NET SDK.
+After installation, open **CodexIsland** from Start. Sign in to your CLI tools
+first, then select your providers in Settings.
+
+Download Windows installers from the
+[landing page](https://codexisland.com/#install), which lists available releases.
+The current installers are unsigned and may show an unknown publisher warning.
+Updates are downloaded in Settings and installed only when you choose
+**Restart and update**. See [Windows installation and updates](windows/UPDATES.md).
+
 ## First run
 
 CodexIsland does not ask for passwords or API keys. It reads the auth state
@@ -170,12 +186,11 @@ For Codex:
 
 For Claude:
 
-- Run `claude` once, or open Claude Desktop, so Claude credentials are
-  populated.
-- CodexIsland checks `CLAUDE_CODE_OAUTH_TOKEN`, then
-  `$CLAUDE_CONFIG_DIR/.credentials.json` (normally
-  `~/.claude/.credentials.json`), then the macOS Keychain item named
-  `Claude Code-credentials`.
+- Run `claude` in a terminal and sign in. Signing in to Claude Desktop alone
+  does not populate the CLI credentials.
+- On macOS, CodexIsland checks `CLAUDE_CODE_OAUTH_TOKEN`, then matching Claude
+  Code Keychain items, then `$CLAUDE_CONFIG_DIR/.credentials.json` as a fallback.
+  Windows credential discovery is documented in [LIVE-PROVIDERS.md](windows/LIVE-PROVIDERS.md).
 - Credential access is strictly read-only. CodexIsland never refreshes OAuth
   tokens or writes to Claude's credential store; run `claude` when an access
   token expires, or `claude /login` when the endpoint requires a newly scoped
@@ -231,7 +246,7 @@ changing the app language offers to restart CodexIsland.
 
 ## Build from source
 
-Requires macOS 13+ and a Swift toolchain from Xcode / Command Line Tools.
+For the Mac app, requires macOS 13+ and a Swift toolchain from Xcode / Command Line Tools.
 
 ```sh
 git clone https://github.com/ericjypark/codex-island
@@ -255,6 +270,9 @@ Smoke test the native app:
 test harnesses. `verify.sh` builds the app, launches the binary for one second,
 then kills it if it is still alive.
 
+For the Windows app, see the [Windows build instructions](windows/README.md)
+and [installer packaging](windows/UPDATES.md).
+
 ## Release
 
 Package a DMG:
@@ -269,7 +287,7 @@ codesigning, creates `dist/CodexIsland-X.Y.Z.dmg`, signs it with Sparkle's
 EdDSA key when available, generates `dist/appcast.xml`, and prints the file size
 and SHA-256.
 
-Pushing a `v*` tag triggers `.github/workflows/release.yml` on `macos-15`,
+Pushing an exact `vX.Y.Z` tag matching `VERSION` triggers `.github/workflows/release.yml` on `macos-15`,
 builds the signed DMG and appcast, generates release notes from Conventional
 Commits, publishes both artifacts in a GitHub Release, and mirrors the cask to
 `ericjypark/homebrew-tap` when `HOMEBREW_TAP_TOKEN` is configured.

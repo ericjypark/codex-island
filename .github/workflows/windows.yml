@@ -1,0 +1,82 @@
+name: Windows installers
+
+on:
+  pull_request:
+    paths: ["windows/**", "VERSION", ".github/workflows/windows.yml"]
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths: ["windows/**", "VERSION", ".github/workflows/windows.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  build:
+    name: ${{ matrix.runtime }} installer
+    runs-on: windows-2025
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: [win-x64, win-arm64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: "10.0.x"
+      - name: Verify tag and application version agree
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $version=(Get-Content VERSION -Raw).Trim()
+          if($env:GITHUB_REF_NAME -ne ('v'+$version)){throw 'The tag must match VERSION.'}
+      - name: Run Windows logic checks
+        if: matrix.runtime == 'win-x64'
+        run: dotnet run --project windows/tests/logic/LogicTests.csproj -c Release
+      - name: Verify release publishing safeguards
+        if: matrix.runtime == 'win-x64'
+        run: python -m unittest discover -s windows/tests -p test_publish_release.py
+      - name: Build unsigned Windows preview
+        shell: pwsh
+        run: ./windows/build-installer.ps1 -Runtime '${{ matrix.runtime }}' -Unsigned -OutputDirectory '${{ runner.temp }}/windows-installer'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: windows-${{ matrix.runtime }}
+          path: |
+            ${{ runner.temp }}/windows-installer/*-Setup.exe
+            ${{ runner.temp }}/windows-installer/*.nupkg
+            ${{ runner.temp }}/windows-installer/releases.*.json
+            ${{ runner.temp }}/windows-installer/windows-*.json
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Attach Windows assets to the existing release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: windows-win-*
+          path: windows-assets
+          merge-multiple: true
+      - name: Publish installers and update feeds
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 windows/publish-release.py windows-assets

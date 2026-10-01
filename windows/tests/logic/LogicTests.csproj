@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="AppUpdateTests.cs" />
+    <Compile Include="../../IslandPrototype/AppUpdates.cs" Link="AppUpdates.cs" />
+    <Compile Include="../../IslandPrototype/DataPaths.cs" Link="DataPaths.cs" />
+    <Compile Include="LiveUsageTests.cs" />
+    <Compile Include="FooterStatusTests.cs" />
+    <Compile Include="../../IslandPrototype/FooterStatus.cs" Link="FooterStatus.cs" />
+    <Compile Include="CodexAccountTests.cs" />
+    <Compile Include="../../IslandPrototype/QuotaHistoryStore.cs" Link="QuotaHistoryStore.cs" />
+    <Compile Include="QuotaHistoryTests.cs" />
+    <Compile Include="../../IslandPrototype/WakeScheduling.cs" Link="WakeScheduling.cs" />
+    <Compile Include="WakeRecoveryTests.cs" />
+    <Compile Include="AccountSetupTests.cs" />
+    <Compile Include="../../IslandPrototype/GrokCompatibility.cs" Link="GrokCompatibility.cs" />
+    <Compile Include="../../IslandPrototype/CodexAccountReader.cs" Link="CodexAccountReader.cs" />
+    <Compile Include="../../IslandPrototype/CodexResetCredits.cs" Link="CodexResetCredits.cs" />
+    <Compile Include="ConnectedProviderTests.cs" />
+    <Compile Include="../../IslandPrototype/WindowsCliCredential.cs" Link="WindowsCliCredential.cs" />
+    <Compile Include="../../IslandPrototype/ProviderCredentialParser.cs" Link="ProviderCredentialParser.cs" />
+    <Compile Include="../../IslandPrototype/ConnectedProviderUsage.cs" Link="ConnectedProviderUsage.cs" />
+    <Compile Include="../../IslandPrototype/ProviderQuotaSelection.cs" Link="ProviderQuotaSelection.cs" />
+    <Compile Include="../../IslandPrototype/CliCredentialWatch.cs" Link="CliCredentialWatch.cs" />
+    <Compile Include="../../IslandPrototype/CliSessionRecovery.cs" Link="CliSessionRecovery.cs" />
+    <Compile Include="../../IslandPrototype/CliAccountActions.cs" Link="CliAccountActions.cs" />
+    <Compile Include="HistoryTests.cs" />
+    <Compile Include="../../IslandPrototype/PageScrollGesture.cs" Link="PageScrollGesture.cs" />
+    <Compile Include="../../IslandPrototype/UsageHistory.cs" Link="UsageHistory.cs" />
+    <Compile Include="../../IslandPrototype/HistoricalUsageDay.cs" Link="HistoricalUsageDay.cs" />
+    <Compile Include="../../IslandPrototype/HistoryImport.cs" Link="HistoryImport.cs" />
+    <Compile Include="../../IslandPrototype/NativeSqlite.cs" Link="NativeSqlite.cs" />
+    <Compile Include="../../IslandPrototype/UsageLedger.cs" Link="UsageLedger.cs" />
+    <Compile Include="../../IslandPrototype/LocalLogScanner.cs" Link="LocalLogScanner.cs" />
+    <Compile Include="../../IslandPrototype/DatabaseLogScanner.cs" Link="DatabaseLogScanner.cs" />
+    <Compile Include="../../IslandPrototype/ModelPricing.cs" Link="ModelPricing.cs" />
+    <Compile Include="../../IslandPrototype/HistorySummary.cs" Link="HistorySummary.cs" />
+    <Compile Include="../../IslandPrototype/HistoryCoordinator.cs" Link="HistoryCoordinator.cs" />
+    <Compile Include="../../IslandPrototype/LiveUsage.cs" Link="LiveUsage.cs" />
+    <Compile Include="../../IslandPrototype/CliCredentials.cs" Link="CliCredentials.cs" />
+    <Compile Include="../../IslandPrototype/ProviderUsageClient.cs" Link="ProviderUsageClient.cs" />
+    <Compile Include="../../IslandPrototype/PreferenceStore.cs" Link="PreferenceStore.cs" />
+    <Compile Include="../../IslandPrototype/CurrencyStore.cs" Link="CurrencyStore.cs" />
+    <Compile Include="../../IslandPrototype/Localizer.cs" Link="Localizer.cs" />
+    <Compile Include="../../IslandPrototype/ParityData.cs" Link="ParityData.cs" />
+    <Compile Include="../../IslandPrototype/AlertEngine.cs" Link="AlertEngine.cs" />
+    <Compile Include="../../IslandPrototype/UsageFeed.cs" Link="UsageFeed.cs" />
+    <Compile Include="../../IslandPrototype/FullscreenGeometry.cs" Link="FullscreenGeometry.cs" />
+    <Compile Include="../../IslandPrototype/ParityTheme.cs" Link="ParityTheme.cs" />
+    <Compile Include="../../IslandPrototype/UsageCardSnapshot.cs" Link="UsageCardSnapshot.cs" />
+    <Resource Include="../../IslandPrototype/Assets/*.json" Link="Assets/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>
