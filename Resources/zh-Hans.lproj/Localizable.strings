@@ -118,7 +118,7 @@
 "Syncing…" = "同步中…";
 "Target display" = "目标屏幕";
 "Target Display" = "目标屏幕";
-"Tint the island and pulse the peek pill when 5-hour usage nears your limit." = "当 5 小时用量接近限额时，为岛和预览胶囊显示提醒效果。";
+"Tint the island and pulse the peek pill when the selected usage window nears your limit." = "当所选周期的用量接近限额时，为岛和预览胶囊显示提醒效果。";
 "Tip: Command-click to cycle visualization" = "提示：Command 点击可切换可视化";
 "Today" = "今天";
 "Token counting" = "Token 统计";
@@ -401,3 +401,9 @@
 "No recorded reading" = "暂无使用记录";
 
 "Unlimited" = "不限额";
+
+"5-hour" = "5 小时";
+"Weekly" = "每周";
+"Compact usage window" = "紧凑用量周期";
+"%@ compact usage window" = "%@ 紧凑用量周期";
+"Auto prefers 5-hour usage, then an available window. Explicit choices show unavailable if not reported. Applies to compact usage and alerts; expanded charts still show all windows. Claude monthly credit alerts remain active." = "自动优先显示 5 小时用量，其次显示其他可用周期。明确选择的周期未报告时显示无数据。应用于紧凑用量和提醒；展开图表仍显示全部周期。Claude 月度额度提醒仍然生效。";

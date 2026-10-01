@@ -15,8 +15,26 @@ Codex charts follow the windows reported by the usage API, not the plan name.
 A weekly-only response displays one quota in the provider column; Rails and History span its width, while Ring uses one empty-center gauge with an adjacent reading.
 Two reported windows retain the 5h/week pair. The discovered window list survives
 failed refreshes, so an offline request cannot bring back a removed 5h tile.
-Zero-percent windows remain visible. Peek and alerts select the same available
-window, and chart styles and history keys remain unchanged.
+Zero-percent windows remain visible. Peek and alerts select the same window,
+and chart styles and history keys remain unchanged.
+
+## Compact usage window
+
+Settings → Display offers Auto, 5-hour, and Weekly independently for Claude and
+Codex. Auto retains the existing available-window selection, preferring a real
+five-hour reading. Explicit selections retain their period during failures or
+on plans without that period; missing readings show unavailable, not a fabricated
+zero or a reading from a different window. Retained readings keep their errors
+and reset timestamps. Expanded charts still show all reported windows.
+
+The choice controls both hover and always-show compact usage, including reset
+captions, accessibility labels, and limit alerts. Claude monthly credit alerts
+remain independent, and Auto still supports monthly-only Enterprise accounts.
+Grok and Antigravity keep their existing primary metric controls.
+
+`MacIsland.peekWindows` persists these display preferences by provider, rather
+than by left/right slot. Existing users default to Auto. Changes apply immediately
+without a network request or changing usage history.
 
 ## Claude Enterprise credits
 

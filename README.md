@@ -214,7 +214,8 @@ runs as an accessory app with no Dock icon and no menu bar.
 - **General:** Launch at Login, 5m/15m/30m refresh interval, app language,
   Always show usage, Low Power Mode, configurable limit alerts, and Sparkle
   update controls.
-- **Display:** used/remaining percentages, Usage and Cost visualization styles,
+- **Display:** used/remaining percentages, independent Claude/Codex compact
+  usage windows (Auto, 5-hour, or Weekly), Usage and Cost visualization styles,
   target display, and island width on non-notched screens.
 - **Providers:** Claude/Codex visibility and status, token-counting mode, and a
   manual refresh for local cost data. Cost estimates can be displayed in USD,
@@ -229,6 +230,12 @@ Preferences are stored in `UserDefaults` under `MacIsland.*` keys (Sparkle
 manages its own `SU*` update keys, and Launch at Login uses
 `SMAppService.mainApp`). Refresh, display, and provider changes apply live;
 changing the app language offers to restart CodexIsland.
+
+Compact window choices apply to hover peek, always-show usage, and limit alerts.
+Auto prefers a five-hour reading, then another available window, including Claude
+monthly credits. An explicit choice shows unavailable if that window is not
+reported; it never substitutes another period. Expanded charts continue showing
+all reported windows, and Claude monthly credit alerts remain independent.
 
 ## Build from source
 

@@ -118,7 +118,7 @@
 "Syncing…" = "Syncing…";
 "Target display" = "Target display";
 "Target Display" = "Target Display";
-"Tint the island and pulse the peek pill when 5-hour usage nears your limit." = "Tint the island and pulse the peek pill when 5-hour usage nears your limit.";
+"Tint the island and pulse the peek pill when the selected usage window nears your limit." = "Tint the island and pulse the peek pill when the selected usage window nears your limit.";
 "Tip: Command-click to cycle visualization" = "Tip: Command-click to cycle visualization";
 "Today" = "Today";
 "Token counting" = "Token counting";
@@ -401,3 +401,9 @@
 "No recorded reading" = "No recorded reading";
 
 "Unlimited" = "Unlimited";
+
+"5-hour" = "5-hour";
+"Weekly" = "Weekly";
+"Compact usage window" = "Compact usage window";
+"%@ compact usage window" = "%@ compact usage window";
+"Auto prefers 5-hour usage, then an available window. Explicit choices show unavailable if not reported. Applies to compact usage and alerts; expanded charts still show all windows. Claude monthly credit alerts remain active." = "Auto prefers 5-hour usage, then an available window. Explicit choices show unavailable if not reported. Applies to compact usage and alerts; expanded charts still show all windows. Claude monthly credit alerts remain active.";

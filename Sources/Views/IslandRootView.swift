@@ -455,6 +455,7 @@ private struct PeekPillOverlay: View {
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @ObservedObject private var connections = ProviderConnectionStore.shared
     @ObservedObject private var quotaPreferences = ProviderQuotaPreferences.shared
+    @ObservedObject private var peekPreferences = PeekWindowPreferenceStore.shared
     @ObservedObject private var usageStore = UsageStore.shared
     @ObservedObject private var alerts = AlertEngine.shared
 
@@ -514,8 +515,8 @@ private struct PeekPillOverlay: View {
 
     private var currentWindow: WindowUsage {
         switch provider {
-        case .claude: return usageStore.claude.peekWindow
-        case .codex:  return usageStore.codex.peekWindow
+        case .claude: return usageStore.claude.peekWindow(preference: peekPreferences.preference(for: provider))
+        case .codex:  return usageStore.codex.peekWindow(preference: peekPreferences.preference(for: provider))
         case .grok, .antigravity:
             return connections.primary(provider)?.window ?? .unknown
         }
@@ -531,8 +532,8 @@ private struct PeekPillOverlay: View {
 
     private var currentWindowKind: UsageWindow? {
         switch provider {
-        case .claude: return usageStore.claude.peekWindowKind
-        case .codex: return usageStore.codex.peekWindowKind
+        case .claude: return usageStore.claude.peekWindowKind(preference: peekPreferences.preference(for: provider))
+        case .codex: return usageStore.codex.peekWindowKind(preference: peekPreferences.preference(for: provider))
         case .grok, .antigravity: return nil
         }
     }

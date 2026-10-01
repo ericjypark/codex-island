@@ -302,18 +302,18 @@ final class UsageStore: ObservableObject {
     /// next scheduled poll will overwrite these values with real data.
     /// Each call uses fresh `resetAt` timestamps so the alert engine
     /// treats it as a new reset window and re-evaluates crossings.
-    func injectPreviewUsage(claudeFiveHour: Double, codexFiveHour: Double) {
+    func injectPreviewUsage(claudePercent: Double, codexPercent: Double) {
         let now = Date()
         let fiveHourReset = now.addingTimeInterval(2 * 3600 + 14 * 60)
         let weeklyReset = now.addingTimeInterval(4 * 86400 + 6 * 3600)
         self.claude = AppUsage(
             fiveHour: WindowUsage(
-                usedPercent: claudeFiveHour,
+                usedPercent: claudePercent,
                 resetAt: fiveHourReset,
                 error: nil
             ),
             weekly: WindowUsage(
-                usedPercent: 0.45,
+                usedPercent: claudePercent,
                 resetAt: weeklyReset,
                 error: nil
             ),
@@ -321,12 +321,12 @@ final class UsageStore: ObservableObject {
         )
         self.codex = AppUsage(
             fiveHour: WindowUsage(
-                usedPercent: codexFiveHour,
+                usedPercent: codexPercent,
                 resetAt: fiveHourReset,
                 error: nil
             ),
             weekly: WindowUsage(
-                usedPercent: 0.30,
+                usedPercent: codexPercent,
                 resetAt: weeklyReset,
                 error: nil
             ),
