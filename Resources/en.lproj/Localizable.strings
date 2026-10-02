@@ -412,3 +412,6 @@
 "Muse Code did not include usage limits in this response. Try again after using Muse Code." = "Muse Code did not include usage limits in this response. Try again after using Muse Code.";
 "Muse Code local token history is not supported yet" = "Muse Code local token history is not supported yet";
 "Last reading - refresh failed" = "Last reading - refresh failed";
+"Hide during Game Mode" = "Hide during Game Mode";
+"Hide the island while macOS Game Mode is active. It returns automatically when Game Mode ends." = "Hide the island while macOS Game Mode is active. It returns automatically when Game Mode ends.";
+

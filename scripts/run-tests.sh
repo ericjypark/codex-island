@@ -10,6 +10,12 @@ cd "$(dirname "$0")/.."
 OUT_DIR=$(mktemp -d)
 trap 'rm -rf "$OUT_DIR"' EXIT
 
+swiftc -parse-as-library -o "$OUT_DIR/game-mode-tests" \
+  Sources/Model/GameModeStore.swift \
+  Sources/Model/IslandVisibilityState.swift \
+  Tests/GameModeTests.swift
+"$OUT_DIR/game-mode-tests"
+
 python3 Tests/SetupSparkleTests.py
 
 swiftc -parse-as-library -o "$OUT_DIR/display-number-tests" \

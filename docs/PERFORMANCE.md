@@ -1,5 +1,32 @@
 # Rendering performance
 
+## Game Mode visibility
+
+`GameModeStore` reads the Boolean state on the Darwin notification
+`com.apple.system.console_mode_changed`, emitted by macOS `gamepolicyd`.
+This is an undocumented OS signal, not a supported Game Mode API. It was
+observed active on macOS 26.6 during a native full-screen game; do not infer
+support on every OS release from successful notification registration alone.
+Unknown states and read failures leave the island visible. No screen capture,
+Accessibility permission, private framework linking, or polling is needed.
+
+`MacIsland.hideDuringGameMode` defaults to true and can be disabled in General
+settings. `IslandWindowController` combines Game Mode with its existing lock
+state, so ending a game cannot reveal a locked session and unlocking cannot
+reveal the island while Game Mode remains active. An ordered-out island cannot
+activate the app or intercept mouse/keyboard input. Restoration does not make
+the window key or activate the application; the normal mouse behavior resumes
+on the next movement. The startup mouse-poll fallback is stopped while hidden.
+Occlusion suppresses the glow, while existing provider/history refreshes remain
+unchanged. Display switching never overrides suppression.
+
+`Tests/GameModeTests.swift` exercises preference persistence, combined lock/game
+transitions, hidden-window input gating, startup during Game Mode, and real
+Darwin notification delivery in a unique test namespace. Tests never write or
+post Apple's Game Mode notification. Live acceptance additionally needs an
+actual game entering/leaving Game Mode and a check that foreground focus is
+preserved, including a launch while Game Mode is already active.
+
 ## Keep history preparation outside interaction updates
 
 `OverviewView` observes cost data and constructs the current-year snapshot.

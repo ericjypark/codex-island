@@ -412,3 +412,6 @@
 "Muse Code did not include usage limits in this response. Try again after using Muse Code." = "Muse Code 本次响应未提供用量限额。使用 Muse Code 后请重试。";
 "Muse Code local token history is not supported yet" = "暂不支持 Muse Code 的本地 token 历史记录";
 "Last reading - refresh failed" = "上次读数 - 刷新失败";
+"Hide during Game Mode" = "游戏模式期间隐藏";
+"Hide the island while macOS Game Mode is active. It returns automatically when Game Mode ends." = "macOS 游戏模式启用时隐藏灵动岛，游戏模式结束后自动恢复。";
+

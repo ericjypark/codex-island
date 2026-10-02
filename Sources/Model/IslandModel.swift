@@ -19,6 +19,7 @@ final class IslandModel: ObservableObject {
     }
 
     @Published var state: State = .compact
+    @Published var isSuppressed = false
     @Published var size: CGSize = .zero
     @Published var notch: NotchInfo
     @Published var edgeBump: EdgeBump?

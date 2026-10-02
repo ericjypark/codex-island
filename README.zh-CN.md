@@ -92,6 +92,9 @@ Claude：
 
 设置窗口是自定义 `NSWindow`，不是系统 Settings scene。应用仍以无 Dock 图标、无菜单栏的 accessory app 方式运行。
 
+“通用 → 游戏模式期间隐藏”默认开启。macOS 游戏模式启用时自动隐藏灵动岛，
+结束后恢复且不抢占焦点。关闭此设置可让灵动岛在游戏模式期间保持可见。
+
 主要偏好：
 
 | 设置 | 存储 | UserDefaults key | 值 |
