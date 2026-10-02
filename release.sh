@@ -28,7 +28,7 @@ if ! command -v create-dmg >/dev/null 2>&1; then
   exit 1
 fi
 
-./build.sh
+ENABLE_UPDATES=1 ./build.sh
 
 rm -rf "$DIST"
 mkdir -p "$DIST"
