@@ -51,8 +51,11 @@ settings. `IslandWindowController` combines Game Mode with its existing lock
 state, so ending a game cannot reveal a locked session and unlocking cannot
 reveal the island while Game Mode remains active. An ordered-out island cannot
 activate the app or intercept mouse/keyboard input. Restoration does not make
-the window key or activate the application; the normal mouse behavior resumes
-on the next movement. The startup mouse-poll fallback is stopped while hidden.
+the window key or activate the application. Restoration immediately recomputes
+click-through at the current pointer position, so a stationary pointer can click
+the restored island. It prepares keyboard handling (still gated by key-window
+status) without consuming the next real pointer entry. The startup mouse-poll
+fallback is stopped while hidden.
 Occlusion suppresses the glow, while existing provider/history refreshes remain
 unchanged. Display switching never overrides suppression.
 
@@ -62,6 +65,14 @@ Darwin notification delivery in a unique test namespace. Tests never write or
 post Apple's Game Mode notification. Live acceptance additionally needs an
 actual game entering/leaving Game Mode and a check that foreground focus is
 preserved, including a launch while Game Mode is already active.
+
+`Tests/WindowInteractionTests.swift` compiles the real window controller against
+window/input/store spies. It exercises hide/restore beneath a stationary pointer,
+outside-pointer click-through, compact/peek modes, combined suppressors, unlock,
+focus preservation, the next real pointer entry, and keyboard-monitor lifecycle.
+The regression fails against the controller before the restoration fix. It
+does not display windows, capture or inject system input, activate applications,
+or establish live AppKit/SwiftUI event behavior.
 
 ## Keep history preparation outside interaction updates
 

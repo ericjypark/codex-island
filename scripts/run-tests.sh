@@ -10,6 +10,12 @@ cd "$(dirname "$0")/.."
 OUT_DIR=$(mktemp -d)
 trap 'rm -rf "$OUT_DIR"' EXIT
 
+swiftc -parse-as-library -o "$OUT_DIR/window-interaction-tests" \
+  Sources/Window/IslandWindowController.swift \
+  Sources/Model/IslandVisibilityState.swift \
+  Tests/WindowInteractionTests.swift
+"$OUT_DIR/window-interaction-tests"
+
 swiftc -parse-as-library -o "$OUT_DIR/fullscreen-tests" \
   Sources/Model/FullscreenSpaceReader.swift \
   Sources/Model/FullscreenStore.swift \

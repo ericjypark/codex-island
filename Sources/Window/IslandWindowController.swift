@@ -116,7 +116,7 @@ final class IslandWindowController {
         trackingTimer = nil
     }
 
-    private func updateMouseEventsBasedOnCursor() {
+    private func updateMouseEventsBasedOnCursor(activateOnEntry: Bool = true) {
         guard visibility.allowsMouseInteraction(windowIsVisible: window.isVisible) else {
             suspendMouseInteraction()
             return
@@ -136,16 +136,20 @@ final class IslandWindowController {
         if window.ignoresMouseEvents == inside {
             window.ignoresMouseEvents = !inside
         }
+        if inside, cmdQMonitor == nil {
+            cmdQMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                self?.handleKeyDown(event) ?? event
+            }
+        } else if !inside, let monitor = cmdQMonitor {
+            NSEvent.removeMonitor(monitor)
+            cmdQMonitor = nil
+        }
+        // Restoring click access must not focus the app or consume the next
+        // real pointer entry. Keyboard handling remains gated by isKeyWindow.
+        guard activateOnEntry else { return }
         if inside != isMouseInsideIsland {
             isMouseInsideIsland = inside
-            if inside {
-                cmdQMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-                    self?.handleKeyDown(event) ?? event
-                }
-            } else {
-                if let m = cmdQMonitor { NSEvent.removeMonitor(m) }
-                cmdQMonitor = nil
-            }
+
         }
     }
 
@@ -281,6 +285,7 @@ final class IslandWindowController {
         guard !window.isVisible else { return }
         window.alphaValue = 1
         window.orderFrontRegardless()
+        updateMouseEventsBasedOnCursor(activateOnEntry: false)
         WindowOcclusionStore.shared.update(isVisible: window.occlusionState.contains(.visible))
     }
 
