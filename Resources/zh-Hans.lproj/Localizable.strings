@@ -401,3 +401,8 @@
 "No recorded reading" = "暂无使用记录";
 
 "Unlimited" = "不限额";
+
+"Hide during Game Mode" = "游戏模式期间隐藏";
+"Hide in fullscreen" = "全屏时隐藏";
+"Hide the island in fullscreen Spaces on its display, including fullscreen video." = "灵动岛所在显示器进入全屏空间时隐藏，包括全屏视频。";
+"Hide the island while macOS Game Mode is active. It returns automatically when Game Mode ends." = "macOS 游戏模式启用时隐藏灵动岛，游戏模式结束后自动恢复。";

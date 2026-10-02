@@ -18,6 +18,7 @@ final class IslandWindowController {
     private var hasSeenMouseEvent = false
     private var isMouseInsideIsland = false
     private var cmdQMonitor: Any?
+    private var visibility = IslandVisibilityState()
 
     static let windowSize = CGSize(width: 900, height: 360)
 
@@ -48,13 +49,13 @@ final class IslandWindowController {
 
     func show() {
         repositionForCurrentScreen()
-        window.orderFrontRegardless()
-        NSApp.activate(ignoringOtherApps: true)
         installMouseTracking()
         observeScreenChanges()
         observeTargetChoice()
         observeOcclusion()
         observeSessionState()
+        observeVisibility()
+        if !visibility.shouldHide { NSApp.activate(ignoringOtherApps: true) }
     }
 
     deinit {
@@ -115,7 +116,11 @@ final class IslandWindowController {
         trackingTimer = nil
     }
 
-    private func updateMouseEventsBasedOnCursor() {
+    private func updateMouseEventsBasedOnCursor(activateOnEntry: Bool = true) {
+        guard visibility.allowsMouseInteraction(windowIsVisible: window.isVisible) else {
+            suspendMouseInteraction()
+            return
+        }
         let cursor = NSEvent.mouseLocation
         let win = window.frame
         let local = NSPoint(x: cursor.x - win.minX, y: cursor.y - win.minY)
@@ -131,23 +136,29 @@ final class IslandWindowController {
         if window.ignoresMouseEvents == inside {
             window.ignoresMouseEvents = !inside
         }
+        if inside, cmdQMonitor == nil {
+            cmdQMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                self?.handleKeyDown(event) ?? event
+            }
+        } else if !inside, let monitor = cmdQMonitor {
+            NSEvent.removeMonitor(monitor)
+            cmdQMonitor = nil
+        }
+        // Restoring click access must not focus the app or consume the next
+        // real pointer entry. Keyboard handling remains gated by isKeyWindow.
+        guard activateOnEntry else { return }
         if inside != isMouseInsideIsland {
             isMouseInsideIsland = inside
             if inside {
                 NSApp.activate(ignoringOtherApps: true)
                 window.makeKey()
-                cmdQMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-                    self?.handleKeyDown(event) ?? event
-                }
-            } else {
-                if let m = cmdQMonitor { NSEvent.removeMonitor(m) }
-                cmdQMonitor = nil
             }
         }
     }
 
     private func handleKeyDown(_ event: NSEvent) -> NSEvent? {
-        guard window.isKeyWindow else { return event }
+        guard visibility.allowsMouseInteraction(windowIsVisible: window.isVisible),
+              window.isKeyWindow else { return event }
 
         let modifiers = event.modifierFlags
             .intersection(.deviceIndependentFlagsMask)
@@ -210,10 +221,11 @@ final class IslandWindowController {
             object: window,
             queue: .main
         ) { [weak self] _ in
-            guard let self else { return }
-            let visible = self.window.occlusionState.contains(.visible)
             Task { @MainActor in
-                WindowOcclusionStore.shared.update(isVisible: visible)
+                guard let self else { return }
+                WindowOcclusionStore.shared.update(
+                    isVisible: !self.visibility.shouldHide && self.window.occlusionState.contains(.visible)
+                )
             }
         }
     }
@@ -229,28 +241,65 @@ final class IslandWindowController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.fadeOut() }
+            Task { @MainActor in
+                self?.visibility.isSessionLocked = true
+                self?.applyVisibility()
+            }
         }
         sessionActiveObserver = dc.addObserver(
             forName: NSNotification.Name("com.apple.screenIsUnlocked"),
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.fadeIn() }
+            Task { @MainActor in
+                GameModeStore.shared.refresh()
+                FullscreenStore.shared.refresh()
+                self?.visibility.isSessionLocked = false
+                self?.applyVisibility()
+            }
         }
     }
 
-    private func fadeOut() {
-        window.orderOut(nil)
+    private func observeVisibility() {
+        let store = GameModeStore.shared
+        let fullscreen = FullscreenStore.shared
+        store.$isActive.combineLatest(store.$hideDuringGameMode,
+                                      fullscreen.$isActive, fullscreen.$hideInFullscreen)
+            .sink { [weak self] active, enabled, isFullscreen, hideInFullscreen in
+                guard let self else { return }
+                self.visibility.isGameModeActive = active
+                self.visibility.hideDuringGameMode = enabled
+                self.visibility.isFullscreen = isFullscreen
+                self.visibility.hideInFullscreen = hideInFullscreen
+                self.applyVisibility()
+            }
+            .store(in: &subs)
     }
 
-    private func fadeIn() {
-        window.alphaValue = 0
+    private func applyVisibility() {
+        model.isSuppressed = visibility.shouldHide
+        if visibility.shouldHide {
+            suspendMouseInteraction()
+            model.setState(AlwaysShowUsageStore.shared.enabled ? .peek : .compact)
+            window.orderOut(nil)
+            WindowOcclusionStore.shared.update(isVisible: false)
+            return
+        }
+        guard !window.isVisible else { return }
+        window.alphaValue = 1
         window.orderFrontRegardless()
-        NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.4
-            ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            window.animator().alphaValue = 1
+        updateMouseEventsBasedOnCursor(activateOnEntry: false)
+        WindowOcclusionStore.shared.update(isVisible: window.occlusionState.contains(.visible))
+    }
+
+    private func suspendMouseInteraction() {
+        window.ignoresMouseEvents = true
+        isMouseInsideIsland = false
+        trackingTimer?.invalidate()
+        trackingTimer = nil
+        if let monitor = cmdQMonitor {
+            NSEvent.removeMonitor(monitor)
+            cmdQMonitor = nil
         }
     }
 
@@ -264,6 +313,7 @@ final class IslandWindowController {
     }
 
     private func repositionForCurrentScreen() {
+        FullscreenStore.shared.refresh()
         guard let screen = Self.targetScreen() else { return }
         model.updateNotch(NotchInfo.detect(from: screen))
         let size = Self.windowSize

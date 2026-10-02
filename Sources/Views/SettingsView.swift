@@ -15,6 +15,8 @@ struct SettingsView: View {
     @ObservedObject private var tokenMode = TokenCountModeStore.shared
     @ObservedObject private var lowPower = LowPowerModeStore.shared
     @ObservedObject private var alwaysShow = AlwaysShowUsageStore.shared
+    @ObservedObject private var gameMode = GameModeStore.shared
+    @ObservedObject private var fullscreen = FullscreenStore.shared
     @ObservedObject private var alertPrefs = AlertThresholdStore.shared
     @ObservedObject private var spacing = IslandSpacingStore.shared
     @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
@@ -245,6 +247,22 @@ struct SettingsView: View {
             ) {
                 SettingsToggle(isOn: alwaysShow.enabled) {
                     alwaysShow.enabled.toggle()
+                }
+            }
+            SettingsRow(
+                title: "Hide during Game Mode",
+                subtitle: "Hide the island while macOS Game Mode is active. It returns automatically when Game Mode ends."
+            ) {
+                SettingsToggle(isOn: gameMode.hideDuringGameMode) {
+                    gameMode.hideDuringGameMode.toggle()
+                }
+            }
+            SettingsRow(
+                title: "Hide in fullscreen",
+                subtitle: "Hide the island in fullscreen Spaces on its display, including fullscreen video."
+            ) {
+                SettingsToggle(isOn: fullscreen.hideInFullscreen) {
+                    fullscreen.hideInFullscreen.toggle()
                 }
             }
             SettingsRow(

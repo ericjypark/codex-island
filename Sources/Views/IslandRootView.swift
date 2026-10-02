@@ -233,10 +233,16 @@ struct IslandRootView: View {
             // No animation here — the window is just becoming visible, so the
             // user sees the silhouette appear already at peek width rather
             // than morphing out under their gaze.
-            if alwaysShow.enabled && model.state == .compact {
+            if alwaysShow.enabled && model.state != .expanded {
                 model.setState(.peek)
                 pillsVisible = true
             }
+        }
+        .onChange(of: model.isSuppressed) { _ in
+            hovering = false
+            contentVisible = false
+            pillsVisible = alwaysShow.enabled
+            model.setState(restState)
         }
         .onChange(of: alwaysShow.enabled) { enabled in
             // Live toggle — defer to the user's current interaction. If they
