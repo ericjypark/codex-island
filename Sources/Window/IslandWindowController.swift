@@ -54,7 +54,7 @@ final class IslandWindowController {
         observeTargetChoice()
         observeOcclusion()
         observeSessionState()
-        observeGameMode()
+        observeVisibility()
         if !visibility.shouldHide { NSApp.activate(ignoringOtherApps: true) }
     }
 
@@ -246,19 +246,24 @@ final class IslandWindowController {
         ) { [weak self] _ in
             Task { @MainActor in
                 GameModeStore.shared.refresh()
+                FullscreenStore.shared.refresh()
                 self?.visibility.isSessionLocked = false
                 self?.applyVisibility()
             }
         }
     }
 
-    private func observeGameMode() {
+    private func observeVisibility() {
         let store = GameModeStore.shared
-        store.$isActive.combineLatest(store.$hideDuringGameMode)
-            .sink { [weak self] active, enabled in
+        let fullscreen = FullscreenStore.shared
+        store.$isActive.combineLatest(store.$hideDuringGameMode,
+                                      fullscreen.$isActive, fullscreen.$hideInFullscreen)
+            .sink { [weak self] active, enabled, isFullscreen, hideInFullscreen in
                 guard let self else { return }
                 self.visibility.isGameModeActive = active
                 self.visibility.hideDuringGameMode = enabled
+                self.visibility.isFullscreen = isFullscreen
+                self.visibility.hideInFullscreen = hideInFullscreen
                 self.applyVisibility()
             }
             .store(in: &subs)
@@ -300,6 +305,7 @@ final class IslandWindowController {
     }
 
     private func repositionForCurrentScreen() {
+        FullscreenStore.shared.refresh()
         guard let screen = Self.targetScreen() else { return }
         model.updateNotch(NotchInfo.detect(from: screen))
         let size = Self.windowSize

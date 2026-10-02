@@ -1,5 +1,41 @@
 # Rendering performance
 
+## Fullscreen visibility
+
+`FullscreenStore` hides the island in the current native fullscreen Space on
+the island's selected display. `MacIsland.hideInFullscreen` defaults to true
+and has an independent General setting. Native fullscreen video and Split View
+are covered; ordinary maximized windows and fullscreen apps in inactive Spaces
+are not fullscreen suppressors. Fullscreen on another display does not hide the
+island. A shared Space (when displays do not have separate Spaces) applies to all
+displays. Custom borderless modes that do not create a native fullscreen Space
+are not detected by this setting.
+
+Apple documents `NSApplication.currentSystemPresentationOptions` as observable,
+but it reported no fullscreen flag while Firefox occupied a native fullscreen
+Space on the tested macOS 26.6 system. `FullscreenSpaceReader` instead optionally
+resolves `CGSMainConnectionID` and `CGSCopyManagedDisplaySpaces` at runtime. These
+are undocumented, read-only WindowServer interfaces. It inspects only the target
+display's `Current Space` type (0 for desktop, 4 for fullscreen), not other
+Spaces or window bounds. Missing symbols, display mappings, or unfamiliar
+payloads fail open. No screen capture, Accessibility access, browser data,
+private framework linking, or Space mutation is involved.
+
+The store reads at startup and on workspace Space/app/wake and display-change
+notifications, with explicit refreshes on target selection and unlock. There is
+no polling timer. The combined visibility subscription seeds all suppressors
+before the first display; hiding and restoring reuse the input/focus safeguards
+below. Fullscreen, Game Mode and lock are independent: all enabled suppressors
+must clear before restoration. macOS can keep Game Mode active briefly after
+leaving a game, delaying restoration even on the desktop.
+
+`Tests/FullscreenTests.swift` covers display mapping, malformed snapshots,
+inactive fullscreen Spaces, every lock/game/fullscreen preference combination,
+input gating, preference persistence, startup and notification refreshes using
+private test notification centers. Fixtures are not proof of live transitions.
+Live acceptance additionally checks native browser video entry/exit and Space
+switches, startup in fullscreen, selected-monitor changes, and preserved focus.
+
 ## Game Mode visibility
 
 `GameModeStore` reads the Boolean state on the Darwin notification
