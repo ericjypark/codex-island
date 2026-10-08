@@ -18,6 +18,7 @@ swiftc -parse-as-library -o "$OUT_DIR/window-interaction-tests" \
 
 swiftc -parse-as-library -o "$OUT_DIR/fullscreen-tests" \
   Sources/Model/FullscreenSpaceReader.swift \
+  Sources/Model/FullscreenWindowReader.swift \
   Sources/Model/FullscreenStore.swift \
   Sources/Model/IslandVisibilityState.swift \
   Sources/Model/DisplayInfo.swift \

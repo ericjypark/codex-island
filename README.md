@@ -99,9 +99,10 @@ for authentication details and data limitations.
 - **Game Mode auto-hide.** The island hides while macOS Game Mode is active
   and returns automatically afterward, without taking focus. Enabled by
   default; turn off **General → Hide during Game Mode** to keep it visible.
-- **Fullscreen auto-hide.** The island also hides in native fullscreen Spaces
-  on its selected display, including browser video and Split View. Enabled by
-  default; control it independently with **General → Hide in fullscreen**.
+- **Fullscreen auto-hide.** The island hides in native fullscreen Spaces,
+  including browser video and Split View, and when a foreground video or
+  borderless game fills its selected display. Enabled by default; control it
+  independently with **General → Hide in fullscreen**.
 - **English and Simplified Chinese.** Follow the macOS language automatically
   or choose a language in Settings.
 - **Display selection.** Auto-pick a notched display or pin the island to a

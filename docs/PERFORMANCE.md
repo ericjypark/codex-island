@@ -2,14 +2,13 @@
 
 ## Fullscreen visibility
 
-`FullscreenStore` hides the island in the current native fullscreen Space on
-the island's selected display. `MacIsland.hideInFullscreen` defaults to true
-and has an independent General setting. Native fullscreen video and Split View
-are covered; ordinary maximized windows and fullscreen apps in inactive Spaces
-are not fullscreen suppressors. Fullscreen on another display does not hide the
-island. A shared Space (when displays do not have separate Spaces) applies to all
-displays. Custom borderless modes that do not create a native fullscreen Space
-are not detected by this setting.
+`FullscreenStore` hides the island in the current native fullscreen Space or
+when a foreground application's visible window fills the island's selected
+display. `MacIsland.hideInFullscreen` defaults to true and has an independent
+General setting. This covers native fullscreen video and Split View, plus
+non-native VLC video and CrossOver-style borderless games. Fullscreen on another
+display does not hide the island. A shared native Space (when displays do not
+have separate Spaces) applies to all displays.
 
 Apple documents `NSApplication.currentSystemPresentationOptions` as observable,
 but it reported no fullscreen flag while Firefox occupied a native fullscreen
@@ -17,13 +16,28 @@ Space on the tested macOS 26.6 system. `FullscreenSpaceReader` instead optionall
 resolves `CGSMainConnectionID` and `CGSCopyManagedDisplaySpaces` at runtime. These
 are undocumented, read-only WindowServer interfaces. It inspects only the target
 display's `Current Space` type (0 for desktop, 4 for fullscreen), not other
-Spaces or window bounds. Missing symbols, display mappings, or unfamiliar
-payloads fail open. No screen capture, Accessibility access, browser data,
-private framework linking, or Space mutation is involved.
+Spaces. Missing symbols, display mappings, or unfamiliar payloads fail open.
+
+If no native fullscreen Space is detected, `FullscreenWindowReader` reads
+on-screen window metadata with `CGWindowListCopyWindowInfo`. It matches the
+foreground application's visible, nontransparent windows against
+`CGDisplayBounds` for the selected display. Both APIs use the same top-left
+coordinate system, including negative origins on additional displays. All four
+edges must match within two points. Desktop layers, Finder, the island itself,
+background apps, inactive Spaces, windows spanning displays, and maximized
+work-area windows that leave room for the menu bar or Dock do not qualify.
+This is a geometry heuristic: a manually resized window that fills the entire
+display is also treated as fullscreen. Neither reader captures pixels, reads
+window titles or browser content, requests Accessibility/Screen Recording
+permission, links a private framework, or changes Spaces.
 
 The store reads at startup and on workspace Space/app/wake and display-change
-notifications, with explicit refreshes on target selection and unlock. There is
-no polling timer. The combined visibility subscription seeds all suppressors
+notifications, with explicit refreshes on target selection and unlock. A
+one-second timer with 20% scheduling tolerance also checks for same-app
+fullscreen entry/exit, which need not emit app or Space notifications. It runs
+only while fullscreen hiding is enabled and pauses on display/system sleep and
+session lock. Disabling, suspending, or destroying the store invalidates the
+timer; queued ticks are gated too. The combined visibility subscription seeds all suppressors
 before the first display; hiding and restoring reuse the input/focus safeguards
 below. Fullscreen, Game Mode and lock are independent: all enabled suppressors
 must clear before restoration. macOS can keep Game Mode active briefly after
@@ -32,9 +46,14 @@ leaving a game, delaying restoration even on the desktop.
 `Tests/FullscreenTests.swift` covers display mapping, malformed snapshots,
 inactive fullscreen Spaces, every lock/game/fullscreen preference combination,
 input gating, preference persistence, startup and notification refreshes using
-private test notification centers. Fixtures are not proof of live transitions.
+private test notification centers. Window fixtures cover borderless video/games,
+foreground identity, display geometry, malformed metadata and maximized-window
+exclusions. A real timer with an injected short interval verifies same-app
+entry/exit, opt-out, sleep/lock suspension, resume and teardown without displaying
+windows. Fixtures are not proof of live transitions.
 Live acceptance additionally checks native browser video entry/exit and Space
-switches, startup in fullscreen, selected-monitor changes, and preserved focus.
+switches, VLC non-native fullscreen, CrossOver borderless entry/exit, startup in
+fullscreen, selected-monitor changes, and preserved focus.
 
 ## Game Mode visibility
 

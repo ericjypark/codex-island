@@ -7,7 +7,10 @@ struct FullscreenTests {
     static func main() async {
         var checks = 0
         func check(_ condition: Bool, _ message: String) {
-            precondition(condition, message)
+            guard condition else {
+                FileHandle.standardError.write(Data("FAIL: \(message)\n".utf8))
+                exit(1)
+            }
             checks += 1
         }
         func display(_ id: String, _ type: Int) -> [String: Any] {
@@ -38,6 +41,54 @@ struct FullscreenTests {
         check(decode([["Display Identifier": "built-in", "Current Space": ["type": 0],
                        "Spaces": [["type": 4]]]]) == false, "A game in an inactive Space does not hide the desktop")
 
+        let screen = CGRect(x: 0, y: 0, width: 1512, height: 982)
+        let pid: pid_t = 123
+        func window(_ bounds: CGRect, owner: pid_t = 123, layer: Int = 0,
+                    alpha: Double = 1, onScreen: Bool = true) -> [String: Any] {
+            [kCGWindowOwnerPID as String: owner, kCGWindowBounds as String: bounds.dictionaryRepresentation,
+             kCGWindowLayer as String: layer, kCGWindowAlpha as String: alpha,
+             kCGWindowIsOnscreen as String: onScreen]
+        }
+        func covers(_ windows: [[String: Any]], target: CGRect? = nil) -> Bool {
+            FullscreenWindowReader.isFullscreen(windows: windows, targetBounds: target ?? screen,
+                                                 foregroundPID: pid)
+        }
+        check(decode([desktop]) == false && covers([window(screen)]),
+              "CrossOver borderless fullscreen hides even on a desktop Space")
+        check(covers([window(screen, layer: 3)]), "VLC floating fullscreen video hides")
+        check(!covers([window(screen, owner: 456)]), "Background apps do not suppress the foreground desktop")
+        check(covers([window(CGRect(x: 10, y: 10, width: 200, height: 100)), window(screen)]),
+              "A foreground video application's controls do not mask its fullscreen video window")
+        check(!covers([window(CGRect(x: 0, y: 38, width: 1512, height: 874))]),
+              "An ordinary maximized window leaves menu bar and Dock space")
+        check(!covers([window(CGRect(x: 0, y: 38, width: 1512, height: 944))]),
+              "Maximized windows with an auto-hidden Dock still leave menu bar space")
+        check(!covers([window(CGRect(x: 100, y: 100, width: 800, height: 600))]),
+              "Windowed video and games do not hide")
+        check(!covers([window(screen, onScreen: false)]), "Minimized or inactive-Space windows do not hide")
+        check(!covers([window(screen, alpha: 0)]), "Invisible windows do not hide")
+        check(!covers([window(screen, alpha: .infinity)]), "Invalid opacity fails open")
+        check(!covers([window(screen, layer: -1)]), "Desktop layers do not hide")
+        let otherScreen = CGRect(x: -1920, y: -1200, width: 1920, height: 1200)
+        check(!covers([window(otherScreen)]), "Fullscreen on another display does not hide")
+        check(covers([window(otherScreen)], target: otherScreen),
+              "Selected displays above and left use Core Graphics coordinates")
+        check(!covers([window(CGRect(x: -1920, y: 0, width: 3432, height: 982))]),
+              "Oversized windows spanning displays are not mistaken for fullscreen")
+        check(covers([window(screen.insetBy(dx: 1, dy: 1))]), "One-point rounding is tolerated")
+        check(!covers([window(screen.insetBy(dx: 3, dy: 3))]), "Substantial borders do not qualify")
+        check(!covers([]), "Missing windows fail open")
+        check(!covers([window(screen)], target: .zero), "Unknown display geometry fails open")
+        check(!covers([window(CGRect(x: 0, y: 0, width: CGFloat.infinity, height: 982))]),
+              "Non-finite window geometry fails open")
+        check(!FullscreenWindowReader.isFullscreen(windows: [window(screen)], targetBounds: screen,
+                                                   foregroundPID: 0), "Missing foreground identity fails open")
+        for key in [kCGWindowOwnerPID, kCGWindowBounds, kCGWindowLayer, kCGWindowAlpha, kCGWindowIsOnscreen] {
+            var malformed = window(screen)
+            malformed.removeValue(forKey: key as String)
+            check(!covers([malformed]), "Missing required metadata fails open: \(key)")
+        }
+
         for locked in [false, true] {
             for game in [false, true] {
                 for hideGame in [false, true] {
@@ -63,10 +114,11 @@ struct FullscreenTests {
         defaults.set("preserved", forKey: "unrelated")
         let workspace = NotificationCenter()
         let application = NotificationCenter()
+        let session = NotificationCenter()
         var reading: Bool? = true
         var reads = 0
         let store = FullscreenStore(defaults: defaults, workspaceCenter: workspace,
-                                    applicationCenter: application) {
+                                    applicationCenter: application, sessionCenter: session) {
             reads += 1
             return reading
         }
@@ -82,7 +134,8 @@ struct FullscreenTests {
         store.hideInFullscreen = false
         check(!visibility.shouldHide, "Opt-out restores immediately")
         check(!FullscreenStore(defaults: defaults, workspaceCenter: workspace,
-                               applicationCenter: application, readFullscreen: { true }).hideInFullscreen,
+                               applicationCenter: application, sessionCenter: session,
+                               readFullscreen: { true }).hideInFullscreen,
               "Opt-out survives relaunch")
         store.hideInFullscreen = true
         check(visibility.shouldHide, "Opt-in hides immediately")
@@ -121,6 +174,77 @@ struct FullscreenTests {
         visibility.isGameModeActive = false
         check(!visibility.shouldHide, "Clearing all suppression reasons restores")
         check(defaults.string(forKey: "unrelated") == "preserved", "Unrelated settings remain intact")
+
+        var liveWindows = [window(CGRect(x: 100, y: 100, width: 800, height: 600))]
+        var pollReads = 0
+        var pollingStore: FullscreenStore? = FullscreenStore(
+            defaults: defaults, workspaceCenter: workspace, applicationCenter: application,
+            sessionCenter: session, pollInterval: 0.02
+        ) {
+            pollReads += 1
+            return covers(liveWindows)
+        }
+        func waitFor(_ predicate: () -> Bool) async -> Bool {
+            for _ in 0..<100 {
+                if predicate() { return true }
+                try? await Task.sleep(nanoseconds: 10_000_000)
+            }
+            return false
+        }
+        check(pollingStore?.isActive == false, "Windowed launch stays visible")
+        liveWindows = [window(screen)]
+        let entered = await waitFor { pollingStore?.isActive == true }
+        check(entered, "The timer detects same-app fullscreen entry without a notification")
+        liveWindows = []
+        let exited = await waitFor { pollingStore?.isActive == false }
+        check(exited, "The timer detects same-app fullscreen exit without a notification")
+
+        pollingStore?.hideInFullscreen = false
+        let disabledReads = pollReads
+        liveWindows = [window(screen)]
+        try? await Task.sleep(nanoseconds: 80_000_000)
+        check(pollReads == disabledReads, "Disabled fullscreen hiding stops window inspection")
+        pollingStore?.hideInFullscreen = true
+        check(pollingStore?.isActive == true, "Re-enabling immediately reads current geometry")
+        liveWindows = []
+        let resumed = await waitFor { pollingStore?.isActive == false }
+        check(resumed, "Re-enabling also resumes periodic detection")
+
+        for (pause, resume, center) in [
+            (NSWorkspace.screensDidSleepNotification, NSWorkspace.screensDidWakeNotification, workspace),
+            (NSWorkspace.willSleepNotification, NSWorkspace.didWakeNotification, workspace),
+            (Notification.Name("com.apple.screenIsLocked"), Notification.Name("com.apple.screenIsUnlocked"), session)
+        ] {
+            center.post(name: pause, object: nil)
+            try? await Task.sleep(nanoseconds: 30_000_000)
+            let pausedReads = pollReads
+            liveWindows = [window(screen)]
+            try? await Task.sleep(nanoseconds: 80_000_000)
+            check(pollReads == pausedReads, "Sleep/lock suspends window inspection: \(pause)")
+            center.post(name: resume, object: nil)
+            let woke = await waitFor { pollingStore?.isActive == true }
+            check(woke, "Wake/unlock immediately refreshes: \(resume)")
+            liveWindows = []
+            let pollingAgain = await waitFor { pollingStore?.isActive == false }
+            check(pollingAgain, "Wake/unlock resumes periodic detection: \(resume)")
+        }
+        workspace.post(name: NSWorkspace.screensDidSleepNotification, object: nil)
+        workspace.post(name: NSWorkspace.willSleepNotification, object: nil)
+        session.post(name: .init("com.apple.screenIsLocked"), object: nil)
+        try? await Task.sleep(nanoseconds: 30_000_000)
+        let suspendedReads = pollReads
+        liveWindows = [window(screen)]
+        workspace.post(name: NSWorkspace.didWakeNotification, object: nil)
+        session.post(name: .init("com.apple.screenIsUnlocked"), object: nil)
+        try? await Task.sleep(nanoseconds: 80_000_000)
+        check(pollReads == suspendedReads, "System wake/unlock cannot resume inspection while the display sleeps")
+        workspace.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
+        let fullyAwake = await waitFor { pollingStore?.isActive == true }
+        check(fullyAwake, "Clearing the final suspension resumes inspection")
+        pollingStore = nil
+        let finalReads = pollReads
+        try? await Task.sleep(nanoseconds: 80_000_000)
+        check(pollReads == finalReads, "Destroying the store stops polling")
         print("PASS \(checks) fullscreen and visibility checks")
     }
 }

@@ -259,7 +259,7 @@ struct SettingsView: View {
             }
             SettingsRow(
                 title: "Hide in fullscreen",
-                subtitle: "Hide the island in fullscreen Spaces on its display, including fullscreen video."
+                subtitle: "Hide the island during fullscreen video and games on its display."
             ) {
                 SettingsToggle(isOn: fullscreen.hideInFullscreen) {
                     fullscreen.hideInFullscreen.toggle()
