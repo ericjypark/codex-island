@@ -177,7 +177,7 @@ final class FullscreenStore: ObservableObject {
             borderlessStatus = .permissionRequired
             borderlessFullscreen = false
             hasBorderlessResult = false
-        } else if let windowMonitor {
+        } else if let windowMonitor, windowMonitor.hasEligibleForegroundApp {
             awaitingReply = true
             if !hasBorderlessResult { isCheckingBorderless = true }
             windowMonitor.update { [weak self] supported in
@@ -203,6 +203,7 @@ final class FullscreenStore: ObservableObject {
                 self.isCheckingBorderless = false
             }
         } else {
+            windowMonitor?.stop()
             borderlessStatus = .unsupported
             borderlessFullscreen = false
             hasBorderlessResult = false

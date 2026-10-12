@@ -439,6 +439,58 @@ struct FullscreenTests {
         await settle()
         delayed.reply(true)
         check(delayedReads == allowedReads && !delayed.running, "Teardown invalidates in-flight observer completion")
+
+        var eligiblePID: pid_t? = 123
+        var eligibilityContext = FullscreenDetectionContext(displayID: "display-a", foregroundPID: 123)
+        var eligibilityNative = false
+        var eligibilityGeometryReads = 0
+        let eligibilityMonitor = FullscreenAccessibilityMonitor(
+            foregroundPID: { eligiblePID }, sessionFactory: { _, _ in nil }
+        )
+        let eligibilityStore = FullscreenStore(
+            defaults: defaults, workspaceCenter: NotificationCenter(), applicationCenter: NotificationCenter(),
+            sessionCenter: NotificationCenter(), windowMonitor: eligibilityMonitor,
+            detectionContext: { eligibilityContext }, accessibilityTrusted: { true },
+            readBorderless: { eligibilityGeometryReads += 1; return true },
+            readFullscreen: { eligibilityNative }
+        )
+        for (name, pid) in [("island", Optional(ProcessInfo.processInfo.processIdentifier)),
+                            ("Finder", Optional(pid_t(456))), ("missing foreground", nil)] {
+            eligiblePID = 123
+            eligibilityContext.foregroundPID = 123
+            eligibilityStore.refresh()
+            for _ in 0..<200 {
+                if !eligibilityStore.isCheckingBorderless { break }
+                try? await Task.sleep(nanoseconds: 10_000_000)
+            }
+            check(!eligibilityStore.isCheckingBorderless, "Eligible-app worker fixture settles")
+            var suppressed: [Bool] = []
+            let observation = eligibilityStore.$isActive.combineLatest(eligibilityStore.$isCheckingBorderless)
+                .map { $0 || $1 }.removeDuplicates().sink { suppressed.append($0) }
+            eligibilityContext.foregroundPID = pid
+            eligiblePID = nil
+            eligibilityStore.refresh()
+            check(suppressed == [false], "Activating \(name) never briefly suppresses the island")
+            check(!eligibilityStore.isCheckingBorderless && eligibilityStore.borderlessStatus == .unsupported,
+                  "An ineligible \(name) context completes without a pending gate")
+            observation.cancel()
+        }
+        eligibilityNative = true
+        eligibilityStore.refresh()
+        check(eligibilityStore.isActive && !eligibilityStore.isCheckingBorderless,
+              "Native fullscreen suppression is independent of foreground AX eligibility")
+        eligibilityNative = false
+        eligiblePID = 789
+        eligibilityContext.foregroundPID = 789
+        eligibilityStore.refresh()
+        check(eligibilityStore.isCheckingBorderless, "An eligible changed context still gates its asynchronous snapshot")
+        eligiblePID = nil
+        eligibilityContext.foregroundPID = ProcessInfo.processInfo.processIdentifier
+        eligibilityStore.refresh()
+        await settle()
+        check(!eligibilityStore.isActive && !eligibilityStore.isCheckingBorderless && eligibilityGeometryReads == 0,
+              "Self-activation cancels an eligible pending reply without reading stale geometry or restoring its gate")
+        eligibilityMonitor.stop()
         let nativeSession = NotificationCenter()
         var nativeReading = true
         var nativeLockReads = 0
@@ -480,6 +532,7 @@ struct FullscreenTests {
 @MainActor
 private final class WindowMonitorSpy: FullscreenWindowMonitoring {
     var onChange: (() -> Void)?
+    var hasEligibleForegroundApp = true
     var updates = 0
     var supported = true
     var running = false

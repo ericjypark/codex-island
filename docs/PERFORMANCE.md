@@ -57,6 +57,9 @@ window display until the current asynchronous snapshot resolves. This pending
 state is separate from detected fullscreen. It prevents startup activation from
 changing the foreground app being inspected and avoids an interactive flash on
 resume. Missing permission, unsupported notifications, and opt-out clear the gate.
+Foreground eligibility is checked before publishing a pending gate. The island,
+Finder, and a missing foreground app skip borderless observation without briefly
+hiding the island on activation; native fullscreen suppression remains independent.
 [Notification support](https://developer.apple.com/documentation/applicationservices/1462089-axobserveraddnotification)
 is app-dependent. Missing permission or unsupported geometry
 notifications leave borderless suppression off and show a status in Settings.

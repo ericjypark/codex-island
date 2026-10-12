@@ -4,6 +4,7 @@ import ApplicationServices
 @MainActor
 protocol FullscreenWindowMonitoring: AnyObject, Sendable {
     var onChange: (() -> Void)? { get set }
+    var hasEligibleForegroundApp: Bool { get }
     func update(_ completion: @escaping @MainActor @Sendable (Bool) -> Void)
     func stop()
 }
@@ -11,6 +12,7 @@ protocol FullscreenWindowMonitoring: AnyObject, Sendable {
 @MainActor
 final class FullscreenAccessibilityMonitor: FullscreenWindowMonitoring {
     var onChange: (() -> Void)?
+    var hasEligibleForegroundApp: Bool { foregroundPID() != nil }
     private let foregroundPID: () -> pid_t?
     private let worker: FullscreenAccessibilityWorker
     private var pid: pid_t?

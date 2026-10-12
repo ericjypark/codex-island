@@ -33,6 +33,7 @@ struct FullscreenAccessibilityTests {
             foregroundPID: { foreground }, sessionFactory: { factory.make(pid: $0, onChange: $1) }
         )
         guard let initial = monitor else { preconditionFailure("Monitor fixture") }
+        check(initial.hasEligibleForegroundApp, "Foreground eligibility is available before scheduling worker work")
         check(await update(initial), "Supported geometry notifications attach")
         check(first.registrations.count == 8, "Application and first window notifications register")
         check(first.allCallsOffMain && factory.allCallsOffMain, "Observer creation and AX messaging run off the main thread")
@@ -69,6 +70,7 @@ struct FullscreenAccessibilityTests {
         await settle()
         check(events == 1 && second.registrations.isEmpty, "Stop invalidates queued callbacks and removes registrations")
         foreground = nil
+        check(!initial.hasEligibleForegroundApp, "Ineligible foreground contexts reject a pending gate synchronously")
         check(!(await update(initial)), "No eligible foreground app leaves detection inactive")
 
         let budgetSession = FakeAccessibilitySession(pid: 555)
