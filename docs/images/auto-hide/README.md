@@ -11,6 +11,18 @@ These are offscreen SwiftUI renders, not screenshots or recordings of a desktop.
   `IslandVisibilityState` and `IslandShape`. It shows desktop, Game Mode,
   fullscreen video with Game Mode off, then desktop again. It demonstrates the
   policy; it does not exercise WindowServer events, real apps, or focus.
+- `before-events.png`: the Game Mode/fullscreen rows before the event-driven
+  replacement, from `2572c6c`.
+- `after-events.png` and `after-events-zh-Hans.png`: the current default settings,
+  including the default-off borderless toggle.
+- `after-events-enabled.png`: borderless detection enabled with the manual
+  Accessibility permission instructions and Recheck button. This is a fixture
+  state, not evidence of live permission or notification delivery.
+
+The event-driven images use the current production row/toggle/button components.
+Titles, subtitles and permission instructions were extracted from `SettingsView`;
+rendering uses an isolated fixture bundle and does not initialize the usage,
+cost or fullscreen stores. All event-driven images are 440 points wide.
 
 Rendered with `ImageRenderer` at 2x scale; the GIF uses ImageIO with 1.8 seconds
 per frame. No desktop capture, provider credentials, browser content, or usage

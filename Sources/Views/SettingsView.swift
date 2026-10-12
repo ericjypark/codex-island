@@ -266,6 +266,20 @@ struct SettingsView: View {
                 }
             }
             SettingsRow(
+                title: "Detect borderless fullscreen",
+                subtitle: "Hide for borderless videos and games. Requires Accessibility permission; reads window layout, not content."
+            ) {
+                SettingsToggle(isOn: fullscreen.detectBorderlessFullscreen) {
+                    fullscreen.detectBorderlessFullscreen.toggle()
+                }
+                .disabled(!fullscreen.hideInFullscreen)
+            }
+            if fullscreen.hideInFullscreen && fullscreen.detectBorderlessFullscreen {
+                SettingsRow(title: "Borderless detection", subtitle: borderlessDetectionSubtitle) {
+                    PillButton(label: "Recheck") { fullscreen.refresh() }
+                }
+            }
+            SettingsRow(
                 title: "Low Power Mode",
                 subtitle: "Glow only on refresh, hover, or limit alerts."
             ) {
@@ -471,6 +485,19 @@ struct SettingsView: View {
                     RoundedRectangle(cornerRadius: 7)
                         .strokeBorder(.white.opacity(0.10), lineWidth: 0.5)
                 }
+        }
+    }
+
+    private var borderlessDetectionSubtitle: String {
+        switch fullscreen.borderlessStatus {
+        case .permissionRequired:
+            return "Allow CodexIsland in System Settings → Privacy & Security → Accessibility, then click Recheck. Native fullscreen hiding works without permission."
+        case .unsupported:
+            return "No supported foreground window notifications. Native fullscreen hiding remains available; borderless changes may be missed."
+        case .observing:
+            return "Listening for window changes. Apps that omit notifications may not be detected. No recurring polling."
+        case .disabled:
+            return "Borderless detection is paused. Native fullscreen hiding works without Accessibility access."
         }
     }
 

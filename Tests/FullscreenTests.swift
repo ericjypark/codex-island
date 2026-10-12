@@ -157,6 +157,8 @@ struct FullscreenTests {
         check(visibility.shouldHide, "Reentering fullscreen hides via Space notification")
         await post(NSWorkspace.didActivateApplicationNotification, center: workspace, state: false)
         check(!visibility.shouldHide, "App activation refreshes current Space")
+        await post(NSWorkspace.didTerminateApplicationNotification, center: workspace, state: true)
+        check(visibility.shouldHide, "App termination refreshes current Space")
         await post(NSWorkspace.didWakeNotification, center: workspace, state: true)
         check(visibility.shouldHide, "Wake refreshes current Space")
         await post(NSApplication.didChangeScreenParametersNotification, center: application, state: nil)
@@ -175,76 +177,182 @@ struct FullscreenTests {
         check(!visibility.shouldHide, "Clearing all suppression reasons restores")
         check(defaults.string(forKey: "unrelated") == "preserved", "Unrelated settings remain intact")
 
-        var liveWindows = [window(CGRect(x: 100, y: 100, width: 800, height: 600))]
-        var pollReads = 0
-        var pollingStore: FullscreenStore? = FullscreenStore(
-            defaults: defaults, workspaceCenter: workspace, applicationCenter: application,
-            sessionCenter: session, pollInterval: 0.02
-        ) {
-            pollReads += 1
-            return covers(liveWindows)
-        }
-        func waitFor(_ predicate: () -> Bool) async -> Bool {
-            for _ in 0..<100 {
-                if predicate() { return true }
-                try? await Task.sleep(nanoseconds: 10_000_000)
+        let monitor = WindowMonitorSpy()
+        var trusted = false
+        var borderlessReads = 0
+        var nativeReads = 0
+        var nativeFullscreen = false
+        var borderless = false
+        let events = NotificationCenter()
+        let appEvents = NotificationCenter()
+        let lockEvents = NotificationCenter()
+        var monitoredStore: FullscreenStore? = FullscreenStore(
+            defaults: defaults, workspaceCenter: events, applicationCenter: appEvents,
+            sessionCenter: lockEvents, windowMonitor: monitor,
+            accessibilityTrusted: { trusted }, readBorderless: {
+                borderlessReads += 1
+                return borderless
+            }, readFullscreen: {
+                nativeReads += 1
+                return nativeFullscreen
             }
-            return false
+        )
+        func settle() async { try? await Task.sleep(nanoseconds: 550_000_000) }
+        check(monitoredStore?.detectBorderlessFullscreen == false, "Accessibility detection requires explicit opt-in")
+        check(monitor.updates == 0 && borderlessReads == 0, "Default performs no Accessibility or borderless query")
+        monitoredStore?.detectBorderlessFullscreen = true
+        check(monitoredStore?.borderlessStatus == .permissionRequired, "Missing permission is surfaced without prompting")
+        check(monitor.updates == 0 && borderlessReads == 0, "Missing permission performs no observer or geometry query")
+        nativeFullscreen = true
+        monitoredStore?.refresh()
+        check(monitoredStore?.isActive == true, "Native fullscreen remains available without Accessibility permission")
+        nativeFullscreen = false
+        trusted = true
+        monitoredStore?.refresh()
+        check(monitoredStore?.borderlessStatus == .observing && monitor.running, "Explicit recheck attaches after permission grant")
+        borderless = true
+        for _ in 0..<30 { monitor.onChange?() }
+        let beforeBurst = borderlessReads
+        await settle()
+        check(monitoredStore?.isActive == true, "Resize notification detects same-app borderless entry")
+        check(borderlessReads - beforeBurst == 2, "Notification bursts coalesce into two bounded transition reads")
+        let idleReads = nativeReads + borderlessReads
+        try? await Task.sleep(nanoseconds: 3_000_000_000)
+        check(nativeReads + borderlessReads == idleReads, "Settled app has no fullscreen queries during three idle seconds")
+        let beforeTrailingEvent = borderlessReads
+        monitor.onChange?()
+        for _ in 0..<100 {
+            if borderlessReads > beforeTrailingEvent { break }
+            try? await Task.sleep(nanoseconds: 10_000_000)
         }
-        check(pollingStore?.isActive == false, "Windowed launch stays visible")
-        liveWindows = [window(screen)]
-        let entered = await waitFor { pollingStore?.isActive == true }
-        check(entered, "The timer detects same-app fullscreen entry without a notification")
-        liveWindows = []
-        let exited = await waitFor { pollingStore?.isActive == false }
-        check(exited, "The timer detects same-app fullscreen exit without a notification")
-
-        pollingStore?.hideInFullscreen = false
-        let disabledReads = pollReads
-        liveWindows = [window(screen)]
-        try? await Task.sleep(nanoseconds: 80_000_000)
-        check(pollReads == disabledReads, "Disabled fullscreen hiding stops window inspection")
-        pollingStore?.hideInFullscreen = true
-        check(pollingStore?.isActive == true, "Re-enabling immediately reads current geometry")
-        liveWindows = []
-        let resumed = await waitFor { pollingStore?.isActive == false }
-        check(resumed, "Re-enabling also resumes periodic detection")
-
+        check(borderlessReads == beforeTrailingEvent + 1, "The first event snapshot runs before its follow-up")
+        borderless = false
+        monitor.onChange?()
+        await settle()
+        check(borderlessReads == beforeTrailingEvent + 3 && monitoredStore?.isActive == false,
+              "A trailing event supersedes the old follow-up and gets two new settled snapshots")
+        borderless = false
+        monitor.onChange?()
+        await settle()
+        check(monitoredStore?.isActive == false, "Window notification detects borderless exit")
+        borderless = true
+        monitor.onChange?()
+        monitoredStore?.hideInFullscreen = false
+        let disabledReads = nativeReads + borderlessReads
+        events.post(name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
+        await settle()
+        check(!monitor.running && nativeReads + borderlessReads == disabledReads,
+              "Disable detaches and cancels queued work, including native queries")
+        check(monitoredStore?.isActive == false, "Disable clears stale suppression")
+        monitoredStore?.hideInFullscreen = true
+        check(monitoredStore?.isActive == true, "Re-enable immediately samples and observes")
+        trusted = false
+        monitor.onChange?()
+        await settle()
+        check(monitoredStore?.borderlessStatus == .permissionRequired && !monitor.running,
+              "Revocation detected at the next event detaches observers")
+        check(monitoredStore?.isActive == false, "Revocation clears stale borderless suppression")
+        trusted = true
+        monitor.supported = false
+        monitoredStore?.refresh()
+        let unsupportedReads = borderlessReads
+        check(monitoredStore?.borderlessStatus == .unsupported && monitoredStore?.isActive == false,
+              "Unsupported notifications fail open and report the limitation")
+        await settle()
+        check(borderlessReads == unsupportedReads, "Unsupported app does not trigger a polling fallback")
+        monitor.supported = true
+        events.post(name: NSWorkspace.didActivateApplicationNotification, object: nil)
+        await settle()
+        check(monitoredStore?.isActive == true, "App activation retries observer attachment")
         for (pause, resume, center) in [
-            (NSWorkspace.screensDidSleepNotification, NSWorkspace.screensDidWakeNotification, workspace),
-            (NSWorkspace.willSleepNotification, NSWorkspace.didWakeNotification, workspace),
-            (Notification.Name("com.apple.screenIsLocked"), Notification.Name("com.apple.screenIsUnlocked"), session)
+            (NSWorkspace.screensDidSleepNotification, NSWorkspace.screensDidWakeNotification, events),
+            (NSWorkspace.willSleepNotification, NSWorkspace.didWakeNotification, events),
+            (Notification.Name("com.apple.screenIsLocked"), Notification.Name("com.apple.screenIsUnlocked"), lockEvents)
         ] {
             center.post(name: pause, object: nil)
-            try? await Task.sleep(nanoseconds: 30_000_000)
-            let pausedReads = pollReads
-            liveWindows = [window(screen)]
-            try? await Task.sleep(nanoseconds: 80_000_000)
-            check(pollReads == pausedReads, "Sleep/lock suspends window inspection: \(pause)")
+            await settle()
+            let pausedReads = nativeReads + borderlessReads
+            monitor.onChange?()
+            await settle()
+            check(!monitor.running && nativeReads + borderlessReads == pausedReads,
+                  "Sleep/lock suspends observers and queries")
             center.post(name: resume, object: nil)
-            let woke = await waitFor { pollingStore?.isActive == true }
-            check(woke, "Wake/unlock immediately refreshes: \(resume)")
-            liveWindows = []
-            let pollingAgain = await waitFor { pollingStore?.isActive == false }
-            check(pollingAgain, "Wake/unlock resumes periodic detection: \(resume)")
+            await settle()
+            check(monitor.running && monitoredStore?.isActive == true, "Wake/unlock reattaches and refreshes")
         }
-        workspace.post(name: NSWorkspace.screensDidSleepNotification, object: nil)
-        workspace.post(name: NSWorkspace.willSleepNotification, object: nil)
-        session.post(name: .init("com.apple.screenIsLocked"), object: nil)
-        try? await Task.sleep(nanoseconds: 30_000_000)
-        let suspendedReads = pollReads
-        liveWindows = [window(screen)]
-        workspace.post(name: NSWorkspace.didWakeNotification, object: nil)
-        session.post(name: .init("com.apple.screenIsUnlocked"), object: nil)
-        try? await Task.sleep(nanoseconds: 80_000_000)
-        check(pollReads == suspendedReads, "System wake/unlock cannot resume inspection while the display sleeps")
-        workspace.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
-        let fullyAwake = await waitFor { pollingStore?.isActive == true }
-        check(fullyAwake, "Clearing the final suspension resumes inspection")
-        pollingStore = nil
-        let finalReads = pollReads
-        try? await Task.sleep(nanoseconds: 80_000_000)
-        check(pollReads == finalReads, "Destroying the store stops polling")
+        events.post(name: NSWorkspace.screensDidSleepNotification, object: nil)
+        events.post(name: NSWorkspace.willSleepNotification, object: nil)
+        lockEvents.post(name: .init("com.apple.screenIsLocked"), object: nil)
+        await settle()
+        let suspendedReads = nativeReads + borderlessReads
+        events.post(name: NSWorkspace.didWakeNotification, object: nil)
+        lockEvents.post(name: .init("com.apple.screenIsUnlocked"), object: nil)
+        await settle()
+        check(nativeReads + borderlessReads == suspendedReads && !monitor.running,
+              "Wake/unlock cannot resume queries while the display remains asleep")
+        events.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
+        await settle()
+        check(monitoredStore?.isActive == true && monitor.running, "Final suspension clearing restores observers")
+        monitoredStore?.detectBorderlessFullscreen = false
+        check(!monitor.running && monitoredStore?.isActive == false, "Borderless opt-out detaches and clears suppression")
+        monitoredStore?.detectBorderlessFullscreen = true
+        monitor.onChange?()
+        monitoredStore = nil
+        await settle()
+        check(!monitor.running && monitor.onChange == nil, "Store teardown cancels pending work and detaches")
+
+        let delayed = WindowMonitorSpy()
+        delayed.holdReplies = true
+        var delayedTrusted = true
+        var delayedReads = 0
+        var delayedStore: FullscreenStore? = FullscreenStore(
+            defaults: defaults, workspaceCenter: NotificationCenter(), applicationCenter: NotificationCenter(),
+            sessionCenter: NotificationCenter(), windowMonitor: delayed,
+            accessibilityTrusted: { delayedTrusted }, readBorderless: {
+                delayedReads += 1
+                return true
+            }, readFullscreen: { false }
+        )
+        delayedStore?.refresh()
+        delayed.reply(true)
+        check(delayedReads == 0 && delayedStore?.isActive == false,
+              "Results from a superseded display/app snapshot cannot hide the island")
+        delayed.reply(true)
+        check(delayedReads == 1 && delayedStore?.isActive == true, "Only the current snapshot can publish borderless suppression")
+        delayedStore?.refresh()
+        delayedStore?.detectBorderlessFullscreen = false
+        delayed.reply(true)
+        check(delayedReads == 1 && delayedStore?.isActive == false,
+              "Opt-out invalidates an in-flight observer result before geometry is read")
+        delayedStore?.detectBorderlessFullscreen = true
+        delayedTrusted = false
+        delayed.reply(true)
+        check(delayedReads == 1 && delayedStore?.borderlessStatus == .permissionRequired && !delayed.running,
+              "Permission loss during observer attachment detaches and prevents geometry access")
+        delayedTrusted = true
+        delayedStore?.refresh()
+        delayedStore = nil
+        await settle()
+        delayed.reply(true)
+        check(delayedReads == 1 && !delayed.running, "Teardown invalidates in-flight observer completion")
         print("PASS \(checks) fullscreen and visibility checks")
     }
+}
+
+@MainActor
+private final class WindowMonitorSpy: FullscreenWindowMonitoring {
+    var onChange: (() -> Void)?
+    var updates = 0
+    var supported = true
+    var running = false
+    var holdReplies = false
+    private var replies: [@MainActor @Sendable (Bool) -> Void] = []
+    func update(_ completion: @escaping @MainActor @Sendable (Bool) -> Void) {
+        updates += 1
+        running = supported
+        if holdReplies { replies.append(completion) }
+        else { completion(supported) }
+    }
+    func reply(_ supported: Bool) { replies.removeFirst()(supported) }
+    func stop() { running = false }
 }

@@ -100,9 +100,11 @@ for authentication details and data limitations.
   and returns automatically afterward, without taking focus. Enabled by
   default; turn off **General → Hide during Game Mode** to keep it visible.
 - **Fullscreen auto-hide.** The island hides in native fullscreen Spaces,
-  including browser video and Split View, and when a foreground video or
-  borderless game fills its selected display. Enabled by default; control it
-  independently with **General → Hide in fullscreen**.
+  including browser video and Split View. Enabled by default; control it with
+  **General → Hide in fullscreen**. Optional **Detect borderless fullscreen**
+  uses Accessibility window notifications for foreground videos and games that
+  fill the selected display. Grant access manually in System Settings, then
+  click Recheck. Unsupported apps may miss borderless changes; no polling is used.
 - **English and Simplified Chinese.** Follow the macOS language automatically
   or choose a language in Settings.
 - **Display selection.** Auto-pick a notched display or pin the island to a

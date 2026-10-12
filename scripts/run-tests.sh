@@ -16,10 +16,16 @@ swiftc -parse-as-library -o "$OUT_DIR/window-interaction-tests" \
   Tests/WindowInteractionTests.swift
 "$OUT_DIR/window-interaction-tests"
 
+swiftc -warnings-as-errors -parse-as-library -o "$OUT_DIR/fullscreen-accessibility-tests" \
+  Sources/Model/FullscreenAccessibilityMonitor.swift \
+  Tests/FullscreenAccessibilityTests.swift
+"$OUT_DIR/fullscreen-accessibility-tests"
+
 swiftc -parse-as-library -o "$OUT_DIR/fullscreen-tests" \
   Sources/Model/FullscreenSpaceReader.swift \
   Sources/Model/FullscreenWindowReader.swift \
   Sources/Model/FullscreenStore.swift \
+  Sources/Model/FullscreenAccessibilityMonitor.swift \
   Sources/Model/IslandVisibilityState.swift \
   Sources/Model/DisplayInfo.swift \
   Sources/Model/IslandTargetDisplayStore.swift \

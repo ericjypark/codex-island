@@ -3,10 +3,10 @@
 ## Fullscreen visibility
 
 `FullscreenStore` hides the island in the current native fullscreen Space or
-when a foreground application's visible window fills the island's selected
-display. `MacIsland.hideInFullscreen` defaults to true and has an independent
-General setting. This covers native fullscreen video and Split View, plus
-non-native VLC video and CrossOver-style borderless games. Fullscreen on another
+with optional Accessibility detection, when a foreground application's visible
+window fills the island's selected display. `MacIsland.hideInFullscreen` defaults to true and has an independent
+General setting. This covers native fullscreen video and Split View. Optional borderless detection
+supports apps that emit Accessibility window notifications. Fullscreen on another
 display does not hide the island. A shared native Space (when displays do not
 have separate Spaces) applies to all displays.
 
@@ -18,42 +18,72 @@ are undocumented, read-only WindowServer interfaces. It inspects only the target
 display's `Current Space` type (0 for desktop, 4 for fullscreen), not other
 Spaces. Missing symbols, display mappings, or unfamiliar payloads fail open.
 
-If no native fullscreen Space is detected, `FullscreenWindowReader` reads
-on-screen window metadata with `CGWindowListCopyWindowInfo`. It matches the
-foreground application's visible, nontransparent windows against
-`CGDisplayBounds` for the selected display. Both APIs use the same top-left
-coordinate system, including negative origins on additional displays. All four
-edges must match within two points. Desktop layers, Finder, the island itself,
-background apps, inactive Spaces, windows spanning displays, and maximized
-work-area windows that leave room for the menu bar or Dock do not qualify.
-This is a geometry heuristic: a manually resized window that fills the entire
-display is also treated as fullscreen. Neither reader captures pixels, reads
-window titles or browser content, requests Accessibility/Screen Recording
-permission, links a private framework, or changes Spaces.
+Native fullscreen detection reads at startup and on Space, application activation/termination,
+wake, display-change, target-selection and unlock events. Disabling fullscreen
+hiding stops all fullscreen queries and detaches the Accessibility observer.
+System/display sleep and session lock also suspend detection.
 
-The store reads at startup and on workspace Space/app/wake and display-change
-notifications, with explicit refreshes on target selection and unlock. A
-one-second timer with 20% scheduling tolerance also checks for same-app
-fullscreen entry/exit, which need not emit app or Space notifications. It runs
-only while fullscreen hiding is enabled and pauses on display/system sleep and
-session lock. Disabling, suspending, or destroying the store invalidates the
-timer; queued ticks are gated too. The combined visibility subscription seeds all suppressors
-before the first display; hiding and restoring reuse the input/focus safeguards
-below. Fullscreen, Game Mode and lock are independent: all enabled suppressors
-must clear before restoration. macOS can keep Game Mode active briefly after
-leaving a game, delaying restoration even on the desktop.
+Borderless detection is a separate, default-off opt-in (`MacIsland.detectBorderlessFullscreen`).
+It requires Accessibility permission granted manually in System Settings; the
+app never prompts automatically. Settings explains the purpose and has a Recheck
+button after granting access. Native fullscreen needs no Accessibility permission.
 
-`Tests/FullscreenTests.swift` covers display mapping, malformed snapshots,
-inactive fullscreen Spaces, every lock/game/fullscreen preference combination,
-input gating, preference persistence, startup and notification refreshes using
-private test notification centers. Window fixtures cover borderless video/games,
-foreground identity, display geometry, malformed metadata and maximized-window
-exclusions. A real timer with an injected short interval verifies same-app
-entry/exit, opt-out, sleep/lock suspension, resume and teardown without displaying
-windows. Fixtures are not proof of live transitions.
-Live acceptance additionally checks native browser video entry/exit and Space
-switches, VLC non-native fullscreen, CrossOver borderless entry/exit, startup in
-fullscreen, selected-monitor changes, and preserved focus.
+`FullscreenAccessibilityMonitor` attaches one AXObserver to the foreground app.
+It observes focused/main-window changes and window creation, plus resize, move,
+destruction and minimize/restore notifications on up to 32 app windows. It
+reconciles registrations when events arrive, replaces the observer on app
+or display changes, and releases its run-loop source/observer when disabled or suspended.
+AX creation, messaging and registration run on a dedicated serial worker with a
+sleeping run loop, away from the UI thread. Calls have a 50 ms timeout and each
+reconciliation has a 200 ms budget (one in-flight call can finish beyond that
+deadline). Partial removal makes progress across events. Window-creation
+notifications remain attached while the foreground app has no windows.
+Callback contexts remain owned until their observers detach; request and
+observation revisions reject stale results and callbacks after context changes.
+[Notification support](https://developer.apple.com/documentation/applicationservices/1462089-axobserveraddnotification)
+is app-dependent. Missing permission or unsupported geometry
+notifications leave borderless suppression off and show a status in Settings.
+Some apps accept registrations but never emit events; same-app changes can then
+be missed until another workspace event or manual Recheck. There is no recurring
+polling fallback.
+
+Notification bursts are debounced into two delayed snapshots (80 ms after the
+latest event, then 350 ms later), allowing transition geometry to settle. A new
+event cancels and replaces pending delayed checks, including a trailing event
+after the first snapshot. Reads do not schedule more reads.
+Workspace events also get an immediate snapshot. Permission is rechecked before
+observer/geometry work; detected revocation releases the observer and clears stale
+borderless suppression. With no events there is no immediate revocation detection:
+returning from System Settings, a workspace event, or Recheck refreshes the state.
+
+Once notifications are available, `FullscreenWindowReader` reads on-screen window
+metadata using `CGWindowListCopyWindowInfo`. Foreground, visible, nontransparent
+window edges must match the selected `CGDisplayBounds` within two points. Finder,
+the island, background apps, inactive Spaces, spanning windows and work-area
+maximized windows do not qualify. A manually sized edge-to-edge window does.
+No pixels, window titles, browser content or Accessibility text values are read.
+Neither reader changes Spaces. Accessibility is used only for window membership
+and notifications; Screen Recording permission is not needed.
+
+All enabled suppressors must clear before restoration. The combined visibility
+subscription seeds state before first display and preserves the input/focus
+safeguards below. Game Mode may briefly outlast a fullscreen transition.
+
+`Tests/FullscreenTests.swift` covers Space and window geometry fixtures, visibility
+composition, notification refresh, opt-in and permission states, unsupported apps,
+burst coalescing, absence of idle polling, cancellation, sleep/lock, and teardown.
+`Tests/FullscreenAccessibilityTests.swift` runs the actual worker and monitor
+against injected AX sessions, checking window replacement, registration bounds,
+windowless apps, unsupported notifications, partial reconciliation, slow queries,
+stale callbacks, off-main execution and teardown. Both suites observe at least
+three idle seconds without additional queries. This establishes query behavior,
+not a battery or CPU-energy measurement.
+The monitor and trust status are injected: tests neither request Accessibility
+permission nor inspect live apps. Window interaction tests cover restoration and
+focus guards. These checks do not establish live AX notification delivery.
+Live acceptance requires separate approval: native browser fullscreen/Space
+switches, supported and unsupported borderless apps, app/window replacement,
+permission grant/revocation, selected displays, sleep/lock, and preserved focus.
 
 ## Game Mode visibility
 

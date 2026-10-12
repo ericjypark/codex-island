@@ -1,19 +1,38 @@
 import AppKit
 import Combine
+import ApplicationServices
 
 @MainActor
 final class FullscreenStore: ObservableObject {
-    static let shared = FullscreenStore {
-        guard let display = DisplayInfo.currentTarget() else { return nil }
-        if FullscreenSpaceReader.read(targetDisplayID: display.stableID) == true { return true }
-        return FullscreenWindowReader.read(targetDisplayID: display.displayID)
+    static let shared = FullscreenStore(
+        windowMonitor: FullscreenAccessibilityMonitor(),
+        accessibilityTrusted: { AXIsProcessTrusted() },
+        readBorderless: {
+            guard let display = DisplayInfo.currentTarget() else { return nil }
+            return FullscreenWindowReader.read(targetDisplayID: display.displayID)
+        },
+        readFullscreen: {
+            FullscreenSpaceReader.read(targetDisplayID: DisplayInfo.currentTarget()?.stableID)
+        }
+    )
+    static let borderlessPreferenceKey = "MacIsland.detectBorderlessFullscreen"
+
+    enum BorderlessStatus {
+        case disabled, permissionRequired, observing, unsupported
     }
+
+    @Published var detectBorderlessFullscreen: Bool {
+        didSet {
+            defaults.set(detectBorderlessFullscreen, forKey: Self.borderlessPreferenceKey)
+            refresh()
+        }
+    }
+    @Published private(set) var borderlessStatus: BorderlessStatus = .disabled
     static let preferenceKey = "MacIsland.hideInFullscreen"
 
     @Published var hideInFullscreen: Bool {
         didSet {
             defaults.set(hideInFullscreen, forKey: Self.preferenceKey)
-            updatePolling()
             refresh()
         }
     }
@@ -21,9 +40,15 @@ final class FullscreenStore: ObservableObject {
 
     private let defaults: UserDefaults
     private let readFullscreen: () -> Bool?
-    private var observers: [(NotificationCenter, NSObjectProtocol)] = []
-    private var pollTimer: Timer?
-    private let pollInterval: TimeInterval
+    private let observers = FullscreenNotificationObservers()
+    private let windowMonitor: FullscreenWindowMonitoring?
+    private let accessibilityTrusted: () -> Bool
+    private let readBorderless: () -> Bool?
+    private var transitionTask: Task<Void, Never>?
+    private var transitionRevision = 0
+    private var snapshotRevision = 0
+    private var nativeFullscreen = false
+    private var borderlessFullscreen = false
     private var isSystemSleeping = false
     private var isScreenSleeping = false
     private var isSessionLocked = false
@@ -36,15 +61,21 @@ final class FullscreenStore: ObservableObject {
          workspaceCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
          applicationCenter: NotificationCenter = .default,
          sessionCenter: NotificationCenter = DistributedNotificationCenter.default(),
-         pollInterval: TimeInterval = 1,
+         windowMonitor: FullscreenWindowMonitoring? = nil,
+         accessibilityTrusted: @escaping () -> Bool = { false },
+         readBorderless: @escaping () -> Bool? = { false },
          readFullscreen: @escaping () -> Bool?) {
         self.defaults = defaults
         self.readFullscreen = readFullscreen
-        self.pollInterval = pollInterval
+        self.windowMonitor = windowMonitor
+        self.accessibilityTrusted = accessibilityTrusted
+        self.readBorderless = readBorderless
+        detectBorderlessFullscreen = defaults.bool(forKey: Self.borderlessPreferenceKey)
         hideInFullscreen = defaults.object(forKey: Self.preferenceKey) == nil
             ? true : defaults.bool(forKey: Self.preferenceKey)
         for name in [NSWorkspace.activeSpaceDidChangeNotification,
-                     NSWorkspace.didActivateApplicationNotification] {
+                     NSWorkspace.didActivateApplicationNotification,
+                     NSWorkspace.didTerminateApplicationNotification] {
             observe(name, on: workspaceCenter)
         }
         observe(NSWorkspace.willSleepNotification, on: workspaceCenter) { $0.isSystemSleeping = true }
@@ -54,47 +85,126 @@ final class FullscreenStore: ObservableObject {
         observe(.init("com.apple.screenIsLocked"), on: sessionCenter) { $0.isSessionLocked = true }
         observe(.init("com.apple.screenIsUnlocked"), on: sessionCenter) { $0.isSessionLocked = false }
         observe(NSApplication.didChangeScreenParametersNotification, on: applicationCenter)
-        updatePolling()
+        windowMonitor?.onChange = { [weak self] in self?.scheduleTransitionChecks() }
         refresh()
     }
 
     deinit {
-        pollTimer?.invalidate()
-        for (center, observer) in observers { center.removeObserver(observer) }
+        transitionTask?.cancel()
+        Task { @MainActor [windowMonitor] in
+            windowMonitor?.onChange = nil
+            windowMonitor?.stop()
+        }
+        observers.cancel()
     }
 
     func refresh() {
-        guard shouldMonitor else { return }
-        let active = readFullscreen() ?? false
+        cancelTransitionChecks()
+        windowMonitor?.stop()
+        borderlessFullscreen = false
+        sample()
+    }
+
+    private func sample() {
+        snapshotRevision += 1
+        let revision = snapshotRevision
+        guard shouldMonitor else {
+            cancelTransitionChecks()
+            windowMonitor?.stop()
+            borderlessStatus = .disabled
+            nativeFullscreen = false
+            borderlessFullscreen = false
+            isActive = false
+            return
+        }
+        nativeFullscreen = readFullscreen() ?? false
+        if !detectBorderlessFullscreen {
+            windowMonitor?.stop()
+            borderlessStatus = .disabled
+            borderlessFullscreen = false
+        } else if !accessibilityTrusted() {
+            windowMonitor?.stop()
+            borderlessStatus = .permissionRequired
+            borderlessFullscreen = false
+        } else if let windowMonitor {
+            windowMonitor.update { [weak self] supported in
+                guard let self, self.snapshotRevision == revision, self.shouldMonitor,
+                      self.detectBorderlessFullscreen else { return }
+                guard self.accessibilityTrusted() else {
+                    windowMonitor.stop()
+                    self.borderlessStatus = .permissionRequired
+                    self.borderlessFullscreen = false
+                    self.publishVisibility()
+                    return
+                }
+                self.borderlessStatus = supported ? .observing : .unsupported
+                self.borderlessFullscreen = supported && (self.readBorderless() ?? false)
+                self.publishVisibility()
+            }
+        } else {
+            borderlessStatus = .unsupported
+            borderlessFullscreen = false
+        }
+        publishVisibility()
+    }
+
+    private func publishVisibility() {
+        let active = nativeFullscreen || borderlessFullscreen
         if active != isActive { isActive = active }
     }
 
-    private func updatePolling() {
-        guard shouldMonitor else {
-            pollTimer?.invalidate()
-            pollTimer = nil
-            return
+    private func cancelTransitionChecks() {
+        transitionRevision += 1
+        transitionTask?.cancel()
+        transitionTask = nil
+    }
+
+    private func scheduleTransitionChecks() {
+        cancelTransitionChecks()
+        guard shouldMonitor else { return }
+        let revision = transitionRevision
+        transitionTask = Task { @MainActor [weak self] in
+            for delay: UInt64 in [80_000_000, 350_000_000] {
+                do { try await Task.sleep(nanoseconds: delay) } catch { return }
+                guard let self, !Task.isCancelled, self.transitionRevision == revision else { return }
+                self.sample()
+            }
+            if self?.transitionRevision == revision { self?.transitionTask = nil }
         }
-        guard pollTimer == nil else { return }
-        // Borderless fullscreen resizes a window without changing app or Space.
-        let timer = Timer(timeInterval: pollInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.refresh() }
-        }
-        timer.tolerance = pollInterval * 0.2
-        RunLoop.main.add(timer, forMode: .common)
-        pollTimer = timer
     }
 
     private func observe(_ name: Notification.Name, on center: NotificationCenter,
-                         change: @escaping (FullscreenStore) -> Void = { _ in }) {
+                         change: @escaping @MainActor @Sendable (FullscreenStore) -> Void = { _ in }) {
         let observer = center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
                 change(self)
-                self.updatePolling()
                 self.refresh()
+                self.scheduleTransitionChecks()
             }
         }
-        observers.append((center, observer))
+        observers.append(center: center, token: observer)
     }
+}
+
+// NotificationCenter removal is thread-safe; this owner can cancel from the
+// store's nonisolated deinit without transferring raw observer tokens to a task.
+private final class FullscreenNotificationObservers: @unchecked Sendable {
+    private let lock = NSLock()
+    private var tokens: [(NotificationCenter, NSObjectProtocol)] = []
+
+    func append(center: NotificationCenter, token: NSObjectProtocol) {
+        lock.withLock { tokens.append((center, token)) }
+    }
+
+    func cancel() {
+        let removed = lock.withLock {
+            let removed = tokens
+            tokens.removeAll()
+            return removed
+        }
+        for (center, token) in removed { center.removeObserver(token) }
+    }
+
+    deinit { cancel() }
 }
