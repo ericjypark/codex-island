@@ -103,8 +103,8 @@ for authentication details and data limitations.
   including browser video and Split View. Enabled by default; control it with
   **General → Hide in fullscreen**. Optional **Detect borderless fullscreen**
   uses Accessibility window notifications for foreground videos and games that
-  fill the selected display. Grant access manually in System Settings, then
-  click Recheck. Unsupported apps may miss borderless changes; no polling is used.
+  fill the selected display. Turning it on requests Accessibility access. Use
+  Open Settings to grant access in the permission pane, then click Recheck. Unsupported apps may miss borderless changes; no polling is used.
 - **English and Simplified Chinese.** Follow the macOS language automatically
   or choose a language in Settings.
 - **Display selection.** Auto-pick a notched display or pin the island to a

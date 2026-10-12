@@ -15,9 +15,10 @@ These are offscreen SwiftUI renders, not screenshots or recordings of a desktop.
   replacement, from `2572c6c`.
 - `after-events.png` and `after-events-zh-Hans.png`: the current default settings,
   including the default-off borderless toggle.
-- `after-events-enabled.png`: borderless detection enabled with the manual
-  Accessibility permission instructions and Recheck button. This is a fixture
-  state, not evidence of live permission or notification delivery.
+- `after-events-enabled.png` and `after-events-enabled-zh-Hans.png`: borderless
+  detection enabled with permission instructions, Recheck and Open Settings
+  buttons. These are fixture states, not evidence of live permission or
+  notification delivery.
 
 The event-driven images use the current production row/toggle/button components.
 Titles, subtitles and permission instructions were extracted from `SettingsView`;

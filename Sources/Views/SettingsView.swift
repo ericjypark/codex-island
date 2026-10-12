@@ -275,9 +275,15 @@ struct SettingsView: View {
                 .disabled(!fullscreen.hideInFullscreen)
             }
             if fullscreen.hideInFullscreen && fullscreen.detectBorderlessFullscreen {
-                SettingsRow(title: "Borderless detection", subtitle: borderlessDetectionSubtitle) {
+                SettingsRow(title: "Borderless detection", subtitle: borderlessDetectionSubtitle) {}
+                HStack(spacing: 8) {
                     PillButton(label: "Recheck") { fullscreen.refresh() }
+                    PillButton(label: "Open Settings") { fullscreen.openAccessibilitySettings() }
+                        .accessibilityLabel(L10n.tr("Open Accessibility settings"))
+                    Spacer(minLength: 0)
                 }
+                .padding(.horizontal, 10)
+                .padding(.bottom, 6)
             }
             SettingsRow(
                 title: "Low Power Mode",
@@ -489,9 +495,12 @@ struct SettingsView: View {
     }
 
     private var borderlessDetectionSubtitle: String {
+        if fullscreen.accessibilitySettingsOpenFailed {
+            return "Could not open System Settings. Go to Privacy & Security → Accessibility, enable CodexIsland, then click Recheck."
+        }
         switch fullscreen.borderlessStatus {
         case .permissionRequired:
-            return "Allow CodexIsland in System Settings → Privacy & Security → Accessibility, then click Recheck. Native fullscreen hiding works without permission."
+            return "Enable CodexIsland in Accessibility settings, then click Recheck. Native fullscreen hiding works without permission."
         case .unsupported:
             return "No supported foreground window notifications. Native fullscreen hiding remains available; borderless changes may be missed."
         case .observing:

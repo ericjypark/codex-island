@@ -19,6 +19,12 @@ struct FullscreenAccessibilityTests {
             }
         }
         func settle() async { try? await Task.sleep(nanoseconds: 50_000_000) }
+        func waitUntil(_ condition: () -> Bool) async {
+            for _ in 0..<200 {
+                if condition() { return }
+                try? await Task.sleep(nanoseconds: 10_000_000)
+            }
+        }
         let first = FakeAccessibilitySession(pid: 123)
         let second = FakeAccessibilitySession(pid: 456)
         let factory = FakeAccessibilityFactory(sessions: [123: first, 456: second])
@@ -79,7 +85,8 @@ struct FullscreenAccessibilityTests {
         for _ in 0..<5 {
             let removed = budgetSession.removals
             finishedBudget = await update(budgetMonitor)
-            check(budgetSession.removals > removed, "Each event makes progress on obsolete registrations")
+            check(finishedBudget || budgetSession.removals > removed,
+                  "Each event advances obsolete removal or completes replacement registration")
             if finishedBudget { break }
         }
         check(finishedBudget, "Later events finish partial reconciliation rather than repeating old removals")
@@ -99,14 +106,14 @@ struct FullscreenAccessibilityTests {
         check(ProcessInfo.processInfo.systemUptime - started < 0.15, "Slow AX work does not block the calling main actor")
         await settle()
         check(slowResult == nil, "Main actor stays responsive while a slow AX query is pending")
-        try? await Task.sleep(nanoseconds: 300_000_000)
+        await waitUntil { slowResult != nil }
         check(slowResult == false && slow.registrations.count == 3,
               "An exhausted reconciliation budget fails open without registering geometry notifications")
         slowResult = nil
         slowMonitor?.update { slowResult = $0 }
         await settle()
         slowMonitor?.stop()
-        try? await Task.sleep(nanoseconds: 300_000_000)
+        await waitUntil { slowResult != nil && slow.registrations.isEmpty }
         check(slowResult == false && slow.registrations.isEmpty, "Stopping an in-flight query discards its result")
         slowMonitor = nil
         await settle()

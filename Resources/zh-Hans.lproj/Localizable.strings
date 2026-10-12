@@ -425,3 +425,11 @@
 "No supported foreground window notifications. Native fullscreen hiding remains available; borderless changes may be missed." = "前台窗口不支持所需通知。原生全屏隐藏仍然可用；可能无法检测无边框全屏变化。";
 "Listening for window changes. Apps that omit notifications may not be detected. No recurring polling." = "正在监听窗口变化。未发送通知的应用可能无法检测。不进行定时轮询。";
 "Borderless detection is paused. Native fullscreen hiding works without Accessibility access." = "无边框全屏检测已暂停。原生全屏隐藏无需辅助功能权限。";
+
+"Open Settings" = "打开设置";
+
+"Open Accessibility settings" = "打开辅助功能设置";
+
+"Enable CodexIsland in Accessibility settings, then click Recheck. Native fullscreen hiding works without permission." = "请在辅助功能设置中启用 CodexIsland，然后点击重新检查。原生全屏隐藏无需此权限。";
+
+"Could not open System Settings. Go to Privacy & Security → Accessibility, enable CodexIsland, then click Recheck." = "无法打开系统设置。请前往隐私与安全性 → 辅助功能，启用 CodexIsland，然后点击重新检查。";

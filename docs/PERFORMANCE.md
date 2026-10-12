@@ -21,12 +21,20 @@ Spaces. Missing symbols, display mappings, or unfamiliar payloads fail open.
 Native fullscreen detection reads at startup and on Space, application activation/termination,
 wake, display-change, target-selection and unlock events. Disabling fullscreen
 hiding stops all fullscreen queries and detaches the Accessibility observer.
-System/display sleep and session lock also suspend detection.
+System/display sleep and session lock also suspend detection. Native suppression
+is retained while suspended until a fresh resume snapshot, so the fullscreen
+store cannot reveal the window before the separate controller lock handler runs.
+Disabling fullscreen hiding still clears the cached result.
 
 Borderless detection is a separate, default-off opt-in (`MacIsland.detectBorderlessFullscreen`).
-It requires Accessibility permission granted manually in System Settings; the
-app never prompts automatically. Settings explains the purpose and has a Recheck
-button after granting access. Native fullscreen needs no Accessibility permission.
+Turning its toggle on requests Accessibility permission when access is missing.
+The request uses [AXIsProcessTrustedWithOptions](https://developer.apple.com/documentation/applicationservices/1459186-axisprocesstrustedwithoptions)
+with the prompt option; macOS
+shows the request asynchronously and the user grants access in System Settings.
+Startup, restored preferences, Recheck, and OS events never prompt. Settings
+provides Recheck and Open Settings actions; Open Settings targets the Accessibility
+permission pane and reports a dispatch failure with manual navigation instructions.
+Native fullscreen needs no Accessibility permission.
 
 `FullscreenAccessibilityMonitor` attaches one AXObserver to the foreground app.
 It observes focused/main-window changes and window creation, plus resize, move,
@@ -92,8 +100,12 @@ stale callbacks, off-main execution and teardown. Both suites observe at least
 three idle seconds without additional queries. This establishes query behavior,
 not a battery or CPU-energy measurement.
 The monitor and trust status are injected: tests neither request Accessibility
-permission nor inspect live apps. Window interaction tests cover restoration and
-focus guards. These checks do not establish live AX notification delivery.
+permission nor inspect live apps. Injected request/open handlers verify user-toggle
+requests, quiet startup/Recheck, the Settings URL and failed-dispatch recovery.
+A late controller lock-handler fixture verifies native suppression has no transient
+clear before the controller processes the same lock notification. Window
+interaction tests cover restoration and focus guards. These checks do not
+establish live AX notification delivery.
 Live acceptance requires separate approval: native browser fullscreen/Space
 switches, supported and unsupported borderless apps, app/window replacement,
 permission grant/revocation, selected displays, sleep/lock, and preserved focus.

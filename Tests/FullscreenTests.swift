@@ -183,13 +183,17 @@ struct FullscreenTests {
         var nativeReads = 0
         var nativeFullscreen = false
         var borderless = false
+        var permissionRequests = 0
+        var settingsURLs: [URL] = []
+        var settingsOpenSucceeds = true
         let events = NotificationCenter()
         let appEvents = NotificationCenter()
         let lockEvents = NotificationCenter()
         var monitoredStore: FullscreenStore? = FullscreenStore(
             defaults: defaults, workspaceCenter: events, applicationCenter: appEvents,
             sessionCenter: lockEvents, windowMonitor: monitor,
-            accessibilityTrusted: { trusted }, readBorderless: {
+            accessibilityTrusted: { trusted }, requestAccessibility: { permissionRequests += 1 },
+            openSettings: { url in settingsURLs.append(url); return settingsOpenSucceeds }, readBorderless: {
                 borderlessReads += 1
                 return borderless
             }, readFullscreen: {
@@ -200,14 +204,42 @@ struct FullscreenTests {
         func settle() async { try? await Task.sleep(nanoseconds: 550_000_000) }
         check(monitoredStore?.detectBorderlessFullscreen == false, "Accessibility detection requires explicit opt-in")
         check(monitor.updates == 0 && borderlessReads == 0, "Default performs no Accessibility or borderless query")
+        check(permissionRequests == 0 && settingsURLs.isEmpty, "Startup neither requests access nor opens Settings")
         monitoredStore?.detectBorderlessFullscreen = true
-        check(monitoredStore?.borderlessStatus == .permissionRequired, "Missing permission is surfaced without prompting")
+        check(monitoredStore?.borderlessStatus == .permissionRequired && permissionRequests == 1,
+              "Turning borderless detection on requests missing permission once and reports its pending state")
+        monitoredStore?.detectBorderlessFullscreen = true
+        monitoredStore?.refresh()
+        check(permissionRequests == 1 && settingsURLs.isEmpty, "Repeated values and Recheck never prompt or open Settings")
+        do {
+            let restored = FullscreenStore(defaults: defaults, workspaceCenter: NotificationCenter(),
+                                           applicationCenter: NotificationCenter(), sessionCenter: NotificationCenter(),
+                                           requestAccessibility: { permissionRequests += 1 }, readFullscreen: { false })
+            check(restored.detectBorderlessFullscreen && permissionRequests == 1,
+                  "Restoring an enabled preference at launch never requests permission")
+        }
+        monitoredStore?.openAccessibilitySettings()
+        check(settingsURLs.last?.absoluteString == "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility" && permissionRequests == 1,
+              "Open Settings targets the Accessibility permission pane without granting access or prompting")
+        settingsOpenSucceeds = false
+        monitoredStore?.openAccessibilitySettings()
+        check(monitoredStore?.accessibilitySettingsOpenFailed == true, "Failed Settings dispatch exposes manual navigation instructions")
+        settingsOpenSucceeds = true
+        monitoredStore?.openAccessibilitySettings()
+        check(monitoredStore?.accessibilitySettingsOpenFailed == false, "A successful Settings retry clears its error")
+        monitoredStore?.detectBorderlessFullscreen = false
+        check(permissionRequests == 1, "Turning the toggle off never requests permission")
+        monitoredStore?.detectBorderlessFullscreen = true
+        check(permissionRequests == 2, "A new explicit opt-in can request access again after denial")
         check(monitor.updates == 0 && borderlessReads == 0, "Missing permission performs no observer or geometry query")
         nativeFullscreen = true
         monitoredStore?.refresh()
         check(monitoredStore?.isActive == true, "Native fullscreen remains available without Accessibility permission")
         nativeFullscreen = false
         trusted = true
+        monitoredStore?.detectBorderlessFullscreen = false
+        monitoredStore?.detectBorderlessFullscreen = true
+        check(permissionRequests == 2, "Already granted access does not trigger a permission request")
         monitoredStore?.refresh()
         check(monitoredStore?.borderlessStatus == .observing && monitor.running, "Explicit recheck attaches after permission grant")
         borderless = true
@@ -238,6 +270,11 @@ struct FullscreenTests {
         borderless = true
         monitor.onChange?()
         monitoredStore?.hideInFullscreen = false
+        monitoredStore?.detectBorderlessFullscreen = false
+        trusted = false
+        monitoredStore?.detectBorderlessFullscreen = true
+        check(permissionRequests == 2, "A disabled fullscreen feature cannot request Accessibility access")
+        trusted = true
         let disabledReads = nativeReads + borderlessReads
         events.post(name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
         await settle()
@@ -402,6 +439,40 @@ struct FullscreenTests {
         await settle()
         delayed.reply(true)
         check(delayedReads == allowedReads && !delayed.running, "Teardown invalidates in-flight observer completion")
+        let nativeSession = NotificationCenter()
+        var nativeReading = true
+        var nativeLockReads = 0
+        let nativeOnly = FullscreenStore(defaults: defaults, workspaceCenter: NotificationCenter(),
+                                         applicationCenter: NotificationCenter(), sessionCenter: nativeSession,
+                                         readFullscreen: { nativeLockReads += 1; return nativeReading })
+        nativeOnly.detectBorderlessFullscreen = false
+        let lockProbe = NativeLockVisibilityProbe()
+        let nativeObservation = nativeOnly.$isActive.combineLatest(nativeOnly.$isCheckingBorderless).sink { active, checking in
+            lockProbe.state.isFullscreen = active || checking
+            lockProbe.samples.append(!lockProbe.state.shouldHide)
+        }
+        let nativeLock = Notification.Name("com.apple.screenIsLocked")
+        let lateControllerObserver = nativeSession.addObserver(forName: nativeLock, object: nil, queue: .main) { _ in
+            Task { @MainActor in
+                lockProbe.state.isSessionLocked = true
+                lockProbe.samples.append(!lockProbe.state.shouldHide)
+            }
+        }
+        nativeSession.post(name: nativeLock, object: nil)
+        await settle()
+        check(nativeOnly.isActive && !lockProbe.samples.contains(true),
+              "A native-fullscreen lock never reveals the island before the controller's later lock task")
+        let lockedReads = nativeLockReads
+        nativeOnly.refresh()
+        check(nativeLockReads == lockedReads && nativeOnly.isActive,
+              "Native suppression stays cached during suspension without WindowServer queries")
+        nativeReading = false
+        nativeSession.post(name: .init("com.apple.screenIsUnlocked"), object: nil)
+        await settle()
+        check(!nativeOnly.isActive && nativeLockReads > lockedReads,
+              "A fresh desktop snapshot clears cached native suppression on resume")
+        nativeObservation.cancel()
+        nativeSession.removeObserver(lateControllerObserver)
         print("PASS \(checks) fullscreen and visibility checks")
     }
 }
@@ -423,4 +494,10 @@ private final class WindowMonitorSpy: FullscreenWindowMonitoring {
     }
     func reply(_ supported: Bool) { replies.removeFirst()(supported) }
     func stop() { stops += 1; running = false }
+}
+
+@MainActor
+private final class NativeLockVisibilityProbe {
+    var state = IslandVisibilityState()
+    var samples: [Bool] = []
 }

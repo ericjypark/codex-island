@@ -1,6 +1,6 @@
 import AppKit
 import Combine
-import ApplicationServices
+@preconcurrency import ApplicationServices
 
 struct FullscreenDetectionContext: Equatable, Sendable {
     var displayID: String?
@@ -19,6 +19,11 @@ final class FullscreenStore: ObservableObject {
         windowMonitor: FullscreenAccessibilityMonitor(),
         detectionContext: { FullscreenDetectionContext.current() },
         accessibilityTrusted: { AXIsProcessTrusted() },
+        requestAccessibility: {
+            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+            _ = AXIsProcessTrustedWithOptions(options)
+        },
+        openSettings: { NSWorkspace.shared.open($0) },
         readBorderless: {
             guard let display = DisplayInfo.currentTarget() else { return nil }
             return FullscreenWindowReader.read(targetDisplayID: display.displayID)
@@ -28,6 +33,7 @@ final class FullscreenStore: ObservableObject {
         }
     )
     static let borderlessPreferenceKey = "MacIsland.detectBorderlessFullscreen"
+    static let accessibilitySettingsURL = URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility")
 
     enum BorderlessStatus {
         case disabled, permissionRequired, observing, unsupported
@@ -36,10 +42,14 @@ final class FullscreenStore: ObservableObject {
     @Published var detectBorderlessFullscreen: Bool {
         didSet {
             defaults.set(detectBorderlessFullscreen, forKey: Self.borderlessPreferenceKey)
+            if detectBorderlessFullscreen && !oldValue && hideInFullscreen && !accessibilityTrusted() {
+                requestAccessibility()
+            }
             refresh()
         }
     }
     @Published private(set) var borderlessStatus: BorderlessStatus = .disabled
+    @Published private(set) var accessibilitySettingsOpenFailed = false
     static let preferenceKey = "MacIsland.hideInFullscreen"
 
     @Published var hideInFullscreen: Bool {
@@ -56,6 +66,8 @@ final class FullscreenStore: ObservableObject {
     private let observers = FullscreenNotificationObservers()
     private let windowMonitor: FullscreenWindowMonitoring?
     private let accessibilityTrusted: () -> Bool
+    private let requestAccessibility: () -> Void
+    private let openSettings: (URL) -> Bool
     private let readBorderless: () -> Bool?
     private let detectionContext: () -> FullscreenDetectionContext
     private var observationContext: FullscreenDetectionContext?
@@ -80,6 +92,8 @@ final class FullscreenStore: ObservableObject {
          windowMonitor: FullscreenWindowMonitoring? = nil,
          detectionContext: @escaping () -> FullscreenDetectionContext = { FullscreenDetectionContext() },
          accessibilityTrusted: @escaping () -> Bool = { false },
+         requestAccessibility: @escaping () -> Void = {},
+         openSettings: @escaping (URL) -> Bool = { _ in false },
          readBorderless: @escaping () -> Bool? = { false },
          readFullscreen: @escaping () -> Bool?) {
         self.defaults = defaults
@@ -87,6 +101,8 @@ final class FullscreenStore: ObservableObject {
         self.windowMonitor = windowMonitor
         self.detectionContext = detectionContext
         self.accessibilityTrusted = accessibilityTrusted
+        self.requestAccessibility = requestAccessibility
+        self.openSettings = openSettings
         self.readBorderless = readBorderless
         detectBorderlessFullscreen = defaults.bool(forKey: Self.borderlessPreferenceKey)
         hideInFullscreen = defaults.object(forKey: Self.preferenceKey) == nil
@@ -121,6 +137,11 @@ final class FullscreenStore: ObservableObject {
         sample()
     }
 
+    func openAccessibilitySettings() {
+        guard let url = Self.accessibilitySettingsURL else { return }
+        accessibilitySettingsOpenFailed = !openSettings(url)
+    }
+
     private func sample() {
         snapshotRevision += 1
         let revision = snapshotRevision
@@ -130,9 +151,11 @@ final class FullscreenStore: ObservableObject {
             hasBorderlessResult = false
             isCheckingBorderless = hideInFullscreen && detectBorderlessFullscreen && windowMonitor != nil
             borderlessStatus = .disabled
-            nativeFullscreen = false
+            // Keep native suppression until the resume snapshot: the controller's
+            // separate lock handler may run after this store's notification task.
+            if !hideInFullscreen { nativeFullscreen = false }
             borderlessFullscreen = false
-            isActive = false
+            publishVisibility()
             return
         }
         let context = detectionContext()
