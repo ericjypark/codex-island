@@ -307,21 +307,50 @@ struct FullscreenTests {
         var delayedReads = 0
         var delayedContext = FullscreenDetectionContext(displayID: "display-a", foregroundPID: 123)
         let delayedEvents = NotificationCenter()
+        let delayedSessionEvents = NotificationCenter()
         var delayedStore: FullscreenStore? = FullscreenStore(
             defaults: defaults, workspaceCenter: delayedEvents, applicationCenter: NotificationCenter(),
-            sessionCenter: NotificationCenter(), windowMonitor: delayed,
+            sessionCenter: delayedSessionEvents, windowMonitor: delayed,
             detectionContext: { delayedContext },
             accessibilityTrusted: { delayedTrusted }, readBorderless: {
                 delayedReads += 1
                 return true
             }, readFullscreen: { false }
         )
+        check(delayedStore?.isCheckingBorderless == true && delayedStore?.isActive == false,
+              "The initial asynchronous borderless snapshot gates display without claiming fullscreen")
         delayedStore?.refresh()
         delayed.reply(true)
         check(delayedReads == 0 && delayedStore?.isActive == false,
               "Results from a superseded display/app snapshot cannot hide the island")
         delayed.reply(true)
         check(delayedReads == 1 && delayedStore?.isActive == true, "Only the current snapshot can publish borderless suppression")
+        check(delayedStore?.isCheckingBorderless == false, "A current result resolves the initial display gate")
+        for (suspend, resume, center) in [
+            (NSWorkspace.willSleepNotification, NSWorkspace.didWakeNotification, delayedEvents),
+            (NSWorkspace.screensDidSleepNotification, NSWorkspace.screensDidWakeNotification, delayedEvents),
+            (Notification.Name("com.apple.screenIsLocked"), Notification.Name("com.apple.screenIsUnlocked"), delayedSessionEvents)
+        ] {
+            let stops = delayed.stops
+            center.post(name: suspend, object: nil)
+            for _ in 0..<100 {
+                if delayed.stops > stops { break }
+                try? await Task.sleep(nanoseconds: 1_000_000)
+            }
+            check(delayedStore?.isCheckingBorderless == true && !delayed.running,
+                  "Suspension detaches the observer while retaining a display gate")
+            let updates = delayed.updates
+            center.post(name: resume, object: nil)
+            for _ in 0..<100 {
+                if delayed.updates > updates { break }
+                try? await Task.sleep(nanoseconds: 1_000_000)
+            }
+            check(delayedStore?.isCheckingBorderless == true && delayedStore?.isActive == false,
+                  "Wake/unlock stays gated while the asynchronous recheck is pending")
+            delayed.reply(true)
+            check(delayedStore?.isActive == true && delayedStore?.isCheckingBorderless == false,
+                  "The resumed fullscreen result replaces the gate without exposing the island")
+        }
         let stopsBeforeRefresh = delayed.stops
         var transientVisibility: [Bool] = []
         let refreshObservation = delayedStore?.$isActive.sink { transientVisibility.append($0) }
@@ -333,6 +362,7 @@ struct FullscreenTests {
         }
         check(delayedStore?.isActive == true && delayed.stops == stopsBeforeRefresh,
               "An unrelated app exit preserves suppression and the existing observer while its reply is pending")
+        check(delayedStore?.isCheckingBorderless == false, "A settled same-context recheck needs no new display gate")
         delayed.reply(true)
         check(transientVisibility == [true], "A successful refresh never flashes an interactive island")
         refreshObservation?.cancel()
@@ -354,7 +384,7 @@ struct FullscreenTests {
         delayedStore?.refresh()
         delayedStore?.detectBorderlessFullscreen = false
         delayed.reply(true)
-        check(delayedReads == allowedReads && delayedStore?.isActive == false,
+        check(delayedReads == allowedReads && delayedStore?.isActive == false && delayedStore?.isCheckingBorderless == false,
               "Opt-out invalidates an in-flight observer result before geometry is read")
         delayedStore?.detectBorderlessFullscreen = true
         delayedTrusted = false
@@ -362,6 +392,11 @@ struct FullscreenTests {
         check(delayedReads == allowedReads && delayedStore?.borderlessStatus == .permissionRequired && !delayed.running,
               "Permission loss during observer attachment detaches and prevents geometry access")
         delayedTrusted = true
+        delayedStore?.refresh()
+        delayed.reply(false)
+        check(delayedStore?.isCheckingBorderless == false && delayedStore?.isActive == false &&
+              delayedStore?.borderlessStatus == .unsupported,
+              "Unsupported notification delivery resolves the pending gate and fails open")
         delayedStore?.refresh()
         delayedStore = nil
         await settle()

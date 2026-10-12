@@ -260,8 +260,10 @@ final class IslandWindowController {
     private func observeVisibility() {
         let store = GameModeStore.shared
         let fullscreen = FullscreenStore.shared
+        let fullscreenSuppression = fullscreen.$isActive.combineLatest(fullscreen.$isCheckingBorderless)
+            .map { active, checking in active || checking }
         store.$isActive.combineLatest(store.$hideDuringGameMode,
-                                      fullscreen.$isActive, fullscreen.$hideInFullscreen)
+                                      fullscreenSuppression, fullscreen.$hideInFullscreen)
             .sink { [weak self] active, enabled, isFullscreen, hideInFullscreen in
                 guard let self else { return }
                 self.visibility.isGameModeActive = active

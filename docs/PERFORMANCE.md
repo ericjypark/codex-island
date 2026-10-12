@@ -44,6 +44,11 @@ Rechecks keep the current borderless suppression and reuse registrations while
 the foreground process and selected display are unchanged. A context change
 clears that result before observing the new context; delayed replies are checked
 against the current process and display before reading geometry.
+The first borderless result, a changed context, and wake/unlock rechecks gate
+window display until the current asynchronous snapshot resolves. This pending
+state is separate from detected fullscreen. It prevents startup activation from
+changing the foreground app being inspected and avoids an interactive flash on
+resume. Missing permission, unsupported notifications, and opt-out clear the gate.
 [Notification support](https://developer.apple.com/documentation/applicationservices/1462089-axobserveraddnotification)
 is app-dependent. Missing permission or unsupported geometry
 notifications leave borderless suppression off and show a status in Settings.
@@ -78,6 +83,8 @@ composition, notification refresh, opt-in and permission states, unsupported app
 burst coalescing, absence of idle polling, cancellation, sleep/lock, and teardown.
 It also covers uninterrupted suppression during unrelated application exits and
 rejects delayed replies after foreground-process or target-display changes.
+Delayed snapshots also exercise startup and sleep/lock resume gates, including
+unsupported results that leave the island visible.
 `Tests/FullscreenAccessibilityTests.swift` runs the actual worker and monitor
 against injected AX sessions, checking window replacement, registration bounds,
 windowless apps, unsupported notifications, partial reconciliation, slow queries,

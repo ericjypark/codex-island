@@ -94,6 +94,33 @@ struct WindowInteractionTests {
         check(window.isVisible && !window.ignoresMouseEvents, "Unlock also restores stationary click access")
         check(NSApp.activations == activations && window.keyRequests == keyRequests, "Unlock preserves focus")
 
+        NSEvent.mouseLocation = outside
+        FullscreenStore.shared.isCheckingBorderless = true
+        do {
+            let pendingController = IslandWindowController()
+            let activations = NSApp.activations
+            pendingController.show()
+            check(!pendingController.window.isVisible && pendingController.window.ignoresMouseEvents,
+                  "Launch waits for the first asynchronous borderless result")
+            check(NSApp.activations == activations && pendingController.window.keyRequests == 0,
+                  "Pending startup cannot activate the island or change the foreground detection context")
+            FullscreenStore.shared.isActive = true
+            FullscreenStore.shared.isCheckingBorderless = false
+            check(!pendingController.window.isVisible, "A fullscreen startup result never reveals the window")
+            FullscreenStore.shared.isActive = false
+            check(pendingController.window.isVisible && NSApp.activations == activations,
+                  "A later clear result restores the window without activation")
+        }
+        FullscreenStore.shared.isCheckingBorderless = true
+        DistributedNotificationCenter.default().post(name: .init("com.apple.screenIsUnlocked"), object: nil)
+        await settle()
+        check(!window.isVisible && window.ignoresMouseEvents,
+              "Unlock cannot reveal an island while its borderless recheck is pending")
+        FullscreenStore.shared.isActive = true
+        FullscreenStore.shared.isCheckingBorderless = false
+        check(!window.isVisible, "Fullscreen reply replaces the unlock gate without a flash")
+        FullscreenStore.shared.isActive = false
+
         for alwaysShow in [false, true] {
             AlwaysShowUsageStore.shared.enabled = alwaysShow
             for transient in [IslandModel.State.peek, .expanded] {
@@ -289,6 +316,7 @@ enum ScreenPref { enum Screen: CaseIterable { case usage, cost, overview } }
 @MainActor final class FullscreenStore {
     static let shared = FullscreenStore()
     @Published var isActive = false
+    @Published var isCheckingBorderless = false
     @Published var hideInFullscreen = true
     var refreshedState: Bool?
     func refresh() {

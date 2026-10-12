@@ -49,6 +49,7 @@ final class FullscreenStore: ObservableObject {
         }
     }
     @Published private(set) var isActive = false
+    @Published private(set) var isCheckingBorderless = false
 
     private let defaults: UserDefaults
     private let readFullscreen: () -> Bool?
@@ -63,6 +64,7 @@ final class FullscreenStore: ObservableObject {
     private var snapshotRevision = 0
     private var nativeFullscreen = false
     private var borderlessFullscreen = false
+    private var hasBorderlessResult = false
     private var isSystemSleeping = false
     private var isScreenSleeping = false
     private var isSessionLocked = false
@@ -125,6 +127,8 @@ final class FullscreenStore: ObservableObject {
         guard shouldMonitor else {
             cancelTransitionChecks()
             windowMonitor?.stop()
+            hasBorderlessResult = false
+            isCheckingBorderless = hideInFullscreen && detectBorderlessFullscreen && windowMonitor != nil
             borderlessStatus = .disabled
             nativeFullscreen = false
             borderlessFullscreen = false
@@ -135,18 +139,24 @@ final class FullscreenStore: ObservableObject {
         if context != observationContext {
             windowMonitor?.stop()
             borderlessFullscreen = false
+            hasBorderlessResult = false
             observationContext = context
         }
+        var awaitingReply = false
         nativeFullscreen = readFullscreen() ?? false
         if !detectBorderlessFullscreen {
             windowMonitor?.stop()
             borderlessStatus = .disabled
             borderlessFullscreen = false
+            hasBorderlessResult = false
         } else if !accessibilityTrusted() {
             windowMonitor?.stop()
             borderlessStatus = .permissionRequired
             borderlessFullscreen = false
+            hasBorderlessResult = false
         } else if let windowMonitor {
+            awaitingReply = true
+            if !hasBorderlessResult { isCheckingBorderless = true }
             windowMonitor.update { [weak self] supported in
                 guard let self, self.snapshotRevision == revision, self.shouldMonitor,
                       self.detectBorderlessFullscreen else { return }
@@ -158,18 +168,24 @@ final class FullscreenStore: ObservableObject {
                     windowMonitor.stop()
                     self.borderlessStatus = .permissionRequired
                     self.borderlessFullscreen = false
+                    self.hasBorderlessResult = false
                     self.publishVisibility()
+                    self.isCheckingBorderless = false
                     return
                 }
                 self.borderlessStatus = supported ? .observing : .unsupported
                 self.borderlessFullscreen = supported && (self.readBorderless() ?? false)
+                self.hasBorderlessResult = true
                 self.publishVisibility()
+                self.isCheckingBorderless = false
             }
         } else {
             borderlessStatus = .unsupported
             borderlessFullscreen = false
+            hasBorderlessResult = false
         }
         publishVisibility()
+        if !awaitingReply { isCheckingBorderless = false }
     }
 
     private func publishVisibility() {
