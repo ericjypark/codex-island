@@ -93,6 +93,49 @@ struct WindowInteractionTests {
         await settle()
         check(window.isVisible && !window.ignoresMouseEvents, "Unlock also restores stationary click access")
         check(NSApp.activations == activations && window.keyRequests == keyRequests, "Unlock preserves focus")
+
+        for alwaysShow in [false, true] {
+            AlwaysShowUsageStore.shared.enabled = alwaysShow
+            for clearsFullscreen in [false, true] {
+                for screenNotification in [false, true] {
+                    for pointerOnNewDisplay in [false, true] {
+                        FullscreenStore.shared.refreshedState = nil
+                        FullscreenStore.shared.isActive = true
+                        DisplayInfo.target = DisplayInfo(screen: NSScreen(
+                            frame: NSRect(x: 0, y: 0, width: 900, height: 360)
+                        ))
+                        NotificationCenter.default.post(
+                            name: NSApplication.didChangeScreenParametersNotification, object: nil
+                        )
+                        await settle()
+                        NSEvent.mouseLocation = NSPoint(x: pointerOnNewDisplay ? 2450 : 450, y: 350)
+                        DisplayInfo.target = DisplayInfo(screen: NSScreen(
+                            frame: NSRect(x: 2000, y: 0, width: 900, height: 360)
+                        ))
+                        FullscreenStore.shared.refreshedState = !clearsFullscreen
+                        let activations = NSApp.activations
+                        let keyRequests = window.keyRequests
+                        if screenNotification {
+                            NotificationCenter.default.post(
+                                name: NSApplication.didChangeScreenParametersNotification, object: nil
+                            )
+                        } else {
+                            IslandTargetDisplayStore.shared.choice += 1
+                        }
+                        await settle()
+                        check(window.frame.minX == 2000 && window.isVisible == clearsFullscreen,
+                              "Display changes move the island and preserve fullscreen suppression")
+                        let acceptsClicks = clearsFullscreen && pointerOnNewDisplay
+                        check(window.ignoresMouseEvents == !acceptsClicks,
+                              "Stationary click access follows the final display position in compact and peek modes")
+                        check(NSEvent.keyMonitorCount == (acceptsClicks ? 1 : 0),
+                              "Display changes prepare shortcuts only beneath the final clickable region")
+                        check(NSApp.activations == activations && window.keyRequests == keyRequests,
+                              "Display changes never activate the app or make the island key")
+                    }
+                }
+            }
+        }
         print("PASS \(checks) window interaction regression checks")
     }
 
@@ -189,7 +232,8 @@ struct NSScreen { let frame: NSRect }
 struct NotchInfo { static func detect(from: NSScreen?) -> NotchInfo { NotchInfo() } }
 struct DisplayInfo {
     let screen: NSScreen
-    static func currentTarget() -> DisplayInfo? { nil }
+    static var target: DisplayInfo?
+    static func currentTarget() -> DisplayInfo? { target }
 }
 @MainActor final class IslandModel {
     enum State { case compact, peek, expanded }
@@ -226,5 +270,8 @@ enum ScreenPref { enum Screen: CaseIterable { case usage, cost, overview } }
     static let shared = FullscreenStore()
     @Published var isActive = false
     @Published var hideInFullscreen = true
-    func refresh() {}
+    var refreshedState: Bool?
+    func refresh() {
+        if let refreshedState { isActive = refreshedState }
+    }
 }
