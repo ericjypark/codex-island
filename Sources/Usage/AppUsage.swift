@@ -1,5 +1,17 @@
 import Foundation
 
+enum PeekWindowPreference: String, CaseIterable {
+    case auto, fiveHour, weekly
+
+    var label: String {
+        switch self {
+        case .auto: return "Auto"
+        case .fiveHour: return "5-hour"
+        case .weekly: return "Weekly"
+        }
+    }
+}
+
 /// Usage periods reported by providers. Named beside AppUsage so the pure
 /// value layer can retain rate windows and monthly credit periods together.
 enum UsageWindow: String, Codable {
@@ -120,6 +132,21 @@ struct AppUsage {
     }
 
     var peekWindow: WindowUsage { window(peekWindowKind) }
+
+    func peekWindowKind(preference: PeekWindowPreference) -> UsageWindow {
+        switch preference {
+        case .auto: return peekWindowKind
+        case .fiveHour: return .fiveHour
+        case .weekly: return .weekly
+        }
+    }
+
+    func peekWindow(preference: PeekWindowPreference) -> WindowUsage {
+        let kind = peekWindowKind(preference: preference)
+        // A discovered plan can exclude a stale reading left in history.
+        if let reportedWindows, !reportedWindows.contains(kind) { return .unknown }
+        return window(kind)
+    }
 
     var peekWindowKind: UsageWindow {
         let visible = visibleWindows

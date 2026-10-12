@@ -3,7 +3,7 @@ import Combine
 
 /// Drives the approaching-limit alert state. Subscribes to `UsageStore`
 /// publishers + the alert/visibility preference stores, derives a current
-/// severity, and emits one-shot `pulseEvent`s when a tracked 5-hour window
+/// severity, and emits one-shot `pulseEvent`s when a tracked usage window
 /// first crosses a threshold inside its current reset cycle.
 ///
 /// The threshold-crossing judgment lives in the `AlertDecision` enum below
@@ -83,6 +83,7 @@ final class AlertEngine: ObservableObject {
             UsageStore.shared.$codex.map { _ in () }.eraseToAnyPublisher(),
             ProviderConnectionStore.shared.objectWillChange.map { _ in () }.eraseToAnyPublisher(),
             ProviderQuotaPreferences.shared.objectWillChange.map { _ in () }.eraseToAnyPublisher(),
+            PeekWindowPreferenceStore.shared.objectWillChange.map { _ in () }.eraseToAnyPublisher(),
             AlertThresholdStore.shared.objectWillChange.map { _ in () }.eraseToAnyPublisher(),
             ProviderVisibilityStore.shared.objectWillChange.map { _ in () }.eraseToAnyPublisher(),
         ]
@@ -112,22 +113,12 @@ final class AlertEngine: ObservableObject {
             && AlertThresholdStore.warningRange.contains(warning)
             && AlertThresholdStore.criticalRange.contains(critical)
 
-        let claudeKinds: [UsageWindow] = usage.claude.visibleWindows.contains(.monthly) && usage.claude.peekWindowKind != .monthly
-            ? [usage.claude.peekWindowKind, .monthly] : [usage.claude.peekWindowKind]
-        let inputs: [AlertDecision.WindowInput] = claudeKinds.map { kind in
-            AlertDecision.WindowInput(provider: .claude, visible: visibility.claudeVisible,
-                window: usage.claude.window(kind), windowKind: kind)
-        } + [
-            AlertDecision.WindowInput(
-                provider: .codex,
-                visible: visibility.codexVisible,
-                // peekWindow, not fiveHour: weekly-only Codex plans report no
-                // 5h window, and severity must track the same number the peek
-                // pill and silhouette tint surface. Two-window plans still
-                // alert on 5h (peekWindow prefers it).
-                window: usage.codex.peekWindow
-            ),
-        ] + [IslandProvider.grok, .antigravity].map { provider in
+        let preferences = PeekWindowPreferenceStore.shared
+        let inputs = AlertDecision.legacyInputs(provider: .claude, usage: usage.claude,
+            preference: preferences.preference(for: .claude), visible: visibility.claudeVisible)
+        + AlertDecision.legacyInputs(provider: .codex, usage: usage.codex,
+            preference: preferences.preference(for: .codex), visible: visibility.codexVisible)
+        + [IslandProvider.grok, .antigravity].map { provider in
             AlertDecision.WindowInput(provider: provider, visible: visibility.selected.contains(provider),
                 window: ProviderConnectionStore.shared.primary(provider)?.window ?? .unknown)
         }
@@ -222,6 +213,18 @@ enum AlertDecision {
         let visible: Bool
         let window: WindowUsage
         var windowKind: UsageWindow = .fiveHour
+    }
+
+    static func legacyInputs(provider: IslandProvider, usage: AppUsage,
+                             preference: PeekWindowPreference, visible: Bool) -> [WindowInput] {
+        let kind = usage.peekWindowKind(preference: preference)
+        var inputs = [WindowInput(provider: provider, visible: visible,
+            window: usage.peekWindow(preference: preference), windowKind: kind)]
+        if provider == .claude, kind != .monthly, usage.visibleWindows.contains(.monthly) {
+            inputs.append(WindowInput(provider: provider, visible: visible,
+                window: usage.monthly, windowKind: .monthly))
+        }
+        return inputs
     }
 
     /// Returns severity per visible window whose percent meets at least the

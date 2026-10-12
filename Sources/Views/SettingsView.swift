@@ -18,6 +18,7 @@ struct SettingsView: View {
     @ObservedObject private var alertPrefs = AlertThresholdStore.shared
     @ObservedObject private var spacing = IslandSpacingStore.shared
     @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
+    @ObservedObject private var peekPreferences = PeekWindowPreferenceStore.shared
     @ObservedObject private var targetDisplay = IslandTargetDisplayStore.shared
     @ObservedObject private var appLanguage = AppLanguageStore.shared
     @ObservedObject private var usage = UsageStore.shared
@@ -262,7 +263,7 @@ struct SettingsView: View {
     }
 
     /// Approaching-limit alerts. Default off — opt-in via the toggle.
-    /// When on, the silhouette glow tints amber/red while a tracked 5h
+    /// When on, the silhouette glow tints amber/red while a tracked usage
     /// window is at or above the configured percentages, and the peek
     /// pill auto-extends once when a window first crosses each threshold.
     private var alertsSection: some View {
@@ -270,7 +271,7 @@ struct SettingsView: View {
             sectionLabel("Alerts")
             SettingsRow(
                 title: "Approaching-limit alerts",
-                subtitle: "Tint the island and pulse the peek pill when 5-hour usage nears your limit."
+                subtitle: "Tint the island and pulse the peek pill when the selected usage window nears your limit."
             ) {
                 SettingsToggle(isOn: alertPrefs.enabled) {
                     // withAnimation here so the threshold rows + Preview row
@@ -347,7 +348,7 @@ struct SettingsView: View {
     /// no-op (key already in memory from the first click).
     private func runPreview(claude: Double, codex: Double) {
         AlertEngine.shared.prepareForPreview()
-        usage.injectPreviewUsage(claudeFiveHour: claude, codexFiveHour: codex)
+        usage.injectPreviewUsage(claudePercent: claude, codexPercent: codex)
     }
 
     /// Single paired block listing both thresholds inline, each tagged
@@ -658,6 +659,26 @@ struct SettingsView: View {
             ) {
                 usageDisplaySegmented
             }
+            sectionLabel("Compact usage window")
+                .padding(.top, 14)
+            ForEach([IslandProvider.claude, .codex]) { provider in
+                SettingsRow(title: provider.name) {
+                    SegmentedControl(
+                        items: PeekWindowPreference.allCases,
+                        selected: Binding(
+                            get: { peekPreferences.preference(for: provider) },
+                            set: { peekPreferences.set($0, for: provider) }
+                        ),
+                        label: { $0.label },
+                        accessibilityPrefix: L10n.tr("%@ compact usage window", provider.name)
+                    )
+                }
+            }
+            Text(L10n.tr("Auto prefers 5-hour usage, then an available window. Explicit choices show unavailable if not reported. Applies to compact usage and alerts; expanded charts still show all windows. Claude monthly credit alerts remain active."))
+                .font(Typography.label)
+                .foregroundStyle(.white.opacity(0.55))
+                .padding(.horizontal, 10)
+                .padding(.top, 4)
         }
         .padding(.horizontal, 14)
         .padding(.top, 18)

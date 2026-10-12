@@ -15,6 +15,13 @@ struct EnterpriseUsageTests {
     }
 
     @MainActor static func main() {
+        UsageStore.shared.injectPreviewUsage(claudePercent: 0.85, codexPercent: 0.97)
+        for preference in PeekWindowPreference.allCases {
+            expect(UsageStore.shared.claude.peekWindow(preference: preference).percentInt == 85,
+                   "Claude alert preview follows \(preference) choice")
+            expect(UsageStore.shared.codex.peekWindow(preference: preference).percentInt == 97,
+                   "Codex alert preview follows \(preference) choice")
+        }
         expect(UsageWindow.monthly.labelKey == "Credits", "monthly credits cannot use the weekly label")
         let staleCaption = UsageChartsRow(color: .white, style: .ring, seed: 0, metrics: [])
             .caption(WindowUsage(usedPercent: 0.4, resetAt: nil, error: "HTTP 500", usedAmount: 6.4, limitAmount: 16))
@@ -76,6 +83,48 @@ struct EnterpriseUsageTests {
         expect(UsageFetcher.parseClaudeUsageResponse(response, plan: "max").monthly.hasReading,
                "response schema determines available credits")
         let reset = Date().addingTimeInterval(3600)
+        let preferredUsage = AppUsage(
+            fiveHour: WindowUsage(usedPercent: 0.1, resetAt: reset, error: nil),
+            weekly: WindowUsage(usedPercent: 0.98, resetAt: reset, error: nil),
+            reportedWindows: [.fiveHour, .weekly])
+        for provider in [IslandProvider.claude, .codex] {
+            let selected = AlertDecision.legacyInputs(provider: provider, usage: preferredUsage,
+                preference: .weekly, visible: true)
+            expect(selected.count == 1 && selected[0].windowKind == .weekly,
+                   "\(provider) alerts use selected weekly identity")
+            expect(AlertDecision.computeSeverity(inputs: selected, warning: 80, critical: 95)[provider] == .critical,
+                   "\(provider) alerts follow weekly reading rather than low five-hour usage")
+            let hourlyInputs = AlertDecision.legacyInputs(provider: provider, usage: preferredUsage,
+                preference: .fiveHour, visible: true)
+            expect(AlertDecision.computeSeverity(inputs: hourlyInputs, warning: 80, critical: 95)[provider] == nil,
+                   "\(provider) changing selection recomputes severity")
+            let previous: Set<AlertEngine.CrossingKey> = [
+                .init(provider: provider, threshold: .warning, resetAt: reset, windowKind: .fiveHour),
+                .init(provider: provider, threshold: .critical, resetAt: reset, windowKind: .fiveHour)]
+            let crossing = AlertDecision.evaluateCrossings(previous: previous, inputs: selected,
+                warning: 80, critical: 95, warmedUp: true)
+            expect(crossing.pulse?.lines.first?.percent == 98, "\(provider) weekly crossing is independent of five-hour crossing")
+            expect(AlertDecision.evaluateCrossings(previous: crossing.next, inputs: selected,
+                warning: 80, critical: 95, warmedUp: true).pulse == nil,
+                   "\(provider) switching back to the same window does not repeat its crossing")
+            let hidden = AlertDecision.legacyInputs(provider: provider, usage: preferredUsage,
+                preference: .weekly, visible: false)
+            expect(AlertDecision.computeSeverity(inputs: hidden, warning: 80, critical: 95).isEmpty,
+                   "\(provider) hidden usage does not alert")
+        }
+        let unavailable = AlertDecision.legacyInputs(provider: .codex,
+            usage: AppUsage(fiveHour: preferredUsage.weekly, weekly: preferredUsage.weekly, reportedWindows: [.weekly]),
+            preference: .fiveHour, visible: true)
+        expect(AlertDecision.computeSeverity(inputs: unavailable, warning: 80, critical: 95).isEmpty,
+               "Unavailable explicit window cannot alert on stale data")
+        let credits = AppUsage(fiveHour: preferredUsage.fiveHour, weekly: preferredUsage.fiveHour,
+            monthly: preferredUsage.weekly, reportedWindows: [.fiveHour, .weekly, .monthly])
+        let withCredits = AlertDecision.legacyInputs(provider: .claude, usage: credits, preference: .weekly, visible: true)
+        expect(withCredits.map(\.windowKind) == [.weekly, .monthly], "Selected weekly window retains independent monthly credit alerts")
+        expect(AlertDecision.computeSeverity(inputs: withCredits, warning: 80, critical: 95)[.claude] == .critical,
+               "Monthly exhaustion still alerts when selected weekly usage is low")
+        let monthlyOnly = AlertDecision.legacyInputs(provider: .claude, usage: original, preference: .auto, visible: true)
+        expect(monthlyOnly.map(\.windowKind) == [.monthly], "Auto monthly selection is not duplicated in alerts")
         let monthly = AlertDecision.WindowInput(provider: .claude, visible: true,
             window: WindowUsage(usedPercent: 0.98, resetAt: reset, error: nil), windowKind: .monthly)
         let hourly = AlertDecision.WindowInput(provider: .claude, visible: true,
