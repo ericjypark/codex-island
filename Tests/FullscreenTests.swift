@@ -305,9 +305,12 @@ struct FullscreenTests {
         delayed.holdReplies = true
         var delayedTrusted = true
         var delayedReads = 0
+        var delayedContext = FullscreenDetectionContext(displayID: "display-a", foregroundPID: 123)
+        let delayedEvents = NotificationCenter()
         var delayedStore: FullscreenStore? = FullscreenStore(
-            defaults: defaults, workspaceCenter: NotificationCenter(), applicationCenter: NotificationCenter(),
+            defaults: defaults, workspaceCenter: delayedEvents, applicationCenter: NotificationCenter(),
             sessionCenter: NotificationCenter(), windowMonitor: delayed,
+            detectionContext: { delayedContext },
             accessibilityTrusted: { delayedTrusted }, readBorderless: {
                 delayedReads += 1
                 return true
@@ -319,22 +322,51 @@ struct FullscreenTests {
               "Results from a superseded display/app snapshot cannot hide the island")
         delayed.reply(true)
         check(delayedReads == 1 && delayedStore?.isActive == true, "Only the current snapshot can publish borderless suppression")
+        let stopsBeforeRefresh = delayed.stops
+        var transientVisibility: [Bool] = []
+        let refreshObservation = delayedStore?.$isActive.sink { transientVisibility.append($0) }
+        let updatesBeforeTermination = delayed.updates
+        delayedEvents.post(name: NSWorkspace.didTerminateApplicationNotification, object: nil)
+        for _ in 0..<100 {
+            if delayed.updates > updatesBeforeTermination { break }
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+        check(delayedStore?.isActive == true && delayed.stops == stopsBeforeRefresh,
+              "An unrelated app exit preserves suppression and the existing observer while its reply is pending")
+        delayed.reply(true)
+        check(transientVisibility == [true], "A successful refresh never flashes an interactive island")
+        refreshObservation?.cancel()
+        delayedStore?.refresh()
+        delayedContext.displayID = "display-b"
+        let readsBeforeContextChange = delayedReads
+        delayed.reply(true)
+        check(delayedReads == readsBeforeContextChange && delayedStore?.isActive == false,
+              "A display change detected at reply time discards stale geometry and clears the old context")
+        check(delayed.stops > stopsBeforeRefresh, "Changing detection context detaches the old observer")
+        delayed.reply(true)
+        check(delayedStore?.isActive == true, "A fresh display-context reply can hide the island")
+        delayedContext.foregroundPID = 456
+        delayedStore?.refresh()
+        check(delayedStore?.isActive == false, "Changing foreground app immediately clears the previous app's suppression")
+        delayed.reply(true)
+        check(delayedStore?.isActive == true, "The new foreground app can establish its own suppression")
+        let allowedReads = delayedReads
         delayedStore?.refresh()
         delayedStore?.detectBorderlessFullscreen = false
         delayed.reply(true)
-        check(delayedReads == 1 && delayedStore?.isActive == false,
+        check(delayedReads == allowedReads && delayedStore?.isActive == false,
               "Opt-out invalidates an in-flight observer result before geometry is read")
         delayedStore?.detectBorderlessFullscreen = true
         delayedTrusted = false
         delayed.reply(true)
-        check(delayedReads == 1 && delayedStore?.borderlessStatus == .permissionRequired && !delayed.running,
+        check(delayedReads == allowedReads && delayedStore?.borderlessStatus == .permissionRequired && !delayed.running,
               "Permission loss during observer attachment detaches and prevents geometry access")
         delayedTrusted = true
         delayedStore?.refresh()
         delayedStore = nil
         await settle()
         delayed.reply(true)
-        check(delayedReads == 1 && !delayed.running, "Teardown invalidates in-flight observer completion")
+        check(delayedReads == allowedReads && !delayed.running, "Teardown invalidates in-flight observer completion")
         print("PASS \(checks) fullscreen and visibility checks")
     }
 }
@@ -345,6 +377,7 @@ private final class WindowMonitorSpy: FullscreenWindowMonitoring {
     var updates = 0
     var supported = true
     var running = false
+    var stops = 0
     var holdReplies = false
     private var replies: [@MainActor @Sendable (Bool) -> Void] = []
     func update(_ completion: @escaping @MainActor @Sendable (Bool) -> Void) {
@@ -354,5 +387,5 @@ private final class WindowMonitorSpy: FullscreenWindowMonitoring {
         else { completion(supported) }
     }
     func reply(_ supported: Bool) { replies.removeFirst()(supported) }
-    func stop() { running = false }
+    func stop() { stops += 1; running = false }
 }

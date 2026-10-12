@@ -40,6 +40,10 @@ deadline). Partial removal makes progress across events. Window-creation
 notifications remain attached while the foreground app has no windows.
 Callback contexts remain owned until their observers detach; request and
 observation revisions reject stale results and callbacks after context changes.
+Rechecks keep the current borderless suppression and reuse registrations while
+the foreground process and selected display are unchanged. A context change
+clears that result before observing the new context; delayed replies are checked
+against the current process and display before reading geometry.
 [Notification support](https://developer.apple.com/documentation/applicationservices/1462089-axobserveraddnotification)
 is app-dependent. Missing permission or unsupported geometry
 notifications leave borderless suppression off and show a status in Settings.
@@ -72,6 +76,8 @@ safeguards below. Game Mode may briefly outlast a fullscreen transition.
 `Tests/FullscreenTests.swift` covers Space and window geometry fixtures, visibility
 composition, notification refresh, opt-in and permission states, unsupported apps,
 burst coalescing, absence of idle polling, cancellation, sleep/lock, and teardown.
+It also covers uninterrupted suppression during unrelated application exits and
+rejects delayed replies after foreground-process or target-display changes.
 `Tests/FullscreenAccessibilityTests.swift` runs the actual worker and monitor
 against injected AX sessions, checking window replacement, registration bounds,
 windowless apps, unsupported notifications, partial reconciliation, slow queries,
@@ -105,6 +111,8 @@ click-through at the current pointer position, so a stationary pointer can click
 the restored island. It prepares keyboard handling (still gated by key-window
 status) without consuming the next real pointer entry. The startup mouse-poll
 fallback is stopped while hidden.
+Restoration resets hidden pulse/expansion state to the configured compact or peek
+state before computing the mouse-hit area, so discarded bounds stay click-through.
 Occlusion suppresses the glow, while existing provider/history refreshes remain
 unchanged. Display switching never overrides suppression.
 
@@ -118,7 +126,8 @@ preserved, including a launch while Game Mode is already active.
 `Tests/WindowInteractionTests.swift` compiles the real window controller against
 window/input/store spies. It exercises hide/restore beneath a stationary pointer,
 outside-pointer click-through, compact/peek modes, combined suppressors, unlock,
-focus preservation, the next real pointer entry, and keyboard-monitor lifecycle.
+hidden pulse/expansion restoration, focus preservation, the next real pointer
+entry, and keyboard-monitor lifecycle.
 The regression fails against the controller before the restoration fix. It
 does not display windows, capture or inject system input, activate applications,
 or establish live AppKit/SwiftUI event behavior.

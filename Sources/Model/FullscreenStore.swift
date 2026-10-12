@@ -2,10 +2,22 @@ import AppKit
 import Combine
 import ApplicationServices
 
+struct FullscreenDetectionContext: Equatable, Sendable {
+    var displayID: String?
+    var foregroundPID: pid_t?
+
+    @MainActor
+    static func current() -> FullscreenDetectionContext {
+        FullscreenDetectionContext(displayID: DisplayInfo.currentTarget()?.stableID,
+                                   foregroundPID: NSWorkspace.shared.frontmostApplication?.processIdentifier)
+    }
+}
+
 @MainActor
 final class FullscreenStore: ObservableObject {
     static let shared = FullscreenStore(
         windowMonitor: FullscreenAccessibilityMonitor(),
+        detectionContext: { FullscreenDetectionContext.current() },
         accessibilityTrusted: { AXIsProcessTrusted() },
         readBorderless: {
             guard let display = DisplayInfo.currentTarget() else { return nil }
@@ -44,6 +56,8 @@ final class FullscreenStore: ObservableObject {
     private let windowMonitor: FullscreenWindowMonitoring?
     private let accessibilityTrusted: () -> Bool
     private let readBorderless: () -> Bool?
+    private let detectionContext: () -> FullscreenDetectionContext
+    private var observationContext: FullscreenDetectionContext?
     private var transitionTask: Task<Void, Never>?
     private var transitionRevision = 0
     private var snapshotRevision = 0
@@ -62,12 +76,14 @@ final class FullscreenStore: ObservableObject {
          applicationCenter: NotificationCenter = .default,
          sessionCenter: NotificationCenter = DistributedNotificationCenter.default(),
          windowMonitor: FullscreenWindowMonitoring? = nil,
+         detectionContext: @escaping () -> FullscreenDetectionContext = { FullscreenDetectionContext() },
          accessibilityTrusted: @escaping () -> Bool = { false },
          readBorderless: @escaping () -> Bool? = { false },
          readFullscreen: @escaping () -> Bool?) {
         self.defaults = defaults
         self.readFullscreen = readFullscreen
         self.windowMonitor = windowMonitor
+        self.detectionContext = detectionContext
         self.accessibilityTrusted = accessibilityTrusted
         self.readBorderless = readBorderless
         detectBorderlessFullscreen = defaults.bool(forKey: Self.borderlessPreferenceKey)
@@ -100,8 +116,6 @@ final class FullscreenStore: ObservableObject {
 
     func refresh() {
         cancelTransitionChecks()
-        windowMonitor?.stop()
-        borderlessFullscreen = false
         sample()
     }
 
@@ -117,6 +131,12 @@ final class FullscreenStore: ObservableObject {
             isActive = false
             return
         }
+        let context = detectionContext()
+        if context != observationContext {
+            windowMonitor?.stop()
+            borderlessFullscreen = false
+            observationContext = context
+        }
         nativeFullscreen = readFullscreen() ?? false
         if !detectBorderlessFullscreen {
             windowMonitor?.stop()
@@ -130,6 +150,10 @@ final class FullscreenStore: ObservableObject {
             windowMonitor.update { [weak self] supported in
                 guard let self, self.snapshotRevision == revision, self.shouldMonitor,
                       self.detectBorderlessFullscreen else { return }
+                guard self.detectionContext() == context else {
+                    self.refresh()
+                    return
+                }
                 guard self.accessibilityTrusted() else {
                     windowMonitor.stop()
                     self.borderlessStatus = .permissionRequired

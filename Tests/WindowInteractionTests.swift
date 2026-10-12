@@ -96,6 +96,25 @@ struct WindowInteractionTests {
 
         for alwaysShow in [false, true] {
             AlwaysShowUsageStore.shared.enabled = alwaysShow
+            for transient in [IslandModel.State.peek, .expanded] {
+                if alwaysShow && transient == .peek { continue }
+                GameModeStore.shared.isActive = true
+                controller.model.setState(transient)
+                NSEvent.mouseLocation = transient == .peek ? NSPoint(x: 650, y: 350) : NSPoint(x: 450, y: 250)
+                let activations = NSApp.activations
+                let keyRequests = window.keyRequests
+                GameModeStore.shared.isActive = false
+                check(controller.model.state == (alwaysShow ? .peek : .compact),
+                      "Restoration resets hidden pulse/expansion state before displaying the island")
+                check(window.ignoresMouseEvents && NSEvent.keyMonitorCount == 0,
+                      "A stationary pointer in discarded transient bounds retains click-through")
+                check(NSApp.activations == activations && window.keyRequests == keyRequests,
+                      "Resetting hidden transient state preserves foreground focus")
+            }
+        }
+
+        for alwaysShow in [false, true] {
+            AlwaysShowUsageStore.shared.enabled = alwaysShow
             for clearsFullscreen in [false, true] {
                 for screenNotification in [false, true] {
                     for pointerOnNewDisplay in [false, true] {
@@ -244,7 +263,8 @@ struct DisplayInfo {
     func updateNotch(_ notch: NotchInfo) {}
     func setState(_ state: State) {
         self.state = state
-        size = CGSize(width: state == .compact ? 280 : 420, height: 32)
+        size = CGSize(width: state == .compact ? 280 : (state == .peek ? 420 : 600),
+                      height: state == .expanded ? 200 : 32)
     }
     func showScreen(_ screen: ScreenPref.Screen) {}
     func rewindScreen() {}
