@@ -80,6 +80,9 @@ synthetic display/read providers and window/input spies shared with the controll
 suite. Forced notification delivery orders cover disconnecting a fullscreen
 target into fullscreen and desktop fallbacks, transient reveal/input, focus,
 synchronous placement and idle stability without physical monitors.
+The fixture waits for both bounded settling reads before invalidating a display
+or asserting idle state; a deliberately slow startup snapshot prevents a fixed
+sleep from accidentally standing in for completion on a busy runner.
 =GameModeTests.swift=
 for private test-namespace Darwin notifications. Shared synthetic sessions live
 in =Tests/FullscreenAccessibilityFixtures.swift=. These tests do not grant OS

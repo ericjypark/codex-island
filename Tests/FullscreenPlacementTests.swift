@@ -33,12 +33,15 @@ struct FullscreenPlacementTests {
                     readFullscreen: {
                         let id = DisplayInfo.positionedDisplay?.stableID
                         reads.append(id)
+                        // Exercise a slow snapshot: timer delays are minimums,
+                        // so a fixed sleep cannot establish quiescence.
+                        if reads.count == 3 { Thread.sleep(forTimeInterval: 0.15) }
                         return id.flatMap { spaces[$0] }
                     }
                 )
                 let controller = IslandWindowController(fullscreen: store, applicationCenter: placementEvents)
                 controller.show()
-                await settle()
+                await waitForReads(reads.count + 2, count: { reads.count })
                 let window = controller.window
                 check(!window.isVisible && window.ignoresMouseEvents, "Initial fullscreen target is hidden and cannot accept input")
                 let fronts = window.frontRequests
@@ -63,7 +66,7 @@ struct FullscreenPlacementTests {
                 placementEvents.post(name: displayChange, object: nil)
                 check(DisplayInfo.positionedDisplay?.stableID == "2000.0",
                       "Display callback updates placement before yielding to queued work")
-                await settle()
+                await waitForReads(reads.count + 2, count: { reads.count })
                 if !storeFirst {
                     NotificationCenter.default.post(name: displayChange, object: nil)
                     await settle()
@@ -88,5 +91,17 @@ struct FullscreenPlacementTests {
 
     private static func settle() async {
         try? await Task.sleep(nanoseconds: 500_000_000)
+    }
+
+    private static func waitForReads(_ expected: Int, count: () -> Int) async {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: .seconds(5))
+        while count() < expected && clock.now < deadline {
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+        guard count() == expected else {
+            FileHandle.standardError.write(Data("FAIL: Expected \(expected) settled reads, received \(count())\n".utf8))
+            exit(1)
+        }
     }
 }
