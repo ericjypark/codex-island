@@ -72,6 +72,8 @@ final class FullscreenStore: ObservableObject {
     private let detectionContext: () -> FullscreenDetectionContext
     private var observationContext: FullscreenDetectionContext?
     private var transitionTask: Task<Void, Never>?
+    private var pendingCheckTask: Task<Void, Never>?
+    private var pendingCheckExpired = false
     private var transitionRevision = 0
     private var snapshotRevision = 0
     private var nativeFullscreen = false
@@ -125,6 +127,7 @@ final class FullscreenStore: ObservableObject {
 
     deinit {
         transitionTask?.cancel()
+        pendingCheckTask?.cancel()
         Task { @MainActor [windowMonitor] in
             windowMonitor?.onChange = nil
             windowMonitor?.stop()
@@ -133,6 +136,9 @@ final class FullscreenStore: ObservableObject {
     }
 
     func refresh() {
+        if accessibilitySettingsOpenFailed && accessibilityTrusted() {
+            accessibilitySettingsOpenFailed = false
+        }
         cancelTransitionChecks()
         sample()
     }
@@ -147,6 +153,7 @@ final class FullscreenStore: ObservableObject {
         let revision = snapshotRevision
         guard shouldMonitor else {
             cancelTransitionChecks()
+            resetPendingCheck()
             windowMonitor?.stop()
             hasBorderlessResult = false
             // The controller may unlock before this store receives its resume
@@ -162,6 +169,7 @@ final class FullscreenStore: ObservableObject {
         }
         let context = detectionContext()
         if context != observationContext {
+            resetPendingCheck()
             windowMonitor?.stop()
             borderlessFullscreen = false
             hasBorderlessResult = false
@@ -170,18 +178,20 @@ final class FullscreenStore: ObservableObject {
         var awaitingReply = false
         nativeFullscreen = readFullscreen() ?? false
         if !detectBorderlessFullscreen {
+            resetPendingCheck()
             windowMonitor?.stop()
             borderlessStatus = .disabled
             borderlessFullscreen = false
             hasBorderlessResult = false
         } else if !accessibilityTrusted() {
+            resetPendingCheck()
             windowMonitor?.stop()
             borderlessStatus = .permissionRequired
             borderlessFullscreen = false
             hasBorderlessResult = false
         } else if let windowMonitor, windowMonitor.hasEligibleForegroundApp {
             awaitingReply = true
-            if !hasBorderlessResult { isCheckingFullscreen = true }
+            if !hasBorderlessResult { beginPendingCheck(context: context) }
             windowMonitor.update { [weak self] supported in
                 guard let self, self.snapshotRevision == revision, self.shouldMonitor,
                       self.detectBorderlessFullscreen else { return }
@@ -190,6 +200,7 @@ final class FullscreenStore: ObservableObject {
                     return
                 }
                 guard self.accessibilityTrusted() else {
+                    self.resetPendingCheck()
                     windowMonitor.stop()
                     self.borderlessStatus = .permissionRequired
                     self.borderlessFullscreen = false
@@ -198,6 +209,7 @@ final class FullscreenStore: ObservableObject {
                     self.isCheckingFullscreen = false
                     return
                 }
+                self.resetPendingCheck()
                 self.borderlessStatus = supported ? .observing : .unsupported
                 self.borderlessFullscreen = supported && (self.readBorderless() ?? false)
                 self.hasBorderlessResult = true
@@ -205,6 +217,7 @@ final class FullscreenStore: ObservableObject {
                 self.isCheckingFullscreen = false
             }
         } else {
+            resetPendingCheck()
             windowMonitor?.stop()
             borderlessStatus = .unsupported
             borderlessFullscreen = false
@@ -212,6 +225,28 @@ final class FullscreenStore: ObservableObject {
         }
         publishVisibility()
         if !awaitingReply { isCheckingFullscreen = false }
+    }
+
+    private func beginPendingCheck(context: FullscreenDetectionContext) {
+        guard !pendingCheckExpired else { return }
+        isCheckingFullscreen = true
+        guard pendingCheckTask == nil else { return }
+        // The display wait is per context, not per snapshot or worker slice.
+        // Reconciliation may continue after this one-shot fail-open deadline.
+        pendingCheckTask = Task { @MainActor [weak self] in
+            do { try await Task.sleep(nanoseconds: 750_000_000) } catch { return }
+            guard let self, !Task.isCancelled, self.shouldMonitor,
+                  self.observationContext == context, !self.hasBorderlessResult else { return }
+            self.pendingCheckTask = nil
+            self.pendingCheckExpired = true
+            self.isCheckingFullscreen = false
+        }
+    }
+
+    private func resetPendingCheck() {
+        pendingCheckTask?.cancel()
+        pendingCheckTask = nil
+        pendingCheckExpired = false
     }
 
     private func publishVisibility() {

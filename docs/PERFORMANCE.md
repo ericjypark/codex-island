@@ -38,6 +38,8 @@ shows the request asynchronously and the user grants access in System Settings.
 Startup, restored preferences, Recheck, and OS events never prompt. Settings
 provides Recheck and Open Settings actions; Open Settings targets the Accessibility
 permission pane and reports a dispatch failure with manual navigation instructions.
+Recheck clears that stale dispatch error once trusted access is observed, without
+opening Settings again or prompting.
 Native fullscreen needs no Accessibility permission.
 
 `FullscreenAccessibilityMonitor` attaches one AXObserver to the foreground app.
@@ -63,7 +65,14 @@ the foreground process and selected display are unchanged. A context change
 clears that result before observing the new context; delayed replies are checked
 against the current process and display before reading geometry.
 The first borderless result, a changed context, and wake/unlock rechecks gate
-window display until the current asynchronous snapshot resolves. This pending
+window display until the current asynchronous snapshot resolves, for at most
+750 ms of initial AX waiting per context. This one-shot deadline is not reset by
+same-context refreshes or reconciliation slices. On expiry, a not-yet-confirmed
+window is shown while reconciliation continues; a late current result can still
+hide it. Established same-context fullscreen suppression is never cleared by
+the deadline. Context changes, suspension, opt-out, permission loss, completion
+and teardown cancel the deadline; no retries or queries are scheduled by it.
+This pending
 state is separate from detected fullscreen. It prevents startup activation from
 changing the foreground app being inspected and avoids an interactive flash on
 resume. After native sampling resumes, missing permission or unsupported
@@ -115,7 +124,10 @@ three idle seconds without additional queries. This establishes query behavior,
 not a battery or CPU-energy measurement.
 The monitor and trust status are injected: tests neither request Accessibility
 permission nor inspect live apps. Injected request/open handlers verify user-toggle
-requests, quiet startup/Recheck, the Settings URL and failed-dispatch recovery.
+requests, quiet startup/Recheck, the Settings URL and failed-dispatch recovery,
+including Recheck after a manual grant. Delayed replies verify the 750 ms gate
+across same-context refreshes, idle stability, late results, retained suppression
+and cancellation across app changes and lock.
 A late controller lock-handler fixture verifies native suppression has no transient
 clear before the controller processes the same lock notification. A controller-first
 unlock fixture changes the selected display while locked and verifies that only a

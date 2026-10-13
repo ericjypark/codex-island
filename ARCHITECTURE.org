@@ -10,11 +10,17 @@ Darwin Game Mode notifications and Accessibility window notifications.
 user preferences, permission status, observation context, and the pending
 initial/resume gate (=isCheckingFullscreen=). Suspension holds this gate even
 with borderless detection disabled, until a fresh native sample and any needed
-AX reply complete; controller-first unlock cannot expose stale display state.
+AX reply complete; controller-first unlock cannot expose stale native display state.
+After native sampling resumes, an initial/changed-context AX wait fails open
+at 750 ms. The one-shot deadline is shared across same-context snapshots and
+worker slices; it neither polls nor clears established fullscreen suppression.
+Late current results can still hide. Context changes, suspension, opt-out,
+permission loss, completion and teardown cancel the deadline.
 Native Space reads use =FullscreenSpaceReader.swift=;
 borderless geometry uses =FullscreenWindowReader.swift=. Missing permission
 fails open; only explicit opt-in requests access. Recheck performs a quiet
-refresh. There is no recurring fullscreen or permission poll.
+refresh and clears an old Settings-dispatch error once it observes trusted access.
+There is no recurring fullscreen or permission poll.
 
 =Sources/Model/FullscreenAccessibilityMonitor.swift= excludes the island,
 Finder and missing foreground apps before scheduling work. Its worker owns
@@ -47,7 +53,8 @@ and Game Mode signals are undocumented read-only OS interfaces; their absence
 must fail open. See [[file:docs/PERFORMANCE.md][performance and visibility contracts]].
 
 =scripts/run-tests.sh= runs =Tests/FullscreenTests.swift= for store transitions,
-including controller-first unlock after a locked display change and a real
+including manual permission recovery, bounded initial waits, cancelled deadlines,
+controller-first unlock after a locked display change and a real
 worker with synthetic AX sessions; =FullscreenAccessibilityTests.swift=
 for bounded progress, transient session-creation recovery, cancellation, window
 replacement and idle behavior;

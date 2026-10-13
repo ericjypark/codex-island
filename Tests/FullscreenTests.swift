@@ -237,7 +237,17 @@ struct FullscreenTests {
         monitoredStore?.refresh()
         check(monitoredStore?.isActive == true, "Native fullscreen remains available without Accessibility permission")
         nativeFullscreen = false
+        settingsOpenSucceeds = false
+        monitoredStore?.openAccessibilitySettings()
+        monitoredStore?.refresh()
+        check(monitoredStore?.accessibilitySettingsOpenFailed == true,
+              "Untrusted Recheck retains manual permission recovery instructions")
         trusted = true
+        let dispatchesBeforeRecovery = settingsURLs.count
+        monitoredStore?.refresh()
+        check(monitoredStore?.accessibilitySettingsOpenFailed == false &&
+              monitoredStore?.borderlessStatus == .observing && settingsURLs.count == dispatchesBeforeRecovery,
+              "Recheck after a manual grant clears stale Settings errors without reopening Settings")
         monitoredStore?.detectBorderlessFullscreen = false
         monitoredStore?.detectBorderlessFullscreen = true
         check(permissionRequests == 2, "Already granted access does not trigger a permission request")
@@ -536,6 +546,53 @@ struct FullscreenTests {
         check(!eligibilityStore.isActive && !eligibilityStore.isCheckingFullscreen && eligibilityGeometryReads == 0,
               "Self-activation cancels an eligible pending reply without reading stale geometry or restoring its gate")
         eligibilityMonitor.stop()
+        let deadlineMonitor = WindowMonitorSpy()
+        deadlineMonitor.holdReplies = true
+        let deadlineSession = NotificationCenter()
+        var deadlineContext = FullscreenDetectionContext(displayID: "deadline-a", foregroundPID: 123)
+        let deadlineStore = FullscreenStore(
+            defaults: defaults, workspaceCenter: NotificationCenter(), applicationCenter: NotificationCenter(),
+            sessionCenter: deadlineSession, windowMonitor: deadlineMonitor,
+            detectionContext: { deadlineContext }, accessibilityTrusted: { true },
+            readBorderless: { true }, readFullscreen: { false }
+        )
+        for _ in 0..<4 {
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            deadlineStore.refresh()
+        }
+        check(!deadlineStore.isCheckingFullscreen && !deadlineStore.isActive,
+              "A slow initial AX check fails open within one second despite same-context refreshes")
+        let deadlineUpdates = deadlineMonitor.updates
+        try? await Task.sleep(nanoseconds: 850_000_000)
+        check(deadlineMonitor.updates == deadlineUpdates && !deadlineStore.isCheckingFullscreen,
+              "Expired pending gates neither retry nor rearm while idle")
+        for _ in 0..<deadlineUpdates { deadlineMonitor.reply(true) }
+        check(deadlineStore.isActive, "A late current AX result can still establish fullscreen suppression")
+        deadlineStore.refresh()
+        try? await Task.sleep(nanoseconds: 850_000_000)
+        check(deadlineStore.isActive && !deadlineStore.isCheckingFullscreen,
+              "The initial-check deadline never clears established same-context fullscreen suppression")
+        deadlineMonitor.reply(true)
+        deadlineContext.foregroundPID = 456
+        deadlineStore.refresh()
+        try? await Task.sleep(nanoseconds: 400_000_000)
+        deadlineContext.foregroundPID = 789
+        deadlineStore.refresh()
+        try? await Task.sleep(nanoseconds: 400_000_000)
+        check(deadlineStore.isCheckingFullscreen,
+              "A cancelled old-context deadline cannot release a newer context's pending gate")
+        try? await Task.sleep(nanoseconds: 450_000_000)
+        check(!deadlineStore.isCheckingFullscreen, "The new context has its own finite pending deadline")
+        deadlineContext.foregroundPID = 999
+        deadlineStore.refresh()
+        deadlineSession.post(name: .init("com.apple.screenIsLocked"), object: nil)
+        try? await Task.sleep(nanoseconds: 900_000_000)
+        check(deadlineStore.isCheckingFullscreen,
+              "A cancelled AX deadline cannot clear the native suspension gate while locked")
+        deadlineStore.hideInFullscreen = false
+        check(!deadlineStore.isCheckingFullscreen, "Opt-out cancels every pending display gate")
+        deadlineStore.hideInFullscreen = true
+
         let nativeSession = NotificationCenter()
         let nativeDisplayEvents = NotificationCenter()
         var nativeDisplayID = "desktop-target"
