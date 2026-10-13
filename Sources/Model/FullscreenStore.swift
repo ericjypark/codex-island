@@ -59,7 +59,7 @@ final class FullscreenStore: ObservableObject {
         }
     }
     @Published private(set) var isActive = false
-    @Published private(set) var isCheckingBorderless = false
+    @Published private(set) var isCheckingFullscreen = false
 
     private let defaults: UserDefaults
     private let readFullscreen: () -> Bool?
@@ -149,7 +149,9 @@ final class FullscreenStore: ObservableObject {
             cancelTransitionChecks()
             windowMonitor?.stop()
             hasBorderlessResult = false
-            isCheckingBorderless = hideInFullscreen && detectBorderlessFullscreen && windowMonitor != nil
+            // The controller may unlock before this store receives its resume
+            // event. Cached native state can be stale after a display change.
+            isCheckingFullscreen = hideInFullscreen
             borderlessStatus = .disabled
             // Keep native suppression until the resume snapshot: the controller's
             // separate lock handler may run after this store's notification task.
@@ -179,7 +181,7 @@ final class FullscreenStore: ObservableObject {
             hasBorderlessResult = false
         } else if let windowMonitor, windowMonitor.hasEligibleForegroundApp {
             awaitingReply = true
-            if !hasBorderlessResult { isCheckingBorderless = true }
+            if !hasBorderlessResult { isCheckingFullscreen = true }
             windowMonitor.update { [weak self] supported in
                 guard let self, self.snapshotRevision == revision, self.shouldMonitor,
                       self.detectBorderlessFullscreen else { return }
@@ -193,14 +195,14 @@ final class FullscreenStore: ObservableObject {
                     self.borderlessFullscreen = false
                     self.hasBorderlessResult = false
                     self.publishVisibility()
-                    self.isCheckingBorderless = false
+                    self.isCheckingFullscreen = false
                     return
                 }
                 self.borderlessStatus = supported ? .observing : .unsupported
                 self.borderlessFullscreen = supported && (self.readBorderless() ?? false)
                 self.hasBorderlessResult = true
                 self.publishVisibility()
-                self.isCheckingBorderless = false
+                self.isCheckingFullscreen = false
             }
         } else {
             windowMonitor?.stop()
@@ -209,7 +211,7 @@ final class FullscreenStore: ObservableObject {
             hasBorderlessResult = false
         }
         publishVisibility()
-        if !awaitingReply { isCheckingBorderless = false }
+        if !awaitingReply { isCheckingFullscreen = false }
     }
 
     private func publishVisibility() {

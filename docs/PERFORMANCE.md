@@ -24,7 +24,11 @@ hiding stops all fullscreen queries and detaches the Accessibility observer.
 System/display sleep and session lock also suspend detection. Native suppression
 is retained while suspended until a fresh resume snapshot, so the fullscreen
 store cannot reveal the window before the separate controller lock handler runs.
-Disabling fullscreen hiding still clears the cached result.
+A separate pending gate also holds display while suspended, including when the
+cached native result is false and borderless detection is off. It clears only
+after the resume sample, so controller-first unlock and display changes while
+locked cannot expose stale native state. Disabling fullscreen hiding clears
+both the cached result and pending gate.
 
 Borderless detection is a separate, default-off opt-in (`MacIsland.detectBorderlessFullscreen`).
 Turning its toggle on requests Accessibility permission when access is missing.
@@ -41,6 +45,8 @@ It observes focused/main-window changes and window creation, plus resize, move,
 destruction and minimize/restore notifications on up to 32 app windows. It
 reconciles registrations when events arrive, replaces the observer on app
 or display changes, and releases its run-loop source/observer when disabled or suspended.
+If observer creation fails transiently, the next event or Recheck retries the
+same context; a recovered session is reused. No idle retry is scheduled.
 AX creation, messaging and registration run on a dedicated serial worker with a
 sleeping run loop, away from the UI thread. Calls have a 50 ms timeout and each
 reconciliation slice has a 200 ms budget (one in-flight call can finish beyond that
@@ -60,7 +66,8 @@ The first borderless result, a changed context, and wake/unlock rechecks gate
 window display until the current asynchronous snapshot resolves. This pending
 state is separate from detected fullscreen. It prevents startup activation from
 changing the foreground app being inspected and avoids an interactive flash on
-resume. Missing permission, unsupported notifications, and opt-out clear the gate.
+resume. After native sampling resumes, missing permission or unsupported
+notifications clear the remaining borderless wait; opt-out always clears the gate.
 Foreground eligibility is checked before publishing a pending gate. The island,
 Finder, and a missing foreground app skip borderless observation without briefly
 hiding the island on activation; native fullscreen suppression remains independent.
@@ -102,7 +109,7 @@ Delayed snapshots also exercise startup and sleep/lock resume gates, including
 unsupported results that leave the island visible.
 `Tests/FullscreenAccessibilityTests.swift` runs the actual worker and monitor
 against injected AX sessions, checking window replacement, registration bounds,
-windowless apps, unsupported notifications, partial reconciliation, slow queries,
+windowless apps, transient creation recovery, unsupported notifications, partial reconciliation, slow queries,
 stale callbacks, off-main execution and teardown. Both suites observe at least
 three idle seconds without additional queries. This establishes query behavior,
 not a battery or CPU-energy measurement.
@@ -110,7 +117,9 @@ The monitor and trust status are injected: tests neither request Accessibility
 permission nor inspect live apps. Injected request/open handlers verify user-toggle
 requests, quiet startup/Recheck, the Settings URL and failed-dispatch recovery.
 A late controller lock-handler fixture verifies native suppression has no transient
-clear before the controller processes the same lock notification. Window
+clear before the controller processes the same lock notification. A controller-first
+unlock fixture changes the selected display while locked and verifies that only a
+fresh native sample can release the resume gate. Window
 interaction tests cover restoration and focus guards. These checks do not
 establish live AX notification delivery.
 Live acceptance requires separate approval: native browser fullscreen/Space

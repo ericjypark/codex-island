@@ -8,7 +8,10 @@ Darwin Game Mode notifications and Accessibility window notifications.
 
 =Sources/Model/FullscreenStore.swift= owns native and borderless results,
 user preferences, permission status, observation context, and the pending
-initial/resume gate. Native Space reads use =FullscreenSpaceReader.swift=;
+initial/resume gate (=isCheckingFullscreen=). Suspension holds this gate even
+with borderless detection disabled, until a fresh native sample and any needed
+AX reply complete; controller-first unlock cannot expose stale display state.
+Native Space reads use =FullscreenSpaceReader.swift=;
 borderless geometry uses =FullscreenWindowReader.swift=. Missing permission
 fails open; only explicit opt-in requests access. Recheck performs a quiet
 refresh. There is no recurring fullscreen or permission poll.
@@ -21,6 +24,8 @@ timeouts. Continuations retain the snapshot and progress; partial results
 never escape as unsupported. New requests, context changes, stop and teardown
 invalidate older work. Only a completed current result reaches the store.
 Existing same-context suppression remains in effect throughout reconciliation.
+A failed session creation retries on the next event or Recheck, even when the
+context is unchanged. A successful session is reused; there is no idle retry.
 
 =Sources/Model/GameModeStore.swift= owns the read-only Darwin state and its
 independent preference. =Sources/Model/IslandVisibilityState.swift= combines
@@ -28,7 +33,8 @@ Game Mode, fullscreen/pending and session-lock reasons.
 =Sources/Window/IslandWindowController.swift= owns the window and lock flag.
 It installs that flag synchronously in the main-queue lock callback, before
 queued model updates can reveal the window. Unlock refreshes detectors before
-clearing the lock reason. Restoration resets transient layout, orders front
+clearing the lock reason; the store-owned resume gate remains until sampling
+actually resumes. Restoration resets transient layout, orders front
 without activation, and recomputes pointer hit testing. Real pointer entry
 retains the existing interactive activation behavior.
 
@@ -41,8 +47,10 @@ and Game Mode signals are undocumented read-only OS interfaces; their absence
 must fail open. See [[file:docs/PERFORMANCE.md][performance and visibility contracts]].
 
 =scripts/run-tests.sh= runs =Tests/FullscreenTests.swift= for store transitions,
-including a real worker with synthetic AX sessions; =FullscreenAccessibilityTests.swift=
-for bounded progress, cancellation, window replacement and idle behavior;
+including controller-first unlock after a locked display change and a real
+worker with synthetic AX sessions; =FullscreenAccessibilityTests.swift=
+for bounded progress, transient session-creation recovery, cancellation, window
+replacement and idle behavior;
 =WindowInteractionTests.swift= for the real controller against window/input
 spies, including lock-before-queued-game-end ordering; and =GameModeTests.swift=
 for private test-namespace Darwin notifications. Shared synthetic sessions live

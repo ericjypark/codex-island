@@ -73,6 +73,21 @@ struct FullscreenAccessibilityTests {
         check(!initial.hasEligibleForegroundApp, "Ineligible foreground contexts reject a pending gate synchronously")
         check(!(await update(initial)), "No eligible foreground app leaves detection inactive")
 
+        let retrySession = FakeAccessibilitySession(pid: 567)
+        let retryFactory = FakeAccessibilityFactory(sessions: [567: retrySession], failures: 1)
+        let retryMonitor = FullscreenAccessibilityMonitor(
+            foregroundPID: { 567 }, sessionFactory: { retryFactory.make(pid: $0, onChange: $1) }
+        )
+        check(!(await update(retryMonitor)), "Transient AX session creation failure fails open")
+        try? await Task.sleep(nanoseconds: 600_000_000)
+        check(retryFactory.attempts == 1, "Session creation failure does not introduce idle retries")
+        check(await update(retryMonitor), "Same-context Recheck retries a failed AX session creation")
+        check(retryFactory.attempts == 2 && retrySession.registrations.count == 8,
+              "The successful retry attaches app and window notifications")
+        check(await update(retryMonitor), "Recovered observation remains supported")
+        check(retryFactory.attempts == 2, "Same-context updates reuse the recovered session")
+        retryMonitor.stop()
+
         let budgetSession = FakeAccessibilitySession(pid: 555)
         let budgetFactory = FakeAccessibilityFactory(sessions: [555: budgetSession])
         let budgetMonitor = FullscreenAccessibilityMonitor(

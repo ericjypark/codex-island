@@ -5,10 +5,21 @@ final class FakeAccessibilityFactory: @unchecked Sendable {
     private let lock = NSLock()
     private let sessions: [pid_t: FakeAccessibilitySession]
     private var offMain = true
-    init(sessions: [pid_t: FakeAccessibilitySession]) { self.sessions = sessions }
+    private var failuresRemaining: Int
+    private var attemptsStorage = 0
+    init(sessions: [pid_t: FakeAccessibilitySession], failures: Int = 0) {
+        self.sessions = sessions
+        failuresRemaining = failures
+    }
+    var attempts: Int { lock.withLock { attemptsStorage } }
     var allCallsOffMain: Bool { lock.withLock { offMain } }
     func make(pid: pid_t, onChange: @escaping @Sendable () -> Void) -> FullscreenAccessibilitySession? {
-        let session = lock.withLock {
+        let session: FakeAccessibilitySession? = lock.withLock {
+            attemptsStorage += 1
+            if failuresRemaining > 0 {
+                failuresRemaining -= 1
+                return nil
+            }
             offMain = offMain && !Thread.isMainThread
             return sessions[pid]
         }

@@ -172,7 +172,7 @@ final class FullscreenAccessibilityWorker: @unchecked Sendable {
         func canContinue() -> Bool {
             isCurrent(request) && ProcessInfo.processInfo.systemUptime < deadline
         }
-        if self.pid != pid || self.observation != observation {
+        if session == nil || self.pid != pid || self.observation != observation {
             detach()
             session = sessionFactory(pid, onChange)
             self.pid = pid

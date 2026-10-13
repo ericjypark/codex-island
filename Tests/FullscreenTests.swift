@@ -355,7 +355,7 @@ struct FullscreenTests {
                 return true
             }, readFullscreen: { false }
         )
-        check(delayedStore?.isCheckingBorderless == true && delayedStore?.isActive == false,
+        check(delayedStore?.isCheckingFullscreen == true && delayedStore?.isActive == false,
               "The initial asynchronous borderless snapshot gates display without claiming fullscreen")
         delayedStore?.refresh()
         delayed.reply(true)
@@ -363,7 +363,7 @@ struct FullscreenTests {
               "Results from a superseded display/app snapshot cannot hide the island")
         delayed.reply(true)
         check(delayedReads == 1 && delayedStore?.isActive == true, "Only the current snapshot can publish borderless suppression")
-        check(delayedStore?.isCheckingBorderless == false, "A current result resolves the initial display gate")
+        check(delayedStore?.isCheckingFullscreen == false, "A current result resolves the initial display gate")
         for (suspend, resume, center) in [
             (NSWorkspace.willSleepNotification, NSWorkspace.didWakeNotification, delayedEvents),
             (NSWorkspace.screensDidSleepNotification, NSWorkspace.screensDidWakeNotification, delayedEvents),
@@ -375,7 +375,7 @@ struct FullscreenTests {
                 if delayed.stops > stops { break }
                 try? await Task.sleep(nanoseconds: 1_000_000)
             }
-            check(delayedStore?.isCheckingBorderless == true && !delayed.running,
+            check(delayedStore?.isCheckingFullscreen == true && !delayed.running,
                   "Suspension detaches the observer while retaining a display gate")
             let updates = delayed.updates
             center.post(name: resume, object: nil)
@@ -383,10 +383,10 @@ struct FullscreenTests {
                 if delayed.updates > updates { break }
                 try? await Task.sleep(nanoseconds: 1_000_000)
             }
-            check(delayedStore?.isCheckingBorderless == true && delayedStore?.isActive == false,
+            check(delayedStore?.isCheckingFullscreen == true && delayedStore?.isActive == false,
                   "Wake/unlock stays gated while the asynchronous recheck is pending")
             delayed.reply(true)
-            check(delayedStore?.isActive == true && delayedStore?.isCheckingBorderless == false,
+            check(delayedStore?.isActive == true && delayedStore?.isCheckingFullscreen == false,
                   "The resumed fullscreen result replaces the gate without exposing the island")
         }
         let stopsBeforeRefresh = delayed.stops
@@ -400,7 +400,7 @@ struct FullscreenTests {
         }
         check(delayedStore?.isActive == true && delayed.stops == stopsBeforeRefresh,
               "An unrelated app exit preserves suppression and the existing observer while its reply is pending")
-        check(delayedStore?.isCheckingBorderless == false, "A settled same-context recheck needs no new display gate")
+        check(delayedStore?.isCheckingFullscreen == false, "A settled same-context recheck needs no new display gate")
         delayed.reply(true)
         check(transientVisibility == [true], "A successful refresh never flashes an interactive island")
         refreshObservation?.cancel()
@@ -422,7 +422,7 @@ struct FullscreenTests {
         delayedStore?.refresh()
         delayedStore?.detectBorderlessFullscreen = false
         delayed.reply(true)
-        check(delayedReads == allowedReads && delayedStore?.isActive == false && delayedStore?.isCheckingBorderless == false,
+        check(delayedReads == allowedReads && delayedStore?.isActive == false && delayedStore?.isCheckingFullscreen == false,
               "Opt-out invalidates an in-flight observer result before geometry is read")
         delayedStore?.detectBorderlessFullscreen = true
         delayedTrusted = false
@@ -432,7 +432,7 @@ struct FullscreenTests {
         delayedTrusted = true
         delayedStore?.refresh()
         delayed.reply(false)
-        check(delayedStore?.isCheckingBorderless == false && delayedStore?.isActive == false &&
+        check(delayedStore?.isCheckingFullscreen == false && delayedStore?.isActive == false &&
               delayedStore?.borderlessStatus == .unsupported,
               "Unsupported notification delivery resolves the pending gate and fails open")
         delayedStore?.refresh()
@@ -505,46 +505,49 @@ struct FullscreenTests {
             eligibilityContext.foregroundPID = 123
             eligibilityStore.refresh()
             for _ in 0..<200 {
-                if !eligibilityStore.isCheckingBorderless { break }
+                if !eligibilityStore.isCheckingFullscreen { break }
                 try? await Task.sleep(nanoseconds: 10_000_000)
             }
-            check(!eligibilityStore.isCheckingBorderless, "Eligible-app worker fixture settles")
+            check(!eligibilityStore.isCheckingFullscreen, "Eligible-app worker fixture settles")
             var suppressed: [Bool] = []
-            let observation = eligibilityStore.$isActive.combineLatest(eligibilityStore.$isCheckingBorderless)
+            let observation = eligibilityStore.$isActive.combineLatest(eligibilityStore.$isCheckingFullscreen)
                 .map { $0 || $1 }.removeDuplicates().sink { suppressed.append($0) }
             eligibilityContext.foregroundPID = pid
             eligiblePID = nil
             eligibilityStore.refresh()
             check(suppressed == [false], "Activating \(name) never briefly suppresses the island")
-            check(!eligibilityStore.isCheckingBorderless && eligibilityStore.borderlessStatus == .unsupported,
+            check(!eligibilityStore.isCheckingFullscreen && eligibilityStore.borderlessStatus == .unsupported,
                   "An ineligible \(name) context completes without a pending gate")
             observation.cancel()
         }
         eligibilityNative = true
         eligibilityStore.refresh()
-        check(eligibilityStore.isActive && !eligibilityStore.isCheckingBorderless,
+        check(eligibilityStore.isActive && !eligibilityStore.isCheckingFullscreen,
               "Native fullscreen suppression is independent of foreground AX eligibility")
         eligibilityNative = false
         eligiblePID = 789
         eligibilityContext.foregroundPID = 789
         eligibilityStore.refresh()
-        check(eligibilityStore.isCheckingBorderless, "An eligible changed context still gates its asynchronous snapshot")
+        check(eligibilityStore.isCheckingFullscreen, "An eligible changed context still gates its asynchronous snapshot")
         eligiblePID = nil
         eligibilityContext.foregroundPID = ProcessInfo.processInfo.processIdentifier
         eligibilityStore.refresh()
         await settle()
-        check(!eligibilityStore.isActive && !eligibilityStore.isCheckingBorderless && eligibilityGeometryReads == 0,
+        check(!eligibilityStore.isActive && !eligibilityStore.isCheckingFullscreen && eligibilityGeometryReads == 0,
               "Self-activation cancels an eligible pending reply without reading stale geometry or restoring its gate")
         eligibilityMonitor.stop()
         let nativeSession = NotificationCenter()
+        let nativeDisplayEvents = NotificationCenter()
+        var nativeDisplayID = "desktop-target"
         var nativeReading = true
         var nativeLockReads = 0
         let nativeOnly = FullscreenStore(defaults: defaults, workspaceCenter: NotificationCenter(),
-                                         applicationCenter: NotificationCenter(), sessionCenter: nativeSession,
+                                         applicationCenter: nativeDisplayEvents, sessionCenter: nativeSession,
+                                         detectionContext: { FullscreenDetectionContext(displayID: nativeDisplayID) },
                                          readFullscreen: { nativeLockReads += 1; return nativeReading })
         nativeOnly.detectBorderlessFullscreen = false
         let lockProbe = NativeLockVisibilityProbe()
-        let nativeObservation = nativeOnly.$isActive.combineLatest(nativeOnly.$isCheckingBorderless).sink { active, checking in
+        let nativeObservation = nativeOnly.$isActive.combineLatest(nativeOnly.$isCheckingFullscreen).sink { active, checking in
             lockProbe.state.isFullscreen = active || checking
             lockProbe.samples.append(!lockProbe.state.shouldHide)
         }
@@ -568,6 +571,33 @@ struct FullscreenTests {
         await settle()
         check(!nativeOnly.isActive && nativeLockReads > lockedReads,
               "A fresh desktop snapshot clears cached native suppression on resume")
+        // Simulate controller-first unlock: refresh still sees the store locked,
+        // then the controller clears its own gate before the store's unlock task.
+        nativeSession.post(name: nativeLock, object: nil)
+        await settle()
+        let beforeUnlockReads = nativeLockReads
+        nativeDisplayID = "fullscreen-fallback"
+        nativeReading = true
+        nativeDisplayEvents.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        await settle()
+        lockProbe.samples.removeAll()
+        nativeOnly.refresh()
+        lockProbe.state.isSessionLocked = false
+        lockProbe.samples.append(!lockProbe.state.shouldHide)
+        check(nativeLockReads == beforeUnlockReads && !lockProbe.samples.contains(true),
+              "Controller-first unlock stays hidden until a fresh native display sample")
+        nativeSession.post(name: .init("com.apple.screenIsUnlocked"), object: nil)
+        await settle()
+        check(nativeOnly.isActive && nativeLockReads > beforeUnlockReads && !lockProbe.samples.contains(true),
+              "Native fullscreen replaces the resume gate without revealing the island")
+        nativeReading = false
+        nativeOnly.refresh()
+        check(!lockProbe.state.shouldHide, "A later desktop snapshot releases resume suppression")
+        nativeSession.post(name: nativeLock, object: nil)
+        await settle()
+        nativeOnly.hideInFullscreen = false
+        check(!nativeOnly.isCheckingFullscreen && !nativeOnly.isActive,
+              "Opt-out releases the suspended native gate without waiting for unlock")
         nativeObservation.cancel()
         nativeSession.removeObserver(lateControllerObserver)
         print("PASS \(checks) fullscreen and visibility checks")
