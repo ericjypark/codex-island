@@ -8,7 +8,7 @@ struct FullscreenDetectionContext: Equatable, Sendable {
 
     @MainActor
     static func current() -> FullscreenDetectionContext {
-        FullscreenDetectionContext(displayID: DisplayInfo.currentTarget()?.stableID,
+        FullscreenDetectionContext(displayID: DisplayInfo.positionedDisplay?.stableID,
                                    foregroundPID: NSWorkspace.shared.frontmostApplication?.processIdentifier)
     }
 }
@@ -25,11 +25,11 @@ final class FullscreenStore: ObservableObject {
         },
         openSettings: { NSWorkspace.shared.open($0) },
         readBorderless: {
-            guard let display = DisplayInfo.currentTarget() else { return nil }
+            guard let display = DisplayInfo.positionedDisplay else { return nil }
             return FullscreenWindowReader.read(targetDisplayID: display.displayID)
         },
         readFullscreen: {
-            FullscreenSpaceReader.read(targetDisplayID: DisplayInfo.currentTarget()?.stableID)
+            FullscreenSpaceReader.read(targetDisplayID: DisplayInfo.positionedDisplay?.stableID)
         }
     )
     static let borderlessPreferenceKey = "MacIsland.detectBorderlessFullscreen"

@@ -19,9 +19,14 @@ struct WindowInteractionTests {
         let outside = NSPoint(x: 20, y: 20)
         NSEvent.mouseLocation = inside
         GameModeStore.shared.isActive = true
+        DisplayInfo.target = DisplayInfo(screen: NSScreen(
+            frame: NSRect(x: 0, y: 0, width: 900, height: 360)
+        ))
         let controller = IslandWindowController()
         controller.show()
         let window = controller.window
+        check(FullscreenStore.shared.refreshedDisplayID == "0.0",
+              "Initial placement publishes its display before refreshing fullscreen")
         check(!window.isVisible && window.ignoresMouseEvents, "Launch while suppressed blocks clicks")
         check(NSApp.activations == 0 && window.keyRequests == 0, "Suppressed launch does not focus")
 
@@ -176,6 +181,8 @@ struct WindowInteractionTests {
                         await settle()
                         check(window.frame.minX == 2000 && window.isVisible == clearsFullscreen,
                               "Display changes move the island and preserve fullscreen suppression")
+                        check(FullscreenStore.shared.refreshedDisplayID == "2000.0",
+                              "Display notification and explicit selection refresh against the positioned display")
                         let acceptsClicks = clearsFullscreen && pointerOnNewDisplay
                         check(window.ignoresMouseEvents == !acceptsClicks,
                               "Stationary click access follows the final display position in compact and peek modes")
@@ -187,6 +194,23 @@ struct WindowInteractionTests {
                 }
             }
         }
+        let placedID = FullscreenStore.shared.refreshedDisplayID
+        let placedFrame = window.frame
+        DisplayInfo.target = DisplayInfo(screen: NSScreen(
+            frame: NSRect(x: 4000, y: 0, width: 900, height: 360)
+        ))
+        FullscreenStore.shared.refresh()
+        check(window.frame == placedFrame && FullscreenStore.shared.refreshedDisplayID == placedID,
+              "Auto resolving another active display cannot retarget fullscreen without moving the island")
+        NotificationCenter.default.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        await settle()
+        check(window.frame.minX == 4000 && FullscreenStore.shared.refreshedDisplayID == "4000.0",
+              "Display reconfiguration moves the island and fullscreen target together")
+        DisplayInfo.target = nil
+        NotificationCenter.default.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        await settle()
+        check(FullscreenStore.shared.refreshedDisplayID == nil,
+              "No connected target clears fullscreen placement instead of reading an unrelated display")
         print("PASS \(checks) window interaction regression checks")
     }
 
@@ -284,7 +308,10 @@ struct NSScreen { let frame: NSRect }
 struct NotchInfo { static func detect(from: NSScreen?) -> NotchInfo { NotchInfo() } }
 struct DisplayInfo {
     let screen: NSScreen
+    var stableID: String { String(describing: screen.frame.minX) }
+    var displayID: CGDirectDisplayID { CGDirectDisplayID(screen.frame.minX) }
     static var target: DisplayInfo?
+    static var positionedDisplay: (stableID: String, displayID: CGDirectDisplayID)?
     static func currentTarget() -> DisplayInfo? { target }
 }
 @MainActor final class IslandModel {
@@ -325,7 +352,9 @@ enum ScreenPref { enum Screen: CaseIterable { case usage, cost, overview } }
     @Published var isCheckingFullscreen = false
     @Published var hideInFullscreen = true
     var refreshedState: Bool?
+    var refreshedDisplayID: String?
     func refresh() {
+        refreshedDisplayID = DisplayInfo.positionedDisplay?.stableID
         if let refreshedState { isActive = refreshedState }
     }
 }

@@ -22,6 +22,14 @@ fails open; only explicit opt-in requests access. Recheck performs a quiet
 refresh and clears an old Settings-dispatch error once it observes trusted access.
 There is no recurring fullscreen or permission poll.
 
+The window controller resolves Auto or the explicit display preference once per
+placement and records its stable/direct IDs in =DisplayInfo.positionedDisplay=
+before refreshing suppression and setting the frame in the same main-actor turn.
+Both fullscreen readers and the AX observation context use that recorded target.
+Foreground activation cannot redirect detection to another display while the
+island stays in place. Screen reconfiguration and target-choice changes update
+placement and detection together; an unavailable target clears the recorded IDs.
+
 =Sources/Model/FullscreenAccessibilityMonitor.swift= excludes the island,
 Finder and missing foreground apps before scheduling work. Its worker owns
 AX objects on one sleeping run loop. Each event starts a finite registration
@@ -59,7 +67,9 @@ worker with synthetic AX sessions; =FullscreenAccessibilityTests.swift=
 for bounded progress, transient session-creation recovery, cancellation, window
 replacement and idle behavior;
 =WindowInteractionTests.swift= for the real controller against window/input
-spies, including lock-before-queued-game-end ordering; and =GameModeTests.swift=
+spies, including lock-before-queued-game-end ordering and placement/detection
+agreement when Auto resolves a different monitor after foreground activation.
+Store tests verify context IDs follow the recorded placement. =GameModeTests.swift=
 for private test-namespace Darwin notifications. Shared synthetic sessions live
 in =Tests/FullscreenAccessibilityFixtures.swift=. These tests do not grant OS
 permissions, create desktop windows or claim live focus verification.

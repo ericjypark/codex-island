@@ -315,8 +315,10 @@ final class IslandWindowController {
     }
 
     private func repositionForCurrentScreen() {
+        let display = DisplayInfo.currentTarget()
+        DisplayInfo.positionedDisplay = display.map { ($0.stableID, $0.displayID) }
         FullscreenStore.shared.refresh()
-        guard let screen = Self.targetScreen() else { return }
+        guard let screen = display?.screen else { return }
         model.updateNotch(NotchInfo.detect(from: screen))
         let size = Self.windowSize
         let frame = screen.frame

@@ -17,6 +17,15 @@ struct FullscreenTests {
         func display(_ id: String, _ type: Int) -> [String: Any] {
             ["Display Identifier": id, "Current Space": ["type": type]]
         }
+        DisplayInfo.positionedDisplay = ("positioned-display", 123)
+        check(FullscreenDetectionContext.current().displayID == "positioned-display",
+              "Fullscreen context follows the positioned display instead of resolving Auto again")
+        DisplayInfo.positionedDisplay = ("replacement-display", 456)
+        check(FullscreenDetectionContext.current().displayID == "replacement-display",
+              "Fullscreen context changes with the next window placement")
+        DisplayInfo.positionedDisplay = nil
+        check(FullscreenDetectionContext.current().displayID == nil,
+              "Missing placement does not fall back to a different active display")
         let desktop = display("built-in", 0)
         let fullscreen = display("built-in", 4)
         let external = display("external", 4)
