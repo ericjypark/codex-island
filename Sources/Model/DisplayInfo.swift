@@ -9,6 +9,10 @@ import CoreGraphics
 /// display from any external monitor. `notch` is the existing
 /// per-screen notch detection result.
 struct DisplayInfo {
+    // Auto can resolve differently when app focus changes without a window move.
+    // Only the controller's placement transaction updates the detection target.
+    @MainActor static var positionedDisplay: (stableID: String, displayID: CGDirectDisplayID)?
+
     let screen: NSScreen
     let displayID: CGDirectDisplayID
     let stableID: String

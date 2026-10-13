@@ -10,6 +10,50 @@ cd "$(dirname "$0")/.."
 OUT_DIR=$(mktemp -d)
 trap 'rm -rf "$OUT_DIR"' EXIT
 
+swiftc -parse-as-library -o "$OUT_DIR/window-interaction-tests" \
+  Sources/Window/IslandWindowController.swift \
+  Sources/Model/IslandVisibilityState.swift \
+  Tests/WindowInteractionTests.swift
+"$OUT_DIR/window-interaction-tests"
+
+swiftc -D FULLSCREEN_PLACEMENT_TESTS -parse-as-library -o "$OUT_DIR/fullscreen-placement-tests" \
+  Sources/Window/IslandWindowController.swift \
+  Sources/Model/IslandVisibilityState.swift \
+  Sources/Model/FullscreenStore.swift \
+  Sources/Model/FullscreenSpaceReader.swift \
+  Sources/Model/FullscreenWindowReader.swift \
+  Sources/Model/FullscreenAccessibilityMonitor.swift \
+  Tests/WindowInteractionTests.swift \
+  Tests/FullscreenPlacementTests.swift
+"$OUT_DIR/fullscreen-placement-tests"
+
+swiftc -warnings-as-errors -parse-as-library -o "$OUT_DIR/fullscreen-accessibility-tests" \
+  Sources/Model/FullscreenAccessibilityMonitor.swift \
+  Tests/FullscreenAccessibilityFixtures.swift \
+  Tests/FullscreenAccessibilityTests.swift
+"$OUT_DIR/fullscreen-accessibility-tests"
+
+swiftc -parse-as-library -o "$OUT_DIR/fullscreen-tests" \
+  Sources/Model/FullscreenSpaceReader.swift \
+  Sources/Model/FullscreenWindowReader.swift \
+  Sources/Model/FullscreenStore.swift \
+  Sources/Model/FullscreenAccessibilityMonitor.swift \
+  Sources/Model/IslandVisibilityState.swift \
+  Sources/Model/DisplayInfo.swift \
+  Sources/Model/IslandTargetDisplayStore.swift \
+  Sources/Model/NotchInfo.swift \
+  Sources/Model/IslandSpacingStore.swift \
+  Sources/Model/PreferenceStorage.swift \
+  Tests/FullscreenAccessibilityFixtures.swift \
+  Tests/FullscreenTests.swift
+"$OUT_DIR/fullscreen-tests"
+
+swiftc -parse-as-library -o "$OUT_DIR/game-mode-tests" \
+  Sources/Model/GameModeStore.swift \
+  Sources/Model/IslandVisibilityState.swift \
+  Tests/GameModeTests.swift
+"$OUT_DIR/game-mode-tests"
+
 python3 Tests/SetupSparkleTests.py
 
 swiftc -parse-as-library -o "$OUT_DIR/display-number-tests" \

@@ -1,0 +1,100 @@
+#+title: CodexIsland architecture
+
+* Visibility and fullscreen detection
+
+Entry points are General settings in =Sources/Views/SettingsView.swift=,
+application startup in =Sources/App.swift=, workspace/Space/display events,
+Darwin Game Mode notifications and Accessibility window notifications.
+
+=Sources/Model/FullscreenStore.swift= owns native and borderless results,
+user preferences, permission status, observation context, and the pending
+initial/resume gate (=isCheckingFullscreen=). Suspension holds this gate even
+with borderless detection disabled, until a fresh native sample and any needed
+AX reply complete; controller-first unlock cannot expose stale native display state.
+After native sampling resumes, an initial/changed-context AX wait fails open
+at 750 ms. The one-shot deadline is shared across same-context snapshots and
+worker slices; it neither polls nor clears established fullscreen suppression.
+Late current results can still hide. Context changes, suspension, opt-out,
+permission loss, completion and teardown cancel the deadline.
+Native Space reads use =FullscreenSpaceReader.swift=;
+borderless geometry uses =FullscreenWindowReader.swift=. Missing permission
+fails open; only explicit opt-in requests access. Recheck performs a quiet
+refresh and clears an old Settings-dispatch error once it observes trusted access.
+There is no recurring fullscreen or permission poll.
+
+The window controller resolves Auto or the explicit display preference once per
+placement and records its stable/direct IDs in =DisplayInfo.positionedDisplay=
+before refreshing suppression and setting the frame in the same main-actor turn.
+Both fullscreen readers and the AX observation context use that recorded target.
+Foreground activation cannot redirect detection to another display while the
+island stays in place. Screen reconfiguration and target-choice changes update
+placement and detection together; an unavailable target clears the recorded IDs.
+The controller alone consumes screen-parameter changes, applying placement
+synchronously in the main-queue callback before queued snapshots can run.
+=FullscreenStore.refreshAfterPlacement()= samples the new target and schedules
+the bounded settling checks. The store has no independent screen-parameter
+observer that could sample a disconnected display before placement.
+
+=Sources/Model/FullscreenAccessibilityMonitor.swift= excludes the island,
+Finder and missing foreground apps before scheduling work. Its worker owns
+AX objects on one sleeping run loop. Each event starts a finite registration
+plan for at most 32 windows, executed in 200 ms slices with 50 ms AX messaging
+timeouts. Continuations retain the snapshot and progress; partial results
+never escape as unsupported. New requests, context changes, stop and teardown
+invalidate older work. Only a completed current result reaches the store.
+Existing same-context suppression remains in effect throughout reconciliation.
+A failed session creation retries on the next event or Recheck, even when the
+context is unchanged. A successful session is reused; there is no idle retry.
+
+=Sources/Model/GameModeStore.swift= owns the read-only Darwin state and its
+independent preference. =Sources/Model/IslandVisibilityState.swift= combines
+Game Mode, fullscreen/pending and session-lock reasons.
+=Sources/Window/IslandWindowController.swift= owns the window and lock flag.
+It installs that flag synchronously in the main-queue lock callback, before
+queued model updates can reveal the window. Unlock refreshes detectors before
+clearing the lock reason; the store-owned resume gate remains until sampling
+actually resumes. Restoration resets transient layout, orders front
+without activation, and recomputes pointer hit testing. Real pointer entry
+retains the existing interactive activation behavior.
+
+* Boundaries and verification
+
+AX reads and observer changes stay off the main thread; UI state remains on
+the main actor. No window content, pixels or credentials enter fullscreen
+detection. Disable, sleep, lock and teardown detach observation. Native Space
+and Game Mode signals are undocumented read-only OS interfaces; their absence
+must fail open. See [[file:docs/PERFORMANCE.md][performance and visibility contracts]].
+
+=scripts/run-tests.sh= runs =Tests/FullscreenTests.swift= for store transitions,
+including manual permission recovery, bounded initial waits, cancelled deadlines,
+controller-first unlock after a locked display change and a real
+worker with synthetic AX sessions; =FullscreenAccessibilityTests.swift=
+for bounded progress, transient session-creation recovery, cancellation, window
+replacement and idle behavior;
+=WindowInteractionTests.swift= for the real controller against window/input
+spies, including lock-before-queued-game-end ordering and placement/detection
+agreement when Auto resolves a different monitor after foreground activation.
+Store tests verify context IDs follow the recorded placement.
+=FullscreenPlacementTests.swift= connects the real controller and store to
+synthetic display/read providers and window/input spies shared with the controller
+suite. Forced notification delivery orders cover disconnecting a fullscreen
+target into fullscreen and desktop fallbacks, transient reveal/input, focus,
+synchronous placement and idle stability without physical monitors.
+The fixture waits for both bounded settling reads before invalidating a display
+or asserting idle state; a deliberately slow startup snapshot prevents a fixed
+sleep from accidentally standing in for completion on a busy runner.
+=GameModeTests.swift=
+for private test-namespace Darwin notifications. Shared synthetic sessions live
+in =Tests/FullscreenAccessibilityFixtures.swift=. These tests do not grant OS
+permissions, create desktop windows or claim live focus verification.
+
+Live acceptance uses the installed app, its Settings entry point, an explicit
+Accessibility grant, fullscreen transitions and foreground-focus observations.
+Rebuilding an ad-hoc-signed app changes its code identity and can require a
+fresh user-authorized permission grant. Build success alone proves delivery.
+
+* Other flows
+
+Quota connections and credential ownership: [[file:docs/PROVIDERS.md][provider contracts]].
+Local token persistence: [[file:docs/USAGE-HISTORY.md][history rules]].
+Distribution and update integrity: [[file:docs/SPARKLE.md][Sparkle]].

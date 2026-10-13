@@ -15,6 +15,8 @@ struct SettingsView: View {
     @ObservedObject private var tokenMode = TokenCountModeStore.shared
     @ObservedObject private var lowPower = LowPowerModeStore.shared
     @ObservedObject private var alwaysShow = AlwaysShowUsageStore.shared
+    @ObservedObject private var gameMode = GameModeStore.shared
+    @ObservedObject private var fullscreen = FullscreenStore.shared
     @ObservedObject private var alertPrefs = AlertThresholdStore.shared
     @ObservedObject private var spacing = IslandSpacingStore.shared
     @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
@@ -248,6 +250,42 @@ struct SettingsView: View {
                 }
             }
             SettingsRow(
+                title: "Hide during Game Mode",
+                subtitle: "Hide the island while macOS Game Mode is active. It returns automatically when Game Mode ends."
+            ) {
+                SettingsToggle(isOn: gameMode.hideDuringGameMode) {
+                    gameMode.hideDuringGameMode.toggle()
+                }
+            }
+            SettingsRow(
+                title: "Hide in fullscreen",
+                subtitle: "Hide the island during fullscreen video and games on its display."
+            ) {
+                SettingsToggle(isOn: fullscreen.hideInFullscreen) {
+                    fullscreen.hideInFullscreen.toggle()
+                }
+            }
+            SettingsRow(
+                title: "Detect borderless fullscreen",
+                subtitle: "Hide for borderless videos and games. Requires Accessibility permission; reads window layout, not content."
+            ) {
+                SettingsToggle(isOn: fullscreen.detectBorderlessFullscreen) {
+                    fullscreen.detectBorderlessFullscreen.toggle()
+                }
+                .disabled(!fullscreen.hideInFullscreen)
+            }
+            if fullscreen.hideInFullscreen && fullscreen.detectBorderlessFullscreen {
+                SettingsRow(title: "Borderless detection", subtitle: borderlessDetectionSubtitle) {}
+                HStack(spacing: 8) {
+                    PillButton(label: "Recheck") { fullscreen.refresh() }
+                    PillButton(label: "Open Settings") { fullscreen.openAccessibilitySettings() }
+                        .accessibilityLabel(L10n.tr("Open Accessibility settings"))
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 10)
+                .padding(.bottom, 6)
+            }
+            SettingsRow(
                 title: "Low Power Mode",
                 subtitle: "Glow only on refresh, hover, or limit alerts."
             ) {
@@ -453,6 +491,22 @@ struct SettingsView: View {
                     RoundedRectangle(cornerRadius: 7)
                         .strokeBorder(.white.opacity(0.10), lineWidth: 0.5)
                 }
+        }
+    }
+
+    private var borderlessDetectionSubtitle: String {
+        if fullscreen.accessibilitySettingsOpenFailed {
+            return "Could not open System Settings. Go to Privacy & Security → Accessibility, enable CodexIsland, then click Recheck."
+        }
+        switch fullscreen.borderlessStatus {
+        case .permissionRequired:
+            return "Enable CodexIsland in Accessibility settings, then click Recheck. Native fullscreen hiding works without permission."
+        case .unsupported:
+            return "No supported foreground window notifications. Native fullscreen hiding remains available; borderless changes may be missed."
+        case .observing:
+            return "Listening for window changes. Apps that omit notifications may not be detected. No recurring polling."
+        case .disabled:
+            return "Borderless detection is paused. Native fullscreen hiding works without Accessibility access."
         }
     }
 

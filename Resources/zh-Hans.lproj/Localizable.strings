@@ -402,6 +402,27 @@
 
 "Unlimited" = "不限额";
 
+"Hide during Game Mode" = "游戏模式期间隐藏";
+"Hide in fullscreen" = "全屏时隐藏";
+"Hide the island during fullscreen video and games on its display." = "灵动岛所在显示器播放全屏视频或运行全屏游戏时隐藏。";
+"Hide the island while macOS Game Mode is active. It returns automatically when Game Mode ends." = "macOS 游戏模式启用时隐藏灵动岛，游戏模式结束后自动恢复。";
+
+"Detect borderless fullscreen" = "检测无边框全屏";
+"Hide for borderless videos and games. Requires Accessibility permission; reads window layout, not content." = "无边框视频或游戏全屏时隐藏。需要辅助功能权限；仅读取窗口布局，不读取内容。";
+"Borderless detection" = "无边框全屏检测";
+"Recheck" = "重新检查";
+"Allow CodexIsland in System Settings → Privacy & Security → Accessibility, then click Recheck. Native fullscreen hiding works without permission." = "请在系统设置 → 隐私与安全性 → 辅助功能中允许 CodexIsland，然后点击重新检查。原生全屏隐藏无需此权限。";
+"No supported foreground window notifications. Native fullscreen hiding remains available; borderless changes may be missed." = "前台窗口不支持所需通知。原生全屏隐藏仍然可用；可能无法检测无边框全屏变化。";
+"Listening for window changes. Apps that omit notifications may not be detected. No recurring polling." = "正在监听窗口变化。未发送通知的应用可能无法检测。不进行定时轮询。";
+"Borderless detection is paused. Native fullscreen hiding works without Accessibility access." = "无边框全屏检测已暂停。原生全屏隐藏无需辅助功能权限。";
+
+"Open Settings" = "打开设置";
+
+"Open Accessibility settings" = "打开辅助功能设置";
+
+"Enable CodexIsland in Accessibility settings, then click Recheck. Native fullscreen hiding works without permission." = "请在辅助功能设置中启用 CodexIsland，然后点击重新检查。原生全屏隐藏无需此权限。";
+
+"Could not open System Settings. Go to Privacy & Security → Accessibility, enable CodexIsland, then click Recheck." = "无法打开系统设置。请前往隐私与安全性 → 辅助功能，启用 CodexIsland，然后点击重新检查。";
 /* Muse Code subscription usage */
 "Open Muse Code" = "打开 Muse Code";
 "Sign in with Muse Code to connect your subscription." = "登录 Muse Code 以连接订阅。";

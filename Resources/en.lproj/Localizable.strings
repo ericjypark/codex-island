@@ -402,6 +402,27 @@
 
 "Unlimited" = "Unlimited";
 
+"Hide during Game Mode" = "Hide during Game Mode";
+"Hide in fullscreen" = "Hide in fullscreen";
+"Hide the island during fullscreen video and games on its display." = "Hide the island during fullscreen video and games on its display.";
+"Hide the island while macOS Game Mode is active. It returns automatically when Game Mode ends." = "Hide the island while macOS Game Mode is active. It returns automatically when Game Mode ends.";
+
+"Detect borderless fullscreen" = "Detect borderless fullscreen";
+"Hide for borderless videos and games. Requires Accessibility permission; reads window layout, not content." = "Hide for borderless videos and games. Requires Accessibility permission; reads window layout, not content.";
+"Borderless detection" = "Borderless detection";
+"Recheck" = "Recheck";
+"Allow CodexIsland in System Settings → Privacy & Security → Accessibility, then click Recheck. Native fullscreen hiding works without permission." = "Allow CodexIsland in System Settings → Privacy & Security → Accessibility, then click Recheck. Native fullscreen hiding works without permission.";
+"No supported foreground window notifications. Native fullscreen hiding remains available; borderless changes may be missed." = "No supported foreground window notifications. Native fullscreen hiding remains available; borderless changes may be missed.";
+"Listening for window changes. Apps that omit notifications may not be detected. No recurring polling." = "Listening for window changes. Apps that omit notifications may not be detected. No recurring polling.";
+"Borderless detection is paused. Native fullscreen hiding works without Accessibility access." = "Borderless detection is paused. Native fullscreen hiding works without Accessibility access.";
+
+"Open Settings" = "Open Settings";
+
+"Open Accessibility settings" = "Open Accessibility settings";
+
+"Enable CodexIsland in Accessibility settings, then click Recheck. Native fullscreen hiding works without permission." = "Enable CodexIsland in Accessibility settings, then click Recheck. Native fullscreen hiding works without permission.";
+
+"Could not open System Settings. Go to Privacy & Security → Accessibility, enable CodexIsland, then click Recheck." = "Could not open System Settings. Go to Privacy & Security → Accessibility, enable CodexIsland, then click Recheck.";
 /* Muse Code subscription usage */
 "Open Muse Code" = "Open Muse Code";
 "Sign in with Muse Code to connect your subscription." = "Sign in with Muse Code to connect your subscription.";
