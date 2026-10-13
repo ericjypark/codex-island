@@ -1,0 +1,61 @@
+#+title: CodexIsland architecture
+
+* Visibility and fullscreen detection
+
+Entry points are General settings in =Sources/Views/SettingsView.swift=,
+application startup in =Sources/App.swift=, workspace/Space/display events,
+Darwin Game Mode notifications and Accessibility window notifications.
+
+=Sources/Model/FullscreenStore.swift= owns native and borderless results,
+user preferences, permission status, observation context, and the pending
+initial/resume gate. Native Space reads use =FullscreenSpaceReader.swift=;
+borderless geometry uses =FullscreenWindowReader.swift=. Missing permission
+fails open; only explicit opt-in requests access. Recheck performs a quiet
+refresh. There is no recurring fullscreen or permission poll.
+
+=Sources/Model/FullscreenAccessibilityMonitor.swift= excludes the island,
+Finder and missing foreground apps before scheduling work. Its worker owns
+AX objects on one sleeping run loop. Each event starts a finite registration
+plan for at most 32 windows, executed in 200 ms slices with 50 ms AX messaging
+timeouts. Continuations retain the snapshot and progress; partial results
+never escape as unsupported. New requests, context changes, stop and teardown
+invalidate older work. Only a completed current result reaches the store.
+Existing same-context suppression remains in effect throughout reconciliation.
+
+=Sources/Model/GameModeStore.swift= owns the read-only Darwin state and its
+independent preference. =Sources/Model/IslandVisibilityState.swift= combines
+Game Mode, fullscreen/pending and session-lock reasons.
+=Sources/Window/IslandWindowController.swift= owns the window and lock flag.
+It installs that flag synchronously in the main-queue lock callback, before
+queued model updates can reveal the window. Unlock refreshes detectors before
+clearing the lock reason. Restoration resets transient layout, orders front
+without activation, and recomputes pointer hit testing. Real pointer entry
+retains the existing interactive activation behavior.
+
+* Boundaries and verification
+
+AX reads and observer changes stay off the main thread; UI state remains on
+the main actor. No window content, pixels or credentials enter fullscreen
+detection. Disable, sleep, lock and teardown detach observation. Native Space
+and Game Mode signals are undocumented read-only OS interfaces; their absence
+must fail open. See [[file:docs/PERFORMANCE.md][performance and visibility contracts]].
+
+=scripts/run-tests.sh= runs =Tests/FullscreenTests.swift= for store transitions,
+including a real worker with synthetic AX sessions; =FullscreenAccessibilityTests.swift=
+for bounded progress, cancellation, window replacement and idle behavior;
+=WindowInteractionTests.swift= for the real controller against window/input
+spies, including lock-before-queued-game-end ordering; and =GameModeTests.swift=
+for private test-namespace Darwin notifications. Shared synthetic sessions live
+in =Tests/FullscreenAccessibilityFixtures.swift=. These tests do not grant OS
+permissions, create desktop windows or claim live focus verification.
+
+Live acceptance uses the installed app, its Settings entry point, an explicit
+Accessibility grant, fullscreen transitions and foreground-focus observations.
+Rebuilding an ad-hoc-signed app changes its code identity and can require a
+fresh user-authorized permission grant. Build success alone proves delivery.
+
+* Other flows
+
+Quota connections and credential ownership: [[file:docs/PROVIDERS.md][provider contracts]].
+Local token persistence: [[file:docs/USAGE-HISTORY.md][history rules]].
+Distribution and update integrity: [[file:docs/SPARKLE.md][Sparkle]].

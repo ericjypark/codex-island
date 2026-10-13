@@ -43,8 +43,12 @@ reconciles registrations when events arrive, replaces the observer on app
 or display changes, and releases its run-loop source/observer when disabled or suspended.
 AX creation, messaging and registration run on a dedicated serial worker with a
 sleeping run loop, away from the UI thread. Calls have a 50 ms timeout and each
-reconciliation has a 200 ms budget (one in-flight call can finish beyond that
-deadline). Partial removal makes progress across events. Window-creation
+reconciliation slice has a 200 ms budget (one in-flight call can finish beyond that
+deadline). An incomplete slice queues a cancellable continuation, retaining its
+window snapshot and operation cursor. The finite plan handles up to 32 windows;
+each registration/removal advances even when unsupported. Completion is published
+only after the plan finishes, so budget exhaustion cannot clear suppression or
+require another external event. Completed work returns to the sleeping run loop. Window-creation
 notifications remain attached while the foreground app has no windows.
 Callback contexts remain owned until their observers detach; request and
 observation revisions reject stale results and callbacks after context changes.
@@ -125,7 +129,9 @@ Accessibility permission, private framework linking, or polling is needed.
 
 `MacIsland.hideDuringGameMode` defaults to true and can be disabled in General
 settings. `IslandWindowController` combines Game Mode with its existing lock
-state, so ending a game cannot reveal a locked session and unlocking cannot
+state. The main-queue lock callback installs the lock flag synchronously before
+queued Game Mode/fullscreen updates can clear other reasons. Ending a game cannot
+reveal a locked session and unlocking cannot
 reveal the island while Game Mode remains active. An ordered-out island cannot
 activate the app or intercept mouse/keyboard input. Restoration does not make
 the window key or activate the application. Restoration immediately recomputes

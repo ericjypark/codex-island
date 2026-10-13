@@ -238,7 +238,9 @@ final class IslandWindowController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in
+            // The callback is delivered on the main queue. Install the lock gate
+            // before queued Game Mode/fullscreen updates can clear their reasons.
+            MainActor.assumeIsolated {
                 self?.visibility.isSessionLocked = true
                 self?.applyVisibility()
             }

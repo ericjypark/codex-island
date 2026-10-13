@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 import Combine
 
 @main
@@ -440,6 +441,50 @@ struct FullscreenTests {
         delayed.reply(true)
         check(delayedReads == allowedReads && !delayed.running, "Teardown invalidates in-flight observer completion")
 
+        let replacementSession = FakeAccessibilitySession(pid: 789)
+        replacementSession.windowList = [AXUIElementCreateApplication(790), AXUIElementCreateApplication(791)]
+        let replacementFactory = FakeAccessibilityFactory(sessions: [789: replacementSession])
+        let replacementMonitor = FullscreenAccessibilityMonitor(
+            foregroundPID: { 789 }, sessionFactory: { replacementFactory.make(pid: $0, onChange: $1) }
+        )
+        var replacementReads = 0
+        var stillFullscreen = true
+        let replacementStore = FullscreenStore(
+            defaults: defaults, workspaceCenter: NotificationCenter(), applicationCenter: NotificationCenter(),
+            sessionCenter: NotificationCenter(), windowMonitor: replacementMonitor,
+            detectionContext: { FullscreenDetectionContext(displayID: "test", foregroundPID: 789) },
+            accessibilityTrusted: { true },
+            readBorderless: { replacementReads += 1; return stillFullscreen }, readFullscreen: { false }
+        )
+        func waitForReplacement(_ condition: () -> Bool) async {
+            for _ in 0..<500 {
+                if condition() { return }
+                try? await Task.sleep(nanoseconds: 10_000_000)
+            }
+        }
+        await waitForReplacement { replacementStore.isActive }
+        check(replacementStore.isActive, "Real worker establishes initial borderless suppression")
+        var replacementStates: [Bool] = []
+        let replacementObservation = replacementStore.$isActive.sink { replacementStates.append($0) }
+        replacementSession.removalDelay = 0.07
+        replacementSession.windowList = [AXUIElementCreateApplication(792)]
+        replacementSession.fire()
+        await waitForReplacement { replacementSession.removals == 10 && replacementReads > 1 }
+        check(replacementSession.removals == 10 && replacementReads > 1,
+              "One AX event completes a multi-slice replacement without further external events")
+        check(replacementStates == [true] && replacementStore.isActive,
+              "Budget exhaustion cannot publish a visible island during borderless replacement")
+        let settledReads = replacementSession.reads
+        try? await Task.sleep(nanoseconds: 600_000_000)
+        check(replacementSession.reads == settledReads, "Completed continuation returns to idle without polling")
+        stillFullscreen = false
+        replacementSession.fire()
+        await waitForReplacement { !replacementStore.isActive }
+        check(!replacementStore.isActive, "A later real geometry change clears suppression normally")
+        replacementObservation.cancel()
+        replacementStore.hideInFullscreen = false
+
+        defaults.set(true, forKey: FullscreenStore.preferenceKey)
         var eligiblePID: pid_t? = 123
         var eligibilityContext = FullscreenDetectionContext(displayID: "display-a", foregroundPID: 123)
         var eligibilityNative = false

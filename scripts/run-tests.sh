@@ -18,6 +18,7 @@ swiftc -parse-as-library -o "$OUT_DIR/window-interaction-tests" \
 
 swiftc -warnings-as-errors -parse-as-library -o "$OUT_DIR/fullscreen-accessibility-tests" \
   Sources/Model/FullscreenAccessibilityMonitor.swift \
+  Tests/FullscreenAccessibilityFixtures.swift \
   Tests/FullscreenAccessibilityTests.swift
 "$OUT_DIR/fullscreen-accessibility-tests"
 
@@ -32,6 +33,7 @@ swiftc -parse-as-library -o "$OUT_DIR/fullscreen-tests" \
   Sources/Model/NotchInfo.swift \
   Sources/Model/IslandSpacingStore.swift \
   Sources/Model/PreferenceStorage.swift \
+  Tests/FullscreenAccessibilityFixtures.swift \
   Tests/FullscreenTests.swift
 "$OUT_DIR/fullscreen-tests"
 

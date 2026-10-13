@@ -84,7 +84,12 @@ struct WindowInteractionTests {
         FullscreenStore.shared.isActive = false
         check(!window.ignoresMouseEvents, "Clearing the final suppressor restores stationary click access")
 
+        GameModeStore.shared.isActive = true
+        let frontsBeforeLock = window.frontRequests
         DistributedNotificationCenter.default().post(name: .init("com.apple.screenIsLocked"), object: nil)
+        GameModeStore.shared.isActive = false
+        check(!window.isVisible && window.frontRequests == frontsBeforeLock,
+              "Lock notification sets its gate before a queued Game Mode ending can reveal the window")
         await settle()
         check(!window.isVisible && window.ignoresMouseEvents, "Lock suspends interaction")
         let activations = NSApp.activations
@@ -211,7 +216,8 @@ final class NSWindow: NSObject {
     var alphaValue: CGFloat = 1
     var occlusionState: AppKit.NSWindow.OcclusionState { isVisible ? [.visible] : [] }
     init(contentRect: NSRect, styleMask: [Style], backing: Backing, defer: Bool) { frame = contentRect }
-    func orderFrontRegardless() { isVisible = true }
+    var frontRequests = 0
+    func orderFrontRegardless() { frontRequests += 1; isVisible = true }
     func orderOut(_ sender: Any?) { isVisible = false; isKeyWindow = false }
     func makeKey() { keyRequests += 1; isKeyWindow = true }
     func setFrame(_ frame: NSRect, display: Bool) { self.frame = frame }

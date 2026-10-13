@@ -112,11 +112,25 @@ final class FullscreenAccessibilityWorker: @unchecked Sendable {
     func update(pid: pid_t, observation: Int, onChange: @escaping @Sendable () -> Void,
                 completion: @escaping @Sendable (Bool) -> Void) {
         let request = invalidate()
+        continueReconciliation(pid: pid, observation: observation, request: request,
+                               plan: RegistrationPlan(), onChange: onChange, completion: completion)
+    }
+
+    private func continueReconciliation(pid: pid_t, observation: Int, request: Int,
+                                        plan: RegistrationPlan, onChange: @escaping @Sendable () -> Void,
+                                        completion: @escaping @Sendable (Bool) -> Void) {
         executor.perform { [self] in
             guard isCurrent(request) else { completion(false); return }
-            let supported = reconcile(pid: pid, observation: observation,
-                                      request: request, onChange: onChange)
-            completion(isCurrent(request) && supported)
+            let result = reconcile(pid: pid, observation: observation, request: request,
+                                   plan: plan, onChange: onChange)
+            guard isCurrent(request) else { completion(false); return }
+            switch result {
+            case .incomplete:
+                continueReconciliation(pid: pid, observation: observation, request: request,
+                                       plan: plan, onChange: onChange, completion: completion)
+            case .complete(let supported):
+                completion(supported)
+            }
         }
     }
 
@@ -138,8 +152,22 @@ final class FullscreenAccessibilityWorker: @unchecked Sendable {
         observation = nil
     }
 
+    private enum ReconciliationResult {
+        case incomplete
+        case complete(Bool)
+    }
+
+    // Created empty by update; all AX elements and progress are worker-owned.
+    private final class RegistrationPlan: @unchecked Sendable {
+        var appIndex = 0
+        var removals: [(AXUIElement, String)]?
+        var additions: [(AXUIElement, String)] = []
+        var removalIndex = 0
+        var additionIndex = 0
+    }
+
     private func reconcile(pid: pid_t, observation: Int, request: Int,
-                           onChange: @escaping @Sendable () -> Void) -> Bool {
+                           plan: RegistrationPlan, onChange: @escaping @Sendable () -> Void) -> ReconciliationResult {
         let deadline = ProcessInfo.processInfo.systemUptime + 0.2
         func canContinue() -> Bool {
             isCurrent(request) && ProcessInfo.processInfo.systemUptime < deadline
@@ -150,34 +178,50 @@ final class FullscreenAccessibilityWorker: @unchecked Sendable {
             self.pid = pid
             self.observation = observation
         }
-        guard canContinue(), let session else { return false }
+        guard let session else { return .complete(false) }
         let appNotifications = [kAXFocusedWindowChangedNotification, kAXMainWindowChangedNotification,
                                 kAXWindowCreatedNotification]
-        for name in appNotifications {
+        while plan.appIndex < appNotifications.count {
+            guard canContinue() else { return .incomplete }
+            let name = appNotifications[plan.appIndex]
+            plan.appIndex += 1
             if registrations.contains(where: { CFEqual($0.0, session.application) && $0.1 == name }) { continue }
-            guard canContinue() else { return false }
             if session.add(session.application, notification: name) { registrations.append((session.application, name)) }
         }
-        guard canContinue(), let windows = session.windows() else { return false }
-        let windowNotifications = [kAXResizedNotification, kAXMovedNotification,
-                                   kAXUIElementDestroyedNotification, kAXWindowMiniaturizedNotification,
-                                   kAXWindowDeminiaturizedNotification]
-        let targets = [(session.application, appNotifications)] + windows.prefix(32).map { ($0, windowNotifications) }
-        let wanted = targets.flatMap { element, names in names.map { (element, $0) } }
-        for (element, name) in registrations where !wanted.contains(where: { CFEqual($0.0, element) && $0.1 == name }) {
-            guard canContinue() else { return false }
+        if plan.removals == nil {
+            guard canContinue() else { return .incomplete }
+            guard let windows = session.windows() else { return .complete(false) }
+            let names = [kAXResizedNotification, kAXMovedNotification,
+                         kAXUIElementDestroyedNotification, kAXWindowMiniaturizedNotification,
+                         kAXWindowDeminiaturizedNotification]
+            let wanted = [(session.application, appNotifications)] + windows.prefix(32).map { ($0, names) }
+            let targets = wanted.flatMap { element, notifications in notifications.map { (element, $0) } }
+            plan.removals = registrations.filter { existing in
+                !targets.contains { CFEqual($0.0, existing.0) && $0.1 == existing.1 }
+            }
+            plan.additions = targets.filter { target in
+                !registrations.contains { CFEqual($0.0, target.0) && $0.1 == target.1 }
+            }
+        }
+        let removals = plan.removals ?? []
+        while plan.removalIndex < removals.count {
+            guard canContinue() else { return .incomplete }
+            let (element, name) = removals[plan.removalIndex]
             session.remove(element, notification: name)
             registrations.removeAll { CFEqual($0.0, element) && $0.1 == name }
+            plan.removalIndex += 1
         }
-        for (element, name) in wanted {
-            if registrations.contains(where: { CFEqual($0.0, element) && $0.1 == name }) { continue }
-            guard canContinue() else { break }
+        while plan.additionIndex < plan.additions.count {
+            guard canContinue() else { return .incomplete }
+            let (element, name) = plan.additions[plan.additionIndex]
             if session.add(element, notification: name) { registrations.append((element, name)) }
+            plan.additionIndex += 1
         }
-        return isCurrent(request) && registrations.contains {
+        return .complete(registrations.contains {
             $0.1 == kAXResizedNotification || $0.1 == kAXMovedNotification
-        }
+        })
     }
+
 }
 
 private final class SystemFullscreenAccessibilitySession: FullscreenAccessibilitySession {

@@ -28,7 +28,8 @@ https://github.com/user-attachments/assets/195beeff-0f70-4d6b-8f3d-9f31d9c0b989
 The app is free, open source, unsigned, and local-first. It reads credentials
 already written by the providers' command-line tools, then calls their own
 services to fetch subscription usage. See [provider connections](docs/PROVIDERS.md)
-for authentication details and data limitations.
+for authentication details and data limitations. See [architecture](ARCHITECTURE.org)
+for event flow, state ownership, boundaries, and tests.
 
 ## What it does
 

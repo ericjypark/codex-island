@@ -81,20 +81,26 @@ struct FullscreenAccessibilityTests {
         check(await update(budgetMonitor), "Budget fixture attaches its initial window")
         budgetSession.removalDelay = 0.07
         budgetSession.windowList = [AXUIElementCreateApplication(888)]
-        check(!(await update(budgetMonitor)), "Slow obsolete registration removal respects the reconciliation budget")
-        check(budgetSession.removals > 0 && budgetSession.removals < 5, "Partial removal makes bounded progress")
-        var finishedBudget = false
-        for _ in 0..<5 {
-            let removed = budgetSession.removals
-            finishedBudget = await update(budgetMonitor)
-            check(finishedBudget || budgetSession.removals > removed,
-                  "Each event advances obsolete removal or completes replacement registration")
-            if finishedBudget { break }
-        }
-        check(finishedBudget, "Later events finish partial reconciliation rather than repeating old removals")
+        let readsBeforeReplacement = budgetSession.reads
+        var budgetResult: Bool?
+        budgetMonitor.update { budgetResult = $0 }
+        await waitUntil { budgetSession.removals >= 3 }
+        check(budgetResult == nil, "Partial cleanup cannot report unsupported before its continuation finishes")
+        await waitUntil { budgetResult != nil }
+        check(budgetResult == true, "One event completes replacement across budget slices without another AX event")
         check(budgetSession.removals == 5 && budgetSession.registrations.count == 8,
               "Completed reconciliation leaves only the replacement window and app registrations")
+        check(budgetSession.reads == readsBeforeReplacement + 1,
+              "Continuations consume one window snapshot instead of repeatedly querying windows")
+        budgetSession.windowList = [AXUIElementCreateApplication(999)]
+        budgetResult = nil
+        let removalsBeforeStop = budgetSession.removals
+        budgetMonitor.update { budgetResult = $0 }
+        await waitUntil { budgetSession.removals > removalsBeforeStop }
         budgetMonitor.stop()
+        await waitUntil { budgetResult != nil && budgetSession.registrations.isEmpty }
+        check(budgetResult == false && budgetSession.registrations.isEmpty,
+              "Stopping between slices cancels continuation and detaches observation")
 
         let slow = FakeAccessibilitySession(pid: 321)
         slow.readDelay = 0.25
@@ -109,8 +115,8 @@ struct FullscreenAccessibilityTests {
         await settle()
         check(slowResult == nil, "Main actor stays responsive while a slow AX query is pending")
         await waitUntil { slowResult != nil }
-        check(slowResult == false && slow.registrations.count == 3,
-              "An exhausted reconciliation budget fails open without registering geometry notifications")
+        check(slowResult == true && slow.registrations.count == 8,
+              "A slow window snapshot continues registration in a later slice")
         slowResult = nil
         slowMonitor?.update { slowResult = $0 }
         await settle()
@@ -143,101 +149,5 @@ struct FullscreenAccessibilityTests {
         check(finalSession.stops == 1, "A retained old callback is safe after monitor teardown")
         monitor = nil
         print("PASS \(checks) Accessibility observer and worker checks")
-    }
-}
-
-private final class FakeAccessibilityFactory: @unchecked Sendable {
-    private let lock = NSLock()
-    private let sessions: [pid_t: FakeAccessibilitySession]
-    private var offMain = true
-    init(sessions: [pid_t: FakeAccessibilitySession]) { self.sessions = sessions }
-    var allCallsOffMain: Bool { lock.withLock { offMain } }
-    func make(pid: pid_t, onChange: @escaping @Sendable () -> Void) -> FullscreenAccessibilitySession? {
-        let session = lock.withLock {
-            offMain = offMain && !Thread.isMainThread
-            return sessions[pid]
-        }
-        session?.callback = onChange
-        return session
-    }
-}
-
-private final class FakeAccessibilitySession: FullscreenAccessibilitySession, @unchecked Sendable {
-    let application: AXUIElement
-    private let lock = NSLock()
-    private var windowsStorage: [AXUIElement]
-    private var registrationStorage: [(AXUIElement, String)] = []
-    private var callbackStorage: (@Sendable () -> Void)?
-    private var readsStorage = 0
-    private var stopsStorage = 0
-    private var removalsStorage = 0
-    private var offMain = true
-    private var delayStorage: TimeInterval = 0
-    private var removalDelayStorage: TimeInterval = 0
-    private var unsupportedStorage = false
-    init(pid: pid_t) {
-        application = AXUIElementCreateApplication(pid)
-        windowsStorage = [AXUIElementCreateApplication(pid + 1)]
-    }
-    var windowList: [AXUIElement] {
-        get { lock.withLock { windowsStorage } }
-        set { lock.withLock { windowsStorage = newValue } }
-    }
-    var callback: (@Sendable () -> Void)? {
-        get { lock.withLock { callbackStorage } }
-        set { lock.withLock { callbackStorage = newValue } }
-    }
-    var readDelay: TimeInterval {
-        get { lock.withLock { delayStorage } }
-        set { lock.withLock { delayStorage = newValue } }
-    }
-    var unsupportedGeometry: Bool {
-        get { lock.withLock { unsupportedStorage } }
-        set { lock.withLock { unsupportedStorage = newValue } }
-    }
-    var removalDelay: TimeInterval {
-        get { lock.withLock { removalDelayStorage } }
-        set { lock.withLock { removalDelayStorage = newValue } }
-    }
-    var registrations: [(AXUIElement, String)] { lock.withLock { registrationStorage } }
-    var reads: Int { lock.withLock { readsStorage } }
-    var stops: Int { lock.withLock { stopsStorage } }
-    var removals: Int { lock.withLock { removalsStorage } }
-    var allCallsOffMain: Bool { lock.withLock { offMain } }
-    func fire() { callback?() }
-    func windows() -> [AXUIElement]? {
-        let delay = lock.withLock {
-            readsStorage += 1
-            offMain = offMain && !Thread.isMainThread
-            return delayStorage
-        }
-        if delay > 0 { Thread.sleep(forTimeInterval: delay) }
-        return windowList
-    }
-    func add(_ element: AXUIElement, notification: String) -> Bool {
-        lock.withLock {
-            offMain = offMain && !Thread.isMainThread
-            if unsupportedStorage && (notification == kAXResizedNotification || notification == kAXMovedNotification) {
-                return false
-            }
-            registrationStorage.append((element, notification))
-            return true
-        }
-    }
-    func remove(_ element: AXUIElement, notification: String) {
-        let delay = removalDelay
-        if delay > 0 { Thread.sleep(forTimeInterval: delay) }
-        lock.withLock {
-            offMain = offMain && !Thread.isMainThread
-            removalsStorage += 1
-            registrationStorage.removeAll { CFEqual($0.0, element) && $0.1 == notification }
-        }
-    }
-    func stop() {
-        lock.withLock {
-            offMain = offMain && !Thread.isMainThread
-            stopsStorage += 1
-            registrationStorage.removeAll()
-        }
     }
 }
