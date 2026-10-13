@@ -123,12 +123,11 @@ struct FullscreenTests {
         defer { defaults.removePersistentDomain(forName: suite) }
         defaults.set("preserved", forKey: "unrelated")
         let workspace = NotificationCenter()
-        let application = NotificationCenter()
         let session = NotificationCenter()
         var reading: Bool? = true
         var reads = 0
         let store = FullscreenStore(defaults: defaults, workspaceCenter: workspace,
-                                    applicationCenter: application, sessionCenter: session) {
+                                    sessionCenter: session) {
             reads += 1
             return reading
         }
@@ -144,7 +143,7 @@ struct FullscreenTests {
         store.hideInFullscreen = false
         check(!visibility.shouldHide, "Opt-out restores immediately")
         check(!FullscreenStore(defaults: defaults, workspaceCenter: workspace,
-                               applicationCenter: application, sessionCenter: session,
+                               sessionCenter: session,
                                readFullscreen: { true }).hideInFullscreen,
               "Opt-out survives relaunch")
         store.hideInFullscreen = true
@@ -171,7 +170,8 @@ struct FullscreenTests {
         check(visibility.shouldHide, "App termination refreshes current Space")
         await post(NSWorkspace.didWakeNotification, center: workspace, state: true)
         check(visibility.shouldHide, "Wake refreshes current Space")
-        await post(NSApplication.didChangeScreenParametersNotification, center: application, state: nil)
+        reading = nil
+        store.refreshAfterPlacement()
         check(!visibility.shouldHide, "Unavailable display snapshot clears stale suppression")
         reading = true
         store.refresh()
@@ -197,10 +197,9 @@ struct FullscreenTests {
         var settingsURLs: [URL] = []
         var settingsOpenSucceeds = true
         let events = NotificationCenter()
-        let appEvents = NotificationCenter()
         let lockEvents = NotificationCenter()
         var monitoredStore: FullscreenStore? = FullscreenStore(
-            defaults: defaults, workspaceCenter: events, applicationCenter: appEvents,
+            defaults: defaults, workspaceCenter: events,
             sessionCenter: lockEvents, windowMonitor: monitor,
             accessibilityTrusted: { trusted }, requestAccessibility: { permissionRequests += 1 },
             openSettings: { url in settingsURLs.append(url); return settingsOpenSucceeds }, readBorderless: {
@@ -223,7 +222,7 @@ struct FullscreenTests {
         check(permissionRequests == 1 && settingsURLs.isEmpty, "Repeated values and Recheck never prompt or open Settings")
         do {
             let restored = FullscreenStore(defaults: defaults, workspaceCenter: NotificationCenter(),
-                                           applicationCenter: NotificationCenter(), sessionCenter: NotificationCenter(),
+                                           sessionCenter: NotificationCenter(),
                                            requestAccessibility: { permissionRequests += 1 }, readFullscreen: { false })
             check(restored.detectBorderlessFullscreen && permissionRequests == 1,
                   "Restoring an enabled preference at launch never requests permission")
@@ -366,7 +365,7 @@ struct FullscreenTests {
         let delayedEvents = NotificationCenter()
         let delayedSessionEvents = NotificationCenter()
         var delayedStore: FullscreenStore? = FullscreenStore(
-            defaults: defaults, workspaceCenter: delayedEvents, applicationCenter: NotificationCenter(),
+            defaults: defaults, workspaceCenter: delayedEvents,
             sessionCenter: delayedSessionEvents, windowMonitor: delayed,
             detectionContext: { delayedContext },
             accessibilityTrusted: { delayedTrusted }, readBorderless: {
@@ -469,7 +468,7 @@ struct FullscreenTests {
         var replacementReads = 0
         var stillFullscreen = true
         let replacementStore = FullscreenStore(
-            defaults: defaults, workspaceCenter: NotificationCenter(), applicationCenter: NotificationCenter(),
+            defaults: defaults, workspaceCenter: NotificationCenter(),
             sessionCenter: NotificationCenter(), windowMonitor: replacementMonitor,
             detectionContext: { FullscreenDetectionContext(displayID: "test", foregroundPID: 789) },
             accessibilityTrusted: { true },
@@ -512,7 +511,7 @@ struct FullscreenTests {
             foregroundPID: { eligiblePID }, sessionFactory: { _, _ in nil }
         )
         let eligibilityStore = FullscreenStore(
-            defaults: defaults, workspaceCenter: NotificationCenter(), applicationCenter: NotificationCenter(),
+            defaults: defaults, workspaceCenter: NotificationCenter(),
             sessionCenter: NotificationCenter(), windowMonitor: eligibilityMonitor,
             detectionContext: { eligibilityContext }, accessibilityTrusted: { true },
             readBorderless: { eligibilityGeometryReads += 1; return true },
@@ -560,7 +559,7 @@ struct FullscreenTests {
         let deadlineSession = NotificationCenter()
         var deadlineContext = FullscreenDetectionContext(displayID: "deadline-a", foregroundPID: 123)
         let deadlineStore = FullscreenStore(
-            defaults: defaults, workspaceCenter: NotificationCenter(), applicationCenter: NotificationCenter(),
+            defaults: defaults, workspaceCenter: NotificationCenter(),
             sessionCenter: deadlineSession, windowMonitor: deadlineMonitor,
             detectionContext: { deadlineContext }, accessibilityTrusted: { true },
             readBorderless: { true }, readFullscreen: { false }
@@ -603,12 +602,11 @@ struct FullscreenTests {
         deadlineStore.hideInFullscreen = true
 
         let nativeSession = NotificationCenter()
-        let nativeDisplayEvents = NotificationCenter()
         var nativeDisplayID = "desktop-target"
         var nativeReading = true
         var nativeLockReads = 0
         let nativeOnly = FullscreenStore(defaults: defaults, workspaceCenter: NotificationCenter(),
-                                         applicationCenter: nativeDisplayEvents, sessionCenter: nativeSession,
+                                         sessionCenter: nativeSession,
                                          detectionContext: { FullscreenDetectionContext(displayID: nativeDisplayID) },
                                          readFullscreen: { nativeLockReads += 1; return nativeReading })
         nativeOnly.detectBorderlessFullscreen = false
@@ -644,7 +642,7 @@ struct FullscreenTests {
         let beforeUnlockReads = nativeLockReads
         nativeDisplayID = "fullscreen-fallback"
         nativeReading = true
-        nativeDisplayEvents.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        nativeOnly.refreshAfterPlacement()
         await settle()
         lockProbe.samples.removeAll()
         nativeOnly.refresh()

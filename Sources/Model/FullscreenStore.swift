@@ -89,7 +89,6 @@ final class FullscreenStore: ObservableObject {
 
     init(defaults: UserDefaults = .standard,
          workspaceCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
-         applicationCenter: NotificationCenter = .default,
          sessionCenter: NotificationCenter = DistributedNotificationCenter.default(),
          windowMonitor: FullscreenWindowMonitoring? = nil,
          detectionContext: @escaping () -> FullscreenDetectionContext = { FullscreenDetectionContext() },
@@ -120,7 +119,6 @@ final class FullscreenStore: ObservableObject {
         observe(NSWorkspace.screensDidWakeNotification, on: workspaceCenter) { $0.isScreenSleeping = false }
         observe(.init("com.apple.screenIsLocked"), on: sessionCenter) { $0.isSessionLocked = true }
         observe(.init("com.apple.screenIsUnlocked"), on: sessionCenter) { $0.isSessionLocked = false }
-        observe(NSApplication.didChangeScreenParametersNotification, on: applicationCenter)
         windowMonitor?.onChange = { [weak self] in self?.scheduleTransitionChecks() }
         refresh()
     }
@@ -141,6 +139,11 @@ final class FullscreenStore: ObservableObject {
         }
         cancelTransitionChecks()
         sample()
+    }
+
+    func refreshAfterPlacement() {
+        refresh()
+        scheduleTransitionChecks()
     }
 
     func openAccessibilitySettings() {

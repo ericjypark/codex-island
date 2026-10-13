@@ -29,6 +29,11 @@ Both fullscreen readers and the AX observation context use that recorded target.
 Foreground activation cannot redirect detection to another display while the
 island stays in place. Screen reconfiguration and target-choice changes update
 placement and detection together; an unavailable target clears the recorded IDs.
+The controller alone consumes screen-parameter changes, applying placement
+synchronously in the main-queue callback before queued snapshots can run.
+=FullscreenStore.refreshAfterPlacement()= samples the new target and schedules
+the bounded settling checks. The store has no independent screen-parameter
+observer that could sample a disconnected display before placement.
 
 =Sources/Model/FullscreenAccessibilityMonitor.swift= excludes the island,
 Finder and missing foreground apps before scheduling work. Its worker owns
@@ -69,7 +74,13 @@ replacement and idle behavior;
 =WindowInteractionTests.swift= for the real controller against window/input
 spies, including lock-before-queued-game-end ordering and placement/detection
 agreement when Auto resolves a different monitor after foreground activation.
-Store tests verify context IDs follow the recorded placement. =GameModeTests.swift=
+Store tests verify context IDs follow the recorded placement.
+=FullscreenPlacementTests.swift= connects the real controller and store to
+synthetic display/read providers and window/input spies shared with the controller
+suite. Forced notification delivery orders cover disconnecting a fullscreen
+target into fullscreen and desktop fallbacks, transient reveal/input, focus,
+synchronous placement and idle stability without physical monitors.
+=GameModeTests.swift=
 for private test-namespace Darwin notifications. Shared synthetic sessions live
 in =Tests/FullscreenAccessibilityFixtures.swift=. These tests do not grant OS
 permissions, create desktop windows or claim live focus verification.

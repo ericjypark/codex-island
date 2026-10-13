@@ -3,6 +3,7 @@ import Combine
 
 // Compile the real controller against window/input spies. No windows are
 // displayed, system input is observed or injected, or app activation is sent.
+#if !FULLSCREEN_PLACEMENT_TESTS
 @main
 @MainActor
 struct WindowInteractionTests {
@@ -219,6 +220,8 @@ struct WindowInteractionTests {
     }
 }
 
+#endif
+
 final class NSWindow: NSObject {
     enum Style { case borderless, fullSizeContentView }
     enum Backing { case buffered }
@@ -346,6 +349,7 @@ enum ScreenPref { enum Screen: CaseIterable { case usage, cost, overview } }
     @Published var hideDuringGameMode = true
     func refresh() {}
 }
+#if !FULLSCREEN_PLACEMENT_TESTS
 @MainActor final class FullscreenStore {
     static let shared = FullscreenStore()
     @Published var isActive = false
@@ -353,8 +357,10 @@ enum ScreenPref { enum Screen: CaseIterable { case usage, cost, overview } }
     @Published var hideInFullscreen = true
     var refreshedState: Bool?
     var refreshedDisplayID: String?
+    func refreshAfterPlacement() { refresh() }
     func refresh() {
         refreshedDisplayID = DisplayInfo.positionedDisplay?.stableID
         if let refreshedState { isActive = refreshedState }
     }
 }
+#endif

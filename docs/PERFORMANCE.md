@@ -19,7 +19,11 @@ display's `Current Space` type (0 for desktop, 4 for fullscreen), not other
 Spaces. Missing symbols, display mappings, or unfamiliar payloads fail open.
 
 Native fullscreen detection reads at startup and on Space, application activation/termination,
-wake, display-change, target-selection and unlock events. Disabling fullscreen
+wake, display-change, target-selection and unlock events. Screen-parameter events
+are owned by the window controller: it updates the recorded placement before
+refreshing fullscreen and scheduling bounded settling checks. The store does not
+independently sample a possibly disconnected display during that notification.
+Disabling fullscreen
 hiding stops all fullscreen queries and detaches the Accessibility observer.
 System/display sleep and session lock also suspend detection. Native suppression
 is retained while suspended until a fresh resume snapshot, so the fullscreen

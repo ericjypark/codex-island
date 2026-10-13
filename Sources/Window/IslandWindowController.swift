@@ -7,6 +7,8 @@ final class IslandWindowController {
     let window: NSWindow
     let model: IslandModel
     private let host: IslandHostingView
+    private let fullscreen: FullscreenStore
+    private let applicationCenter: NotificationCenter
     private var localMouseMonitor: Any?
     private var globalMouseMonitor: Any?
     private var trackingTimer: Timer?
@@ -22,7 +24,10 @@ final class IslandWindowController {
 
     static let windowSize = CGSize(width: 900, height: 360)
 
-    init() {
+    init(fullscreen: FullscreenStore? = nil,
+         applicationCenter: NotificationCenter = .default) {
+        self.fullscreen = fullscreen ?? .shared
+        self.applicationCenter = applicationCenter
         let notch = NotchInfo.detect(from: Self.targetScreen())
         self.model = IslandModel(notch: notch)
 
@@ -60,7 +65,7 @@ final class IslandWindowController {
 
     deinit {
         if let observer = screenChangeObserver {
-            NotificationCenter.default.removeObserver(observer)
+            applicationCenter.removeObserver(observer)
         }
         if let observer = occlusionObserver {
             NotificationCenter.default.removeObserver(observer)
@@ -194,12 +199,12 @@ final class IslandWindowController {
     }
 
     private func observeScreenChanges() {
-        screenChangeObserver = NotificationCenter.default.addObserver(
+        screenChangeObserver = applicationCenter.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.repositionForCurrentScreen() }
+            MainActor.assumeIsolated { self?.repositionForCurrentScreen() }
         }
     }
 
@@ -252,7 +257,7 @@ final class IslandWindowController {
         ) { [weak self] _ in
             Task { @MainActor in
                 GameModeStore.shared.refresh()
-                FullscreenStore.shared.refresh()
+                self?.fullscreen.refresh()
                 self?.visibility.isSessionLocked = false
                 self?.applyVisibility()
             }
@@ -261,7 +266,6 @@ final class IslandWindowController {
 
     private func observeVisibility() {
         let store = GameModeStore.shared
-        let fullscreen = FullscreenStore.shared
         let fullscreenSuppression = fullscreen.$isActive.combineLatest(fullscreen.$isCheckingFullscreen)
             .map { active, checking in active || checking }
         store.$isActive.combineLatest(store.$hideDuringGameMode,
@@ -317,7 +321,7 @@ final class IslandWindowController {
     private func repositionForCurrentScreen() {
         let display = DisplayInfo.currentTarget()
         DisplayInfo.positionedDisplay = display.map { ($0.stableID, $0.displayID) }
-        FullscreenStore.shared.refresh()
+        fullscreen.refreshAfterPlacement()
         guard let screen = display?.screen else { return }
         model.updateNotch(NotchInfo.detect(from: screen))
         let size = Self.windowSize

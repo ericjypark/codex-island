@@ -16,6 +16,17 @@ swiftc -parse-as-library -o "$OUT_DIR/window-interaction-tests" \
   Tests/WindowInteractionTests.swift
 "$OUT_DIR/window-interaction-tests"
 
+swiftc -D FULLSCREEN_PLACEMENT_TESTS -parse-as-library -o "$OUT_DIR/fullscreen-placement-tests" \
+  Sources/Window/IslandWindowController.swift \
+  Sources/Model/IslandVisibilityState.swift \
+  Sources/Model/FullscreenStore.swift \
+  Sources/Model/FullscreenSpaceReader.swift \
+  Sources/Model/FullscreenWindowReader.swift \
+  Sources/Model/FullscreenAccessibilityMonitor.swift \
+  Tests/WindowInteractionTests.swift \
+  Tests/FullscreenPlacementTests.swift
+"$OUT_DIR/fullscreen-placement-tests"
+
 swiftc -warnings-as-errors -parse-as-library -o "$OUT_DIR/fullscreen-accessibility-tests" \
   Sources/Model/FullscreenAccessibilityMonitor.swift \
   Tests/FullscreenAccessibilityFixtures.swift \
