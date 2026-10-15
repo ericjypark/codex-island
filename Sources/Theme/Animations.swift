@@ -10,6 +10,10 @@ extension Animation {
     /// reads better at 220ms (chart style change, etc).
     static let chartSwap = Animation.timingCurve(0.23, 1, 0.32, 1, duration: 0.22)
 
+    /// Shared hover / selection chrome crossfade. One duration for every
+    /// "faint white wash" state change so the chrome reads as one product.
+    static let hoverFade = Animation.easeOut(duration: 0.12)
+
     /// Horizontal page movement. Tuned between the too-snappy drawer curve
     /// and the slower full ease-in-out pass: responsive start, quiet settle.
     static let pageSwipe = Animation.timingCurve(0.25, 0.82, 0.25, 1, duration: 0.36)

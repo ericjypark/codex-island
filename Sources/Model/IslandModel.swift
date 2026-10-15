@@ -9,44 +9,38 @@ final class IslandModel: ObservableObject {
         case expanded
     }
 
+    /// Fired when a swipe tries to page past either end of the carousel.
+    /// `PagedContent` turns it into a small rubber-band nudge so the
+    /// dead-end gesture gets visible feedback instead of silently doing
+    /// nothing. Fresh id per attempt so repeated over-swipes re-trigger.
+    struct EdgeBump: Equatable {
+        let id: UUID
+        let direction: Int
+    }
+
     @Published var state: State = .compact
     @Published var size: CGSize = .zero
     @Published var notch: NotchInfo
+    @Published var edgeBump: EdgeBump?
 
     /// Side extension that houses each brand logo in compact state.
     let tabWidth: CGFloat = 38
 
-    /// Per-side outboard slot that houses the peek-state percentage pill.
-    /// Sized for "100% · Nh" worst case at the chosen pill typography.
-    /// Fixed (not text-measured) so percentage updates don't jitter the
-    /// silhouette width during refresh. Grown symmetrically on both sides
-    /// regardless of which provider is visible — keeps the silhouette
-    /// balanced over the physical notch.
-    let pillSlotWidth: CGFloat = 78
+    /// Stacked labels share the same fixed space as a single-provider gauge,
+    /// so changing providers or live readings never shifts the silhouette.
+    let pillSlotWidth: CGFloat = 56
 
     /// Visible expanded panel width.
     private let expandedWidth: CGFloat = 800
 
-    /// Visible expanded panel content height. The shape sits flush with the
-    /// top of the screen, so we add notch.height of "filler" so visible
-    /// content sits BELOW the notch line.
-    private let expandedBaseContentHeight: CGFloat = 188
-
-    /// Overview needs room for the full-year contribution grid. Keep this
-    /// page-specific so usage/cost preserve their compact original height.
-    private let overviewBaseContentHeight: CGFloat = 244
-
-    /// Extra room for the overview's selected-day details. Kept below the
-    /// fixed host window height on standard notch/menu-bar sizes.
-    private let overviewDetailContentHeight: CGFloat = 52
+    // Mirrors measured content for hit testing; it does not constrain expanded layout.
+    private var expandedHeight: CGFloat = 0
 
     /// Detection-pure notch from `NotchInfo.detect`. Kept separate from
     /// `notch` (which has the user's spacing override applied) so
     /// `updateNotch`'s diff guard isn't confused by override-induced
     /// width changes that originate from the store, not the screen.
     private var rawNotch: NotchInfo
-    private var activeScreen = ScreenPref.shared.screen
-    private var overviewDayDetailVisible = false
     private var compactLogoPreferenceVisible = LogoVisibilityStore.shared.visible
 
     private var subs: Set<AnyCancellable> = []
@@ -57,7 +51,6 @@ final class IslandModel: ObservableObject {
         recomputeSize()
         subscribeToSpacingStore()
         subscribeToLogoVisibilityStore()
-        subscribeToScreenPref()
     }
 
     func setState(_ new: State) {
@@ -75,42 +68,35 @@ final class IslandModel: ObservableObject {
         recomputeSize()
     }
 
-    func setOverviewDayDetailVisible(_ visible: Bool) {
-        guard overviewDayDetailVisible != visible else { return }
-        overviewDayDetailVisible = visible
-        withAnimation(visible ? .detailExpand : .detailCollapse) {
-            recomputeSize()
-        }
+    func updateExpandedHeight(_ height: CGFloat) {
+        guard height > 0, abs(expandedHeight - height) > 0.5 else { return }
+        expandedHeight = height
+        if state == .expanded { recomputeSize() }
     }
 
     func advanceScreen() {
         let pages = ScreenPref.Screen.allCases
         let index = ScreenPref.shared.screen.pageIndex
-        guard index < pages.count - 1 else { return }
+        guard index < pages.count - 1 else {
+            edgeBump = EdgeBump(id: UUID(), direction: 1)
+            return
+        }
         showScreen(pages[index + 1])
     }
 
     func rewindScreen() {
         let pages = ScreenPref.Screen.allCases
         let index = ScreenPref.shared.screen.pageIndex
-        guard index > 0 else { return }
+        guard index > 0 else {
+            edgeBump = EdgeBump(id: UUID(), direction: -1)
+            return
+        }
         showScreen(pages[index - 1])
     }
 
     func showScreen(_ screen: ScreenPref.Screen) {
         guard ScreenPref.shared.screen != screen else { return }
 
-        if shouldCollapseDetailBeforeShowing(screen) {
-            withAnimation(.pageSwipe) {
-                overviewDayDetailVisible = false
-                activeScreen = screen
-                ScreenPref.shared.screen = screen
-                recomputeSize()
-            }
-            return
-        }
-
-        activeScreen = screen
         ScreenPref.shared.screen = screen
     }
 
@@ -162,23 +148,6 @@ final class IslandModel: ObservableObject {
             .store(in: &subs)
     }
 
-    private func subscribeToScreenPref() {
-        ScreenPref.shared.$screen
-            .dropFirst()
-            .sink { [weak self] screen in
-                guard let self, self.state == .expanded else { return }
-                let wasShowingOverviewDetail = self.overviewDayDetailVisible
-                self.activeScreen = screen
-                if screen != .overview {
-                    self.overviewDayDetailVisible = false
-                }
-                withAnimation(wasShowingOverviewDetail ? .pageSwipe : .detailCollapse) {
-                    self.recomputeSize()
-                }
-            }
-            .store(in: &subs)
-    }
-
     private func recomputeSize() {
         switch state {
         case .compact:
@@ -194,7 +163,7 @@ final class IslandModel: ObservableObject {
         case .expanded:
             size = CGSize(
                 width: expandedWidth,
-                height: expandedContentHeight + notch.height
+                height: max(notch.height, expandedHeight)
             )
         }
     }
@@ -205,21 +174,5 @@ final class IslandModel: ObservableObject {
 
     var compactLogosVisible: Bool {
         !notch.hasNotch || compactLogoPreferenceVisible
-    }
-
-    private var expandedContentHeight: CGFloat {
-        let baseHeight = activeScreen == .overview
-            ? overviewBaseContentHeight
-            : expandedBaseContentHeight
-        let detailHeight = activeScreen == .overview && overviewDayDetailVisible
-            ? overviewDetailContentHeight
-            : 0
-        return baseHeight + detailHeight
-    }
-
-    private func shouldCollapseDetailBeforeShowing(_ screen: ScreenPref.Screen) -> Bool {
-        activeScreen == .overview
-            && screen != .overview
-            && overviewDayDetailVisible
     }
 }

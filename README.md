@@ -6,63 +6,111 @@
   <img src="Assets/codexisland-logo.png" width="160" alt="CodexIsland logo">
 </p>
 
+<p align="center">
+  <a href="https://hits.sh/github.com/ericjypark/codex-island/">
+    <img alt="README visitors" src="https://hits.sh/github.com/ericjypark/codex-island.svg?label=visitors&color=007ec6&labelColor=555555">
+  </a>
+</p>
 
 > Your AI usage limits, living in your notch.
 
 CodexIsland is a native macOS overlay that turns the MacBook notch into a
-Dynamic-Island-style live activity for Claude Code and Codex usage limits. It
-sits quietly over the notch, peeks on hover with the 5-hour headline, and
-expands on click to show both providers' 5-hour and weekly windows with reset
-timing, chart controls, and a swipeable Cost screen that estimates dollar
-spend and token throughput from your local session logs.
+Dynamic-Island-style live activity for AI coding subscriptions. Choose up to two
+providers: Claude Code, Codex, Grok, Antigravity, or Muse Code. It
+sits quietly over the notch, peeks on hover with the selected quota, and
+expands on click to show the available usage windows with reset
+timing, chart controls, local-log cost estimates, and a year-at-a-glance usage
+history.
 
 https://github.com/user-attachments/assets/195beeff-0f70-4d6b-8f3d-9f31d9c0b989
 
 
 The app is free, open source, unsigned, and local-first. It reads credentials
-already written by Claude Code / Claude Desktop and Codex, then calls only the
-providers' own usage endpoints.
+already written by the providers' command-line tools, then calls their own
+services to fetch subscription usage. See [provider connections](docs/PROVIDERS.md)
+for authentication details and data limitations.
 
 ## What it does
 
-- **Two providers, four windows.** Claude 5h + 7d and Codex 5h + 7d live in
-  one panel.
+- **Choose your providers.** Display one or two providers and the quota windows
+  their services report. Muse Code supports subscription usage and reset times;
+  local token history and cost estimates for Muse Code are not yet available.
 - **Notch-native overlay.** The compact state is a black pill aligned to the
   physical notch, drawn with continuous (squircle) corners that match the
-  hardware. On non-notched Macs it falls back to a 200 x 28 menu-bar pill.
+  hardware. On non-notched displays it falls back to a configurable menu-bar
+  pill.
 - **Hover to peek.** The silhouette widens just enough to show each visible
-  provider's 5-hour percentage and reset headline.
-- **Click to expand.** Click the island to open the full Usage / Cost panel,
-  provider columns, and chart controls.
-- **Swipe between Usage and Cost.** A second screen estimates today and
-  month-to-date dollar spend + token throughput from your local Claude Code
-  and Codex session logs (no extra auth — same files `ccusage` reads). Cycle
-  display modes between USD, VALUE (vs your subscription), TOKENS, and TREND.
+  provider's 5-hour percentage and reset headline, or keep those headlines
+  visible at rest with **Always show usage**.
+- **Three swipeable screens.** Click to expand, then swipe between **Usage**,
+  **Cost**, and **Overview**. Cost estimates today and month-to-date spend and
+  token throughput from local Claude Code, Codex CLI, and OpenCode session
+  data. Overview renders the current year's activity as a contribution-style
+  calendar using logs from every supported provider, regardless of which
+  providers are selected for the usage pills. Click a provider in the calendar
+  legend to filter its history; click it again to show all providers.
+- **A usage card worth sharing.** Open **Overview → Share usage** or
+  **Settings → General → Usage card**. Put your estimated API value
+  in USD front and center, with a flowing cumulative chart and provider
+  amounts, or spotlight your token count. Card colors are earned: White below
+  $1K / 100M tokens, Black from $1K / 100M, and Blue from $10K / 1B, using the
+  selected metric. Pick **Last 7 days**, **Last 30 days**, **Last 3 months**, **This year**,
+  or **All time**. Last 7 days is the default. The 7-day and 30-day ranges include
+  today plus the previous 6 or 29 days. Last 3 months is a rolling calendar
+  window ending today. This year runs through today; All time reads the oldest
+  available local usage records on demand. Choose a feed / square / story format and optional
+  signature, then share the image and caption
+  through the macOS share menu. Use **Actual size** for a closer look and the
+  **…** menu to save a 1080-pixel-wide PNG or copy the image and caption.
+  After an app update, the card opens once when your weekly usage is ready.
+  Figures follow your local calendar and include cache usage;
+  API value is an estimate, not your subscription bill.
+  Missing prices are marked as partial. Everything is rendered on your Mac.
+- **Usage history that stays yours.** CodexIsland saves captured token counts
+  in its own local database, including older records still available when it
+  scans. Provider log cleanup no longer erases captured history. Repeated
+  scans update the same calls instead of counting them again. See
+  [usage-history storage](docs/USAGE-HISTORY.md) for coverage details. Open
+  **Settings → General → Recover Claude usage…** to preview verified counts
+  from surviving logs, backups, and old daily snapshots before importing them.
+  A [terminal script](docs/USAGE-HISTORY.md#recover-your-claude-usage) is also included.
+- **Used or remaining quota.** Display provider windows as usage consumed or
+  quota remaining.
+- **Approaching-limit alerts.** Optional warning and critical thresholds tint
+  the island and pulse the peek pill as a visible 5-hour window nears its
+  limit.
+- **Codex reset credits.** When reset credits are available, the Usage footer
+  shows their count and expiration details.
 - **Configurable token counting.** The TOKENS hero can sum every token type
   that crossed the wire (cache included, ccusage parity) or input + output
   only — the latter matches Anthropic's claude.ai stats panel.
 - **Click-through outside the island.** The window ignores mouse events outside
   the visible silhouette so the menu bar and apps underneath still work.
-- **Five chart styles.** Ring, Bar, Stepped, Numeric, and Sparkline. Pick the
-  default in Settings or Cmd-click the expanded panel to cycle.
+- **Five chart styles.** Rails, Ring, Grid, History, and Stepped. Pick the
+  default in Settings or Command-click the expanded panel to cycle. History
+  uses real readings recorded by CodexIsland during successful refreshes.
 - **On-demand refresh.** Click `synced Xs ago` in the panel header to refetch
   immediately; the next scheduled poll re-arms from there.
 - **Cobalt glow + Low Power Mode.** A soft glow around the island signals an
   in-flight refresh. Low Power Mode hides the steady-state glow so it only
   pulses during active work.
 - **Settings without a Dock icon.** A quiet gear in the expanded panel opens a
-  custom settings window for launch-at-login, refresh interval, provider
-  visibility, chart style, cost view style, token counting, links, and Quit.
+  custom, resizable settings window with General, Display, and Providers tabs.
+- **English and Simplified Chinese.** Follow the macOS language automatically
+  or choose a language in Settings.
+- **Display selection.** Auto-pick a notched display or pin the island to a
+  specific connected display. Non-notched displays offer compact and
+  notch-style widths.
 - **Configurable safe polling.** Choose 5m, 15m, or 30m. The app does not offer
   sub-5-minute polling because Anthropic rate-limits the usage endpoint
   aggressively.
 - **Universal binary.** `build.sh` compiles arm64 and x86_64 slices and merges
   them with `lipo`, targeting macOS 13+.
 - **Auto-updates via Sparkle.** The app checks the appcast attached to the
-  latest GitHub Release on launch and once a day thereafter, then prompts
-  before installing. Updates are signed with an EdDSA key — verifiable
-  without involving Apple's signing infrastructure. Toggle off in Settings
-  if you'd rather pin a version.
+  latest GitHub Release in the background, then prompts before installing.
+  Updates are signed with an EdDSA key — verifiable without involving Apple's
+  signing infrastructure. Toggle off automatic checks in Settings if you'd
+  rather pin a version.
 - **Native app privacy.** No app telemetry, no crash reporting, no third-party
   app analytics, and no proxy service.
 
@@ -80,9 +128,9 @@ Apple — Sparkle handles update verification independently).
 
 ### Direct download
 
-Download `CodexIsland-X.Y.Z.dmg` from
-[Releases](https://github.com/ericjypark/codex-island/releases), drag the app
-to `/Applications`, then run:
+Download the current `CodexIsland-X.Y.Z.dmg` from the
+[latest release](https://github.com/ericjypark/codex-island/releases/latest),
+drag the app to `/Applications`, then run:
 
 ```sh
 xattr -dr com.apple.quarantine /Applications/CodexIsland.app
@@ -125,11 +173,17 @@ For Codex:
 
 For Claude:
 
-- Run `claude` once, or open Claude Desktop, so Claude credentials are
-  populated.
-- CodexIsland tries `CLAUDE_CODE_OAUTH_TOKEN`, then the macOS Keychain item
-  named `Claude Code-credentials`, then a refresh against Anthropic's OAuth
-  token endpoint.
+- Run `claude` in Terminal and complete the Claude Code login. Opening
+  Claude Desktop alone does not create the CLI credentials CodexIsland reads.
+- CodexIsland checks `CLAUDE_CODE_OAUTH_TOKEN`, then matching macOS Keychain
+  items named `Claude Code-credentials` or `Claude Code-credentials-*`, then
+  `$CLAUDE_CONFIG_DIR/.credentials.json` (normally
+  `~/.claude/.credentials.json`) as a fallback.
+- Credential access is strictly read-only. CodexIsland never calls the OAuth
+  refresh endpoint or writes to Claude's credential store. Its expired-token
+  handling may launch the CLI so Claude Code can renew its own session. Run
+  `claude` when an access token expires; if a newly scoped token is required,
+  enter `/login` inside the Claude Code session.
 - If none work, the panel shows `auth required — run claude`.
 
 The first fetch starts at app launch so the panel usually has values ready by
@@ -139,19 +193,17 @@ the first peek. Opening Settings also triggers a fresh fetch.
 
 - Hover the notch to peek at the current 5-hour usage.
 - Click the island to expand the full panel.
-- Swipe horizontally on the panel (or use the indicator dots) to cross between
-  the **Usage** screen and the **Cost** screen.
+- Swipe horizontally on the panel (or use the indicator dots) to move between
+  **Usage**, **Cost**, and **Overview**.
 - Move away to collapse it.
-- Cmd-click the expanded panel to cycle chart styles on the active screen
-  (Usage cycles Ring/Bar/Stepped/Numeric/Sparkline; Cost cycles
-  USD/VALUE/TOKENS/TREND).
+- Command-click the expanded panel to cycle chart styles on the active screen
+  (Usage cycles Rails/Ring/Grid/History/Stepped; Cost cycles
+  USD/VALUE/TOKENS/TREND; Overview has one calendar view).
 - Click `synced Xs ago` in the panel header to refetch immediately.
 - Click the gear in the lower-left corner of the expanded panel to open
-  Settings.
-- Use Settings to enable Launch at Login, pick a refresh interval, toggle Low
-  Power Mode, hide/show Claude or Codex, choose the default chart and cost
-  styles, choose between all-tokens and billable-only token counting, open
-  GitHub / License, or quit the app.
+  Settings, or press ⌘,.
+- Press ⌘Q while the pointer is over the island to quit. You can also
+  quit from Settings.
 
 Provider visibility is display-only. Hiding a provider removes that provider's
 logo and column from the island, but the app keeps the latest usage values in
@@ -162,23 +214,24 @@ memory so showing it again does not require a reset.
 Settings is a custom `NSWindow`, not the system Settings scene. The app still
 runs as an accessory app with no Dock icon and no menu bar.
 
-Stored preferences:
+- **General:** Launch at Login, 5m/15m/30m refresh interval, app language,
+  Always show usage, Low Power Mode, configurable limit alerts, and Sparkle
+  update controls.
+- **Display:** used/remaining percentages, Usage and Cost visualization styles,
+  target display, and island width on non-notched screens.
+- **Providers:** Claude/Codex visibility and status, token-counting mode, and a
+  manual refresh for local cost data. Cost estimates can be displayed in USD,
+  CNY, EUR, GBP, JPY, KRW, CAD, AUD, CHF, or SEK. Conversion uses a cached daily
+  reference rate; the underlying model prices and cost calculations remain in
+  USD. Like model pricing, exchange rates load from cache at startup and are
+  checked every six hours, fetching when at least 24 hours old. Refresh also
+  updates exchange rates. Currency selection uses the shared cached table;
+  offline, the last valid table is retained (or USD is shown until one is available).
 
-| Setting | Store | UserDefaults key | Values |
-| --- | --- | --- | --- |
-| Chart style | `StylePref` | `MacIsland.chartStyle` | `ring`, `bar`, `stepped`, `numeric`, `spark` |
-| Cost style | `CostStylePref` | `MacIsland.costStyle` | `dollar`, `multi`, `tokens`, `spark` |
-| Token counting | `TokenCountModeStore` | `MacIsland.tokenCountMode` | `all`, `billable` |
-| Refresh interval | `RefreshIntervalStore` | `MacIsland.refreshInterval` | `300`, `900`, `1800` |
-| Low Power Mode | `LowPowerModeStore` | `MacIsland.lowPowerMode` | Boolean, default `false` |
-| Claude visible | `ProviderVisibilityStore` | `MacIsland.claudeVisible` | Boolean, default `true` |
-| Codex visible | `ProviderVisibilityStore` | `MacIsland.codexVisible` | Boolean, default `true` |
-| Launch at login | `LaunchAtLoginStore` | managed by `SMAppService.mainApp` | System login item status |
-| Style hint seen | `StylePref` | `MacIsland.hasCycledStyle` | Boolean |
-| Cost style hint seen | `CostStylePref` | `MacIsland.costStyleCycled` | Boolean |
-
-The refresh interval applies live. `UsageStore` invalidates the current timer
-and re-arms it with the selected cadence.
+Preferences are stored in `UserDefaults` under `MacIsland.*` keys (Sparkle
+manages its own `SU*` update keys, and Launch at Login uses
+`SMAppService.mainApp`). Refresh, display, and provider changes apply live;
+changing the app language offers to restart CodexIsland.
 
 ## Build from source
 
@@ -198,11 +251,13 @@ There is no Xcode project and no SwiftPM package. `build.sh` runs `swiftc` over
 Smoke test the native app:
 
 ```sh
+./scripts/run-tests.sh
 ./scripts/verify.sh
 ```
 
-The script builds the app, launches the binary for one second, then kills it if
-it is still alive.
+`run-tests.sh` compiles and runs the credential-resolution and notch-height
+test harnesses. `verify.sh` builds the app, launches the binary for one second,
+then kills it if it is still alive.
 
 ## Release
 
@@ -214,12 +269,14 @@ npm install --global create-dmg
 ```
 
 `release.sh` runs the native build, copies the `.app` to `dist/`, applies ad-hoc
-codesigning, creates `dist/CodexIsland-X.Y.Z.dmg`, and prints the file size and
-SHA-256.
+codesigning, creates `dist/CodexIsland-X.Y.Z.dmg`, signs it with Sparkle's
+EdDSA key when available, generates `dist/appcast.xml`, and prints the file size
+and SHA-256.
 
 Pushing a `v*` tag triggers `.github/workflows/release.yml` on `macos-15`,
-builds the DMG, computes the checksum, publishes a GitHub Release, and mirrors
-the cask to `ericjypark/homebrew-tap` when `HOMEBREW_TAP_TOKEN` is configured.
+builds the signed DMG and appcast, generates release notes from Conventional
+Commits, publishes both artifacts in a GitHub Release, and mirrors the cask to
+`ericjypark/homebrew-tap` when `HOMEBREW_TAP_TOKEN` is configured.
 
 `Casks/codexisland.rb` is the Homebrew Cask template. Do not manually bump its
 version or SHA for normal releases; CI copies it to the tap and rewrites those
@@ -232,17 +289,19 @@ fields from the tag and freshly built DMG.
 ├── Sources/
 │   ├── App.swift
 │   ├── Cost/                # Local-log cost + token aggregation
+│   ├── Localization/        # Runtime localization helper
 │   ├── Model/
 │   ├── Theme/
 │   ├── Update/              # Sparkle wrapper
 │   ├── Usage/
 │   ├── Views/
 │   └── Window/
-├── Resources/              # App-bundled logo PNGs and .icns
+├── Resources/              # Icons, provider marks, localized strings
 ├── Assets/                 # README logo asset
+├── Tests/                  # Bare-swiftc regression harnesses
 ├── docs/                   # Sparkle runbook, design specs
 ├── Casks/                  # Homebrew Cask template
-├── scripts/verify.sh       # Native smoke test
+├── scripts/                # Tests, native smoke test, Sparkle setup
 ├── build.sh                # Universal .app build
 ├── release.sh              # DMG packaging
 └── VERSION
@@ -257,16 +316,30 @@ Native app behavior:
 - No crash reporting.
 - No proxy server.
 - No credentials are stored by CodexIsland.
+- Model prices are fetched once a day from a public, GitHub-hosted catalog
+  ([codex-island-model-catalog](https://github.com/ericjypark/codex-island-model-catalog)).
+  The request carries no identifier, no token, and no usage data — it is a
+  plain GET for a static JSON file, and the app works from a local cache when
+  it fails.
 - Codex tokens are read locally from `~/.codex/auth.json`.
-- Claude tokens are read from `CLAUDE_CODE_OAUTH_TOKEN`, the macOS Keychain, or
-  Anthropic's refresh endpoint.
+- Claude tokens are read from `CLAUDE_CODE_OAUTH_TOKEN`, Claude's credentials
+  file, or the macOS Keychain. CodexIsland never refreshes or writes them.
 - Tokens leave the machine only as `Authorization` headers to `chatgpt.com` and
   `api.anthropic.com`.
 - The Cost screen reads local Claude Code session logs from
   `~/.claude/projects/**/*.jsonl` (and `~/.config/claude/...`, plus any path
-  in `CLAUDE_CONFIG_DIR`) and Codex session logs from `~/.codex/sessions/`.
-  Aggregation happens entirely on-device — no log content is uploaded or
-  shared anywhere.
+  in `CLAUDE_CONFIG_DIR`), Codex session logs from `~/.codex/sessions/`, and
+  OpenCode data from `~/.local/share/opencode/`. Aggregation happens entirely
+  on-device — no log content is uploaded or shared anywhere.
+- Default Claude history discovery also includes locally mirrored Cowork
+  session logs in `~/Library/Application Support/Claude/local-agent-mode-sessions/`.
+  Captured usage is retained in
+  `~/Library/Application Support/dev.codexisland.CodexIsland/usage-history.sqlite3`.
+  The database contains token counts, models, timestamps, and opaque record
+  identifiers; it does not contain prompts, responses, or credentials.
+
+The visitor badge at the top of this README is an external `hits.sh` image that
+counts badge requests. It is not bundled with or contacted by the native app.
 
 The network surface is concentrated in
 [`Sources/Usage/UsageFetcher.swift`](Sources/Usage/UsageFetcher.swift). The
@@ -275,26 +348,42 @@ local log readers live in [`Sources/Cost/`](Sources/Cost/).
 ## Troubleshooting
 
 **Claude shows `auth required — run claude`.**
-Run `claude` once in Terminal or open Claude Desktop so the credentials exist.
+Run `claude` in Terminal and complete the Claude Code login. If the CLI is not
+installed, follow the [Claude Code setup guide](https://code.claude.com/docs/en/setup).
+Opening Claude Desktop alone does not create the CLI credentials CodexIsland reads.
+
+**Claude shows `token expired — run claude`.**
+Run `claude` so Claude Code can refresh its own token. CodexIsland intentionally
+does not refresh it.
+
+**Claude shows `re-login: claude /login`.**
+The stored token is missing a scope now required by the usage endpoint. Run
+`claude`, then enter `/login` inside the session to mint a newly scoped token;
+refreshing the old token is not
+enough.
 
 **Codex shows `no codex auth`.**
 Sign in to Codex / ChatGPT CLI and confirm `~/.codex/auth.json` exists.
+
+**Codex shows `auth expired — codex login`.**
+Run `codex login` to refresh the credentials in `~/.codex/auth.json`.
 
 **The app shows stale values after an error.**
 That is intentional. `UsageStore` keeps the previous good values when a refresh
 returns only errors, so a temporary 429 does not turn the panel into 0%.
 
 **Why can I not choose 30-second polling?**
-Anthropic rate-limits `/api/oauth/usage` per token. The app exposes 5m, 15m,
-and 30m only.
+Anthropic rate-limits `/api/oauth/usage` aggressively at the account level. The
+app exposes 5m, 15m, and 30m only.
 
 **Does it work without a notch?**
-Yes. It falls back to a 200 x 28 pill in the menu-bar area.
+Yes. It falls back to a compact menu-bar pill; Settings can switch it to the
+wider notch-style spacing.
 
 **Does it support multiple monitors?**
-Partially. The app prefers the first display whose safe-area inset indicates a
-notch, then falls back to `NSScreen.main`. Multi-monitor setups still get one
-island, not one island per display.
+Yes, with one island at a time. Auto mode prefers a notched display, then the
+main display. You can also pin the island to a connected display in Settings;
+if that display is unplugged, CodexIsland falls back to Auto.
 
 **Will the usage endpoints break?**
 Probably at some point. Both provider endpoints are undocumented. If the panel
@@ -309,15 +398,17 @@ Settings, and use Settings -> Quit to exit.
 
 - Unsigned builds require dequarantine / Open Anyway.
 - Claude and Codex usage endpoints are undocumented.
-- Sparkline history is synthesized, not provider-sourced history.
-- Multi-monitor placement uses a single island.
+- Sparkline history contains only readings CodexIsland records while it is
+  running; providers do not expose historical usage series.
+- Multi-monitor setups use one island, pinned to or auto-selected for one
+  display at a time.
 - Accessibility is partial: VoiceOver labels exist, but a high-contrast variant
   is not implemented yet.
 
 ## Acknowledgements
 
 - [codexbar](https://github.com/steipete/codexbar) by Peter Steinberger -
-  auth-source archaeology for the Claude env-var -> keychain -> refresh ladder.
+  auth-source archaeology for Claude credential resolution.
 - [claudecodeusage](https://github.com/RchGrav/claudecodeusage) by Rich Hickson
   - the `claude-code/2.1.121` User-Agent requirement on `/api/oauth/usage`.
 - [LaunchAtLogin-Modern](https://github.com/sindresorhus/LaunchAtLogin-Modern)
@@ -327,7 +418,9 @@ Settings, and use Settings -> Quit to exit.
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for user-facing changes per release.
+See [GitHub Releases](https://github.com/ericjypark/codex-island/releases) for
+current release notes and [CHANGELOG.md](CHANGELOG.md) for curated milestone
+notes.
 
 ## License
 

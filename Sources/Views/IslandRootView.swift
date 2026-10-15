@@ -3,17 +3,21 @@ import AppKit
 
 struct IslandRootView: View {
     @ObservedObject var model: IslandModel
+    var tracksHover: Bool = true
+    @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @ObservedObject private var alwaysShow = AlwaysShowUsageStore.shared
     @State private var hovering = false
     @State private var contentVisible = false
     @State private var pillsVisible = false
     @State private var pulseToken: UUID?
 
-    /// Image decode from disk is ~150µs per call. Computed properties
-    /// re-decoded both logos every render — inside a 120Hz TimelineView
-    /// that's 240 main-thread decodes/sec. Cache once on appear.
-    @State private var claudeLogo: NSImage?
-    @State private var openaiLogo: NSImage?
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
+    init(model: IslandModel, tracksHover: Bool = true, initialContentVisible: Bool = false) {
+        self.model = model
+        self.tracksHover = tracksHover
+        _contentVisible = State(initialValue: initialContentVisible)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,11 +29,6 @@ struct IslandRootView: View {
             // with the spring for main-thread budget and showing up as
             // hover-spring jank.
             ZStack {
-                GlowLayer(
-                    isExpanded: model.state == .expanded,
-                    hovering: hovering
-                )
-
                 if model.state == .expanded {
                     ExpandedView(model: model)
                         .opacity(contentVisible ? 1 : 0)
@@ -38,13 +37,21 @@ struct IslandRootView: View {
                         // exit the offset never matters because the
                         // content fully fades before the shape shrinks.
                         .offset(y: contentVisible ? 0 : -8)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 14)
                         .allowsHitTesting(contentVisible)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background {
+                            GeometryReader { geometry in
+                                Color.clear.preference(key: ExpandedHeightKey.self, value: geometry.size.height)
+                            }
+                        }
+                } else {
+                    Color.clear.frame(height: model.notch.height)
                 }
             }
-            .frame(width: model.size.width, height: model.size.height)
+            .frame(width: model.size.width)
+            .onPreferenceChange(ExpandedHeightKey.self) { model.updateExpandedHeight($0) }
+            .background {
+                GlowLayer(isExpanded: model.state == .expanded, hovering: hovering)
+            }
             .background {
                     // Frosted halo. ultraThinMaterial is a backdrop blur of
                     // whatever desktop content is behind the window. Lives
@@ -62,71 +69,69 @@ struct IslandRootView: View {
                     // the panel content (220ms after hover-in, immediately
                     // on hover-out) and the .frame here tracks model.size,
                     // so the halo grows/shrinks with the spring morph.
-                    IslandShape()
-                        .fill(.ultraThinMaterial)
-                        .padding(-9)
-                        .blur(radius: 8)
-                        .opacity(contentVisible ? 0.55 : 0)
-                        .allowsHitTesting(false)
+                    //
+                    // Purely decorative, so Reduce Transparency drops it
+                    // entirely — the solid black silhouette is the UI.
+                    if !reduceTransparency {
+                        IslandShape()
+                            .fill(.ultraThinMaterial)
+                            .padding(-9)
+                            .blur(radius: 8)
+                            .opacity(contentVisible ? 0.55 : 0)
+                            .allowsHitTesting(false)
+                    }
                 }
                 .overlay(alignment: .topLeading) {
-                    LogoOverlay(
-                        image: claudeLogo,
-                        color: IslandColor.claude,
-                        provider: .claude,
-                        state: model.state,
-                        compactLogosVisible: model.compactLogosVisible,
-                        edgePadding: logoEdgePadding,
-                        topPadding: max(0, (model.notch.height - 20) / 2)
-                    )
-                }
-                .overlay(alignment: .topTrailing) {
-                    LogoOverlay(
-                        image: openaiLogo,
-                        color: IslandColor.codex,
-                        provider: .codex,
-                        state: model.state,
-                        compactLogosVisible: model.compactLogosVisible,
-                        edgePadding: logoEdgePadding,
-                        topPadding: max(0, (model.notch.height - 20) / 2)
-                    )
-                }
-                .overlay(alignment: .topLeading) {
-                    // Pill lives in the new outboard slot (the 78pt the
-                    // silhouette grew on entering peek). 14pt inset from the
-                    // silhouette's new leading edge keeps it visually
-                    // breathing inside the rounded corner.
-                    if model.state != .compact {
-                        PeekPillOverlay(
-                            provider: .claude,
-                            topPadding: max(0, (model.notch.height - 14) / 2),
-                            pillsVisible: pillsVisible
-                        )
+                    if model.state != .expanded {
+                        ProviderMark(provider: visibility.left)
+                            .padding(.leading, logoEdgePadding)
+                            .padding(.top, max(0, (model.notch.height - 20) / 2))
+                            .modifier(IdleLogoVisibility(visible: logosVisible))
                     }
                 }
                 .overlay(alignment: .topTrailing) {
-                    if model.state != .compact {
-                        PeekPillOverlay(
-                            provider: .codex,
-                            topPadding: max(0, (model.notch.height - 14) / 2),
-                            pillsVisible: pillsVisible
-                        )
+                    if model.state != .expanded {
+                        if let right = visibility.right {
+                            ProviderMark(provider: right)
+                                .padding(.trailing, logoEdgePadding)
+                                .padding(.top, max(0, (model.notch.height - 20) / 2))
+                                .modifier(IdleLogoVisibility(visible: logosVisible))
+                        } else {
+                            PeekPillOverlay(provider: visibility.left, isLeft: false,
+                                topPadding: 0, pillsVisible: true,
+                                contents: .gauge, edgePadding: logoEdgePadding, slotWidth: 20,
+                                availableHeight: model.notch.height,
+                                gaugeProgress: model.state == .peek ? 1 : 0)
+                                .modifier(IdleLogoVisibility(visible: logosVisible))
+                        }
                     }
                 }
-                .overlay(alignment: .bottomLeading) {
-                    // Utility control, not dashboard status. Keep it in a
-                    // quiet corner so the footer remains about live data.
-                    if model.state == .expanded {
-                        SettingsButton()
-                            .opacity(contentVisible ? 1 : 0)
-                            .padding(6)
+                .overlay(alignment: .topLeading) {
+                    if model.state != .expanded {
+                        PeekPillOverlay(provider: visibility.left, isLeft: true,
+                            topPadding: 0, pillsVisible: true,
+                            contents: visibility.right == nil ? .reset : .stacked,
+                            edgePadding: 9,
+                            slotWidth: model.state == .peek ? model.pillSlotWidth - 14 : 0,
+                            availableHeight: model.notch.height,
+                            showsResetCaption: model.notch.height >= 32,
+                            revealProgress: model.state == .peek ? 1 : 0)
+                    }
+                }
+                .overlay(alignment: .topTrailing) {
+                    if model.state != .expanded, let right = visibility.right {
+                        PeekPillOverlay(provider: right, isLeft: false,
+                            topPadding: 0, pillsVisible: true, contents: .stacked, edgePadding: 9,
+                            slotWidth: model.state == .peek ? model.pillSlotWidth - 14 : 0,
+                            availableHeight: model.notch.height,
+                            revealProgress: model.state == .peek ? 1 : 0)
                     }
                 }
                 .contentShape(IslandShape())
                 .onTapGesture {
                     // Cmd-click cycles the visualization style of whichever
-                    // page is active. Usage rotates Ring/Bar/Stepped/Numeric/
-                    // Spark; cost rotates USD/VALUE/TOKENS/TREND. Overview
+                    // page is active. Usage rotates Rails/Ring/Grid/
+                    // History/Stepped; cost rotates USD/VALUE/TOKENS/TREND. Overview
                     // is fixed to year-to-date.
                     if NSEvent.modifierFlags.contains(.command) {
                         switch ScreenPref.shared.screen {
@@ -151,13 +156,19 @@ struct IslandRootView: View {
                             contentVisible = true
                         }
                     }
+                    // Guard against a hover-out landing inside the 250ms
+                    // wait: under always-show it restores the pills at peek,
+                    // and this stale callback would hide them again — leaving
+                    // the rest state pill-less until the next hover cycle.
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                        withAnimation(.easeIn(duration: 0.18)) {
+                        guard model.state == .expanded else { return }
+                        withAnimation(.easeOut(duration: 0.18)) {
                             pillsVisible = false
                         }
                     }
                 }
                 .onHover { h in
+                    guard tracksHover else { return }
                     hovering = h
                     if h {
                         // Trackpad tap on hover-in. .levelChange is closer to
@@ -193,10 +204,16 @@ struct IslandRootView: View {
                         withAnimation(.easeOut(duration: 0.10)) {
                             contentVisible = false
                         }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
+                        // Start the shape morph after only 20ms — overlapping
+                        // with the content fade — so the silhouette begins
+                        // shrinking while the content is still fading out.
+                        // The original 100ms wait caused a visible "flash black"
+                        // because the full-size black shape was exposed for the
+                        // entire fade before the closeMorph fired.
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
                             guard !hovering else { return }
                             // Re-read restState here — the user may have flipped
-                            // the always-show toggle during the 100ms wait, and
+                            // the always-show toggle during the 20ms wait, and
                             // a captured-at-creation-time `target` would settle
                             // at the wrong state for them.
                             let target = restState
@@ -223,14 +240,6 @@ struct IslandRootView: View {
         .accessibilityLabel(L10n.tr("CodexIsland panel"))
         .accessibilityHint(accessibilityHintForState)
         .onAppear {
-            if claudeLogo == nil {
-                claudeLogo = Bundle.main.url(forResource: "claude_logo", withExtension: "pdf")
-                    .flatMap { NSImage(contentsOf: $0) }
-            }
-            if openaiLogo == nil {
-                openaiLogo = Bundle.main.url(forResource: "openai_logo", withExtension: "pdf")
-                    .flatMap { NSImage(contentsOf: $0) }
-            }
             // Snap to peek on launch when the user has opted into always-show.
             // No animation here — the window is just becoming visible, so the
             // user sees the silhouette appear already at peek width rather
@@ -357,6 +366,24 @@ struct IslandRootView: View {
         case .peek:               return model.pillSlotWidth + 9
         }
     }
+
+    /// The idle-logo preference applies only to the compact rest state.
+    /// Peek and expanded keep their logos so hover and panel chrome keep
+    /// their geometry.
+    private var logosVisible: Bool {
+        model.state != .compact || model.compactLogosVisible
+    }
+}
+
+private struct IdleLogoVisibility: ViewModifier {
+    let visible: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(visible ? 1 : 0)
+            .animation(.openMorph, value: visible)
+            .accessibilityHidden(!visible)
+    }
 }
 
 /// Silhouette + halo + animated sweep. Bundles every layer whose
@@ -437,76 +464,56 @@ private struct GlowLayer: View {
     }
 }
 
-/// Per-provider brand logo overlay. Observes only ProviderVisibilityStore
-/// so a UsageStore/CostStore tick doesn't re-render the logo image or
-/// re-evaluate its accessibility label.
-private struct LogoOverlay: View {
-    let image: NSImage?
-    let color: Color
-    let provider: AlertEngine.Provider
-    let state: IslandModel.State
-    let compactLogosVisible: Bool
-    let edgePadding: CGFloat
-    let topPadding: CGFloat
-
-    @ObservedObject private var visibility = ProviderVisibilityStore.shared
-
-    var body: some View {
-        // The logo preference applies only to the compact rest state.
-        // Peek/expanded remain exactly as before so hover, pills, and panel
-        // chrome keep their current geometry.
-        if let image {
-            Image(nsImage: image)
-                .resizable()
-                .renderingMode(.template)
-                .aspectRatio(contentMode: .fit)
-                .foregroundStyle(color)
-                .frame(width: 20, height: 20)
-                .padding(provider == .claude ? .leading : .trailing, edgePadding)
-                .padding(.top, topPadding)
-                .opacity(isVisible ? 1 : 0)
-                .animation(.openMorph, value: isVisible)
-                .accessibilityLabel(isVisible ? providerLabel : L10n.tr("%@ (hidden)", providerLabel))
-                .accessibilityHidden(!isVisible)
-        }
-    }
-
-    private var isVisible: Bool {
-        visibility.effectiveVisible(provider: provider)
-            && (state != .compact || compactLogosVisible)
-    }
-
-    private var providerLabel: String {
-        switch provider {
-        case .claude: return "Claude"
-        case .codex:  return "OpenAI"
-        }
-    }
-}
-
 /// Per-provider peek pill overlay. Observes ProviderVisibilityStore,
 /// UsageStore, and AlertEngine — but not CostStore, so a Codex log
 /// scan completing doesn't re-render the pill that has no cost data
 /// in it.
 private struct PeekPillOverlay: View {
-    let provider: AlertEngine.Provider
+    let provider: IslandProvider
+    let isLeft: Bool
     let topPadding: CGFloat
     let pillsVisible: Bool
+    var contents: NotchPeekPill.Contents = .combined
+    var edgePadding: CGFloat = 14
+    var slotWidth: CGFloat? = nil
+    var availableHeight: CGFloat? = nil
+    var gaugeProgress: CGFloat = 0
+    var showsResetCaption = false
+    var revealProgress: CGFloat = 1
 
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
+    @ObservedObject private var connections = ProviderConnectionStore.shared
+    @ObservedObject private var quotaPreferences = ProviderQuotaPreferences.shared
     @ObservedObject private var usageStore = UsageStore.shared
     @ObservedObject private var alerts = AlertEngine.shared
 
     var body: some View {
         let window = currentWindow
-        NotchPeekPill(
+        let pill = NotchPeekPill(
             usage: window,
-            loading: usageStore.loading,
+            loading: provider.usesLegacyUsage ? usageStore.loading : connections.loading.contains(provider),
             tint: tint,
-            alignment: provider == .claude ? .leading : .trailing,
-            severity: severity
+            alignment: isLeft ? .leading : .trailing,
+            severity: severity,
+            windowLengthFallback: windowLengthFallback,
+            contents: contents,
+            gaugeProgress: gaugeProgress,
+            gaugeHeight: availableHeight ?? 38,
+            showsResetCaption: showsResetCaption,
+            valueWidth: slotWidth
         )
-        .padding(provider == .claude ? .leading : .trailing, 14)
+        Group {
+            if contents == .reset || contents == .stacked {
+                pill
+                    .modifier(PeekContentReveal(progress: revealProgress, start: 0.45, end: 1))
+                    .animation(PeekMotion.animation(opening: revealProgress > 0), value: revealProgress)
+                    .frame(width: slotWidth, height: availableHeight, alignment: isLeft ? .trailing : .leading)
+                    .mask { Rectangle().padding(isLeft ? .leading : .trailing, -edgePadding) }
+            } else {
+                pill.frame(width: slotWidth, height: availableHeight, alignment: isLeft ? .trailing : .leading)
+            }
+        }
+        .padding(isLeft ? .leading : .trailing, edgePadding)
         .padding(.top, topPadding)
         // Two opacity bindings stack:
         //   - `pillsVisible` is the peek lifecycle (hover-in / hover-out).
@@ -516,61 +523,119 @@ private struct PeekPillOverlay: View {
         // lockstep with the rest of the chrome.
         .opacity((pillsVisible && isVisible) ? 1 : 0)
         .animation(.openMorph, value: isVisible)
-        .offset(x: pillsVisible ? 0 : (provider == .claude ? -6 : 6))
+        .offset(x: pillsVisible ? 0 : (isLeft ? -6 : 6))
         .allowsHitTesting(false)
-        .accessibilityLabel(peekLabel(for: window, provider: providerLabel))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(peekLabel(for: window, provider: providerLabel,
+                                      weekly: currentWindowIsWeekly, monthly: currentWindowIsMonthly))
         // Mirror the visual opacity gate exactly — both `pillsVisible` and
         // `isVisible` must be true for the pill to render. Keying the
         // accessibility hide on only `isVisible` lets VoiceOver reach a
         // pill that is visually invisible during the peek-out lifecycle.
-        .accessibilityHidden(!(pillsVisible && isVisible))
+        .accessibilityHidden(!(pillsVisible && isVisible) || contents == .reset || contents == .percentage
+            || (contents == .stacked && revealProgress == 0))
     }
 
     private var isVisible: Bool {
-        visibility.effectiveVisible(provider: provider)
+        visibility.selected.contains(provider)
     }
 
     private var currentWindow: WindowUsage {
         switch provider {
-        case .claude: return usageStore.claude.fiveHour
-        case .codex:  return usageStore.codex.fiveHour
+        case .claude: return usageStore.claude.peekWindow
+        case .codex:  return usageStore.codex.peekWindow
+        case .grok, .antigravity, .muse:
+            return connections.primary(provider)?.window ?? .unknown
         }
+    }
+
+    private var currentWindowIsWeekly: Bool {
+        currentWindowKind == .weekly
+    }
+
+    private var currentWindowIsMonthly: Bool {
+        currentWindowKind == .monthly
+    }
+
+    private var currentWindowKind: UsageWindow? {
+        switch provider {
+        case .claude: return usageStore.claude.peekWindowKind
+        case .codex: return usageStore.codex.peekWindowKind
+        case .muse:
+            guard let kind = connections.primary(provider)?.kind else { return nil }
+            return kind == .weekly ? .weekly : .fiveHour
+        case .grok, .antigravity: return nil
+        }
+    }
+
+    private var windowLengthFallback: String {
+        if provider == .muse {
+            guard let limit = connections.primary(provider) else { return "" }
+            return currentWindowIsWeekly ? "7d" : limit.label
+        }
+        guard currentWindowKind != nil else { return "" }
+        return currentWindowIsMonthly ? "" : currentWindowIsWeekly ? "7d" : "5h"
     }
 
     private var severity: AlertEngine.Severity {
-        switch provider {
-        case .claude: return alerts.claudeSeverity
-        case .codex:  return alerts.codexSeverity
-        }
+        alerts.providerSeverities[provider] ?? .none
     }
 
-    private var tint: Color {
-        switch provider {
-        case .claude: return IslandColor.claude
-        case .codex:  return IslandColor.codex
-        }
-    }
+    private var tint: Color { provider.color }
+    private var providerLabel: String { provider.name }
 
-    private var providerLabel: String {
-        switch provider {
-        case .claude: return "Claude"
-        case .codex:  return "Codex"
+    private func peekLabel(for window: WindowUsage, provider: String, weekly: Bool,
+                           monthly: Bool) -> String {
+        if !self.provider.usesLegacyUsage {
+            guard window.hasReading else { return L10n.tr("%@: usage unavailable", provider) }
+            let mode = UsageDisplayModeStore.shared.mode
+            let label: String
+            if self.provider == .muse, let limit = connections.primary(.muse) {
+                label = "\(provider), \(L10n.tr(limit.label)), \(L10n.tr(mode.label))"
+            } else {
+                label = provider
+            }
+            return L10n.tr("%@: %d%%", label, window.displayedPercentInt(mode: mode))
         }
-    }
-
-    private func peekLabel(for window: WindowUsage, provider: String) -> String {
-        if window.error != nil && window.usedPercent == 0 {
-            return L10n.tr("%@: no data for 5-hour window", provider)
+        if !window.hasReading {
+            if monthly { return L10n.tr("%@: no data for monthly window", provider) }
+            return weekly ? L10n.tr("%@: no data for weekly window", provider)
+                : L10n.tr("%@: no data for 5-hour window", provider)
         }
-        let pct = window.percentInt
+        if window.isUnlimitedAmount, let amount = window.usedAmount {
+            return L10n.tr("%@, %@ credits used, unlimited", provider,
+                           UsageCreditDisplay.currency(amount, code: window.currencyCode))
+        }
+        let mode = UsageDisplayModeStore.shared.mode
+        let pct = window.displayedPercentInt(mode: mode)
         guard let resetAt = window.resetAt else {
-            return L10n.tr("%@: %d percent of 5-hour window used", provider, pct)
+            if monthly {
+                return mode == .used
+                    ? L10n.tr("%@: %d percent of monthly credits used", provider, pct)
+                    : L10n.tr("%@: %d percent of monthly credits remaining", provider, pct)
+            }
+            switch (mode, weekly) {
+            case (.used, false):      return L10n.tr("%@: %d percent of 5-hour window used", provider, pct)
+            case (.remaining, false): return L10n.tr("%@: %d percent of 5-hour window remaining", provider, pct)
+            case (.used, true):       return L10n.tr("%@: %d percent of weekly window used", provider, pct)
+            case (.remaining, true):  return L10n.tr("%@: %d percent of weekly window remaining", provider, pct)
+            }
         }
         let remaining = max(0, resetAt.timeIntervalSinceNow)
         let resetPhrase: String = remaining >= 3600
             ? L10n.tr("resets in %d hours", Int((remaining / 3600).rounded(.down)))
             : L10n.tr("resets in %d minutes", max(1, Int((remaining / 60).rounded(.down))))
-        return L10n.tr("%@: %d percent of 5-hour window used, %@", provider, pct, resetPhrase)
+        if monthly {
+            return mode == .used
+                ? L10n.tr("%@: %d percent of monthly credits used, %@", provider, pct, resetPhrase)
+                : L10n.tr("%@: %d percent of monthly credits remaining, %@", provider, pct, resetPhrase)
+        }
+        switch (mode, weekly) {
+        case (.used, false):      return L10n.tr("%@: %d percent of 5-hour window used, %@", provider, pct, resetPhrase)
+        case (.remaining, false): return L10n.tr("%@: %d percent of 5-hour window remaining, %@", provider, pct, resetPhrase)
+        case (.used, true):       return L10n.tr("%@: %d percent of weekly window used, %@", provider, pct, resetPhrase)
+        case (.remaining, true):  return L10n.tr("%@: %d percent of weekly window remaining, %@", provider, pct, resetPhrase)
+        }
     }
 }
 
@@ -621,5 +686,12 @@ private struct LoadingSweep: View {
                     .blur(radius: 3)
             }
         }
+    }
+}
+
+private struct ExpandedHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }

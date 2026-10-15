@@ -5,17 +5,8 @@ struct NotchInfo {
     let height: CGFloat
     let hasNotch: Bool
 
-    /// `screen.frame.maxY - screen.visibleFrame.maxY` reports the actual
-    /// pixel distance between the top of the screen and the top of the app
-    /// content area — i.e., where the menu bar visually ends. Use that as
-    /// the silhouette height so the dark pill's bottom edge always sits
-    /// flush with the menu bar's bottom, in both default notched mode
-    /// (≈37pt) and "Scaled to avoid the notch" mode (≈24pt, menu bar sits
-    /// below the dead notch area).
-    ///
-    /// `safeAreaInsets.top` reports the *physical notch* and can disagree
-    /// with the visible menu bar in scaled modes — use it only as a
-    /// fallback when visibleFrame is unmeasurable (auto-hide menu bar).
+    /// Use the screen's safe-area inset, in points, for the physical notch
+    /// height. Screens without a top inset use the visible menu-bar height.
     ///
     /// auxiliaryTopLeftArea / auxiliaryTopRightArea give the menu-bar regions
     /// on either side of the notch; the notch's own width is
@@ -39,16 +30,35 @@ struct NotchInfo {
     }
 
     private static func visibleMenuBarHeight(of screen: NSScreen) -> CGFloat {
-        let fromVisibleFrame = screen.frame.maxY - screen.visibleFrame.maxY
-        if fromVisibleFrame > 0 { return fromVisibleFrame }
-        // Auto-hide menu bar — visibleFrame == frame, so derive from the
-        // physical notch (if present) or the system status bar thickness.
-        if screen.safeAreaInsets.top > 0 { return screen.safeAreaInsets.top }
-        return menuBarFallback()
+        menuBarHeight(
+            safeTop: screen.safeAreaInsets.top,
+            visibleFrameDelta: screen.frame.maxY - screen.visibleFrame.maxY,
+            statusBarThickness: NSStatusBar.system.thickness
+        )
+    }
+
+    /// Pure height rule, separated from NSScreen so the test harness can
+    /// drive it (see Tests/NotchHeightTests.swift).
+    ///
+    /// A positive safe-area inset is authoritative for notch coverage.
+    /// The visibleFrame delta can be smaller or larger than that inset,
+    /// so using it would leave a gap or overhang the physical notch.
+    /// Keep the existing 1pt menu-bar correction for non-notched screens.
+    static func menuBarHeight(
+        safeTop: CGFloat,
+        visibleFrameDelta: CGFloat,
+        statusBarThickness: CGFloat
+    ) -> CGFloat {
+        if safeTop > 0 { return safeTop }
+        let fromVisibleFrame = visibleFrameDelta - 1
+        if fromVisibleFrame > 0 {
+            return fromVisibleFrame
+        }
+        // Auto-hide menu bar: visibleFrame supplies no usable height.
+        return statusBarThickness > 0 ? statusBarThickness : 24
     }
 
     private static func menuBarFallback() -> CGFloat {
-        let t = NSStatusBar.system.thickness
-        return t > 0 ? t : 24
+        menuBarHeight(safeTop: 0, visibleFrameDelta: 0, statusBarThickness: NSStatusBar.system.thickness)
     }
 }

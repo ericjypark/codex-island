@@ -136,18 +136,47 @@ final class IslandWindowController {
             if inside {
                 NSApp.activate(ignoringOtherApps: true)
                 window.makeKey()
-                cmdQMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                    if event.modifierFlags.contains(.command),
-                       event.charactersIgnoringModifiers == "q" {
-                        NSApp.terminate(nil)
-                        return nil
-                    }
-                    return event
+                cmdQMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                    self?.handleKeyDown(event) ?? event
                 }
             } else {
                 if let m = cmdQMonitor { NSEvent.removeMonitor(m) }
                 cmdQMonitor = nil
             }
+        }
+    }
+
+    private func handleKeyDown(_ event: NSEvent) -> NSEvent? {
+        guard window.isKeyWindow else { return event }
+
+        let modifiers = event.modifierFlags
+            .intersection(.deviceIndependentFlagsMask)
+            .subtracting([.capsLock])
+        if modifiers == .command, event.charactersIgnoringModifiers == "q" {
+            NSApp.terminate(nil)
+            return nil
+        }
+
+        guard model.state == .expanded else { return event }
+
+        if modifiers == .command,
+           let character = event.charactersIgnoringModifiers,
+           let index = ["1", "2", "3"].firstIndex(of: character) {
+            model.showScreen(ScreenPref.Screen.allCases[index])
+            return nil
+        }
+
+        let navigationModifiers = modifiers.subtracting([.function, .numericPad, .capsLock])
+        guard navigationModifiers.isEmpty else { return event }
+        switch event.keyCode {
+        case 123:
+            model.rewindScreen()
+            return nil
+        case 124:
+            model.advanceScreen()
+            return nil
+        default:
+            return event
         }
     }
 
@@ -220,7 +249,7 @@ final class IslandWindowController {
         window.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.4
-            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
             window.animator().alphaValue = 1
         }
     }

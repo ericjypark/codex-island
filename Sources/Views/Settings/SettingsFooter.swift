@@ -34,10 +34,10 @@ struct SettingsFooter: View {
                             }
                     }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressableButtonStyle(scale: 0.97))
             .onHover { quitHovered = $0 }
             .help(L10n.tr("Quit CodexIsland"))
-            .animation(.strongEaseOut, value: quitHovered)
+            .animation(.hoverFade, value: quitHovered)
         }
         .padding(.horizontal, 24)
         .padding(.top, 12)
@@ -83,8 +83,8 @@ private struct DottedLink: View {
             }
             .padding(.bottom, 2)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableButtonStyle(scale: 0.97))
         .onHover { hovered = $0 }
-        .animation(.easeOut(duration: 0.10), value: hovered)
+        .animation(.hoverFade, value: hovered)
     }
 }

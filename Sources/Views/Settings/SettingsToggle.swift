@@ -34,10 +34,10 @@ struct SettingsToggle: View {
                     .padding(.horizontal, (trackHeight - dotSize) / 2)
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableButtonStyle())
         .contentShape(Capsule())
         .onHover { hovered = $0 }
         .animation(.spring(response: 0.32, dampingFraction: 0.72), value: isOn)
-        .animation(.easeOut(duration: 0.15), value: hovered)
+        .animation(.hoverFade, value: hovered)
     }
 }

@@ -1,7 +1,18 @@
 import SwiftUI
 import AppKit
+import Combine
 
 @main
+enum CodexIslandEntryPoint {
+    @MainActor
+    static func main() {
+        if CommandLine.arguments.dropFirst().first == "--recover-claude" {
+            exit(ClaudeUsageRecovery.run(arguments: Array(CommandLine.arguments.dropFirst(2))))
+        }
+        CodexIslandApp.main()
+    }
+}
+
 struct CodexIslandApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     var body: some Scene {
@@ -17,8 +28,22 @@ struct CodexIslandApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var island: IslandWindowController?
     private var settingsShortcutMonitor: Any?
+    private var weeklyCardLaunchObservation: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        let appPreferences = Bundle.main.bundleIdentifier
+            .flatMap { UserDefaults.standard.persistentDomain(forName: $0) } ?? [:]
+        let existingInstallation = appPreferences.keys.contains { $0.hasPrefix("MacIsland.") }
+        let launchGate = WeeklyCardLaunchGate(defaults: .standard)
+        let offerWeeklyCard = !AppEnvironment.isDemo
+            && launchGate.prepare(version: version, existingInstallation: existingInstallation)
+
+        // Before any window or store exists: the first cost scan must price
+        // against the cached catalog, not fall back to the seed and then
+        // silently change its numbers a moment later.
+        PricingCatalog.loadFromDisk()
+
         NSApp.setActivationPolicy(.accessory)
         island = IslandWindowController()
         island?.show()
@@ -41,6 +66,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // of flashing "0%" while the first request lands.
         UsageStore.shared.startAutoRefresh()
         CostStore.shared.startAutoRefresh()
+        PricingCatalog.startAutoRefresh()
+        CurrencyStore.shared.startAutoRefresh()
+
+        if offerWeeklyCard {
+            let costs = CostStore.shared
+            weeklyCardLaunchObservation = Publishers.CombineLatest3(
+                costs.$claudeLoading, costs.$codexLoading, costs.$connectedLoading
+            )
+            .filter { !$0 && !$1 && $2.isEmpty }
+            .first()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.weeklyCardLaunchObservation = nil
+                    guard launchGate.isPending(version: version) else { return }
+                    launchGate.complete(version: version)
+                    let snapshot = WeeklyUsageSnapshot.make(buckets: Dictionary(
+                        uniqueKeysWithValues: IslandProvider.allCases.map { ($0, costs.cost(for: $0).dailyTokens) }
+                    ))
+                    guard snapshot.totalTokens > 0 else { return }
+                    WeeklyCardWindowController.shared.show(refresh: false)
+                }
+            }
+        }
 
         // Wire the alert engine after the usage store so its initial
         // recompute sees whatever values the first refresh has produced.

@@ -8,8 +8,14 @@ enum IslandColor {
     /// #CC785C — Anthropic terracotta. Claude logo + ring/bar fills.
     static let claude = Color(red: 204/255, green: 120/255, blue: 92/255)
 
-    /// #5AA8F0 — OpenAI sky blue. Codex logo + ring/bar fills.
-    static let codex = Color(red: 90/255, green: 168/255, blue: 240/255)
+    /// #E5E5E5 - neutral Codex logo + ring/bar fills.
+    static let codex = Color(red: 229/255, green: 229/255, blue: 229/255)
+
+    static let grok = Color.white
+    static let muse = Color(red: 0/255, green: 130/255, blue: 251/255)
+
+    // App identity tint: separates Antigravity from other providers and status colors.
+    static let antigravity = Color(red: 182/255, green: 156/255, blue: 255/255)
 
     /// #3DD68C — live status dot. Sits next to cobalt without clashing.
     static let liveTeal = Color(red: 61/255, green: 214/255, blue: 140/255)

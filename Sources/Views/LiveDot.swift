@@ -1,8 +1,9 @@
 import SwiftUI
 
 /// Breathing live-status dot. Active = teal with a pulsing outer halo;
-/// inactive = dim white. Driven by TimelineView so the breath ticks at
-/// display refresh rate. Briefly bumps on each fresh sync so the user can
+/// inactive = dim white. TimelineView ticks at 30Hz — imperceptible from
+/// display rate for a 2.4s breath but 4× cheaper (same rationale as
+/// LoadingSweep). Briefly bumps on each fresh sync so the user can
 /// see new data has just landed.
 struct LiveDot: View {
     let active: Bool
@@ -12,7 +13,7 @@ struct LiveDot: View {
     var body: some View {
         Group {
             if active {
-                TimelineView(.animation(minimumInterval: 1.0 / 120.0)) { context in
+                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
                     let phase = context.date.timeIntervalSinceReferenceDate
                     // sin(phase * 2.6) ≈ 2.4s breath cycle. Slow enough to
                     // feel like a heartbeat at rest, not a strobe.

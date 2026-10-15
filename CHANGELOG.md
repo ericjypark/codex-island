@@ -4,6 +4,234 @@ User-facing changes per release. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); dates are when the
 tag was cut.
 
+## [Unreleased]
+
+## [0.3.0] - 2026-10-01
+
+### Added
+
+- Five quota chart styles: Rails, Ring, Grid, History, and Stepped. Quota
+  history follows recorded usage with smoother paths while keeping
+  abrupt quota changes visible.
+- A balanced notch peek with usage and reset readings on either side, including
+  a compact quota gauge when one provider is selected.
+- Claude Enterprise monthly usage credits, including unlimited credit amounts
+  and independent threshold alerts. Consumed credits are not billed charges.
+- Choose SEK as a display currency. Cost totals and shareable usage cards use
+  the selected currency and localized amount formatting.
+
+### Fixed
+
+- Follow the selected Codex account for quota and reset-credit requests.
+- Detect Claude Code account changes and re-read credentials while preserving
+  the five-minute request spacing and provider rate-limit cooldowns.
+- Preserve cached exchange rates during upgrades and keep card tier labels and
+  challenge amounts consistent with the displayed currency.
+- Recover from interrupted or incomplete Sparkle setup with bounded retries.
+- Correct Claude login guidance in both README languages: use the Claude Code
+  CLI; opening Claude Desktop alone does not create the required credentials.
+
+### Changed
+
+- Migrate legacy chart selections to the new styles; remove Numeric as a
+  standalone style while keeping numeric readings in the quota charts.
+- Add issue forms, a PR template requiring screenshots for UI changes, and
+  CodexIsland-specific code review guidance.
+
+## [0.2.5] - 2026-09-10
+
+### Added
+
+- Turn your AI usage into a shareable card with token totals or estimated API
+  value, provider breakdowns, and a cumulative chart. Choose 7 days, 30 days,
+  3 months, this year, or all time, then share or export a PNG in three formats.
+  API value is explicitly an estimate, not a bill.
+- Captured usage stays in a private local archive even after provider logs are
+  removed. Repeated scans preserve history without duplicating the same calls.
+- Preview and recover Claude usage from surviving logs, Cowork records, and
+  older backups in Settings. Imports back up the archive and leave source files
+  untouched; daily totals without model details remain unpriced.
+
+### Fixed
+
+- Space quota rings evenly within provider columns.
+- Populate Grok and Antigravity cost views in opt-in demo mode.
+
+## [0.2.4] - 2026-09-08
+
+### Fixed
+
+- Antigravity quota now uses the agy CLI backend, correcting readings stuck at
+  100% remaining while the CLI reports usage.
+- Grok reads weekly and monthly subscription allowances without substituting
+  on-demand spending caps for subscription usage. Missing readings stay unknown.
+- Overview labels small nonzero provider shares as `<1%` instead of `0%`.
+
+## [0.2.3] - 2026-09-08
+
+Large cost totals are easier to read: the main numbers now use digit grouping
+such as `1,964,040`, including during the count-up animation. Separators follow
+the app's locale, and the full amount still scales to fit its tile.
+
+## [0.2.2] - 2026-09-08
+
+View estimated token costs in your preferred currency, with nine display
+currencies and cached daily exchange rates.
+
+### Added
+
+- Choose USD, CNY, EUR, GBP, JPY, KRW, CAD, AUD, or CHF in Settings → Providers.
+  Cost totals, value comparisons, and model breakdowns use the selected currency;
+  underlying model prices stay in USD. Offline, the last valid exchange rates
+  are retained, with a clearly labeled USD fallback before rates are available.
+
+### Fixed
+
+- Large converted amounts scale to fit the cost tile instead of truncating digits.
+- The expanded panel fits the selected page's content, including calendar day
+  details, and settles at the correct height after rapid navigation during opening.
+- The entire Usage display row in provider settings now opens its controls.
+
+## [0.2.1] - 2026-09-08
+
+See every supported provider's activity in one calendar, then click a provider
+in the legend to filter its history—even when it is not selected for the usage pills.
+
+### Changed
+
+- Overview combines local history from all supported providers and adds provider filters.
+- Page transitions use Core Animation, with display-aware frame pacing and a
+  30 FPS request in Low Power Mode. History preparation avoids repeated work
+  during interaction updates.
+- Antigravity has a distinct lilac color, and Settings opens with more vertical space.
+
+### Fixed
+
+- Expired Grok and Antigravity sessions get one renewal attempt through the
+  official CLI before retrying. HTTP 403 no longer implies that the user is logged out.
+- Accounts without reported usage show actionable empty states; existing cost
+  records and real zero-percent readings remain visible.
+
+## [0.1.23] - 2026-08-14
+
+Weekly-only Codex plans get a real number in the peek pill instead of "—%".
+
+### Fixed
+
+- **The peek pill works on weekly-only Codex plans.** Plans that report
+  only a weekly quota (no 5-hour window) always showed "—%" on hover —
+  the pill was hard-wired to the missing 5-hour slot. It now falls back
+  to the weekly window: the remaining percentage and its multi-day
+  countdown ("34% · 6d 23h") render, VoiceOver announces it as the
+  weekly window, and the no-countdown fallback glyph reads "7d" instead
+  of "5h". Two-window plans still show the 5-hour window first.
+  Contributed by @albertloky (#75).
+- **Limit alerts follow the window you can see.** Alert severity (the
+  warning glyph and amber/red tint) tracked the 5-hour window even when
+  the peek was showing the weekly one — a weekly-only plan at 96% never
+  warned. Severity now tracks the same window the pill displays.
+
+## [0.1.22] - 2026-08-10
+
+Waking your Mac no longer strands the Claude card on "rate limited" or
+"token expired — run claude", and the Codex week tile is alive again.
+
+### Fixed
+
+- **Post-wake false alarms self-heal now.** Opening the lid used to fire
+  the first poll straight into a half-up network with an access token
+  that had expired mid-sleep — the panel then sat on an error caption
+  for up to 45 minutes even though Claude itself worked fine. The app
+  now waits out the wake burst before its first probe, watches the
+  credential store for Claude Code's own token refresh and refetches
+  within seconds (metadata only — never a keychain prompt), nudges the
+  CLI with one silent haiku ping per expiry episode on days when
+  nothing else refreshes the login (desktop-app-only workflows), and
+  repaints the last real readings under the failure caption instead of
+  blanking to "—" while a rate-limit cooldown runs its course.
+- **The Codex week tile had been dead since mid-July.** The usage API
+  stopped assigning window slots by position: single-limit plans now
+  ship their weekly window in the primary slot, which landed the weekly
+  percentage in the 5h tile (complete with a "resets in 3d" countdown)
+  and left the week tile at "—" forever. Windows are now routed by
+  their advertised span, with the old slot-order behavior kept for
+  accounts still on the two-window shape.
+- **No more fabricated percentages.** A window the plan doesn't report
+  shows a passive "—" everywhere now — the peek pill used to render it
+  as "0% · 5h" (a full budget under the remaining toggle) and Settings
+  flagged it "⚠ no data" as if something were broken.
+
+## [0.1.21] - 2026-07-26
+
+Model prices now come from a published catalog instead of the app binary,
+so a new model no longer waits on an app release to price correctly.
+
+### Changed
+
+- **New models price themselves.** Until now every new model needed a
+  CodexIsland release before its cost showed up — in the gap, its turns
+  counted as tokens but totalled $0. Prices now come from a public
+  [catalog][catalog] the app refreshes once a day, and it already carries
+  78 models, including many this app has never shipped a price for. The
+  request sends no identifier and no usage data; if it fails, the app
+  keeps using its last good copy, and failing that the table baked into
+  the build. Your totals cannot go blank because the fetch went wrong.
+- **The "pricing data N days old" note in Settings is gone.** It existed
+  to warn that a frozen price table had drifted, which was worth saying
+  when the only fix was updating the app. With prices refreshing on their
+  own it was a warning about nothing the reader could act on.
+
+[catalog]: https://github.com/ericjypark/codex-island-model-catalog
+
+## [0.1.20] - 2026-07-26
+
+A one-line pricing fix, shipped on its own so heavy Opus 5 users stop
+under-counting today.
+
+### Fixed
+
+- **Claude Opus 5 now prices.** Sessions on the new model were counted as
+  tokens but priced at $0, so the Cost screen showed an `⚠ 1 unpriced`
+  badge and a dollar total that was short by every Opus 5 turn. Opus 5
+  bills in the same re-tiered Opus band as 4.5–4.8 ($5 / $25 per million
+  input / output). Note that Opus 5's *fast mode* bills at a premium
+  Claude Code doesn't record in its session logs, so — as with `ccusage`
+  — those turns are still counted at the standard rate.
+
+## [0.1.19] - 2026-07-22
+
+The stop-nagging-me release: no more macOS keychain password popups, and no
+more false "Claude session expired" panels.
+
+### Fixed
+
+- **macOS keychain password prompts are gone.** Clicking "Always Allow"
+  never stuck because Claude Code's ~8h token rotation rewrites its
+  keychain item in a way that silently wipes per-app grants (the item's
+  partition list resets to `apple-tool:`). CodexIsland now reads the
+  credential through Apple's `security` tool, which that rewrite
+  permanently trusts — so reads are silent on every Mac, across every
+  update, with no Apple Developer certificate required.
+- **"Claude session expired" no longer appears while you're actually
+  logged in.** The app held a copy of the access token in memory past
+  Claude Code's rotation; when the copy expired it flashed the re-auth
+  panel for up to a full poll interval even though a fresh token was
+  already in the keychain. A failed token now triggers an immediate
+  re-read and retry in the same pass — the panel only appears when the
+  login is genuinely dead.
+- **Logins under a custom `CLAUDE_CONFIG_DIR` are now found.** Claude Code
+  stores those under a hashed keychain service name; the app now discovers
+  credential items by enumerating keychain metadata instead of assuming
+  the default name.
+- **The re-auth panel now says "Claude re-login needed"** when the token is
+  missing a required scope (the fix is `claude /login`), keeping "session
+  expired" for genuine expiry. Localized in English and Chinese.
+- **The one-click Re-authenticate flow is quieter and sturdier.** It waits
+  for the login to actually write credentials before touching the keychain
+  (previously up to 24 reads per re-auth), recovers from a transient
+  network failure right after login, and backs off immediately when the
+  usage API rate-limits.
+
 ## [0.1.4] - 2026-05-09
 
 A polish + hardening release. One user-visible fix in Settings; the rest

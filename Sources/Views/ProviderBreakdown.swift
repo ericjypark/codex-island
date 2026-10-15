@@ -57,6 +57,7 @@ private func providerBrandColor(_ provider: AlertEngine.Provider) -> Color {
     switch provider {
     case .claude: return IslandColor.claude
     case .codex:  return IslandColor.codex
+    case .grok, .antigravity, .muse: return provider.color
     }
 }
 
@@ -64,6 +65,7 @@ private func providerLowerLabel(_ provider: AlertEngine.Provider) -> String {
     switch provider {
     case .claude: return "Claude"
     case .codex:  return "Codex"
+    case .grok, .antigravity, .muse: return provider.name
     }
 }
 
@@ -72,6 +74,7 @@ private func recentRows(for provider: AlertEngine.Provider, store: CostStore) ->
     switch provider {
     case .claude: return store.claude.recentByModel
     case .codex:  return store.codex.recentByModel
+    case .grok, .antigravity, .muse: return store.cost(for: provider).recentByModel
     }
 }
 
@@ -80,6 +83,7 @@ private func weekRowsList(for provider: AlertEngine.Provider, store: CostStore) 
     switch provider {
     case .claude: return store.claude.weekByModel
     case .codex:  return store.codex.weekByModel
+    case .grok, .antigravity, .muse: return store.cost(for: provider).weekByModel
     }
 }
 
@@ -163,6 +167,7 @@ struct PerModelBreakdown: View {
 
     let provider: AlertEngine.Provider
     let metric: Metric
+    @ObservedObject private var currencyStore = CurrencyStore.shared
 
     @ObservedObject private var costStore = CostStore.shared
 
@@ -192,7 +197,8 @@ struct PerModelBreakdown: View {
 
             if rows.isEmpty {
                 Spacer(minLength: 0)
-                Text(L10n.tr("no %@ activity in last 5h or this week", providerLowerLabel(provider)))
+                Text(provider == .muse ? L10n.tr("Muse Code local token history is not supported yet")
+                    : L10n.tr("no %@ activity in last 5h or this week", providerLowerLabel(provider)))
                     .font(Typography.caption)
                     .foregroundStyle(.white.opacity(0.4))
                 Spacer(minLength: 0)
@@ -203,7 +209,7 @@ struct PerModelBreakdown: View {
                             displayName: row.displayName,
                             recentAbsolute: row.recentAbsolute(metric: metric),
                             weekAbsolute: row.weekAbsolute(metric: metric),
-                            trailingValue: row.trailingValue(metric: metric),
+                            trailingValue: trailingValue(for: row),
                             color: color,
                             weight: perModelRowWeights[min(idx, perModelRowWeights.count - 1)]
                         )
@@ -211,6 +217,15 @@ struct PerModelBreakdown: View {
                 }
                 Spacer(minLength: 0)
             }
+        }
+    }
+
+    private func trailingValue(for row: JoinedModelRow) -> String {
+        switch metric {
+        case .tokens:
+            return row.trailingValue(metric: metric)
+        case .dollars:
+            return currencyStore.formatted(usd: row.week.dollars)
         }
     }
 

@@ -1,9 +1,10 @@
 import Foundation
 
 /// Walks the local Claude Code session JSONL files and emits TokenEvents for
-/// every assistant message that recorded usage. Mirrors ccusage's data path:
+/// every assistant message that recorded usage:
 ///   - reads from ~/.claude/projects/**/*.jsonl AND ~/.config/claude/projects/**/*.jsonl
 ///   - honors CLAUDE_CONFIG_DIR (comma-separated) when set
+///   - includes locally mirrored Cowork project logs in the default search
 ///   - dedupes by `messageId:requestId`
 ///   - skips synthetic placeholder models
 ///
@@ -15,38 +16,51 @@ enum ClaudeLogReader {
     /// Walk the configured project roots and return every usage-bearing
     /// assistant turn from the last `lookbackDays` days. Pure file IO; no
     /// network. Safe to call from a background thread.
-    static func scan(lookbackDays: Int = 30) -> [TokenEvent] {
-        let cutoff = Date().addingTimeInterval(-Double(lookbackDays) * 86400)
-        var seen = Set<String>()
+    static func scan(lookbackDays: Int? = 30, roots: [URL]? = nil, requireStableIDs: Bool = false) -> [TokenEvent] {
+        let cutoff = lookbackDays.map { Date().addingTimeInterval(-Double($0) * 86400) } ?? .distantPast
+        var positions: [String: Int] = [:]
+        var occurrences: [String: Int] = [:]
         var out: [TokenEvent] = []
 
         LogParseCache.walk(
-            roots: projectRoots(),
+            roots: roots ?? projectRoots(),
             cutoff: cutoff,
             cacheFilename: "claude-parse-cache.v1.json",
             cacheVersion: cacheVersion,
+            useCache: roots == nil,
             parse: parseFile(at:),
-            emit: { (ev: CachedEvent) in
-                guard ev.timestamp >= cutoff else { return }
-                if !ev.dedupKey.isEmpty {
-                    if seen.contains(ev.dedupKey) { return }
-                    seen.insert(ev.dedupKey)
-                }
-                out.append(TokenEvent(
+            emit: { (ev: CachedEvent, file: URL) in
+                guard ev.timestamp >= cutoff, !requireStableIDs || !ev.dedupKey.isEmpty else { return }
+                let event = TokenEvent(
                     provider: .claude,
                     timestamp: ev.timestamp,
                     model: ev.model,
                     inputTokens: ev.inputTokens,
                     outputTokens: ev.outputTokens,
                     cacheCreationTokens: ev.cacheCreationTokens,
-                    cacheReadTokens: ev.cacheReadTokens
-                ))
+                    cacheReadTokens: ev.cacheReadTokens,
+                    recordID: ev.dedupKey.isEmpty
+                        ? LogParseCache.recordID(file: file, timestamp: ev.timestamp, occurrences: &occurrences)
+                        : ev.dedupKey
+                )
+                if !ev.dedupKey.isEmpty, let position = positions[ev.dedupKey] {
+                    let previous = out[position]
+                    // Streaming rows can repeat a call with more complete usage. Keep an actual row, never a synthetic sum.
+                    if event.model == previous.model,
+                       event.inputTokens >= previous.inputTokens, event.outputTokens >= previous.outputTokens,
+                       event.cacheCreationTokens >= previous.cacheCreationTokens, event.cacheReadTokens >= previous.cacheReadTokens {
+                        out[position] = event
+                    }
+                } else {
+                    if !ev.dedupKey.isEmpty { positions[ev.dedupKey] = out.count }
+                    out.append(event)
+                }
             }
         )
         return out
     }
 
-    private static func projectRoots() -> [URL] {
+    static func projectRoots() -> [URL] {
         if let env = ProcessInfo.processInfo.environment["CLAUDE_CONFIG_DIR"], !env.isEmpty {
             return env.split(separator: ",").map {
                 URL(fileURLWithPath: String($0).trimmingCharacters(in: .whitespaces))
@@ -57,7 +71,22 @@ enum ClaudeLogReader {
         return [
             home.appendingPathComponent(".claude/projects", isDirectory: true),
             home.appendingPathComponent(".config/claude/projects", isDirectory: true),
-        ].filter { FileManager.default.fileExists(atPath: $0.path) }
+        ].filter { FileManager.default.fileExists(atPath: $0.path) } + desktopProjectRoots(home: home)
+    }
+
+    private static func desktopProjectRoots(home: URL) -> [URL] {
+        let root = home.appendingPathComponent("Library/Application Support/Claude/local-agent-mode-sessions", isDirectory: true)
+        guard let enumerator = FileManager.default.enumerator(at: root,
+                                                              includingPropertiesForKeys: [.isDirectoryKey],
+                                                              options: [.skipsPackageDescendants]) else { return [] }
+        var roots: [URL] = []
+        for case let url as URL in enumerator where url.lastPathComponent == "projects"
+            && url.deletingLastPathComponent().lastPathComponent == ".claude" {
+            guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else { continue }
+            roots.append(url)
+            enumerator.skipDescendants()
+        }
+        return roots
     }
 
     /// Parse a single file end-to-end. Caller is responsible for cutoff

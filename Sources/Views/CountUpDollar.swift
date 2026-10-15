@@ -3,7 +3,7 @@ import SwiftUI
 /// Count-up animated dollar number — the slot-machine reveal that gives
 /// the cost screen its dopamine hit. Interpolates from `lastSeenTarget`
 /// (or 0 on first appearance) to `target` over ~0.65s using a cubic
-/// ease-out, driven by a 60Hz TimelineView.
+/// ease-out, paced for the expanded panel and Low Power Mode.
 ///
 /// Visually identical to the previous static text — same 38pt brand-color
 /// monospace digits with the dual-shadow glow whose intensity is locked
@@ -11,29 +11,32 @@ import SwiftUI
 /// finishes.
 struct CountUpDollar: View {
     let target: Double
+    let wholeUnits: Bool
     let color: Color
     let glowOpacity: Double
+    var font: Font = Typography.bigNumber
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private static let duration: TimeInterval = 0.65
+
+    @ObservedObject private var lowPower = LowPowerModeStore.shared
 
     @State private var animationStart: Date = Date()
     @State private var startValue: Double = 0
     @State private var lastSeenTarget: Double = 0
-    /// Gates the 60Hz TimelineView. Once the count settles we render a
-    /// plain `Text` so SwiftUI stops re-evaluating this body 60 times per
-    /// second. Four cost cells each running idle TimelineViews adds up.
+    /// Stop scheduling frames once the counter settles.
     @State private var animating: Bool = false
     @State private var animationToken: UUID = UUID()
 
     var body: some View {
         Group {
             if animating {
-                TimelineView(.animation(minimumInterval: 1.0 / 60.0)) { context in
+                TimelineView(.animation(minimumInterval: frameInterval)) { context in
                     let elapsed = context.date.timeIntervalSince(animationStart)
                     digits(formatted(interpolatedValue(elapsed: elapsed)))
                 }
             } else {
-                digits(formatted(lastSeenTarget))
+                digits(formatted(target))
             }
         }
         .onAppear {
@@ -45,24 +48,47 @@ struct CountUpDollar: View {
         }
         .onChange(of: target) { _ in
             // Smooth update during a refresh — count from where the eye
-            // last saw the number, not from zero.
-            startValue = lastSeenTarget
+            // last saw the number, not from zero. If a prior count is
+            // still in flight, resume from the interpolated on-screen
+            // value so the retarget never visibly snaps.
+            startValue = displayedValue()
             animationStart = Date()
             lastSeenTarget = target
             startAnimation()
         }
     }
 
+    private var frameInterval: TimeInterval {
+        1.0 / Double(ExpandedFrameRate.preferred(
+            maximum: DisplayInfo.currentTarget()?.screen.maximumFramesPerSecond ?? 60,
+            lowPower: lowPower.effectiveEnabled
+        ))
+    }
+
+    private func displayedValue() -> Double {
+        guard animating else { return lastSeenTarget }
+        let elapsed = Date().timeIntervalSince(animationStart)
+        guard elapsed < Self.duration else { return lastSeenTarget }
+        let t = max(0, min(1, elapsed / Self.duration))
+        let eased = 1 - pow(1 - t, 3)
+        return startValue + (lastSeenTarget - startValue) * eased
+    }
+
     @ViewBuilder
     private func digits(_ text: String) -> some View {
         Text(text)
-            .font(Typography.bigNumber)
+            .font(font)
+            .lineLimit(1)
             .foregroundStyle(color)
             .shadow(color: color.opacity(glowOpacity), radius: 6)
             .shadow(color: color.opacity(glowOpacity * 0.5), radius: 14)
     }
 
     private func startAnimation() {
+        guard !reduceMotion else {
+            animating = false
+            return
+        }
         animating = true
         let token = UUID()
         animationToken = token
@@ -81,10 +107,7 @@ struct CountUpDollar: View {
         return startValue + (target - startValue) * eased
     }
 
-    /// Cents under $100 (where they're meaningful); rounded above so a
-    /// 7-digit month total fits the 38pt slot.
     private func formatted(_ v: Double) -> String {
-        if v < 100 { return String(format: "%.2f", v) }
-        return String(format: "%.0f", v)
+        DisplayNumber.money(v, wholeUnits: wholeUnits, abbreviated: true, locale: L10n.locale)
     }
 }

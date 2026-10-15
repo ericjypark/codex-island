@@ -27,7 +27,7 @@ struct CostBlock: View {
                      centered: centerWhenSingle)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.horizontal, 12)
+        .padding(.horizontal, IslandPanelLayout.columnInset)
     }
 }
 
@@ -48,11 +48,13 @@ struct CostTile: View {
 
     @ObservedObject private var stylePref = CostStylePref.shared
     @ObservedObject private var usageStore = UsageStore.shared
+    @ObservedObject private var connections = ProviderConnectionStore.shared
     @ObservedObject private var tokenMode = TokenCountModeStore.shared
+    @ObservedObject private var currencyStore = CurrencyStore.shared
 
-    /// Locked to match `ChartTile.tileHeight` so swipe transitions don't
+    /// Locked to match the usage chart height so swipe transitions don't
     /// reflow the panel.
-    private static let tileHeight: CGFloat = 96
+    private static let tileHeight = IslandPanelLayout.tileHeight
 
     var body: some View {
         VStack(alignment: centered ? .center : .leading, spacing: 6) {
@@ -69,19 +71,23 @@ struct CostTile: View {
             }
             .frame(maxWidth: centered ? 240 : .infinity)
 
-            Spacer(minLength: 0)
-
             Group {
+                if stylePref.style == .multi {
+                    multiplierHero
+                } else if window.error != nil || (stylePref.style != .tokens && costUnavailable) {
+                    Text("—").font(Typography.chartValue).foregroundStyle(.white.opacity(0.4))
+                } else {
                 switch stylePref.style {
                 case .dollar: dollarHero
                 case .multi:  multiplierHero
                 case .tokens: tokensHero
                 case .spark:  sparkHero
                 }
+                }
             }
             .id(stylePref.style)
             .transition(.chartSwap.animation(.chartSwap))
-            .offset(y: heroYOffset)
+            .frame(maxHeight: .infinity, alignment: .center)
             .frame(maxWidth: centered ? 240 : .infinity, alignment: centered ? .center : .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: centered ? .top : .topLeading)
@@ -93,38 +99,58 @@ struct CostTile: View {
         .accessibilityValue(spokenValue)
     }
 
+    private var costUnavailable: Bool {
+        window.error != nil || (window.dollars == 0 && !window.unknownModels.isEmpty)
+    }
+
     private var spokenValue: String {
+        if stylePref.style == .multi {
+            let plan = subscriptionUSD == nil ? "unavailable" : currencyStore.formatted(usd: planAmount, compact: false)
+            let you = costUnavailable ? "unavailable" : currencyStore.formatted(usd: window.dollars, compact: false)
+            return L10n.tr("%@ %@ versus you %@", planLabel ?? L10n.tr("Plan"), plan, you)
+        }
+        if let error = window.error { return error }
+        if stylePref.style != .tokens && window.dollars == 0 && !window.unknownModels.isEmpty {
+            return "Cost unavailable: model pricing is missing"
+        }
         switch stylePref.style {
         case .dollar:
-            return "$\(formattedDollarsCompact)"
+            return currencyStore.formatted(usd: window.dollars, compact: false)
         case .multi:
             let plan = formatBarDollars(planAmount)
             let you = formatBarDollars(window.dollars)
             return L10n.tr("%@ %@ versus you %@", planLabel ?? L10n.tr("Plan"), plan, you)
         case .tokens:
-            return L10n.tr("%@%@ tokens", tokensValue, tokensUnit)
+            return L10n.tr("%@%@ tokens", displayedTokens.formatted(.number.locale(L10n.locale)), "")
         case .spark:
-            return L10n.tr("$%@ cumulative", formattedDollarsCompact)
+            return L10n.tr("%@ cumulative", currencyStore.formatted(usd: window.dollars, compact: false))
         }
     }
 
     // MARK: - Heroes
 
-    private var heroYOffset: CGFloat {
-        switch stylePref.style {
-        case .dollar, .tokens: return -10
-        case .multi, .spark:   return 0
-        }
-    }
-
     private var dollarHero: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 1) {
-            Text("$")
-                .font(Typography.unit)
-                .foregroundStyle(.white.opacity(0.4))
-            CountUpDollar(target: window.dollars, color: color, glowOpacity: glowOpacity)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(currencyStore.displayPrefix)
+                    .font(Typography.unit)
+                    .foregroundStyle(.white.opacity(0.6))
+                CountUpDollar(
+                    target: currencyStore.converted(usd: window.dollars),
+                    wholeUnits: currencyStore.displayUsesWholeUnits,
+                    color: color,
+                    glowOpacity: 0,
+                    font: .system(size: 36, weight: .semibold, design: .monospaced)
+                )
+                if !currencyStore.displaySuffix.isEmpty {
+                    Text(currencyStore.displaySuffix)
+                        .font(Typography.unit)
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .help(currencyStore.formatted(usd: window.dollars, compact: false))
     }
 
     /// Side-by-side bar chart: left bar is the plan price (white, subtle),
@@ -141,10 +167,18 @@ struct CostTile: View {
         // Sized so barColumn's natural height (14 dollar text + 3 + bar + 3
         // + 13 label text) fits inside the cell's hero slot without the bars
         // overflowing upward into the "Today" header.
-        let maxBarHeight: CGFloat = 36
+        let maxBarHeight: CGFloat = 52
 
         return HStack(alignment: .bottom, spacing: 14) {
             Spacer(minLength: 0)
+            if subscriptionUSD == nil {
+                VStack(spacing: 3) {
+                    Text("—").font(Typography.bodyNumber)
+                    Text("Plan").font(Typography.caption)
+                }
+                .foregroundStyle(.white.opacity(0.4))
+                .help("Monthly USD reference price is not available for this plan.")
+            } else {
             barColumn(
                 amount: plan,
                 label: planLabel ?? L10n.tr("Plan"),
@@ -153,6 +187,14 @@ struct CostTile: View {
                 maxAmount: maxAmount,
                 maxBarHeight: maxBarHeight
             )
+            }
+            if costUnavailable {
+                VStack(spacing: 3) {
+                    Text("—").font(Typography.bodyNumber)
+                    Text(L10n.tr("You")).font(Typography.caption)
+                }
+                .foregroundStyle(.white.opacity(0.4))
+            } else {
             barColumn(
                 amount: spend,
                 label: L10n.tr("You"),
@@ -161,6 +203,7 @@ struct CostTile: View {
                 maxAmount: maxAmount,
                 maxBarHeight: maxBarHeight
             )
+            }
             Spacer(minLength: 0)
         }
         // Intrinsic height + width-only fill: lets the parent VStack's
@@ -187,15 +230,12 @@ struct CostTile: View {
                 .font(Typography.bodyNumber)
                 .foregroundStyle(isYou ? color : .white.opacity(0.78))
                 .lineLimit(1)
+                .help(currencyStore.formatted(usd: amount, compact: false))
             ZStack(alignment: .bottom) {
                 Color.clear.frame(width: 24, height: maxBarHeight)
                 RoundedRectangle(cornerRadius: 3)
                     .fill(fill)
                     .frame(width: 24, height: height)
-                    .shadow(
-                        color: isYou ? color.opacity(glowOpacity) : .clear,
-                        radius: 5
-                    )
                     .animation(.strongEaseOut, value: amount)
             }
             Text(label)
@@ -206,36 +246,45 @@ struct CostTile: View {
     }
 
     private var tokensHero: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 3) {
-            Text(tokensValue)
-                .font(Typography.bigNumber)
-                .foregroundStyle(color)
-                .shadow(color: color.opacity(glowOpacity), radius: 6)
-                .shadow(color: color.opacity(glowOpacity * 0.5), radius: 14)
-            Text(tokensUnit)
-                .font(Typography.unit)
-                .foregroundStyle(.white.opacity(0.4))
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(tokensValue)
+                    .font(.system(size: 36, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(color)
+                    .lineLimit(1)
+                Text(tokensUnit)
+                    .font(Typography.unit)
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+            Text(L10n.tr("Tokens"))
+                .font(Typography.micro)
+                .foregroundStyle(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .help(displayedTokens.formatted(.number.locale(L10n.locale)) + " " + L10n.tr("Tokens"))
     }
 
     private var sparkHero: some View {
-        ZStack(alignment: .bottomTrailing) {
-            CostSparkline(series: window.series, color: color)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            // Small dollar overlay anchored to the bottom-right so the
-            // sparkline gets the full cell but the user still has the
-            // numeric anchor they can read at a glance.
-            HStack(alignment: .firstTextBaseline, spacing: 1) {
-                Text("$")
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(currencyStore.displayPrefix)
                     .font(Typography.micro)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(.white.opacity(0.6))
                 Text(formattedDollarsCompact)
-                    .font(Typography.bodyNumber)
+                    .font(.system(size: 28, weight: .semibold, design: .monospaced))
                     .foregroundStyle(color)
-                    .shadow(color: color.opacity(0.7), radius: 3)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                if !currencyStore.displaySuffix.isEmpty {
+                    Text(currencyStore.displaySuffix)
+                        .font(Typography.micro)
+                        .foregroundStyle(.white.opacity(0.6))
+                }
             }
+            CostSparkline(series: window.series, color: color)
+                .frame(height: 40)
         }
+        .help(currencyStore.formatted(usd: window.dollars, compact: false))
     }
 
     // MARK: - Derived values
@@ -243,12 +292,20 @@ struct CostTile: View {
     /// Monthly subscription cost in USD for this provider's currently
     /// detected plan tier. Auto-mapped from Anthropic's "subscriptionType"
     /// or OpenAI's "plan_type" so each provider's bar reflects its actual
-    /// plan: Claude Pro $20 / Max $200, Codex Plus $20 / Pro $200.
+    /// plan: Claude Pro $20 / Max $200, Codex Plus $20 / Pro $100 or $200.
     private var subscriptionUSD: Double? {
+        // Illustrative demo baselines; do not infer live subscription pricing.
+        if AppEnvironment.isDemo {
+            if provider == .grok { return 30 }
+            if provider == .antigravity { return 19.99 }
+        }
         let plan: String? = {
             switch provider {
             case .claude: return usageStore.claude.plan?.lowercased()
             case .codex:  return usageStore.codex.plan?.lowercased()
+            case .antigravity: return connections.snapshot(.antigravity).plan?.lowercased()
+            case .grok: return connections.snapshot(.grok).plan?.lowercased()
+            case .muse: return connections.snapshot(.muse).plan?.lowercased()
             }
         }()
         guard let plan else { return nil }
@@ -256,7 +313,9 @@ struct CostTile: View {
         case (.claude, "pro"): return 20
         case (.claude, "max"): return 200
         case (.codex, "plus"): return 20
+        case (.codex, "prolite"): return 100
         case (.codex, "pro"):  return 200
+        case (.antigravity, "google ai pro"): return 19.99
         default: return nil
         }
     }
@@ -265,10 +324,17 @@ struct CostTile: View {
     /// label under the plan bar so the user always knows what the
     /// comparison is anchored to.
     private var planLabel: String? {
+        if AppEnvironment.isDemo {
+            if provider == .grok { return "SuperGrok" }
+            if provider == .antigravity { return "AI Pro" }
+        }
         let plan: String? = {
             switch provider {
             case .claude: return usageStore.claude.plan?.lowercased()
             case .codex:  return usageStore.codex.plan?.lowercased()
+            case .antigravity: return connections.snapshot(.antigravity).plan?.lowercased()
+            case .grok: return connections.snapshot(.grok).plan?.lowercased()
+            case .muse: return connections.snapshot(.muse).plan?.lowercased()
             }
         }()
         guard let plan else { return nil }
@@ -276,7 +342,9 @@ struct CostTile: View {
         case (.claude, "pro"): return "Pro"
         case (.claude, "max"): return "Max"
         case (.codex, "plus"): return "Plus"
+        case (.codex, "prolite"): return "Pro"
         case (.codex, "pro"):  return "Pro"
+        case (.antigravity, "google ai pro"): return "AI Pro"
         default: return nil
         }
     }
@@ -292,8 +360,7 @@ struct CostTile: View {
     }
 
     private func formatBarDollars(_ v: Double) -> String {
-        if v < 10 { return String(format: "$%.2f", v) }
-        return String(format: "$%.0f", v)
+        currencyStore.formatted(usd: v, abbreviated: true)
     }
 
     /// Honors the user's TokenCountMode setting: `.all` shows wire-level
@@ -307,50 +374,27 @@ struct CostTile: View {
     }
 
     private var tokensValue: String {
-        let n = displayedTokens
-        let v = Double(n)
-        if n < 1_000 { return "\(n)" }
-        if n < 10_000 { return String(format: "%.1f", v / 1_000) }
-        if n < 1_000_000 { return String(format: "%.0f", v / 1_000) }
-        if n < 1_000_000_000 { return String(format: "%.1f", v / 1_000_000) }
-        return String(format: "%.1f", v / 1_000_000_000)
+        DisplayNumber.tokens(displayedTokens, locale: L10n.locale).value
     }
 
     private var tokensUnit: String {
-        let n = displayedTokens
-        if n < 1_000 { return "tok" }
-        if n < 1_000_000 { return "k" }
-        if n < 1_000_000_000 { return "M" }
-        return "B"
+        DisplayNumber.tokens(displayedTokens, locale: L10n.locale).unit
     }
 
     private var formattedDollarsCompact: String {
-        let v = window.dollars
-        if v < 100 { return String(format: "%.2f", v) }
-        return String(format: "%.0f", v)
-    }
-
-    /// Glow intensity scales softly with spend so a quiet day stays calm
-    /// and a heavy month looks luminous. Logarithmic so the curve doesn't
-    /// blow out at the high end. Caps around 0.85 so even at peak the
-    /// glow stays a halo, not a smear.
-    private var glowOpacity: Double {
-        let s = window.dollars
-        if s <= 0 { return 0 }
-        let scale = log(s + 1) / log(2000)
-        return min(0.85, 0.20 + scale * 0.65)
+        currencyStore.formatted(usd: window.dollars, includesSymbol: false, abbreviated: true)
     }
 
     /// Compact "↻ 5h" / "↻ 12d" countdown — computed at render time from
     /// the current clock so the panel always shows accurate time-remaining
-    /// regardless of how stale the last refresh is. Mirrors `NumericChart`'s
-    /// "↻ 3h" treatment so the cost screen doesn't introduce a new caption
-    /// shape. When the embedded pricing snapshot is missing models that
-    /// produced real spend in this window, the countdown is replaced with
+    /// regardless of how stale the last refresh is. Uses the same "↻ 3h"
+    /// caption shape as the usage tiles. When the embedded pricing snapshot is
+    /// missing models that produced real spend in this window, the countdown is replaced with
     /// an "⚠ N unpriced" warning so the user knows the dollar total is an
     /// undercount rather than a clean zero.
     private var resetGlyph: String {
-        if let err = window.error { return err }
+        if loading && window.error != nil { return "Loading" }
+        if window.error != nil { return "No records" }
         if !window.unknownModels.isEmpty {
             return L10n.tr("⚠ %d unpriced", window.unknownModels.count)
         }

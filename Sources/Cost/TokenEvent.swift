@@ -4,9 +4,12 @@ import Foundation
 /// Both `ClaudeLogReader` and `CodexLogReader` emit these so the cost pipeline
 /// downstream is provider-agnostic.
 struct TokenEvent {
-    enum Provider {
+    enum Provider: String, Codable {
         case claude
         case codex
+        case grok
+        case antigravity
+        case muse
     }
 
     let provider: Provider
@@ -20,4 +23,6 @@ struct TokenEvent {
     /// (Codex calls these "cached_input_tokens" — they are billed at a
     /// discount but still draw from the input bucket).
     let cacheReadTokens: Int
+    var recordID: String? = nil
+    var recordAliases: [String] = []
 }

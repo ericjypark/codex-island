@@ -1,0 +1,85 @@
+name: Bug report
+description: Report broken or unexpected app behavior.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search [existing issues](https://github.com/ericjypark/codex-island/issues) before reporting a bug.
+        This is public. Remove tokens, account details, private file paths, and private content from logs and screenshots.
+  - type: input
+    id: app-version
+    attributes:
+      label: CodexIsland version
+      description: Find the version in Settings. For a source build, also include the commit or branch and whether you launched that build or the installed app.
+      placeholder: "0.2.5; installed release"
+    validations:
+      required: true
+  - type: input
+    id: operating-system
+    attributes:
+      label: Operating system and hardware
+      description: Include OS version and Apple Silicon or Intel. For display issues, include display count, notch, and resolution.
+      placeholder: "macOS 15.6, Apple Silicon, built-in notched display"
+    validations:
+      required: true
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: How did you install?
+      options:
+        - Homebrew cask
+        - Download from GitHub Releases
+        - Built from source
+        - Updated through the app
+        - Other or not sure
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened?
+      description: Include the exact error or unexpected behavior and how often it happens.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Launch the app
+        2. Open ...
+        3. Observe ...
+      description: If you cannot reproduce it reliably, describe what happened just before the problem.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      multiple: true
+      options:
+        - Window placement or notch
+        - Settings or appearance
+        - Usage quotas or provider connection
+        - Usage history or cost estimates
+        - Charts
+        - Weekly card
+        - Auto-update
+        - Launch at login
+        - Build or install
+        - Other or not sure
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Additional context, screenshots, or redacted logs
+      description: For provider issues, name the provider and say whether readings worked before. Include relevant settings rather than a full settings or credential dump.

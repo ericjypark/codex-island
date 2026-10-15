@@ -42,7 +42,8 @@ struct StyleTile<Preview: View>: View {
                             : .clear, radius: 9)
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableButtonStyle(scale: 0.97))
+        .animation(.hoverFade, value: isOn)
         .accessibilityLabel(displayLabel)
         .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
     }

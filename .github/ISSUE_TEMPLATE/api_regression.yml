@@ -1,0 +1,47 @@
+name: Provider API regression
+description: Report changed Claude or Codex usage responses or authentication errors.
+title: "fix(usage): "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form is for usage API changes. For other providers or general display problems, use Bug report.
+        Remove Authorization headers, access/refresh tokens, cookies, account identifiers, and private content before posting.
+        Do not paste credential files or Keychain contents. CodexIsland does not refresh Claude OAuth tokens or write Claude credentials; Claude Code owns that process.
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Affected provider
+      options:
+        - Claude usage API
+        - Codex usage API
+        - Both
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: CodexIsland version and operating system
+      description: Find the app version in Settings. Include the commit for a source build.
+      placeholder: "0.2.5, macOS 15.6"
+    validations:
+      required: true
+  - type: textarea
+    id: symptom
+    attributes:
+      label: Observed and expected behavior
+      description: Include the exact app error or HTTP status, whether it worked before, and when it started.
+    validations:
+      required: true
+  - type: textarea
+    id: response
+    attributes:
+      label: Redacted response or logs (optional)
+      description: Paste only the relevant response or error if you already have it. You do not need to make a manual authenticated request. For Claude header-related errors, note the CLI version and whether the documented User-Agent and beta header were present; never include Authorization.
+      render: text
+  - type: textarea
+    id: context
+    attributes:
+      label: Reproduction and recent changes
+      description: Include app or CLI updates, account switching, login changes, and whether the provider CLI itself still works. Do not include credentials.

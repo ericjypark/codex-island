@@ -9,6 +9,7 @@ struct SegmentedControl<Value: Hashable>: View {
     @Binding var selected: Value
     let label: (Value) -> String
     var accessibilityPrefix: String = ""
+    var labelFont: Font = Typography.bodyNumber
 
     var body: some View {
         HStack(spacing: 0) {
@@ -19,7 +20,7 @@ struct SegmentedControl<Value: Hashable>: View {
                     selected = item
                 } label: {
                     Text(itemLabel)
-                        .font(Typography.bodyNumber)
+                        .font(labelFont)
                         .foregroundStyle(isOn
                             ? Color.white.opacity(0.95)
                             : .white.opacity(0.55))
@@ -34,7 +35,8 @@ struct SegmentedControl<Value: Hashable>: View {
                                 }
                         }
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PressableButtonStyle(scale: 0.97))
+                .animation(.hoverFade, value: isOn)
                 .accessibilityLabel(accessibilityPrefix.isEmpty
                     ? itemLabel
                     : L10n.tr("%@, %@", L10n.tr(accessibilityPrefix), itemLabel))
@@ -73,8 +75,9 @@ struct PillButton: View {
                         }
                 }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableButtonStyle(scale: 0.97))
         .disabled(isLoading)
         .opacity(isLoading ? 0.55 : 1)
+        .animation(.hoverFade, value: isLoading)
     }
 }

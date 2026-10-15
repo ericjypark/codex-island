@@ -1,28 +1,20 @@
 import SwiftUI
 
-/// Shared head for the three "label + big number" charts (Bar, Stepped,
-/// Spark). RingChart and NumericChart render their own custom heads.
 struct ChartHead: View {
     let value: Double
     let label: String
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(label)
                 .font(Typography.label)
-                .foregroundStyle(.white.opacity(0.55))
-                .textCase(.lowercase)
-            Spacer()
-            HStack(alignment: .firstTextBaseline, spacing: 1) {
-                Text("\(Int(value))")
-                    .font(Typography.chartValue)
-                    .foregroundStyle(UrgencyColor.value(value))
-                    .numericTransition(value: value)
-                    .animation(.strongEaseOut, value: value)
-                Text("%")
-                    .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.5))
-            }
+                .foregroundStyle(.white.opacity(0.6))
+            Spacer(minLength: 4)
+            QuotaValue(reading: QuotaChartReading(id: label, label: label, value: value, caption: ""),
+                       mode: UsageDisplayModeStore.shared.mode, size: 32, weight: .semibold)
+                .animation(reduceMotion ? nil : .strongEaseOut, value: DisplayNumber.percent(value))
         }
     }
 }
@@ -33,7 +25,7 @@ struct ChartFoot: View {
     var body: some View {
         Text(caption)
             .font(Typography.caption)
-            .foregroundStyle(.white.opacity(0.4))
+            .foregroundStyle(.white.opacity(0.55))
             .lineLimit(1)
             .truncationMode(.tail)
             .frame(maxWidth: .infinity, alignment: .leading)

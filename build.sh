@@ -39,8 +39,13 @@ mkdir -p "$MACOS_DIR" "$RES_DIR" "$FRAMEWORKS_DIR"
 
 cp ./Resources/claude_logo.pdf "$RES_DIR/claude_logo.pdf"
 cp ./Resources/openai_logo.pdf "$RES_DIR/openai_logo.pdf"
+cp ./Resources/grok_logo.png "$RES_DIR/grok_logo.png"
+cp ./Resources/muse_logo.pdf "$RES_DIR/muse_logo.pdf"
+cp ./Resources/ThirdPartyNotices.txt "$RES_DIR/ThirdPartyNotices.txt"
+cp ./Resources/antigravity_logo.png "$RES_DIR/antigravity_logo.png"
 cp ./Resources/codexisland_logo.png "$RES_DIR/codexisland_logo.png"
 cp ./Resources/CodexIsland.icns "$RES_DIR/CodexIsland.icns"
+cp ./scripts/recover-claude-usage.sh "$RES_DIR/recover-claude-usage.sh"
 find ./Resources -maxdepth 1 -type d -name '*.lproj' -exec cp -R {} "$RES_DIR/" \;
 
 # Embed Sparkle.framework. -a preserves the symlinks inside Versions/.

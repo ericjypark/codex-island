@@ -77,6 +77,6 @@ struct SettingsRow<Trailing: View>: View {
         }
         .contentShape(Rectangle())
         .onHover { hovered = $0 }
-        .animation(.easeOut(duration: 0.10), value: hovered)
+        .animation(.hoverFade, value: hovered)
     }
 }

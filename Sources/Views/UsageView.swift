@@ -4,64 +4,38 @@ import AppKit
 /// Usage data row. The chrome (provider titles, footer chip + page dots +
 /// sync status) lives in `PanelHeader` / `PanelFooter` so it stays fixed
 /// while this row swipes between usage and cost screens.
-///
-/// Branches on `(claudeOn, codexOn)` from `ProviderVisibilityStore`:
-///   - both on:  two `ChartsBlock`s with a hairline divider (default).
-///   - one on:   the live block on its native side, hairline, then a
-///               per-model token breakdown filling the freed half.
-///   - both off: a centered `BothHiddenPlaceholder`.
 struct UsageView: View {
     @ObservedObject private var store = UsageStore.shared
     @ObservedObject private var pref = StylePref.shared
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
 
     private var style: ChartStyle { pref.style }
-
     var body: some View {
-        let claudeOn = visibility.claudeVisible
-        let codexOn = visibility.codexVisible
-
-        HStack(spacing: 0) {
-            switch (claudeOn, codexOn) {
-            case (true, true):
-                ChartsBlock(color: IslandColor.claude, usage: store.claude,
-                            style: style, seed: 1)
-                hairline
-                ChartsBlock(color: IslandColor.codex, usage: store.codex,
-                            style: style, seed: 3)
-            case (true, false):
-                ChartsBlock(color: IslandColor.claude, usage: store.claude,
-                            style: style, seed: 1)
-                hairline
-                PerModelBreakdown(provider: .claude, metric: .tokens)
+        HStack(alignment: .center, spacing: 0) {
+            providerBlock(visibility.left)
+            if let right = visibility.right {
+                providerBlock(right)
+            } else if let legacy = visibility.left.legacy {
+                PerModelBreakdown(provider: legacy, metric: .tokens)
                     .frame(maxWidth: .infinity, alignment: .top)
-                    .padding(.horizontal, 12)
-                    .transition(breakdownTransition)
-            case (false, true):
-                PerModelBreakdown(provider: .codex, metric: .tokens)
-                    .frame(maxWidth: .infinity, alignment: .top)
-                    .padding(.horizontal, 12)
-                    .transition(breakdownTransition)
-                hairline
-                ChartsBlock(color: IslandColor.codex, usage: store.codex,
-                            style: style, seed: 3)
-            case (false, false):
-                BothHiddenPlaceholder()
-                    .transition(.opacity)
+                    .padding(.horizontal, IslandPanelLayout.columnInset)
+            } else {
+                Color.clear.frame(maxWidth: .infinity)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.horizontal, 22)
-        .padding(.top, 12)
-        .padding(.bottom, 6)
+        .frame(minHeight: IslandPanelLayout.tileHeight, alignment: .center)
+        .overlay { hairline.allowsHitTesting(false) }
+        .padding(.horizontal, IslandPanelLayout.horizontalInset)
     }
 
-    /// Slight scale + opacity gives the breakdown half a sense of "expanding
-    /// into the freed space" rather than a hard crossfade. Same curve the
-    /// chart-style swap uses; reads as a single morph paired with the
-    /// `withAnimation(.openMorph)` on the Settings toggle.
-    private var breakdownTransition: AnyTransition {
-        .opacity.combined(with: .scale(scale: 0.97))
+    @ViewBuilder
+    private func providerBlock(_ provider: IslandProvider) -> some View {
+        if let legacy = provider.legacy {
+            ChartsBlock(color: provider.color, usage: provider == .claude ? store.claude : store.codex,
+                        style: style, seed: provider == .claude ? 1 : 3, provider: legacy)
+        } else {
+            ConnectedUsageBlock(provider: provider)
+        }
     }
 
     private var hairline: some View {
@@ -80,30 +54,83 @@ struct ChartsBlock: View {
     let usage: AppUsage
     let style: ChartStyle
     let seed: Int
+    let provider: AlertEngine.Provider
 
-    /// Treat the block as needing re-auth when both windows are stuck on the
-    /// scope-insufficient sentinel. Either tile alone could be a transient
-    /// per-window failure, but matching pair = the underlying token genuinely
-    /// lacks the required scope.
+    /// Treat the block as needing re-auth when both windows are stuck on a
+    /// reauth-actionable sentinel — an expired token (401) or a missing scope
+    /// (403). Either tile alone could be a transient per-window failure, but a
+    /// matching pair = the underlying token is genuinely unusable.
     private var needsReauth: Bool {
-        usage.fiveHour.error == ClaudeCredentials.reauthRequiredMessage
-            && usage.weekly.error == ClaudeCredentials.reauthRequiredMessage
+        ClaudeCredentials.isTerminalAuthFailure(usage)
     }
 
     var body: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 18) {
-                ChartTile(style: style, color: color, labelKey: "5h",
-                          window: usage.fiveHour, seed: seed)
-                ChartTile(style: style, color: color, labelKey: "week",
-                          window: usage.weekly, seed: seed + 1)
-            }
-            if needsReauth && ClaudeCredentials.canPromptReauth() {
-                ReauthButton()
+        Group {
+            if needsReauth {
+                // Dead token: the sparkline tiles carry no live data, so
+                // replace them with a single centered prompt. Swapping (not
+                // appending a button row) keeps the panel within its fixed
+                // 188pt height instead of overflowing into the footer.
+                // Same swap vocabulary as a chart-style change — the tiles
+                // and the prompt trade places in one 220ms morph instead of
+                // teleporting when a poll flips the auth state.
+                ReauthState(color: color, usage: usage)
+                    .transition(.chartSwap.animation(.chartSwap))
+            } else {
+                Group {
+                    if usage.visibleWindows.isEmpty {
+                        ProviderDataUnavailable(message: "Usage limits are not available yet.")
+                    } else {
+                        UsageChartsRow(color: color, style: style, seed: seed,
+                            metrics: usage.visibleWindows.filter { $0 != .monthly }.map { kind in
+                                UsageChartMetric(id: kind.rawValue, label: kind.labelKey,
+                                                 window: usage.window(kind),
+                                                 historyKey: "\(provider.rawValue).\(kind.rawValue)")
+                            }, credits: usage.visibleWindows.contains(.monthly) ? usage.monthly : nil)
+                    }
+                }
+                .transition(.chartSwap.animation(.chartSwap))
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .padding(.horizontal, IslandPanelLayout.columnInset)
+        .animation(.chartSwap, value: usage.visibleWindows)
+    }
+}
+
+/// Shown in place of the sparkline tiles when the Claude token can no longer
+/// be used — expired (401) or missing the scope the usage endpoint now
+/// requires (403). Both windows carry a reauth-actionable sentinel; the dead
+/// numbers would only mislead, so this centered prompt takes their place. When
+/// a `claude` binary is discoverable it offers one-click re-auth; otherwise it
+/// shows the exact manual command from the sentinel.
+struct ReauthState: View {
+    let color: Color
+    let usage: AppUsage
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "key.slash")
+                .font(.system(size: 20, weight: .regular))
+                .foregroundStyle(color.opacity(0.85))
+            if ClaudeCredentials.canPromptReauth() {
+                // A scope-insufficient token (403) is not "expired" — only a
+                // fresh `claude /login` re-issues the missing scope, so say
+                // what is actually wrong (CodeRabbit finding on #59).
+                Text(L10n.tr(usage.fiveHour.error == ClaudeCredentials.reauthRequiredMessage
+                    ? "Claude re-login needed" : "Claude session expired"))
+                    .font(Typography.label)
+                    .foregroundStyle(.white.opacity(0.55))
+                ReauthButton()
+            } else {
+                Text(usage.fiveHour.error ?? ClaudeCredentials.tokenExpiredMessage)
+                    .font(Typography.label)
+                    .foregroundStyle(.white.opacity(0.55))
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .padding(.horizontal, 8)
     }
 }
 
@@ -112,6 +139,7 @@ struct ChartsBlock: View {
 /// `claude auth login` and polls for the keychain to update — the chip
 /// recovers on its own when the new scoped token lands.
 struct ReauthButton: View {
+    var title = "Re-authenticate"
     @ObservedObject private var store = UsageStore.shared
     @State private var hovered = false
 
@@ -119,7 +147,7 @@ struct ReauthButton: View {
         Button {
             store.reauthenticateClaude()
         } label: {
-            Text(store.claudeReauthInProgress ? L10n.tr("waiting for browser…") : L10n.tr("Re-authenticate"))
+            Text(store.claudeReauthInProgress ? L10n.tr("waiting for browser…") : L10n.tr(title))
                 .font(Typography.label)
                 .foregroundStyle(.white.opacity(hovered && !store.claudeReauthInProgress ? 0.95 : 0.72))
                 .padding(.horizontal, 8)
@@ -130,86 +158,134 @@ struct ReauthButton: View {
                 )
                 .contentShape(RoundedRectangle(cornerRadius: 5))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableButtonStyle(scale: 0.97))
         .disabled(store.claudeReauthInProgress)
         .onHover { hovered = $0 }
+        .animation(.hoverFade, value: hovered)
+        .animation(.hoverFade, value: store.claudeReauthInProgress)
     }
 }
 
-struct ChartTile: View {
-    let style: ChartStyle
-    let color: Color
-    let labelKey: String
+struct UsageChartMetric: Identifiable {
+    let id: String
+    let label: String
     let window: WindowUsage
-    let seed: Int
+    let historyKey: String
+}
 
-    /// Locked tile height across all 5 styles so the panel size is
-    /// identical regardless of what the user picks.
-    private static let tileHeight: CGFloat = 96
+struct UsageChartsRow: View {
+    let color: Color
+    let style: ChartStyle
+    let seed: Int
+    let metrics: [UsageChartMetric]
+    var credits: WindowUsage? = nil
+    @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
+    @ObservedObject private var historyStore = UsageHistoryStore.shared
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var readings: [QuotaChartReading] {
+        metrics.enumerated().map { index, metric in
+            let window = metric.window
+            let mode = usageDisplay.mode
+            let value = window.hasPercentageReading ? Double(DisplayNumber.percent(window.displayedFraction(mode: mode) * 100)) : nil
+            let history = style == .telemetry ? historyStore.samples(key: metric.historyKey).map {
+                Double(DisplayNumber.percent(WindowUsage(usedPercent: $0.used, resetAt: nil, error: nil)
+                    .displayedFraction(mode: mode) * 100))
+            } : []
+            return QuotaChartReading(id: metric.id, label: L10n.tr(metric.label), value: value,
+                caption: caption(window), amount: window.isUnlimitedAmount ? window.usedAmount.map { UsageCreditDisplay.currency($0, code: window.currencyCode) } : nil, history: value.map {
+                    SparklineSamples.displayed(history: history, value: $0, seed: seed + index,
+                                               isDemo: AppEnvironment.isDemo)
+                } ?? [])
+        }
+    }
 
     var body: some View {
-        let value = window.usedPercent * 100   // 0-100
-        let sub = subCaption()
-        let label = L10n.tr(labelKey)
+        let readings = readings
+        VStack(alignment: .leading, spacing: 16) {
+            if !readings.isEmpty {
+                charts(readings)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: metrics.count > 2 ? 180 : IslandPanelLayout.tileHeight)
+                    .id(style)
+                    .transition(reduceMotion ? .opacity : .chartSwap)
+            }
+            if let credits {
+                UsageCreditsSummary(window: credits, color: color, mode: usageDisplay.mode)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .animation(reduceMotion ? nil : .chartSwap, value: style)
+    }
 
+    private func charts(_ readings: [QuotaChartReading]) -> some View {
         Group {
             switch style {
-            case .ring:    RingChart(value: value, color: color, label: label, sub: sub)
-            case .bar:     BarChart(value: value, color: color, label: label, sub: sub)
-            case .stepped: SteppedChart(value: value, color: color, label: label, sub: sub)
-            case .numeric: NumericChart(value: value, color: color, label: label, sub: compactSubCaption())
-            case .spark:   SparkChart(value: value, color: color, label: label, sub: sub, seed: seed)
+            case .rails:
+                RailsChart(readings: readings, color: color, mode: usageDisplay.mode)
+            case .ring:
+                OrbitChart(readings: readings, color: color, mode: usageDisplay.mode)
+            case .capacity:
+                HStack(spacing: 18) {
+                    ForEach(readings) { reading in
+                        CapacityChart(reading: reading, color: color, mode: usageDisplay.mode,
+                                      compact: readings.count > 1)
+                    }
+                }
+            case .telemetry:
+                TelemetryChart(readings: readings, color: color, mode: usageDisplay.mode)
+            case .stepped:
+                HStack(spacing: 18) {
+                    ForEach(readings) { reading in
+                        Group {
+                            if let value = reading.value {
+                                SteppedChart(value: value, color: color, label: reading.label, sub: reading.caption)
+                            } else if let amount = reading.amount {
+                                UsageAmountChart(label: reading.label, amount: amount, sub: reading.caption)
+                            } else {
+                                NoReadingChart(label: reading.label, sub: reading.caption)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .help(reading.caption)
+                        .modifier(QuotaAccessibility(reading: reading, mode: usageDisplay.mode))
+                    }
+                }
             }
         }
-        .id(style)
-        // Blur + scale + opacity, all on the same strong ease-out at 220ms.
-        // The blur masks the geometric mismatch between Ring and Bar so the
-        // crossfade reads as one morph instead of two stacked objects.
-        .transition(.chartSwap.animation(.chartSwap))
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .frame(height: Self.tileHeight)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(L10n.tr("%@, %d%%", label, Int(value)))
-        .accessibilityValue(subCaption())
     }
 
-    private func subCaption() -> String {
-        if let r = window.resetAt {
-            let delta = max(0, r.timeIntervalSinceNow)
-            return L10n.tr("resets in %@", Duration.compact(delta))
+    func caption(_ window: WindowUsage) -> String {
+        if let amounts = window.amountCaption {
+            if let error = window.error, error != "no data" { return error + " · " + amounts }
+            guard let resetAt = window.resetAt else { return amounts }
+            return amounts + " · " + L10n.tr("resets in %@", Duration.compact(max(0, resetAt.timeIntervalSinceNow)))
         }
-        // "no data" is our internal sentinel for "API returned null for this
-        // window" — most commonly a brand-new 5h period before the first
-        // OAuth call lands. Hide it so the tile reads as a passive
-        // window-context cue (the "5h"/"week" header label communicates the
-        // window type) instead of looking broken. Real errors still surface.
-        if let err = window.error, err != "no data" {
-            // Suppress the scope-insufficient text when the inline re-auth
-            // button is going to appear below the tiles — otherwise the same
-            // remediation hint reads twice (caption + button label). Users
-            // without a discoverable `claude` binary still get the raw text
-            // so they know the manual fix.
-            if err == ClaudeCredentials.reauthRequiredMessage,
-               ClaudeCredentials.canPromptReauth() {
-                return ""
-            }
-            return err
+        if let reset = window.resetAt {
+            return L10n.tr("resets in %@", Duration.compact(max(0, reset.timeIntervalSinceNow)))
         }
+        if let error = window.error, error != "no data" { return error }
         return ""
     }
+}
 
-    private func compactSubCaption() -> String {
-        if let r = window.resetAt {
-            let delta = max(0, r.timeIntervalSinceNow)
-            return "↻ " + Duration.compact(delta)
+private struct UsageAmountChart: View {
+    let label: String
+    let amount: String
+    let sub: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(Typography.label)
+                .foregroundStyle(.white.opacity(0.6))
+            Text(amount)
+                .font(Typography.bigNumber)
+                .foregroundStyle(.white.opacity(0.9))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            ChartFoot(caption: sub)
         }
-        if let err = window.error, err != "no data" {
-            if err == ClaudeCredentials.reauthRequiredMessage,
-               ClaudeCredentials.canPromptReauth() {
-                return ""
-            }
-            return err
-        }
-        return ""
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 }

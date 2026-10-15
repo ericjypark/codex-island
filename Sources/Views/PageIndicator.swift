@@ -19,17 +19,21 @@ struct PageIndicator: View {
 
     private func dot(for screen: ScreenPref.Screen) -> some View {
         let isActive = screenPref.screen == screen
-        return Circle()
-            .fill(.white.opacity(isActive ? 0.78 : 0.22))
-            .frame(width: 5, height: 5)
-            // Visual stays 5pt; hit area expands ~6pt outward so the dot
-            // is reachable without pixel-precise aim.
-            .contentShape(Rectangle().inset(by: -6))
-            .onTapGesture { model.showScreen(screen) }
-            .accessibilityElement()
-            .accessibilityLabel(accessibilityLabel(for: screen))
-            .accessibilityAddTraits(.isButton)
-            .accessibilityAddTraits(isActive ? .isSelected : [])
+        return Button {
+            model.showScreen(screen)
+        } label: {
+            Circle()
+                .fill(.white.opacity(isActive ? 0.78 : 0.22))
+                .frame(width: 5, height: 5)
+                // Visual stays 5pt; hit area expands ~6pt outward so the dot
+                // is reachable without pixel-precise aim.
+                .contentShape(Rectangle().inset(by: -6))
+        }
+        .buttonStyle(.plain)
+        .help(L10n.tr("Switch to %@ (⌘%d)", screen.pageLabel, screen.pageIndex + 1))
+        .accessibilityLabel(accessibilityLabel(for: screen))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAddTraits(isActive ? .isSelected : [])
     }
 
     private func accessibilityLabel(for screen: ScreenPref.Screen) -> String {

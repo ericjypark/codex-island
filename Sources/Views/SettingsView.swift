@@ -17,14 +17,17 @@ struct SettingsView: View {
     @ObservedObject private var alwaysShow = AlwaysShowUsageStore.shared
     @ObservedObject private var alertPrefs = AlertThresholdStore.shared
     @ObservedObject private var spacing = IslandSpacingStore.shared
+    @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
     @ObservedObject private var logos = LogoVisibilityStore.shared
     @ObservedObject private var targetDisplay = IslandTargetDisplayStore.shared
     @ObservedObject private var appLanguage = AppLanguageStore.shared
     @ObservedObject private var usage = UsageStore.shared
     @ObservedObject private var cost = CostStore.shared
+    @ObservedObject private var currencyStore = CurrencyStore.shared
     @ObservedObject private var updater = UpdaterController.shared
 
     @AppStorage("Settings.activeTab") private var activeTabRaw: String = SettingsTab.general.rawValue
+    @State private var recoveryPresented = false
 
     private var activeTab: SettingsTab {
         get { SettingsTab(rawValue: activeTabRaw) ?? .general }
@@ -66,9 +69,15 @@ struct SettingsView: View {
 
             SettingsFooter()
         }
-        .frame(minWidth: 440, minHeight: 420)
+        .frame(minWidth: 440, minHeight: 560)
         .background(Color(red: 0.020, green: 0.020, blue: 0.027))
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $recoveryPresented) {
+            ClaudeRecoveryView(model: ClaudeRecoveryModel(onSaved: {
+                CostStore.shared.refresh()
+                NotificationCenter.default.post(name: .codexIslandUsageHistoryRecovered, object: nil)
+            }))
+        }
     }
 
     // MARK: - Tabs
@@ -118,8 +127,8 @@ struct SettingsView: View {
                         }
                 }
         }
-        .buttonStyle(.plain)
-        .animation(.easeOut(duration: 0.12), value: isOn)
+        .buttonStyle(PressableButtonStyle(scale: 0.97))
+        .animation(.hoverFade, value: isOn)
         .accessibilityLabel(L10n.tr("%@ tab", L10n.tr(tab.label)))
         .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
     }
@@ -129,6 +138,23 @@ struct SettingsView: View {
     private var generalTab: some View {
         VStack(alignment: .leading, spacing: 0) {
             generalSection
+            SettingsRow(title: "Usage card", subtitle: "Your time with AI, ready to share.") {
+                Button(L10n.tr("Create card…")) { WeeklyCardWindowController.shared.show() }
+                    .controlSize(.small)
+            }
+            .padding(.horizontal, 14)
+            SettingsRow(title: "Usage history", subtitle: "Find older Claude counts.") {
+                HStack(spacing: 8) {
+                    RecoveryHelp(
+                        title: "Why recover usage?",
+                        explanation: "Older usage can be missing when Claude logs have been deleted or moved. Recovery checks the records still on your Mac and any backups you add. It saves only missing counts, so scanning again won't duplicate your usage."
+                    )
+                    Button(L10n.tr("Recover Claude usage…")) { recoveryPresented = true }
+                        .controlSize(.small)
+                        .disabled(AppEnvironment.isDemo)
+                }
+            }
+            .padding(.horizontal, 14)
             alertsSection
             updatesSection
         }
@@ -136,6 +162,7 @@ struct SettingsView: View {
 
     private var displayTab: some View {
         VStack(alignment: .leading, spacing: 0) {
+            usageDisplaySection
             chartSection
             costStyleSection
             targetDisplaySection
@@ -498,36 +525,7 @@ struct SettingsView: View {
     }
 
     private var providersSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Providers")
-            SettingsRow(
-                title: "Claude",
-                subtitle: providerSubtitle(usage.claude),
-                dot: IslandColor.claude,
-                chip: usage.claude.plan?.uppercased()
-            ) {
-                SettingsToggle(isOn: visibility.claudeVisible) {
-                    withAnimation(.openMorph) {
-                        visibility.claudeVisible.toggle()
-                    }
-                }
-            }
-            SettingsRow(
-                title: "Codex",
-                subtitle: providerSubtitle(usage.codex),
-                dot: IslandColor.codex,
-                chip: usage.codex.plan?.uppercased()
-            ) {
-                SettingsToggle(isOn: visibility.codexVisible) {
-                    withAnimation(.openMorph) {
-                        visibility.codexVisible.toggle()
-                    }
-                }
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.top, 18)
-        .padding(.bottom, 6)
+        ProviderSelectionView()
     }
 
     /// Lets the user pick which token total drives the TOKENS hero on the
@@ -569,9 +567,9 @@ struct SettingsView: View {
         )
     }
 
-    /// Single-row Cost section. Re-uses the section-label typography on the
-    /// left and inlines the freshness caption + refresh button on the right
-    /// — compact so it sits cleanly under the Providers list.
+    /// Compact Cost section with the rate attribution kept under the
+    /// freshness caption, so the currency picker remains usable in the
+    /// settings window's narrowest supported width.
     private var costSection: some View {
         HStack(alignment: .center, spacing: 10) {
             Text(L10n.tr("Cost"))
@@ -580,29 +578,47 @@ struct SettingsView: View {
                 .textCase(.uppercase)
                 .foregroundStyle(.white.opacity(0.34))
 
-            Text(costSubtitle())
-                .font(Typography.label)
-                .foregroundStyle(.white.opacity(0.42))
-                .lineLimit(1)
-                .truncationMode(.tail)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(costSubtitle())
+                    .font(Typography.label)
+                    .foregroundStyle(.white.opacity(0.42))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+
+                if let attributionURL = URL(string: "https://www.exchangerate-api.com") {
+                    Link(
+                        L10n.tr("Rates by ExchangeRate-API"),
+                        destination: attributionURL
+                    )
+                    .font(Typography.micro)
+                    .foregroundStyle(.white.opacity(0.34))
+                }
+            }
 
             Spacer(minLength: 8)
+
+            Picker("", selection: $currencyStore.currency) {
+                ForEach(DisplayCurrency.allCases) { currency in
+                    Text(currency.menuLabel).tag(currency)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .fixedSize()
+            .accessibilityLabel(L10n.tr("Display currency"))
 
             PillButton(
                 label: cost.loading ? "Refreshing…" : "Refresh",
                 isLoading: cost.loading
-            ) { cost.refresh() }
+            ) {
+                cost.refresh()
+                currencyStore.refresh()
+            }
         }
         .padding(.horizontal, 24)
         .padding(.top, 14)
         .padding(.bottom, 14)
     }
-
-    /// Days past the embedded pricing snapshot before the Cost section
-    /// admits the data may be stale. Anthropic re-tiered Opus once already,
-    /// so two months without a refresh is the point where dollar totals
-    /// could meaningfully drift from reality.
-    private static let pricingFreshnessThreshold = 60
 
     private static let relativeFormatter: RelativeDateTimeFormatter = {
         let f = RelativeDateTimeFormatter()
@@ -612,23 +628,24 @@ struct SettingsView: View {
     }()
 
     private func costSubtitle() -> String {
-        let days = Pricing.daysSinceSnapshot
-        let isStale = days > Self.pricingFreshnessThreshold
-
-        if cost.loading {
-            return isStale
-                ? L10n.tr("scanning local logs… · pricing data %dd old", days)
-                : L10n.tr("scanning local logs…")
-        } else if let updated = cost.lastUpdated {
-            let relative = Self.relativeFormatter.localizedString(for: updated, relativeTo: Date())
-            return isStale
-                ? L10n.tr("last scan %@ · pricing data %dd old", relative, days)
-                : L10n.tr("last scan %@", relative)
+        if currencyStore.refreshing {
+            return L10n.tr("updating exchange rate…")
         }
-
-        return isStale
-            ? L10n.tr("swipe panel to view · pricing data %dd old", days)
-            : L10n.tr("swipe panel to view")
+        if cost.loading {
+            return L10n.tr("scanning local logs…")
+        }
+        if let updated = cost.lastUpdated {
+            let relative = Self.relativeFormatter.localizedString(for: updated, relativeTo: Date())
+            if currencyStore.displayCurrency == .usd {
+                return L10n.tr("last scan %@", relative)
+            }
+            return L10n.tr(
+                "last scan %@ · estimated %@",
+                relative,
+                currencyStore.displayCurrency.rawValue
+            )
+        }
+        return L10n.tr("swipe panel to view")
     }
 
     private var chartSection: some View {
@@ -637,6 +654,21 @@ struct SettingsView: View {
             ChartStylePicker(selected: $stylePref.style)
                 .padding(.top, 4)
                 .padding(.horizontal, 10)
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 18)
+        .padding(.bottom, 14)
+    }
+
+    private var usageDisplaySection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionLabel("Usage display")
+            SettingsRow(
+                title: "Percentages",
+                subtitle: "Show usage as used or remaining quota."
+            ) {
+                usageDisplaySegmented
+            }
         }
         .padding(.horizontal, 14)
         .padding(.top, 18)
@@ -695,6 +727,15 @@ struct SettingsView: View {
             selected: $spacing.mode,
             label: { $0 == .compact ? "Compact" : "Notch-style" },
             accessibilityPrefix: "Island width"
+        )
+    }
+
+    private var usageDisplaySegmented: some View {
+        SegmentedControl(
+            items: UsageDisplayMode.allCases,
+            selected: $usageDisplay.mode,
+            label: \.label,
+            accessibilityPrefix: "Usage display"
         )
     }
 
@@ -782,12 +823,15 @@ struct SettingsView: View {
             guard let updated = usage.lastUpdated else { return L10n.tr("idle") }
             return L10n.tr("synced %@", Self.relativeFormatter.localizedString(for: updated, relativeTo: Date()))
         }()
-        let nums = "\(Self.windowCaption(u.fiveHour)) / \(Self.windowCaption(u.weekly))"
+        let nums = "\(windowCaption(u.fiveHour)) / \(windowCaption(u.weekly))"
         return "\(synced) · \(nums)"
     }
 
-    private static func windowCaption(_ w: WindowUsage) -> String {
+    private func windowCaption(_ w: WindowUsage) -> String {
+        // The parse-omission sentinel is a plan shape, not a fault — no
+        // warning glyph for a window the provider doesn't offer.
+        if w.isUnreported { return "—" }
         if let err = w.error, w.percentInt == 0 { return "⚠ \(err)" }
-        return "\(w.percentInt)%"
+        return "\(w.displayedPercentInt(mode: usageDisplay.mode))%"
     }
 }

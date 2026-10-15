@@ -1,17 +1,19 @@
 import Foundation
 
-/// Embedded snapshot of per-million-token API prices in USD. Mirrors LiteLLM's
-/// `model_prices_and_context_window.json` for the models we actually expect
-/// in Claude Code and Codex CLI sessions, so totals cross-check against
-/// `npx ccusage` and `npx @ccusage/codex` to within rounding.
+/// Model prices in USD per million tokens.
 ///
-/// To refresh: bump `snapshotDate` and re-fetch the four rates per model
-/// from `https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json`.
-/// Unknown models silently price to $0 — same behavior as ccusage when
+/// The live source is the published catalog (see `PricingCatalog`); the table
+/// below is the build-time seed, used until the first successful fetch and as
+/// the permanent fallback for anything the catalog omits. Totals cross-check
+/// against `npx ccusage` and `npx @ccusage/codex` to within rounding, and
+/// unknown models silently price to $0 — same behavior as ccusage when
 /// LiteLLM has no entry.
+///
+/// To refresh the seed: re-fetch the four rates per model from
+/// `https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json`.
+/// This is housekeeping, not a release requirement — the catalog covers new
+/// models without an app update.
 enum Pricing {
-    static let snapshotDate = "2026-06-02"
-
     struct Rates {
         let inputPerMillion: Double
         let outputPerMillion: Double
@@ -19,10 +21,21 @@ enum Pricing {
         let cacheReadPerMillion: Double
     }
 
-    private static let table: [String: Rates] = [
-        // Anthropic — LiteLLM lists Opus 4-5/4-6/4-7/4-8 at the same rates
-        // (cheaper than the original Opus 4 because Anthropic re-tiered the
-        // Opus line in 2025).
+    private static let seedTable: [String: Rates] = [
+        // Anthropic — LiteLLM lists Opus 5 and 4-5/4-6/4-7/4-8 at the same
+        // rates (cheaper than the original Opus 4 because Anthropic re-tiered
+        // the Opus line in 2025). Opus 5's fast mode bills at $10/$50 but
+        // Claude Code logs it under the same `claude-opus-5` id with no speed
+        // marker in `message.model`, so — like ccusage — we price every row at
+        // the standard tier.
+        "claude-fable-5": Rates(
+            inputPerMillion: 10, outputPerMillion: 50,
+            cacheCreationPerMillion: 12.50, cacheReadPerMillion: 1.00
+        ),
+        "claude-opus-5": Rates(
+            inputPerMillion: 5, outputPerMillion: 25,
+            cacheCreationPerMillion: 6.25, cacheReadPerMillion: 0.50
+        ),
         "claude-opus-4-8": Rates(
             inputPerMillion: 5, outputPerMillion: 25,
             cacheCreationPerMillion: 6.25, cacheReadPerMillion: 0.50
@@ -38,6 +51,12 @@ enum Pricing {
         "claude-opus-4-5": Rates(
             inputPerMillion: 5, outputPerMillion: 25,
             cacheCreationPerMillion: 6.25, cacheReadPerMillion: 0.50
+        ),
+        // Sonnet 5 rates reflect Anthropic's introductory pricing ($2/$10
+        // through 2026-08-31; $3/$15 after) — matches LiteLLM's current entry.
+        "claude-sonnet-5": Rates(
+            inputPerMillion: 2, outputPerMillion: 10,
+            cacheCreationPerMillion: 2.50, cacheReadPerMillion: 0.20
         ),
         "claude-sonnet-4-6": Rates(
             inputPerMillion: 3, outputPerMillion: 15,
@@ -55,7 +74,25 @@ enum Pricing {
         // OpenAI — Codex CLI tags conversations with the chat-completion
         // model name. cache_creation has no separate rate (OpenAI bills
         // cache writes at the standard input rate).
-        // Base reasoning models (newest first).
+        // Base reasoning models (newest first). Starting with 5.6, OpenAI
+        // bills cache writes at 1.25x input (matching Anthropic) instead of
+        // the standard input rate.
+        "gpt-5.6": Rates(
+            inputPerMillion: 5, outputPerMillion: 30,
+            cacheCreationPerMillion: 6.25, cacheReadPerMillion: 0.50
+        ),
+        "gpt-5.6-sol": Rates(
+            inputPerMillion: 5, outputPerMillion: 30,
+            cacheCreationPerMillion: 6.25, cacheReadPerMillion: 0.50
+        ),
+        "gpt-5.6-terra": Rates(
+            inputPerMillion: 2.5, outputPerMillion: 15,
+            cacheCreationPerMillion: 3.125, cacheReadPerMillion: 0.25
+        ),
+        "gpt-5.6-luna": Rates(
+            inputPerMillion: 1, outputPerMillion: 6,
+            cacheCreationPerMillion: 1.25, cacheReadPerMillion: 0.10
+        ),
         "gpt-5.5": Rates(
             inputPerMillion: 5, outputPerMillion: 30,
             cacheCreationPerMillion: 5, cacheReadPerMillion: 0.50
@@ -147,8 +184,7 @@ enum Pricing {
     /// Claude Code workflows. ccusage's per-bucket threshold check would
     /// disagree with Anthropic's per-position-in-context billing anyway.
     static func cost(for event: TokenEvent) -> Double {
-        let lookup = canonicalModel(event.model)
-        guard let rates = table[lookup] else { return 0 }
+        guard let rates = resolvedRates(for: canonicalModel(event.model), at: event.timestamp) else { return 0 }
 
         let input = Double(event.inputTokens) / 1_000_000 * rates.inputPerMillion
         let output = Double(event.outputTokens) / 1_000_000 * rates.outputPerMillion
@@ -158,27 +194,34 @@ enum Pricing {
         return input + output + cacheCreate + cacheRead
     }
 
-    /// Whether the embedded snapshot has a price entry for this model.
-    /// Lets callers warn the user about unpriced spend without re-implementing
-    /// the canonical-name stripping logic.
+    /// Whether either source has a price entry for this model. Lets callers
+    /// warn the user about unpriced spend without re-implementing the
+    /// canonical-name stripping logic.
     static func isKnown(_ rawModel: String) -> Bool {
-        table[canonicalModel(rawModel)] != nil
+        resolvedRates(for: canonicalModel(rawModel)) != nil
     }
 
-    /// Calendar days between `snapshotDate` and now (UTC). Returns 0 if the
-    /// snapshot string fails to parse, so a malformed constant is treated as
-    /// fresh rather than triggering a permanent staleness warning.
-    static var daysSinceSnapshot: Int {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "UTC")
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        guard let snapshot = formatter.date(from: snapshotDate) else { return 0 }
-        var calendar = Calendar(identifier: .gregorian)
-        if let utc = TimeZone(identifier: "UTC") { calendar.timeZone = utc }
-        let components = calendar.dateComponents([.day], from: snapshot, to: Date())
-        return max(0, components.day ?? 0)
+    /// Remote catalog first, embedded seed second. The seed is what keeps a
+    /// catalog that omits a model from silently pricing it at $0.
+    private static func resolvedRates(for canonical: String, at date: Date = Date()) -> Rates? {
+        // Published Gemini introductory pricing expires on 2027-01-01 UTC.
+        // Use event time so importing older CLI records keeps their historical rate.
+        if ["gemini-3.6-flash", "gemini-3.7-flash", "gemini-3.8-flash"].contains(canonical) {
+            let factor = date.timeIntervalSince1970 < 1_798_761_600 ? 1.0 : 2.0
+            return Rates(inputPerMillion: 0.75 * factor, outputPerMillion: 3.75 * factor,
+                         cacheCreationPerMillion: 0.75 * factor, cacheReadPerMillion: 0.075 * factor)
+        }
+        if let remote = PricingCatalog.rates(for: canonical) {
+            return Rates(
+                inputPerMillion: remote.inputPerMillion,
+                outputPerMillion: remote.outputPerMillion,
+                cacheCreationPerMillion: remote.cacheCreationPerMillion,
+                cacheReadPerMillion: remote.cacheReadPerMillion
+            )
+        }
+        return seedTable[canonical]
     }
+
 
     /// Strip Anthropic-style date suffixes (e.g. "claude-haiku-4-5-20251001"
     /// → "claude-haiku-4-5") so the snapshot table doesn't need an entry per
@@ -188,7 +231,42 @@ enum Pricing {
         canonicalModel(raw)
     }
 
+    /// Pretty-print the canonical model id for UI rows. Falls back to the
+    /// raw id if no friendlier name is wired up yet — better than a blank.
+    static func prettyModelName(_ canonical: String) -> String {
+        if let name = PricingCatalog.rates(for: canonical)?.displayName, !name.isEmpty {
+            return name
+        }
+        // Anthropic: "claude-opus-4-7" → "Opus 4.7"
+        if canonical.hasPrefix("claude-") {
+            let trimmed = String(canonical.dropFirst("claude-".count))
+            // Split at first dash, then collapse remaining dashes into dots
+            // so "opus-4-7" → "opus.4.7" → "Opus 4.7".
+            guard let dash = trimmed.firstIndex(of: "-") else {
+                return trimmed.capitalized
+            }
+            let family = String(trimmed[..<dash]).capitalized
+            let version = trimmed[trimmed.index(after: dash)...]
+                .replacingOccurrences(of: "-", with: ".")
+            return "\(family) \(version)"
+        }
+        // OpenAI: keep as-is, just uppercase the GPT prefix.
+        if canonical.hasPrefix("gpt-") {
+            return canonical.replacingOccurrences(of: "gpt-", with: "GPT-")
+        }
+        // OpenAI reasoning family ("o3-pro", "o4-mini-high", etc.) — already
+        // short and conventional, capitalize only the leading letter so it
+        // matches the typographic weight of "GPT-..." / "Opus 4.7".
+        if let first = canonical.first, first == "o", canonical.count > 1,
+           canonical.dropFirst().first?.isNumber == true {
+            return canonical.prefix(1).uppercased() + canonical.dropFirst()
+        }
+        return canonical
+    }
+
     private static func canonicalModel(_ raw: String) -> String {
+        let raw = raw.hasPrefix("claude-") && raw.hasSuffix("-thinking")
+            ? String(raw.dropLast("-thinking".count)) : raw
         guard raw.count > 9 else { return raw }
         let suffixStart = raw.index(raw.endIndex, offsetBy: -9)
         let suffix = raw[suffixStart...]

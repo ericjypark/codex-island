@@ -6,6 +6,13 @@ import Foundation
 /// files. Each provider supplies only its `Event` Codable shape and a
 /// `parseFile` closure that consumes lines one at a time.
 enum LogParseCache {
+    static func recordID(file: URL, timestamp: Date, occurrences: inout [String: Int]) -> String {
+        let base = "\(file.lastPathComponent):\(Int64((timestamp.timeIntervalSince1970 * 1000).rounded()))"
+        let occurrence = occurrences[base, default: 0]
+        occurrences[base] = occurrence + 1
+        return "\(base):\(occurrence)"
+    }
+
     struct FileEntry {
         let url: URL
         let mtime: Date
@@ -43,31 +50,79 @@ enum LogParseCache {
     /// terminated line, plus once for any trailing line lacking a newline.
     /// Session JSONLs can reach 50+ MB and we may walk months of them, so
     /// loading entire files via `Data(contentsOf:)` blows up peak memory.
-    /// Buffer trim happens once per chunk (not per line) — `removeSubrange`
-    /// is O(N) and per-line trimming made a single 50MB JSONL O(N²).
-    static func streamLines(at url: URL, onLine: (Data) -> Void) {
+    ///
+    /// Newline scanning happens on each freshly-read chunk (always ≤64KB) via
+    /// `memchr` — vectorized, and it skips the per-byte bounds-checked `Data`
+    /// subscript that dominated the scan profile — and only the in-progress
+    /// partial line is carried forward in `pending`. The
+    /// previous implementation appended every chunk to one growing buffer and
+    /// re-scanned it from the cursor each time, which is O(N²) for a single
+    /// long line — a Codex session that embeds base64 images produces lines
+    /// up to ~50MB, and a 10GB home of them pegged a core for minutes. Here a
+    /// long line only ever costs the per-chunk scan plus appends to `pending`.
+    ///
+    /// `maxLineBytes` caps a single line: once `pending` exceeds it, the line
+    /// is abandoned (never buffered further, never delivered) and bytes are
+    /// dropped until the next newline. Defaults to no cap so existing callers
+    /// (Claude) are byte-for-byte unchanged; the Codex reader opts in to skip
+    /// the image/payload blobs it never needs to parse.
+    static func streamLines(at url: URL, maxLineBytes: Int = .max, onLine: (Data) -> Void) {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return }
         defer { try? handle.close() }
 
-        var buffer = Data()
         let chunkSize = 64 * 1024
+        var pending = Data()          // partial line carried across chunk reads
+        var skippingLongLine = false  // discarding an over-cap line until its '\n'
 
         while true {
             let chunk = handle.readData(ofLength: chunkSize)
             if chunk.isEmpty { break }
-            buffer.append(chunk)
 
-            var cursor = buffer.startIndex
-            while cursor < buffer.endIndex {
-                guard let nl = buffer[cursor..<buffer.endIndex].firstIndex(of: 0x0A) else { break }
-                if nl > cursor { onLine(buffer[cursor..<nl]) }
-                cursor = buffer.index(after: nl)
+            var lineStart = 0
+            while let nl = firstNewline(in: chunk, from: lineStart) {
+                if skippingLongLine {
+                    // Reached the end of the abandoned line; resume normally.
+                    skippingLongLine = false
+                    pending.removeAll(keepingCapacity: true)
+                } else if pending.isEmpty {
+                    // A line wholly inside one chunk never touches `pending`, so
+                    // honor the cap here too — otherwise the "over-cap line is
+                    // never delivered" contract would silently break for any
+                    // caller whose cap is below the 64KB chunk size.
+                    let len = nl - lineStart
+                    if len > 0, len <= maxLineBytes { onLine(chunk[lineStart..<nl]) }
+                } else {
+                    pending.append(chunk[lineStart..<nl])
+                    onLine(pending)
+                    pending.removeAll(keepingCapacity: true)
+                }
+                lineStart = nl + 1
             }
-            if cursor > buffer.startIndex {
-                buffer.removeSubrange(buffer.startIndex..<cursor)
+
+            // Bytes after the last newline form (the start of) the next line.
+            if lineStart < chunk.count, !skippingLongLine {
+                pending.append(chunk[lineStart..<chunk.count])
+                if pending.count > maxLineBytes {
+                    pending.removeAll(keepingCapacity: true)
+                    skippingLongLine = true
+                }
             }
         }
-        if !buffer.isEmpty { onLine(buffer) }
+        if !skippingLongLine, !pending.isEmpty { onLine(pending) }
+    }
+
+    /// Offset of the first 0x0A at or after `start` within `data`, or nil.
+    /// `memchr` is vectorized and skips the per-byte bounds-checked `Data`
+    /// subscript that dominated the scan profile on large session logs.
+    /// Callers pass a fresh chunk (startIndex 0), so the returned offset is a
+    /// valid `Int` subscript into it.
+    private static func firstNewline(in data: Data, from start: Int) -> Int? {
+        guard start < data.count else { return nil }
+        return data.withUnsafeBytes { raw -> Int? in
+            guard let base = raw.baseAddress else { return nil }
+            guard let hit = memchr(base + start, 0x0A, data.count - start) else { return nil }
+            return UnsafeRawPointer(hit) - base
+        }
     }
 
     /// Per-file cache entry. Generic over the provider's `Event` Codable shape.
@@ -125,11 +180,13 @@ enum LogParseCache {
         cutoff: Date,
         cacheFilename: String,
         cacheVersion: Int,
+        useCache: Bool = true,
         fileFilter: (URL) -> Bool = { _ in true },
         parse: (URL) -> [Event],
-        emit: (Event) -> Void
+        emit: (Event, URL) -> Void
     ) {
-        var cache = loadCache(filename: cacheFilename, version: cacheVersion, eventType: Event.self)
+        var cache = useCache ? loadCache(filename: cacheFilename, version: cacheVersion, eventType: Event.self)
+            : ParseCache<Event>(version: cacheVersion, files: [:])
         var visited = Set<String>()
         var cacheChanged = false
 
@@ -146,7 +203,7 @@ enum LogParseCache {
                     cache.files[path] = CachedFile(mtime: entry.mtime, size: entry.size, events: events)
                     cacheChanged = true
                 }
-                for ev in events { emit(ev) }
+                for ev in events { emit(ev, entry.url) }
             }
         }
 
@@ -156,6 +213,6 @@ enum LogParseCache {
         cache.files = cache.files.filter { visited.contains($0.key) }
         if cache.files.count != preCount { cacheChanged = true }
 
-        if cacheChanged { saveCache(cache, filename: cacheFilename) }
+        if useCache && cacheChanged { saveCache(cache, filename: cacheFilename) }
     }
 }

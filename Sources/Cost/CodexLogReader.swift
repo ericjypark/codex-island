@@ -13,18 +13,20 @@ import Foundation
 /// keyed by (path, mtime, size). Between two 5/15/30-minute polls almost no
 /// rollout file has changed, so the steady-state refresh skips re-parsing.
 enum CodexLogReader {
-    static func scan(lookbackDays: Int = 30) -> [TokenEvent] {
-        let cutoff = Date().addingTimeInterval(-Double(lookbackDays) * 86400)
+    static func scan(lookbackDays: Int? = 30, root: URL? = nil) -> [TokenEvent] {
+        let cutoff = lookbackDays.map { Date().addingTimeInterval(-Double($0) * 86400) } ?? .distantPast
         var out: [TokenEvent] = []
+        var occurrences: [String: Int] = [:]
 
         LogParseCache.walk(
-            roots: [sessionsRoot()],
+            roots: [root ?? sessionsRoot()],
             cutoff: cutoff,
             cacheFilename: "codex-parse-cache.v1.json",
             cacheVersion: cacheVersion,
+            useCache: root == nil,
             fileFilter: { $0.lastPathComponent.hasPrefix("rollout-") },
             parse: parseFile(at:),
-            emit: { (ev: CachedEvent) in
+            emit: { (ev: CachedEvent, file: URL) in
                 guard ev.timestamp >= cutoff else { return }
                 out.append(TokenEvent(
                     provider: .codex,
@@ -33,7 +35,8 @@ enum CodexLogReader {
                     inputTokens: ev.inputTokens,
                     outputTokens: ev.outputTokens,
                     cacheCreationTokens: 0,
-                    cacheReadTokens: ev.cacheReadTokens
+                    cacheReadTokens: ev.cacheReadTokens,
+                    recordID: LogParseCache.recordID(file: file, timestamp: ev.timestamp, occurrences: &occurrences)
                 ))
             }
         )
@@ -60,7 +63,16 @@ enum CodexLogReader {
         var currentModel: String?
         var out: [CachedEvent] = []
 
-        LogParseCache.streamLines(at: url) { lineData in
+        // `maxLineBytes` skips the multi-MB `response_item` blobs (base64
+        // screenshots, large tool output) at the reader level — they're never
+        // the records we want and assembling them is what stalls big sessions.
+        LogParseCache.streamLines(at: url, maxLineBytes: maxUsefulLineBytes) { lineData in
+            // The only lines we care about — `turn_context` (model) and
+            // `event_msg`/`token_count` (usage) — carry these markers. A cheap
+            // byte-scan rejects everything else before paying for JSON parsing.
+            guard lineData.range(of: tokenCountMarker) != nil
+                    || lineData.range(of: turnContextMarker) != nil else { return }
+
             guard let raw = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any],
                   let type = raw["type"] as? String else { return }
 
@@ -108,6 +120,16 @@ enum CodexLogReader {
         }
         return out
     }
+
+    // MARK: - Line pre-filter
+
+    /// Upper bound for a usage/model line. `token_count` payloads are well
+    /// under 1KB and even a tool-heavy `turn_context` stays small; 1MB leaves
+    /// generous headroom while skipping the multi-MB image/payload lines that
+    /// dominate large sessions.
+    private static let maxUsefulLineBytes = 1 << 20
+    private static let tokenCountMarker = Data("token_count".utf8)
+    private static let turnContextMarker = Data("turn_context".utf8)
 
     // MARK: - Per-file cache
 

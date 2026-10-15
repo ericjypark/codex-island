@@ -27,6 +27,11 @@ struct CostWindow {
     /// doesn't silently read as $0.
     let unknownModels: [String]
 
+    static func unavailable(label: String, reason: String) -> CostWindow {
+        CostWindow(dollars: 0, tokens: 0, billableTokens: 0, series: [], label: label,
+                   error: reason, unknownModels: [])
+    }
+
     static let unknown = CostWindow(
         dollars: 0, tokens: 0, billableTokens: 0, series: [], label: "—",
         error: "no data", unknownModels: []
@@ -69,6 +74,10 @@ struct DailyTokenBucket: Codable {
     let dayStart: Date
     let tokens: Int
     let billableTokens: Int
+    // Optional so older caches stay readable without inventing a $0 price.
+    var dollars: Double? = nil
+    var unpricedTokens: Int? = nil
+    var recoveredTokens: Int? = nil
 }
 
 /// Per-provider cost summary: today + month-to-date in calendar-local time.

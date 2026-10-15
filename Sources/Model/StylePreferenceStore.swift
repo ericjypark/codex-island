@@ -13,21 +13,25 @@ class StylePreferenceStore<S: RawRepresentable & CaseIterable & Hashable>: Obser
 where S.RawValue == String {
     private let styleKey: String
     private let cycledKey: String
+    private let defaults: UserDefaults
 
     @Published var style: S {
-        didSet { UserDefaults.standard.set(style.rawValue, forKey: styleKey) }
+        didSet { defaults.set(style.rawValue, forKey: styleKey) }
     }
     @Published var hasCycledStyle: Bool {
-        didSet { UserDefaults.standard.set(hasCycledStyle, forKey: cycledKey) }
+        didSet { defaults.set(hasCycledStyle, forKey: cycledKey) }
     }
 
-    init(styleKey: String, cycledKey: String, defaultStyle: S) {
+    init(styleKey: String, cycledKey: String, defaultStyle: S,
+         legacyStyles: [String: S] = [:], defaults: UserDefaults = .standard) {
         self.styleKey = styleKey
         self.cycledKey = cycledKey
-        let raw = UserDefaults.standard.string(forKey: styleKey) ?? ""
-        self.style = S(rawValue: raw) ?? defaultStyle
+        self.defaults = defaults
+        let raw = defaults.string(forKey: styleKey) ?? ""
+        self.style = S(rawValue: raw) ?? legacyStyles[raw] ?? defaultStyle
         // Demo mode keeps the ⌘-click hint visible regardless of prior session.
-        self.hasCycledStyle = AppEnvironment.isDemo ? false : UserDefaults.standard.bool(forKey: cycledKey)
+        self.hasCycledStyle = AppEnvironment.isDemo ? false : defaults.bool(forKey: cycledKey)
+        if legacyStyles[raw] != nil { defaults.set(style.rawValue, forKey: styleKey) }
     }
 
     func cycle() {
