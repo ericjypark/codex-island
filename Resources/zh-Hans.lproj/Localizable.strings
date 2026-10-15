@@ -118,7 +118,7 @@
 "Syncing…" = "同步中…";
 "Target display" = "目标屏幕";
 "Target Display" = "目标屏幕";
-"Tint the island and pulse the peek pill when 5-hour usage nears your limit." = "当 5 小时用量接近限额时，为岛和预览胶囊显示提醒效果。";
+"Tint the island and pulse the peek pill when peeked usage nears your limit." = "当预览中的用量接近限额时，为岛和预览胶囊显示提醒效果。";
 "Tip: Command-click to cycle visualization" = "提示：Command 点击可切换可视化";
 "Today" = "今天";
 "Token counting" = "Token 统计";
@@ -203,6 +203,8 @@
 "Use defaults" = "使用默认设置";
 "Model group" = "模型组";
 "Peek and alerts" = "预览和提醒";
+"5-hour" = "5 小时";
+"Weekly" = "每周";
 "Selected metric is unavailable. Use defaults to choose an available metric." = "所选指标不可用。使用默认设置以选择可用指标。";
 "First metric" = "第一项指标";
 "Second metric" = "第二项指标";

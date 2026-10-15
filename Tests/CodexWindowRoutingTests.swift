@@ -149,11 +149,11 @@ struct CodexWindowRoutingTests {
             weekly: weeklyOnly.weekly
         )
         expect(
-            weeklyOnlyUsage.peekWindow.hasReading,
+            weeklyOnlyUsage.peekWindow(preferring: .fiveHour).hasReading,
             "peek selects the reported weekly window instead of rendering an em dash"
         )
         expect(
-            weeklyOnlyUsage.peekWindowIsWeekly,
+            weeklyOnlyUsage.peekWindowKind(preferring: .fiveHour) == .weekly,
             "peek chrome knows the weekly window was selected (a11y label, 7d fallback)"
         )
 
@@ -163,12 +163,38 @@ struct CodexWindowRoutingTests {
         expect(both.fiveHour.usedPercent == 0.12, "18000s primary window lands in 5h")
         expect(both.weekly.usedPercent == 0.34, "604800s secondary window lands in weekly")
         expect(
-            AppUsage(fiveHour: both.fiveHour, weekly: both.weekly).peekWindow.usedPercent == 0.12,
+            AppUsage(fiveHour: both.fiveHour, weekly: both.weekly).peekWindow(preferring: .fiveHour).usedPercent == 0.12,
             "peek continues to prefer 5h when both windows are reported"
         )
         expect(
-            !AppUsage(fiveHour: both.fiveHour, weekly: both.weekly).peekWindowIsWeekly,
+            AppUsage(fiveHour: both.fiveHour, weekly: both.weekly).peekWindowKind(preferring: .fiveHour) == .fiveHour,
             "peek chrome describes the 5h window on two-window plans"
+        )
+
+        // MARK: the peek follows the user's preferred window
+
+        let bothUsage = AppUsage(fiveHour: both.fiveHour, weekly: both.weekly, reportedWindows: both.reported)
+        expect(
+            bothUsage.peekWindowKind(preferring: .weekly) == .weekly
+                && bothUsage.peekWindow(preferring: .weekly).usedPercent == 0.34,
+            "weekly preference shows the weekly reading on two-window plans"
+        )
+        let failure = WindowUsage(usedPercent: 0, resetAt: nil, error: "HTTP 500")
+        let weeklyFailed = AppUsage(fiveHour: both.fiveHour, weekly: failure, reportedWindows: both.reported)
+        expect(
+            weeklyFailed.peekWindowKind(preferring: .weekly) == .fiveHour,
+            "weekly preference falls back to a real 5h reading when weekly has none"
+        )
+        let neitherReading = AppUsage(fiveHour: failure, weekly: failure, reportedWindows: both.reported)
+        expect(
+            neitherReading.peekWindowKind(preferring: .weekly) == .weekly,
+            "weekly preference keeps its identity when no window has a reading"
+        )
+        expect(
+            weeklyOnlyUsage.peekWindowKind(preferring: .fiveHour) == .weekly
+                && AppUsage(fiveHour: both.fiveHour, weekly: .unknown, reportedWindows: [.fiveHour])
+                    .peekWindowKind(preferring: .weekly) == .fiveHour,
+            "single-window plans ignore the preference"
         )
 
         // MARK: shapes without limit_window_seconds fall back to slot order
@@ -215,12 +241,13 @@ struct CodexWindowRoutingTests {
         let zero = WindowUsage(usedPercent: 0, resetAt: nil, error: nil)
         let zeroWeekly = AppUsage(fiveHour: .unknown, weekly: zero, reportedWindows: [.weekly])
         expect(zeroWeekly.visibleWindows == [.weekly], "genuine zero-percent weekly limit remains visible")
-        expect(zeroWeekly.peekWindowIsWeekly && zeroWeekly.peekWindow.hasReading, "zero-percent weekly peek keeps its identity")
+        expect(zeroWeekly.peekWindowKind(preferring: .fiveHour) == .weekly
+            && zeroWeekly.peekWindow(preferring: .fiveHour).hasReading, "zero-percent weekly peek keeps its identity")
         let error = WindowUsage(usedPercent: 0, resetAt: nil, error: "offline")
         let failed = AppUsage(fiveHour: error, weekly: error)
         let merged = AppUsage.merged(fetched: failed, retaining: weeklyDisplay, at: Date())
         expect(merged.visibleWindows == [.weekly], "offline refresh cannot resurrect the absent 5h tile")
-        expect(merged.peekWindowIsWeekly, "offline weekly plan keeps weekly peek and alert routing")
+        expect(merged.peekWindowKind(preferring: .fiveHour) == .weekly, "offline weekly plan keeps weekly peek and alert routing")
         let failedAgain = AppUsage.merged(fetched: failed, retaining: merged, at: Date())
         expect(failedAgain.visibleWindows == [.weekly], "repeated failures retain the discovered windows")
         let changed = AppUsage.merged(fetched: twoDisplay, retaining: merged, at: Date())
@@ -228,7 +255,7 @@ struct CodexWindowRoutingTests {
         let removed = AppUsage.merged(fetched: weeklyDisplay, retaining: twoDisplay, at: Date())
         expect(removed.visibleWindows == [.weekly], "a removed limit does not remain as a placeholder")
         let fiveOnlyDisplay = AppUsage(fiveHour: zero, weekly: .unknown, reportedWindows: [.fiveHour])
-        expect(fiveOnlyDisplay.visibleWindows == [.fiveHour] && !fiveOnlyDisplay.peekWindowIsWeekly,
+        expect(fiveOnlyDisplay.visibleWindows == [.fiveHour] && fiveOnlyDisplay.peekWindowKind(preferring: .weekly) == .fiveHour,
                "five-hour-only plans keep the correct label")
         expect(AppUsage.empty.visibleWindows.isEmpty, "cold-start unknown does not invent limit windows")
 

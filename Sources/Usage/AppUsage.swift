@@ -119,18 +119,19 @@ struct AppUsage {
         }
     }
 
-    var peekWindow: WindowUsage { window(peekWindowKind) }
-
-    var peekWindowKind: UsageWindow {
-        let visible = visibleWindows
-        if visible.count == 1 { return visible[0] }
-        return visible.first { window($0).hasReading } ?? visible.first ?? .fiveHour
+    func peekWindow(preferring preferred: UsageWindow) -> WindowUsage {
+        window(peekWindowKind(preferring: preferred))
     }
 
-    /// Which window `peekWindow` selected — the peek chrome (VoiceOver label,
-    /// window-length fallback glyph) must describe the same window it shows.
-    var peekWindowIsWeekly: Bool {
-        peekWindowKind == .weekly
+    /// Which window the peek shows — the peek chrome (VoiceOver label,
+    /// window-length fallback glyph) and alerts must describe this same
+    /// window. The user's preferred window wins while it has a reading;
+    /// otherwise the peek falls back to another reported window that does.
+    func peekWindowKind(preferring preferred: UsageWindow) -> UsageWindow {
+        let visible = visibleWindows
+        if visible.count == 1 { return visible[0] }
+        let ordered = visible.contains(preferred) ? [preferred] + visible.filter { $0 != preferred } : visible
+        return ordered.first { window($0).hasReading } ?? ordered.first ?? .fiveHour
     }
 
     /// Fold a fetch result into the values currently on screen.

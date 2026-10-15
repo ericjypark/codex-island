@@ -270,7 +270,7 @@ struct SettingsView: View {
             sectionLabel("Alerts")
             SettingsRow(
                 title: "Approaching-limit alerts",
-                subtitle: "Tint the island and pulse the peek pill when 5-hour usage nears your limit."
+                subtitle: "Tint the island and pulse the peek pill when peeked usage nears your limit."
             ) {
                 SettingsToggle(isOn: alertPrefs.enabled) {
                     // withAnimation here so the threshold rows + Preview row

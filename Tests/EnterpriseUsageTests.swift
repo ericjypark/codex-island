@@ -68,7 +68,11 @@ struct EnterpriseUsageTests {
         expect(!AppUsage.merged(fetched: .empty, retaining: original, at: Date()).monthly.hasReading, "omitted monthly window displaces old reading")
 
         let weeklyFallback = AppUsage(fiveHour: failure, weekly: limited, reportedWindows: [.fiveHour, .weekly])
-        expect(weeklyFallback.peekWindowKind == .weekly, "unavailable 5h reading still falls back to real weekly reading")
+        expect(weeklyFallback.peekWindowKind(preferring: .fiveHour) == .weekly, "unavailable 5h reading still falls back to real weekly reading")
+        let enterprise = AppUsage(fiveHour: limited, weekly: limited, monthly: limited,
+            reportedWindows: [.fiveHour, .weekly, .monthly])
+        expect(enterprise.peekWindowKind(preferring: .weekly) == .weekly,
+               "weekly preference applies alongside Enterprise monthly credits")
         let response = try! JSONSerialization.jsonObject(with: Data(#"{"extra_usage":{"is_enabled":true,"used_credits":47,"monthly_limit":1600}}"#.utf8)) as! [String: Any]
         let noPlan = UsageFetcher.parseClaudeUsageResponse(response, plan: nil)
         expect(noPlan.visibleWindows == [.monthly] && noPlan.monthly.usedAmount == 0.47,

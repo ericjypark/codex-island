@@ -41,7 +41,8 @@ for authentication details and data limitations.
   pill.
 - **Hover to peek.** The silhouette widens just enough to show each visible
   provider's 5-hour percentage and reset headline, or keep those headlines
-  visible at rest with **Always show usage**.
+  visible at rest with **Always show usage**. Claude and Codex can peek at the
+  weekly window instead from **Settings → Providers → Peek and alerts**.
 - **Three swipeable screens.** Click to expand, then swipe between **Usage**,
   **Cost**, and **Overview**. Cost estimates today and month-to-date spend and
   token throughput from local Claude Code, Codex CLI, and OpenCode session
@@ -77,8 +78,7 @@ for authentication details and data limitations.
 - **Used or remaining quota.** Display provider windows as usage consumed or
   quota remaining.
 - **Approaching-limit alerts.** Optional warning and critical thresholds tint
-  the island and pulse the peek pill as a visible 5-hour window nears its
-  limit.
+  the island and pulse the peek pill as the peeked window nears its limit.
 - **Codex reset credits.** When reset credits are available, the Usage footer
   shows their count and expiration details.
 - **Configurable token counting.** The TOKENS hero can sum every token type
@@ -191,7 +191,7 @@ the first peek. Opening Settings also triggers a fresh fetch.
 
 ## Using the app
 
-- Hover the notch to peek at the current 5-hour usage.
+- Hover the notch to peek at the current 5-hour (or chosen weekly) usage.
 - Click the island to expand the full panel.
 - Swipe horizontally on the panel (or use the indicator dots) to move between
   **Usage**, **Cost**, and **Overview**.

@@ -463,6 +463,7 @@ private struct PeekPillOverlay: View {
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @ObservedObject private var connections = ProviderConnectionStore.shared
     @ObservedObject private var quotaPreferences = ProviderQuotaPreferences.shared
+    @ObservedObject private var peekWindows = PeekWindowStore.shared
     @ObservedObject private var usageStore = UsageStore.shared
     @ObservedObject private var alerts = AlertEngine.shared
 
@@ -521,8 +522,8 @@ private struct PeekPillOverlay: View {
 
     private var currentWindow: WindowUsage {
         switch provider {
-        case .claude: return usageStore.claude.peekWindow
-        case .codex:  return usageStore.codex.peekWindow
+        case .claude: return usageStore.claude.peekWindow(preferring: peekWindows.window(for: .claude))
+        case .codex:  return usageStore.codex.peekWindow(preferring: peekWindows.window(for: .codex))
         case .grok, .antigravity, .muse:
             return connections.primary(provider)?.window ?? .unknown
         }
@@ -538,8 +539,8 @@ private struct PeekPillOverlay: View {
 
     private var currentWindowKind: UsageWindow? {
         switch provider {
-        case .claude: return usageStore.claude.peekWindowKind
-        case .codex: return usageStore.codex.peekWindowKind
+        case .claude: return usageStore.claude.peekWindowKind(preferring: peekWindows.window(for: .claude))
+        case .codex: return usageStore.codex.peekWindowKind(preferring: peekWindows.window(for: .codex))
         case .muse:
             guard let kind = connections.primary(provider)?.kind else { return nil }
             return kind == .weekly ? .weekly : .fiveHour
