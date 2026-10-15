@@ -1,17 +1,18 @@
 import Foundation
 
-/// User preference for showing the provider logos in the compact rest state.
+/// User preference for showing the provider logos beside the notch.
 ///
 /// Default on preserves the current branded island. On notched displays,
-/// turning it off affects only `.compact`: the rest-state silhouette shrinks
-/// to the physical notch width, so loading sweeps and alert glow stay fitted
-/// to the hardware notch. Non-notched displays ignore the hidden state to
+/// turning it off removes the logo tabs from every collapsed state: at rest
+/// the silhouette shrinks to the physical notch width, and the peek
+/// (including "Always show usage") carries only the usage pills, which keep
+/// their provider tint. Non-notched displays ignore the hidden state to
 /// avoid leaving an empty synthetic pill at top-center.
 @MainActor
 final class LogoVisibilityStore: ObservableObject {
     static let shared = LogoVisibilityStore()
 
-    private static let key = "MacIsland.compactLogosVisible"
+    private static let key = "MacIsland.providerLogosVisible"
 
     @Published var visible: Bool {
         didSet { UserDefaults.standard.set(visible, forKey: Self.key) }

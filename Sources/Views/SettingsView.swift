@@ -166,8 +166,8 @@ struct SettingsView: View {
             chartSection
             costStyleSection
             targetDisplaySection
-            if restChromeSectionVisible {
-                restChromeSection
+            if logosSectionVisible {
+                logosSection
             }
             if spacingSectionVisible {
                 spacingSection
@@ -183,10 +183,10 @@ struct SettingsView: View {
         DisplayInfo.currentTarget()?.notch.hasNotch == false
     }
 
-    /// The idle-logo toggle only makes sense on a physical notch. On
-    /// non-notched displays, hiding the rest-state logos would leave an empty
-    /// synthetic pill floating at top-center.
-    private var restChromeSectionVisible: Bool {
+    /// The logo toggle only makes sense on a physical notch. On non-notched
+    /// displays, hiding the logos would leave an empty synthetic pill
+    /// floating at top-center.
+    private var logosSectionVisible: Bool {
         DisplayInfo.currentTarget()?.notch.hasNotch == true
     }
 
@@ -702,12 +702,12 @@ struct SettingsView: View {
         .padding(.bottom, 14)
     }
 
-    private var restChromeSection: some View {
+    private var logosSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Idle")
+            sectionLabel("Logos")
             SettingsRow(
-                title: "Idle logos",
-                subtitle: "Show provider logos before hover or expand."
+                title: "Provider logos",
+                subtitle: "Show provider logos beside the notch. When off, usage colors identify each provider."
             ) {
                 SettingsToggle(isOn: logos.visible) {
                     logos.visible.toggle()

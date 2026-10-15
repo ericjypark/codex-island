@@ -41,7 +41,7 @@ final class IslandModel: ObservableObject {
     /// `updateNotch`'s diff guard isn't confused by override-induced
     /// width changes that originate from the store, not the screen.
     private var rawNotch: NotchInfo
-    private var compactLogoPreferenceVisible = LogoVisibilityStore.shared.visible
+    @Published private(set) var logoPreferenceVisible = LogoVisibilityStore.shared.visible
 
     private var subs: Set<AnyCancellable> = []
 
@@ -139,8 +139,8 @@ final class IslandModel: ObservableObject {
             .sink { [weak self] visible in
                 guard let self else { return }
                 withAnimation(.openMorph) {
-                    self.compactLogoPreferenceVisible = visible
-                    if self.state == .compact {
+                    self.logoPreferenceVisible = visible
+                    if self.state != .expanded {
                         self.recomputeSize()
                     }
                 }
@@ -152,12 +152,12 @@ final class IslandModel: ObservableObject {
         switch state {
         case .compact:
             size = CGSize(
-                width: notch.width + compactLogoTabWidth * 2,
+                width: notch.width + logoTabWidth * 2,
                 height: notch.height
             )
         case .peek:
             size = CGSize(
-                width: notch.width + tabWidth * 2 + pillSlotWidth * 2,
+                width: notch.width + logoTabWidth * 2 + pillSlotWidth * 2,
                 height: notch.height
             )
         case .expanded:
@@ -168,11 +168,11 @@ final class IslandModel: ObservableObject {
         }
     }
 
-    private var compactLogoTabWidth: CGFloat {
-        compactLogosVisible ? tabWidth : 0
+    private var logoTabWidth: CGFloat {
+        logosVisible ? tabWidth : 0
     }
 
-    var compactLogosVisible: Bool {
-        !notch.hasNotch || compactLogoPreferenceVisible
+    var logosVisible: Bool {
+        !notch.hasNotch || logoPreferenceVisible
     }
 }
