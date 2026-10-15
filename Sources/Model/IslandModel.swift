@@ -41,6 +41,7 @@ final class IslandModel: ObservableObject {
     /// `updateNotch`'s diff guard isn't confused by override-induced
     /// width changes that originate from the store, not the screen.
     private var rawNotch: NotchInfo
+    @Published private(set) var logoPreferenceVisible = LogoVisibilityStore.shared.visible
 
     private var subs: Set<AnyCancellable> = []
 
@@ -49,6 +50,7 @@ final class IslandModel: ObservableObject {
         self.notch = Self.applyOverride(to: notch, width: IslandSpacingStore.shared.width)
         recomputeSize()
         subscribeToSpacingStore()
+        subscribeToLogoVisibilityStore()
     }
 
     func setState(_ new: State) {
@@ -131,16 +133,31 @@ final class IslandModel: ObservableObject {
             .store(in: &subs)
     }
 
+    private func subscribeToLogoVisibilityStore() {
+        LogoVisibilityStore.shared.$visible
+            .dropFirst()
+            .sink { [weak self] visible in
+                guard let self else { return }
+                withAnimation(.openMorph) {
+                    self.logoPreferenceVisible = visible
+                    if self.state != .expanded {
+                        self.recomputeSize()
+                    }
+                }
+            }
+            .store(in: &subs)
+    }
+
     private func recomputeSize() {
         switch state {
         case .compact:
             size = CGSize(
-                width: notch.width + tabWidth * 2,
+                width: notch.width + logoTabWidth * 2,
                 height: notch.height
             )
         case .peek:
             size = CGSize(
-                width: notch.width + tabWidth * 2 + pillSlotWidth * 2,
+                width: notch.width + logoTabWidth * 2 + pillSlotWidth * 2,
                 height: notch.height
             )
         case .expanded:
@@ -149,5 +166,13 @@ final class IslandModel: ObservableObject {
                 height: max(notch.height, expandedHeight)
             )
         }
+    }
+
+    private var logoTabWidth: CGFloat {
+        logosVisible ? tabWidth : 0
+    }
+
+    var logosVisible: Bool {
+        !notch.hasNotch || logoPreferenceVisible
     }
 }

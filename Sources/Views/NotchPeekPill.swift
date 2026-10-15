@@ -29,7 +29,7 @@ struct NotchPeekPill: View {
     var contents: Contents = .combined
     var gaugeProgress: CGFloat = 0
     var gaugeHeight: CGFloat = 38
-    var showsResetCaption = false
+    var showsCaption = false
     var valueWidth: CGFloat? = nil
     @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -43,7 +43,7 @@ struct NotchPeekPill: View {
                 stackedContent
             } else if contents == .ring {
                 quotaRing
-            } else if contents == .reset, showsResetCaption {
+            } else if contents == .reset, showsCaption {
                 VStack(alignment: .trailing, spacing: 1) {
                     if showSpinner {
                         LoadingDot()
@@ -56,6 +56,23 @@ struct NotchPeekPill: View {
                     }
                     if usage.hasReading, resetText != nil || !windowLengthFallback.isEmpty {
                         Text(L10n.tr(resetText == nil ? "Window" : "Reset"))
+                            .font(Typography.micro).foregroundStyle(.white.opacity(0.55))
+                    }
+                }
+            } else if contents == .percentage, showsCaption {
+                VStack(alignment: alignment == .leading ? .trailing : .leading, spacing: 1) {
+                    if showSpinner {
+                        LoadingDot()
+                    } else if showDash {
+                        Text("-%").font(Typography.bodyNumber).foregroundStyle(.white.opacity(0.40))
+                    } else {
+                        HStack(spacing: 4) {
+                            percentLabel
+                            if severity != .none { warningGlyph }
+                        }
+                    }
+                    if usage.hasReading {
+                        Text(usage.isUnlimitedAmount ? "∞" : L10n.tr(usageDisplay.mode == .used ? "Used" : "Quota left"))
                             .font(Typography.micro).foregroundStyle(.white.opacity(0.55))
                     }
                 }
@@ -194,7 +211,7 @@ struct NotchPeekPill: View {
 
     private var percentText: String {
         if usage.isUnlimitedAmount, let amount = usage.usedAmount {
-            return contents == .stacked
+            return contents == .stacked || contents == .percentage
                 ? UsageCreditDisplay.compactCurrency(amount, code: usage.currencyCode)
                 : UsageCreditDisplay.currency(amount, code: usage.currencyCode)
         }

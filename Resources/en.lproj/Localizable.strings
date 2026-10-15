@@ -60,10 +60,13 @@
 "Critical" = "Critical";
 "Daily token usage in %@" = "Daily token usage in %@";
 "Display" = "Display";
+"Show provider logos beside the notch. When off, usage colors identify each provider." = "Show provider logos beside the notch. When off, usage colors identify each provider.";
 "General" = "General";
 "Follows macOS" = "Follows macOS";
 "Glow only on refresh, hover, or limit alerts." = "Glow only on refresh, hover, or limit alerts.";
 "Idle" = "Idle";
+"Logos" = "Logos";
+"Provider logos" = "Provider logos";
 "idle" = "idle";
 "Input + output" = "Input + output";
 "Input + output only. Matches Anthropic's claude.ai stats." = "Input + output only. Matches Anthropic's claude.ai stats.";
