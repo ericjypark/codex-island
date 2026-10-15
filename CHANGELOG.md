@@ -6,6 +6,12 @@ tag was cut.
 
 ## [Unreleased]
 
+### Added
+
+- Choose whether the collapsed island shows the 5-hour or weekly window for
+  Claude and Codex in **Settings → Providers → Peek and alerts**. Alerts and
+  the silhouette tint follow the chosen window.
+
 ## [0.3.0] - 2026-10-01
 
 ### Added

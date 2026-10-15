@@ -118,7 +118,7 @@
 "Syncing…" = "Syncing…";
 "Target display" = "Target display";
 "Target Display" = "Target Display";
-"Tint the island and pulse the peek pill when 5-hour usage nears your limit." = "Tint the island and pulse the peek pill when 5-hour usage nears your limit.";
+"Tint the island and pulse the peek pill when peeked usage nears your limit." = "Tint the island and pulse the peek pill when peeked usage nears your limit.";
 "Tip: Command-click to cycle visualization" = "Tip: Command-click to cycle visualization";
 "Today" = "Today";
 "Token counting" = "Token counting";
@@ -203,6 +203,8 @@
 "Use defaults" = "Use defaults";
 "Model group" = "Model group";
 "Peek and alerts" = "Peek and alerts";
+"5-hour" = "5-hour";
+"Weekly" = "Weekly";
 "Selected metric is unavailable. Use defaults to choose an available metric." = "Selected metric is unavailable. Use defaults to choose an available metric.";
 "First metric" = "First metric";
 "Second metric" = "Second metric";
