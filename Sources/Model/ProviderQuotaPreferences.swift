@@ -31,6 +31,8 @@ final class ProviderQuotaPreferences: ObservableObject {
     static func resolve(_ usage: ConnectedUsage, selection: QuotaSelection) -> [ConnectedLimit] {
         let groups = Array(Set(usage.limits.map(\.groupID))).sorted()
         let preferred = groups.first { id in
+            usage.limits.contains { $0.groupID == id && ($0.groupLabel ?? "").caseInsensitiveCompare("Gemini Models") == .orderedSame }
+        } ?? groups.first { id in
             usage.limits.contains { $0.groupID == id && ($0.groupLabel ?? "").localizedCaseInsensitiveContains("gemini") }
         }
         guard let group = selection.groupID ?? preferred ?? groups.first else { return [] }

@@ -170,7 +170,8 @@ struct EnterpriseUsageTests {
         for kind in [UsageWindow.fiveHour, .weekly] {
             func input(_ fraction: Double, reset: Date? = nil) -> AlertDecision.WindowInput {
                 AlertDecision.WindowInput(provider: .muse, visible: true,
-                    window: WindowUsage(usedPercent: fraction, resetAt: reset, error: nil), windowKind: kind)
+                    window: WindowUsage(usedPercent: fraction, resetAt: reset, error: nil), windowKind: kind,
+                    metricID: "muse-fixture-\(kind)")
             }
             func evaluate(_ previous: Set<AlertEngine.CrossingKey>, _ value: AlertDecision.WindowInput,
                           warmedUp: Bool = true) -> AlertDecision.CrossingsEvalResult {
@@ -184,7 +185,7 @@ struct EnterpriseUsageTests {
             expect(evaluate([], input(0.85), warmedUp: false).pulse == nil,
                    "Muse \(kind) startup warmup remains silent")
             let failedInput = AlertDecision.WindowInput(provider: .muse, visible: true,
-                                                        window: .unknown, windowKind: kind)
+                                                        window: .unknown, windowKind: kind, metricID: "muse-fixture-\(kind)")
             let afterFailure = evaluate(first.next, failedInput)
             expect(afterFailure.next == first.next && afterFailure.pulse == nil,
                    "Muse \(kind) missing reading cannot rearm an alert")
@@ -204,7 +205,8 @@ struct EnterpriseUsageTests {
                    "Muse \(kind) critical crossing alerts independently")
             let otherKind: UsageWindow = kind == .weekly ? .fiveHour : .weekly
             let switched = AlertDecision.WindowInput(provider: .muse, visible: true,
-                window: WindowUsage(usedPercent: 0.85, resetAt: nil, error: nil), windowKind: otherKind)
+                window: WindowUsage(usedPercent: 0.85, resetAt: nil, error: nil), windowKind: otherKind,
+                metricID: "muse-fixture-\(otherKind)")
             expect(evaluate(first.next, switched).pulse != nil,
                    "Muse session and weekly crossings retain separate identities")
         }
@@ -233,6 +235,47 @@ struct EnterpriseUsageTests {
             inputs: [museLater], warning: 80, critical: 95, warmedUp: true)
         expect(laterCrossing.pulse?.severity == .critical,
                "A real Muse crossing after its baseline still alerts")
+        let sharedReset = Date(timeIntervalSince1970: 1_800_000_000)
+        let geminiLimit = ConnectedLimit(id: "gemini-weekly", label: "week", usedFraction: 0.85,
+            resetAt: sharedReset, groupID: "Gemini Models", kind: .weekly)
+        let argonLimit = ConnectedLimit(id: "gemini-argon-wtu-weekly", label: "week", usedFraction: 0.85,
+            resetAt: sharedReset, groupID: "Gemini 4 Argon", kind: .weekly)
+        let connectedUsage = ConnectedUsage(limits: [geminiLimit, argonLimit], accountID: "fixture-account")
+        let geminiInput = AlertDecision.WindowInput.connected(provider: .antigravity, visible: true,
+            usage: connectedUsage, limit: geminiLimit)
+        let argonInput = AlertDecision.WindowInput.connected(provider: .antigravity, visible: true,
+            usage: connectedUsage, limit: argonLimit)
+        func connectedCrossing(_ previous: Set<AlertEngine.CrossingKey>, _ input: AlertDecision.WindowInput) -> AlertDecision.CrossingsEvalResult {
+            AlertDecision.evaluateCrossings(previous: previous, inputs: [input], warning: 80, critical: 95, warmedUp: true)
+        }
+        expect(geminiInput.windowKind == .weekly && argonInput.windowKind == .weekly,
+               "Connected weekly alerts keep the selected window kind")
+        let geminiCrossing = connectedCrossing([], geminiInput)
+        let argonCrossing = connectedCrossing(geminiCrossing.next, argonInput)
+        expect(argonCrossing.pulse?.severity == .warning && argonCrossing.next.count == 2,
+               "Gemini crossing cannot suppress Argon with the same reset")
+        expect(connectedCrossing(argonCrossing.next, argonInput).pulse == nil,
+               "Repeated Argon reading cannot duplicate an alert")
+        expect(connectedCrossing(argonCrossing.next, geminiInput).pulse == nil,
+               "Switching back to Gemini preserves its crossing memory")
+        let resetArgon = AlertDecision.WindowInput(provider: .antigravity, visible: true,
+            window: WindowUsage(usedPercent: 0.85, resetAt: sharedReset.addingTimeInterval(604800), error: nil),
+            windowKind: .weekly, metricID: argonInput.metricID)
+        let argonNewPeriod = connectedCrossing(argonCrossing.next, resetArgon)
+        expect(argonNewPeriod.pulse != nil && connectedCrossing(argonNewPeriod.next, geminiInput).pulse == nil,
+               "Argon reset cannot erase Gemini crossing memory")
+        var anotherAccount = connectedUsage
+        anotherAccount.accountID = "another-fixture-account"
+        let otherAccountInput = AlertDecision.WindowInput.connected(provider: .antigravity, visible: true,
+            usage: anotherAccount, limit: argonLimit)
+        expect(connectedCrossing(argonCrossing.next, otherAccountInput).pulse != nil,
+               "Connected quota alerts are isolated by account")
+        let duplicateID = ConnectedLimit(id: geminiLimit.id, label: "week", usedFraction: 0.85,
+            resetAt: sharedReset, groupID: "another-group", kind: .weekly)
+        let otherGroupInput = AlertDecision.WindowInput.connected(provider: .antigravity, visible: true,
+            usage: connectedUsage, limit: duplicateID)
+        expect(connectedCrossing(geminiCrossing.next, otherGroupInput).pulse != nil,
+               "Quota groups with matching bucket IDs still alert independently")
         if failures > 0 { exit(1) }
         print("PASS all Enterprise usage checks")
     }
