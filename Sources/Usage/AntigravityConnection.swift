@@ -96,7 +96,8 @@ enum AntigravityConnection {
         request.httpBody = try JSONEncoder().encode(body)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("antigravity/1.1.25", forHTTPHeaderField: "User-Agent")
+        // The backend gates Gemini and Argon buckets on the versioned CLI client profile.
+        request.setValue("antigravity/cli/1.4.2", forHTTPHeaderField: "User-Agent")
         return request
     }
 

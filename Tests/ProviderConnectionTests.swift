@@ -104,6 +104,23 @@ struct ProviderConnectionTests {
         reordered.limits.reverse()
         expect(ProviderQuotaPreferences.resolve(reordered, selection: defaultsSelection).map(\.id) == automatic.map(\.id),
                "API ordering cannot change displayed metrics")
+        var withArgon = summary
+        withArgon.limits.append(ConnectedLimit(id: "gemini-argon-wtu-weekly", label: "week", usedFraction: 0,
+            resetAt: nil, groupID: "Gemini 4 Argon", groupLabel: "Gemini 4 Argon", kind: .weekly))
+        expect(ProviderQuotaPreferences.resolve(withArgon, selection: defaultsSelection).map(\.id) == automatic.map(\.id),
+               "new Argon group cannot replace the standard Gemini default")
+        withArgon.limits.reverse()
+        expect(ProviderQuotaPreferences.resolve(withArgon, selection: defaultsSelection).map(\.id) == automatic.map(\.id),
+               "standard Gemini stays the default regardless of group ordering")
+        let argonSelection = QuotaSelection(groupID: "Gemini 4 Argon")
+        let argonLimits = ProviderQuotaPreferences.resolve(withArgon, selection: argonSelection)
+        expect(argonLimits.count == 1 && argonLimits[0].kind == .weekly,
+               "selecting Argon displays its single real weekly metric")
+        expect(ProviderQuotaPreferences.primary(argonLimits, selection: argonSelection)?.id == "gemini-argon-wtu-weekly",
+               "Argon peek and alerts use the selected weekly metric")
+        let argonOnly = ConnectedUsage(limits: argonLimits)
+        expect(ProviderQuotaPreferences.resolve(argonOnly, selection: defaultsSelection).map(\.id) == argonLimits.map(\.id),
+               "Argon-only responses still have an automatic default")
         let custom = QuotaSelection(groupID: automatic[0].groupID,
                                     metricIDs: [automatic[1].id, automatic[0].id], primaryID: automatic[1].id)
         let resolved = ProviderQuotaPreferences.resolve(summary, selection: custom)
