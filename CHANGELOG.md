@@ -6,6 +6,17 @@ tag was cut.
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-10-18
+
+### Fixed
+
+- Restore missing Gemini subscription limits and expose Gemini 4 Argon's separate
+  weekly quota in Antigravity's Model group selector. Keep standard Gemini as the
+  default and display only the windows the provider reports.
+- Keep quota alerts independent across accounts, model groups, and buckets.
+  Switching between Gemini and Argon no longer suppresses an alert when their
+  reset times match or repeats an alert when returning to a previous selection.
+
 ## [0.3.0] - 2026-10-01
 
 ### Added
