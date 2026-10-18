@@ -63,6 +63,7 @@ final class AlertEngine: ObservableObject {
         let threshold: Threshold
         let resetAt: Date?
         var windowKind: UsageWindow = .fiveHour
+        var metricID: String?
     }
 
     private var crossings: Set<CrossingKey> = []
@@ -130,9 +131,8 @@ final class AlertEngine: ObservableObject {
             ),
         ] + IslandProvider.allCases.filter { !$0.usesLegacyUsage }.map { provider in
             let limit = ProviderConnectionStore.shared.primary(provider)
-            return AlertDecision.WindowInput(provider: provider, visible: visibility.selected.contains(provider),
-                window: limit?.window ?? .unknown,
-                windowKind: provider == .muse && limit?.kind == .weekly ? .weekly : .fiveHour)
+            return AlertDecision.WindowInput.connected(provider: provider, visible: visibility.selected.contains(provider),
+                usage: ProviderConnectionStore.shared.snapshot(provider), limit: limit)
         }
 
         // Severity drives the silhouette tint and is always computed: a
@@ -233,6 +233,14 @@ enum AlertDecision {
         let visible: Bool
         let window: WindowUsage
         var windowKind: UsageWindow = .fiveHour
+        var metricID: String?
+
+        static func connected(provider: AlertEngine.Provider, visible: Bool,
+                              usage: ConnectedUsage, limit: ConnectedLimit?) -> Self {
+            Self(provider: provider, visible: visible, window: limit?.window ?? .unknown,
+                 windowKind: limit?.kind == .weekly ? .weekly : .fiveHour,
+                 metricID: limit.map { usage.historyKey(provider: provider, limit: $0) })
+        }
 
         var permitsResetlessCrossings: Bool { provider == .muse || windowKind == .monthly }
     }
@@ -288,12 +296,13 @@ enum AlertDecision {
         for input in inputs {
             if let currentReset = input.window.resetAt {
                 next = Set(next.compactMap { key in
-                    guard key.provider == input.provider, key.windowKind == input.windowKind else { return key }
+                    guard key.provider == input.provider, key.windowKind == input.windowKind,
+                          key.metricID == input.metricID else { return key }
                     if input.permitsResetlessCrossings, key.resetAt == nil {
                         let bound = key.threshold == .warning ? warning : critical
                         guard input.window.hasPercentageReading, input.window.percentInt >= bound else { return nil }
                         return AlertEngine.CrossingKey(provider: key.provider, threshold: key.threshold,
-                                                       resetAt: currentReset, windowKind: key.windowKind)
+                                                       resetAt: currentReset, windowKind: key.windowKind, metricID: key.metricID)
                     }
                     return key.resetAt == currentReset ? key : nil
                 })
@@ -301,7 +310,7 @@ enum AlertDecision {
                 // Without a provider boundary, rearm only after an observed
                 // reading falls below the threshold. Failed polls cannot rearm.
                 next = next.filter { key in
-                    if key.provider != input.provider || key.windowKind != input.windowKind { return true }
+                    if key.provider != input.provider || key.windowKind != input.windowKind || key.metricID != input.metricID { return true }
                     let bound = key.threshold == .warning ? warning : critical
                     return input.window.percentInt >= bound
                 }
@@ -326,10 +335,12 @@ enum AlertDecision {
                     provider: input.provider,
                     threshold: threshold,
                     resetAt: resetAt,
-                    windowKind: input.windowKind
+                    windowKind: input.windowKind,
+                    metricID: input.metricID
                 )
                 let alreadyCrossed = resetAt == nil
-                    ? next.contains { $0.provider == input.provider && $0.windowKind == input.windowKind && $0.threshold == threshold }
+                    ? next.contains { $0.provider == input.provider && $0.windowKind == input.windowKind
+                        && $0.metricID == input.metricID && $0.threshold == threshold }
                     : next.contains(key)
                 if !alreadyCrossed {
                     next.insert(key)
@@ -341,7 +352,8 @@ enum AlertDecision {
             // tick — coalesces both providers into a single event when both
             // happen on the same usage update.
             if !warmingProviders.contains(input.provider),
-               newCrossings.contains(where: { $0.provider == input.provider && $0.windowKind == input.windowKind }) {
+               newCrossings.contains(where: { $0.provider == input.provider && $0.windowKind == input.windowKind
+                   && $0.metricID == input.metricID }) {
                 let sev: AlertEngine.Severity = pct >= critical
                     ? .critical
                     : (pct >= warning ? .warning : .none)

@@ -89,6 +89,8 @@ the automatic selection. No five-hour window is invented for a weekly-only plan.
 On paid Pro accounts, the backend can report Argon as a separate weekly-only
 group. Preserve that group's bucket identity and reset time; do not infer an
 Argon group for accounts whose response includes it in the larger Gemini bucket.
+Alert crossing memory uses the selected account, model group, and bucket identity,
+so switching groups cannot suppress another bucket's alert or repeat an old one.
 
 Preferences use account identity when supplied by the provider. Quota history
 is stored under hashed account and metric identifiers; an unidentified session
