@@ -52,6 +52,7 @@
 "Cost" = "Cost";
 "Display currency" = "Display currency";
 "Rates by ExchangeRate-API" = "Rates by ExchangeRate-API";
+"Rates by AllRatesToday" = "Rates by AllRatesToday";
 "updating exchange rate…" = "updating exchange rate…";
 "last scan %@ · estimated %@" = "last scan %1$@ · estimated %2$@";
 "Cost view" = "Cost view";

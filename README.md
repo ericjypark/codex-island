@@ -227,6 +227,9 @@ runs as an accessory app with no Dock icon and no menu bar.
   checked every six hours, fetching when at least 24 hours old. Refresh also
   updates exchange rates. Currency selection uses the shared cached table;
   offline, the last valid table is retained (or USD is shown until one is available).
+  Rates come from ExchangeRate-API's open endpoint; if that request fails, the
+  same refresh asks AllRatesToday's keyless ECB endpoint once, and Settings links
+  whichever source the cached table came from.
 
 Preferences are stored in `UserDefaults` under `MacIsland.*` keys (Sparkle
 manages its own `SU*` update keys, and Launch at Login uses
