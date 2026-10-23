@@ -574,9 +574,9 @@ struct SettingsView: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
 
-                if let attributionURL = URL(string: "https://www.exchangerate-api.com") {
+                if let attributionURL = URL(string: currencyStore.rateSource.attributionURL) {
                     Link(
-                        L10n.tr("Rates by ExchangeRate-API"),
+                        L10n.tr(currencyStore.rateSource.attributionKey),
                         destination: attributionURL
                     )
                     .font(Typography.micro)

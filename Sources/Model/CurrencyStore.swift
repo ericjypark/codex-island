@@ -110,10 +110,42 @@ final class CurrencyStore: ObservableObject {
     private static let cacheKey = "MacIsland.currencyRates.v2"
     private static let refreshInterval: TimeInterval = 24 * 60 * 60
 
+    /// Where a rate table came from. The second source is asked only when the
+    /// first fails, and answers in the same JSON shape (ECB reference rates,
+    /// which cover every `DisplayCurrency`). Both ask for a visible link.
+    enum RateSource: String, Codable, CaseIterable {
+        case exchangeRateAPI
+        case allRatesToday
+
+        var endpoint: String {
+            switch self {
+            case .exchangeRateAPI: "https://open.er-api.com/v6/latest/USD"
+            case .allRatesToday: "https://allratestoday.com/api/open/latest/USD"
+            }
+        }
+
+        var attributionURL: String {
+            switch self {
+            case .exchangeRateAPI: "https://www.exchangerate-api.com"
+            case .allRatesToday: "https://allratestoday.com"
+            }
+        }
+
+        var attributionKey: String {
+            switch self {
+            case .exchangeRateAPI: "Rates by ExchangeRate-API"
+            case .allRatesToday: "Rates by AllRatesToday"
+            }
+        }
+    }
+
     private struct CachedRates: Codable {
         let rates: [String: Double]
         let fetchedAt: Date
         let sourceDate: String
+        /// Nil in tables cached before the fallback existed; those came from
+        /// ExchangeRate-API.
+        var source: RateSource? = nil
     }
 
     private struct RateResponse: Decodable {
@@ -137,6 +169,7 @@ final class CurrencyStore: ObservableObject {
 
     var usdRate: Double { cache?.rates[currency.rawValue] ?? 1 }
     var lastUpdated: Date? { cache?.fetchedAt }
+    var rateSource: RateSource { cache?.source ?? .exchangeRateAPI }
     @Published private(set) var refreshing = false
 
     @Published private var cache: CachedRates?
@@ -226,31 +259,30 @@ final class CurrencyStore: ObservableObject {
             return
         }
 
-        guard let url = URL(string: "https://open.er-api.com/v6/latest/USD") else {
-            return
-        }
-        var request = URLRequest(url: url)
-        request.timeoutInterval = 15
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-
         refreshing = true
         defer { refreshing = false }
-        do {
-            let (data, response) = try await fetch(request)
-            guard let http = response as? HTTPURLResponse,
+        for source in RateSource.allCases {
+            guard let url = URL(string: source.endpoint) else { continue }
+            var request = URLRequest(url: url)
+            request.timeoutInterval = 15
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+            // A failed source keeps the most recent cached rate and moves on.
+            // Currency display should remain stable when the Mac is offline or
+            // the reference API is down.
+            guard let (data, response) = try? await fetch(request),
+                  let http = response as? HTTPURLResponse,
                   http.statusCode == 200,
                   let decoded = try? JSONDecoder().decode(RateResponse.self, from: data),
                   decoded.result == "success",
                   decoded.baseCode == "USD",
-                  Self.validRates(decoded.rates) else { return }
+                  Self.validRates(decoded.rates) else { continue }
             let sourceDate = ISO8601DateFormatter().string(
                 from: Date(timeIntervalSince1970: decoded.timeLastUpdateUnix)
             )
-            cache = CachedRates(rates: decoded.rates, fetchedAt: now, sourceDate: sourceDate)
+            cache = CachedRates(rates: decoded.rates, fetchedAt: now, sourceDate: sourceDate, source: source)
             persistCache()
-        } catch {
-            // Keep the most recent cached rate. Currency display should remain
-            // stable when the Mac is offline or the reference API is down.
+            return
         }
     }
 

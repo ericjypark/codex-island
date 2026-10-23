@@ -52,6 +52,7 @@
 "Cost" = "成本";
 "Display currency" = "显示货币";
 "Rates by ExchangeRate-API" = "汇率由 ExchangeRate-API 提供";
+"Rates by AllRatesToday" = "汇率由 AllRatesToday 提供";
 "updating exchange rate…" = "正在更新汇率…";
 "last scan %@ · estimated %@" = "上次扫描 %1$@ · %2$@ 估算";
 "Cost view" = "成本视图";
