@@ -134,8 +134,6 @@ final class IslandWindowController {
         if inside != isMouseInsideIsland {
             isMouseInsideIsland = inside
             if inside {
-                NSApp.activate(ignoringOtherApps: true)
-                window.makeKey()
                 cmdQMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
                     self?.handleKeyDown(event) ?? event
                 }
