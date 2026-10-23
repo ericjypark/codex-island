@@ -49,6 +49,7 @@ extension UsageWindow {
         switch self {
         case .fiveHour: return "5h"
         case .weekly: return "week"
+        case .fableWeekly: return "Fable"
         case .monthly: return "Credits"
         }
     }

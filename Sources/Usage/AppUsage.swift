@@ -5,6 +5,7 @@ import Foundation
 enum UsageWindow: String, Codable {
     case fiveHour
     case weekly
+    case fableWeekly
     case monthly
 
     /// How long the window runs before the provider resets it. Bounds how
@@ -12,7 +13,7 @@ enum UsageWindow: String, Codable {
     var span: TimeInterval {
         switch self {
         case .fiveHour: return 5 * 3600
-        case .weekly:   return 7 * 86400
+        case .weekly, .fableWeekly: return 7 * 86400
         case .monthly:  return 31 * 86400
         }
     }
@@ -85,6 +86,7 @@ struct WindowUsage {
 struct AppUsage {
     var fiveHour: WindowUsage
     var weekly: WindowUsage
+    var fableWeekly: WindowUsage
     var monthly: WindowUsage
     /// Provider-reported plan tier — Claude's `subscriptionType` (free/pro/max/enterprise)
     /// or Codex's `plan_type` (free/plus/pro). nil when unknown.
@@ -94,10 +96,12 @@ struct AppUsage {
     var reportedWindows: [UsageWindow]?
 
     init(fiveHour: WindowUsage, weekly: WindowUsage, monthly: WindowUsage = .unknown,
+         fableWeekly: WindowUsage = .unknown,
          plan: String? = nil,
          reportedWindows: [UsageWindow]? = nil) {
         self.fiveHour = fiveHour
         self.weekly = weekly
+        self.fableWeekly = fableWeekly
         self.monthly = monthly
         self.plan = plan
         self.reportedWindows = reportedWindows
@@ -106,15 +110,18 @@ struct AppUsage {
     static let empty = AppUsage(fiveHour: .unknown, weekly: .unknown)
 
     var visibleWindows: [UsageWindow] {
-        let order: [UsageWindow] = [.fiveHour, .weekly, .monthly]
+        let order: [UsageWindow] = [.fiveHour, .weekly, .fableWeekly, .monthly]
         if let reportedWindows { return order.filter { reportedWindows.contains($0) } }
-        return order.filter { !window($0).isUnreported && ($0 != .monthly || window($0).hasReading) }
+        return order.filter {
+            !window($0).isUnreported && (($0 != .monthly && $0 != .fableWeekly) || window($0).hasReading)
+        }
     }
 
     func window(_ kind: UsageWindow) -> WindowUsage {
         switch kind {
         case .fiveHour: return fiveHour
         case .weekly: return weekly
+        case .fableWeekly: return fableWeekly
         case .monthly: return monthly
         }
     }
@@ -130,7 +137,7 @@ struct AppUsage {
     /// Which window `peekWindow` selected — the peek chrome (VoiceOver label,
     /// window-length fallback glyph) must describe the same window it shows.
     var peekWindowIsWeekly: Bool {
-        peekWindowKind == .weekly
+        peekWindowKind == .weekly || peekWindowKind == .fableWeekly
     }
 
     /// Fold a fetch result into the values currently on screen.
@@ -151,6 +158,7 @@ struct AppUsage {
             fiveHour: carryForward(fetched.fiveHour, prior: prior.fiveHour, at: now),
             weekly: carryForward(fetched.weekly, prior: prior.weekly, at: now),
             monthly: carryForward(fetched.monthly, prior: prior.monthly, at: now),
+            fableWeekly: carryForward(fetched.fableWeekly, prior: prior.fableWeekly, at: now),
             // Plan tier is read from the credential store, not the usage
             // response, so a failed fetch shouldn't blank the chip's badge.
             plan: fetched.plan ?? prior.plan,

@@ -107,6 +107,7 @@ enum ChartQAScenario: String, CaseIterable {
     case creditsSwapped, creditsSingleProvider, creditsZeroLimit, creditsOverCap
     case creditsFirstFailure, creditsLongError, creditsLocalized, creditsWrappedAmount
     case creditsGrok, creditsAntigravity
+    case fable, fableRemaining, fableCredits, fableError
 
     @MainActor
     func apply() {
@@ -127,7 +128,7 @@ enum ChartQAScenario: String, CaseIterable {
         RunLoop.main.run(until: Date().addingTimeInterval(0.05))
         if self == .creditsGrok { ProviderConnectionStore.shared.refresh(.grok) }
         if self == .creditsAntigravity { ProviderConnectionStore.shared.refresh(.antigravity) }
-        UsageDisplayModeStore.shared.mode = self == .remaining || self == .creditsRemaining ? .remaining : .used
+        UsageDisplayModeStore.shared.mode = self == .remaining || self == .creditsRemaining || self == .fableRemaining ? .remaining : .used
         let now = Date()
         func reading(_ value: Double, _ reset: TimeInterval) -> WindowUsage {
             WindowUsage(usedPercent: value / 100, resetAt: now.addingTimeInterval(reset), error: nil)
@@ -149,6 +150,16 @@ enum ChartQAScenario: String, CaseIterable {
                                            weekly: claudeWindows.contains(.weekly) ? claudeWeek : .unknown,
                                            plan: "Max", reportedWindows: claudeWindows)
         UsageStore.shared.lastUpdated = now
+        if rawValue.hasPrefix("fable") {
+            let credit = WindowUsage(usedPercent: 0.4, resetAt: nil, error: nil,
+                                     usedAmount: 6.8, limitAmount: 17, currencyCode: "USD")
+            UsageStore.shared.claude = AppUsage(fiveHour: claudeShort, weekly: claudeWeek,
+                monthly: self == .fableCredits ? credit : .unknown,
+                fableWeekly: WindowUsage(usedPercent: 0.635, resetAt: now.addingTimeInterval(2 * 86400),
+                                         error: self == .fableError ? "HTTP 500" : nil),
+                plan: "Max", reportedWindows: self == .fableCredits
+                    ? [.fiveHour, .weekly, .fableWeekly, .monthly] : [.fiveHour, .weekly, .fableWeekly])
+        }
         if rawValue.hasPrefix("credits") {
             let credit: WindowUsage
             switch self {

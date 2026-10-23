@@ -18,6 +18,15 @@ failed refreshes, so an offline request cannot bring back a removed 5h tile.
 Zero-percent windows remain visible. Peek and alerts select the same available
 window, and chart styles and history keys remain unchanged.
 
+## Claude Fable weekly limit
+
+When Claude reports a Fable `weekly_scoped` entry in `limits[]`, the Usage page
+shows a separate Fable quota alongside 5h and week in every chart style. Its
+percentage, reset countdown, and history stay separate from account-wide weekly
+usage. The legacy `seven_day_overage_included` window is also supported.
+Missing or incomplete Fable readings do not create a zero-percent quota based on
+the plan name. Failed refreshes retain the last reading until its reset boundary.
+
 ## Claude Enterprise credits
 
 Enterprise accounts can report monthly `extra_usage` credits alongside or instead

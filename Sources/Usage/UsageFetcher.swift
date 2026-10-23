@@ -48,7 +48,8 @@ enum UsageFetcher {
         AppUsage(
             fiveHour: WindowUsage(usedPercent: 0, resetAt: nil, error: message),
             weekly: WindowUsage(usedPercent: 0, resetAt: nil, error: message),
-            monthly: WindowUsage(usedPercent: 0, resetAt: nil, error: message)
+            monthly: WindowUsage(usedPercent: 0, resetAt: nil, error: message),
+            fableWeekly: WindowUsage(usedPercent: 0, resetAt: nil, error: message)
         )
     }
 
@@ -101,7 +102,7 @@ enum UsageFetcher {
             switch kind {
             case .fiveHour: if fiveHour == nil { fiveHour = parseCodexWindow(d) }
             case .weekly:   if weekly == nil { weekly = parseCodexWindow(d) }
-            case .monthly: break
+            case .monthly, .fableWeekly: break
             }
         }
         var reported: [UsageWindow] = []
@@ -220,13 +221,29 @@ enum UsageFetcher {
     static func parseClaudeUsageResponse(_ object: [String: Any], plan: String?) -> AppUsage {
         let fiveHour = parseClaudeWindow(object["five_hour"])
         let weekly = parseClaudeWindow(object["seven_day"])
+        let fableWeekly = parseClaudeFableWindow(object)
         let monthly = parseClaudeEnterpriseCredits(object["extra_usage"])
         var reported: [UsageWindow] = []
         if !fiveHour.isUnreported { reported.append(.fiveHour) }
         if !weekly.isUnreported { reported.append(.weekly) }
+        if !fableWeekly.isUnreported { reported.append(.fableWeekly) }
         if monthly != nil { reported.append(.monthly) }
         return AppUsage(fiveHour: fiveHour, weekly: weekly, monthly: monthly ?? .unknown,
+                        fableWeekly: fableWeekly,
                         plan: plan, reportedWindows: reported)
+    }
+
+    private static func parseClaudeFableWindow(_ object: [String: Any]) -> WindowUsage {
+        for limit in object["limits"] as? [[String: Any]] ?? [] {
+            guard limit["kind"] as? String == "weekly_scoped",
+                  let scope = limit["scope"] as? [String: Any],
+                  let model = scope["model"] as? [String: Any],
+                  let name = model["display_name"] as? String,
+                  name.caseInsensitiveCompare("Fable") == .orderedSame
+                    || name.lowercased().hasPrefix("fable ") else { continue }
+            return parseClaudeWindow(limit)
+        }
+        return parseClaudeWindow(object["seven_day_overage_included"])
     }
 
     private static func parseClaudeWindow(_ obj: Any?) -> WindowUsage {
@@ -236,7 +253,8 @@ enum UsageFetcher {
         // heuristic broke the moment the 5h window reset: utilization values
         // in (0, 1] (e.g. 0.5% used → 0.5) were treated as already-normalized
         // and rendered as 50%–100%. Always divide by 100; clamp below.
-        let raw = (d["utilization"] as? Double) ?? (d["used_percent"] as? Double) ?? 0
+        guard let raw = (d["utilization"] as? Double) ?? (d["used_percent"] as? Double)
+                ?? (d["percent"] as? Double), raw.isFinite else { return .unknown }
         let normalized = raw / 100.0
         var resetAt: Date?
         if let r = d["resets_at"] as? Double {

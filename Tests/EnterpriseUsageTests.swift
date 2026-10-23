@@ -120,6 +120,22 @@ struct EnterpriseUsageTests {
                "startup warmup still suppresses monthly pulses")
 
         let history = UsageHistoryStore.shared
+        let fableReading = WindowUsage(usedPercent: 0.635, resetAt: Date().addingTimeInterval(86400), error: nil)
+        let withFable = AppUsage(fiveHour: .unknown, weekly: .unknown, fableWeekly: fableReading,
+                                reportedWindows: [.fableWeekly])
+        let recordedAt = Date()
+        history.record(provider: .claude, usage: withFable, at: recordedAt)
+        expect(history.samples(provider: .claude, window: .fableWeekly).last?.used == 0.635,
+               "Fable history uses a separate series")
+        let fableSeed = UsageStore.seeded(.empty, provider: .claude, fillUnreported: true)
+        expect(fableSeed.fableWeekly.usedPercent == 0.635, "Fable history survives cold-start seeding")
+        let omittedFable = AppUsage(fiveHour: .unknown, weekly: .unknown, reportedWindows: [.weekly])
+        expect(!UsageStore.seeded(omittedFable, provider: .claude, fillUnreported: false).visibleWindows.contains(.fableWeekly),
+               "Fable history cannot resurrect an omitted quota")
+        let fableErrorCaption = UsageChartsRow(color: .white, style: .ring, seed: 0, metrics: []).caption(
+            WindowUsage(usedPercent: 0.635, resetAt: fableReading.resetAt, error: "HTTP 500"))
+        expect(fableErrorCaption.hasPrefix("HTTP 500"), "Fable fetch error remains visible alongside reset countdown")
+        expect(UsageWindow.fableWeekly.labelKey == "Fable", "Fable chart label stays distinct from week")
         let key = "enterprise-test-\(UUID().uuidString)"
         history.record(key: key, window: unlimited, at: Date())
         expect(history.samples(key: key).isEmpty, "unlimited credits do not persist fake zero utilization")

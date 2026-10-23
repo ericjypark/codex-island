@@ -3,6 +3,7 @@ import SwiftUI
 struct ChartHead: View {
     let value: Double
     let label: String
+    var valueSize: CGFloat = 32
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -13,7 +14,7 @@ struct ChartHead: View {
                 .foregroundStyle(.white.opacity(0.6))
             Spacer(minLength: 4)
             QuotaValue(reading: QuotaChartReading(id: label, label: label, value: value, caption: ""),
-                       mode: UsageDisplayModeStore.shared.mode, size: 32, weight: .semibold)
+                       mode: UsageDisplayModeStore.shared.mode, size: valueSize, weight: .semibold)
                 .animation(reduceMotion ? nil : .strongEaseOut, value: DisplayNumber.percent(value))
         }
     }

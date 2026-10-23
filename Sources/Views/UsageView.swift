@@ -219,27 +219,30 @@ struct UsageChartsRow: View {
     }
 
     private func charts(_ readings: [QuotaChartReading]) -> some View {
-        Group {
+        let metricLayout = readings.count > 2
+            ? AnyLayout(VStackLayout(spacing: 16)) : AnyLayout(HStackLayout(spacing: 18))
+        return Group {
             switch style {
             case .rails:
                 RailsChart(readings: readings, color: color, mode: usageDisplay.mode)
             case .ring:
                 OrbitChart(readings: readings, color: color, mode: usageDisplay.mode)
             case .capacity:
-                HStack(spacing: 18) {
+                metricLayout {
                     ForEach(readings) { reading in
                         CapacityChart(reading: reading, color: color, mode: usageDisplay.mode,
-                                      compact: readings.count > 1)
+                                      compact: readings.count > 1, rowLayout: readings.count > 2)
                     }
                 }
             case .telemetry:
                 TelemetryChart(readings: readings, color: color, mode: usageDisplay.mode)
             case .stepped:
-                HStack(spacing: 18) {
+                metricLayout {
                     ForEach(readings) { reading in
                         Group {
                             if let value = reading.value {
-                                SteppedChart(value: value, color: color, label: reading.label, sub: reading.caption)
+                                SteppedChart(value: value, color: color, label: reading.label,
+                                             sub: reading.caption, rowLayout: readings.count > 2)
                             } else if let amount = reading.amount {
                                 UsageAmountChart(label: reading.label, amount: amount, sub: reading.caption)
                             } else {
@@ -262,7 +265,9 @@ struct UsageChartsRow: View {
             return amounts + " · " + L10n.tr("resets in %@", Duration.compact(max(0, resetAt.timeIntervalSinceNow)))
         }
         if let reset = window.resetAt {
-            return L10n.tr("resets in %@", Duration.compact(max(0, reset.timeIntervalSinceNow)))
+            let countdown = L10n.tr("resets in %@", Duration.compact(max(0, reset.timeIntervalSinceNow)))
+            if let error = window.error, error != "no data" { return error + " · " + countdown }
+            return countdown
         }
         if let error = window.error, error != "no data" { return error }
         return ""

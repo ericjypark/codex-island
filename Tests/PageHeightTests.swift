@@ -84,6 +84,20 @@ struct PageHeightTests {
                          "Removing Credits must release its space")
             print("PASS Credits addition/removal resizes the real island and hit-test model: \(quotaHeight) -> \(creditsHeight) -> \(model.size.height)")
 
+            let withFable = AppUsage(fiveHour: measured, weekly: measured, fableWeekly: measured,
+                                    reportedWindows: [.fiveHour, .weekly, .fableWeekly])
+            UsageStore.shared.claude = withFable
+            await settleLayout()
+            precondition(model.size.height > quotaHeight + 30,
+                         "Fable's third quota must contribute to the panel and hit-test height")
+            precondition(model.size.height <= IslandWindowController.windowSize.height,
+                         "Fable quota must fit the overlay window")
+            UsageStore.shared.claude = withoutCredits
+            await settleLayout()
+            precondition(abs(model.size.height - quotaHeight) < 1,
+                         "Removing Fable must release its space")
+            print("PASS Fable addition/removal resizes the island and hit-test model")
+
             // Publishing provider data and navigating in the same turn used to
             // update the footer while leaving the previous page body mounted.
             for repetition in 1...2 {

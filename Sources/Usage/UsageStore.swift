@@ -283,6 +283,7 @@ final class UsageStore: ObservableObject {
             fiveHour: fill(.fiveHour, current.fiveHour, prior?.fiveHour),
             weekly: fill(.weekly, current.weekly, prior?.weekly),
             monthly: current.monthly,
+            fableWeekly: fill(.fableWeekly, current.fableWeekly, prior?.fableWeekly),
             plan: current.plan,
             reportedWindows: current.reportedWindows
         )
