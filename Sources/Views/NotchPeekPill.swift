@@ -29,8 +29,12 @@ struct NotchPeekPill: View {
     var contents: Contents = .combined
     var gaugeProgress: CGFloat = 0
     var gaugeHeight: CGFloat = 38
-    var showsResetCaption = false
+    var showsCaption = false
     var valueWidth: CGFloat? = nil
+    /// Keeps the value in the provider's brand tint even above an alert
+    /// threshold. Used when the logos are hidden, where the tint is the
+    /// only provider cue; the warning glyph still carries the severity.
+    var preservesBrandTint = false
     @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -43,7 +47,7 @@ struct NotchPeekPill: View {
                 stackedContent
             } else if contents == .ring {
                 quotaRing
-            } else if contents == .reset, showsResetCaption {
+            } else if contents == .reset, showsCaption {
                 VStack(alignment: .trailing, spacing: 1) {
                     if showSpinner {
                         LoadingDot()
@@ -59,12 +63,29 @@ struct NotchPeekPill: View {
                             .font(Typography.micro).foregroundStyle(.white.opacity(0.55))
                     }
                 }
+            } else if contents == .percentage, showsCaption {
+                VStack(alignment: alignment == .leading ? .trailing : .leading, spacing: 1) {
+                    if showSpinner {
+                        LoadingDot(color: placeholderDotColor)
+                    } else if showDash {
+                        Text("-%").font(Typography.bodyNumber).foregroundStyle(placeholderDashColor)
+                    } else {
+                        HStack(spacing: 4) {
+                            percentLabel
+                            if severity != .none { warningGlyph }
+                        }
+                    }
+                    if usage.hasReading {
+                        Text(usage.isUnlimitedAmount ? "∞" : L10n.tr(usageDisplay.mode == .used ? "Used" : "Quota left"))
+                            .font(Typography.micro).foregroundStyle(.white.opacity(0.55))
+                    }
+                }
             } else if showSpinner {
-                LoadingDot()
+                LoadingDot(color: contents == .reset ? .white.opacity(0.55) : placeholderDotColor)
             } else if showDash {
                 Text(contents == .reset ? "-" : "-%")
                     .font(Typography.bodyNumber)
-                    .foregroundStyle(.white.opacity(0.40))
+                    .foregroundStyle(contents == .reset ? .white.opacity(0.40) : placeholderDashColor)
             } else if contents == .reset {
                 resetLabel
             } else if contents == .percentage {
@@ -101,9 +122,9 @@ struct NotchPeekPill: View {
         VStack(alignment: alignment == .leading ? .trailing : .leading, spacing: 1) {
             HStack(spacing: 4) {
                 if showSpinner {
-                    LoadingDot()
+                    LoadingDot(color: placeholderDotColor)
                 } else if showDash {
-                    Text("-%").font(Typography.bodyNumber).foregroundStyle(.white.opacity(0.40))
+                    Text("-%").font(Typography.bodyNumber).foregroundStyle(placeholderDashColor)
                 } else {
                     if alignment == .leading, severity != .none { warningGlyph }
                     percentLabel
@@ -139,14 +160,15 @@ struct NotchPeekPill: View {
     private var warningGlyph: some View {
         Text("⚠")
             .font(Typography.bodyNumber)
-            .foregroundStyle(effectiveTint)
+            .foregroundStyle(severityTint)
     }
 
     private var percentLabel: some View {
         Text(percentText)
             .font(Typography.bodyNumber)
             .minimumScaleFactor(0.5)
-            .frame(width: contents == .stacked && usage.isUnlimitedAmount ? valueWidth : nil,
+            .frame(width: (contents == .stacked || contents == .percentage) && usage.isUnlimitedAmount
+                       ? valueWidth : nil,
                    alignment: alignment == .leading ? .trailing : .leading)
             .foregroundStyle(effectiveTint)
             .help(usage.isUnlimitedAmount ? usage.amountCaption ?? "" : "")
@@ -168,13 +190,28 @@ struct NotchPeekPill: View {
     }
 
     /// Brand tint by default; alert color when above threshold so the
-    /// percent + warning glyph share a consistent severity color.
+    /// percent + warning glyph share a consistent severity color, unless
+    /// `preservesBrandTint` keeps the value identifying its provider.
     private var effectiveTint: Color {
+        preservesBrandTint ? tint : severityTint
+    }
+
+    private var severityTint: Color {
         switch severity {
         case .none:     return tint
         case .warning:  return IslandColor.alertAmber
         case .critical: return IslandColor.alertRed
         }
+    }
+
+    /// Loading and unavailable placeholders stay neutral, except under
+    /// `preservesBrandTint`, where the tint is the only provider cue.
+    private var placeholderDotColor: Color {
+        preservesBrandTint ? tint.opacity(0.70) : .white.opacity(0.55)
+    }
+
+    private var placeholderDashColor: Color {
+        preservesBrandTint ? tint.opacity(0.55) : .white.opacity(0.40)
     }
 
     /// A measured zero stays visible during refresh, just like any other reading.
@@ -194,7 +231,7 @@ struct NotchPeekPill: View {
 
     private var percentText: String {
         if usage.isUnlimitedAmount, let amount = usage.usedAmount {
-            return contents == .stacked
+            return contents == .stacked || contents == .percentage
                 ? UsageCreditDisplay.compactCurrency(amount, code: usage.currencyCode)
                 : UsageCreditDisplay.currency(amount, code: usage.currencyCode)
         }
@@ -213,11 +250,12 @@ struct NotchPeekPill: View {
 }
 
 private struct LoadingDot: View {
+    var color: Color = .white.opacity(0.55)
     @State private var pulsing = false
 
     var body: some View {
         Circle()
-            .fill(.white.opacity(0.55))
+            .fill(color)
             .frame(width: 6, height: 6)
             .opacity(pulsing ? 0.30 : 0.85)
             .onAppear {

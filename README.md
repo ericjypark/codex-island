@@ -38,7 +38,8 @@ for authentication details and data limitations.
 - **Notch-native overlay.** The compact state is a black pill aligned to the
   physical notch, drawn with continuous (squircle) corners that match the
   hardware. On non-notched displays it falls back to a configurable menu-bar
-  pill.
+  pill. Turn off **Provider logos** to keep the island tight around the notch;
+  usage readings keep their provider colors.
 - **Hover to peek.** The silhouette widens just enough to show each visible
   provider's 5-hour percentage and reset headline, or keep those headlines
   visible at rest with **Always show usage**.

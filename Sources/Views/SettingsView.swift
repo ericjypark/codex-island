@@ -18,6 +18,7 @@ struct SettingsView: View {
     @ObservedObject private var alertPrefs = AlertThresholdStore.shared
     @ObservedObject private var spacing = IslandSpacingStore.shared
     @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
+    @ObservedObject private var logos = LogoVisibilityStore.shared
     @ObservedObject private var targetDisplay = IslandTargetDisplayStore.shared
     @ObservedObject private var appLanguage = AppLanguageStore.shared
     @ObservedObject private var usage = UsageStore.shared
@@ -27,6 +28,10 @@ struct SettingsView: View {
 
     @AppStorage("Settings.activeTab") private var activeTabRaw: String = SettingsTab.general.rawValue
     @State private var recoveryPresented = false
+    /// Bumped on display attach/detach. `DisplayInfo` reads `NSScreen`
+    /// directly, which SwiftUI can't observe, so the Display tab reads this
+    /// to re-resolve the target with the window controller.
+    @State private var screenConfigurationRevision = 0
 
     private var activeTab: SettingsTab {
         get { SettingsTab(rawValue: activeTabRaw) ?? .general }
@@ -76,6 +81,11 @@ struct SettingsView: View {
                 CostStore.shared.refresh()
                 NotificationCenter.default.post(name: .codexIslandUsageHistoryRecovered, object: nil)
             }))
+        }
+        .onReceive(NotificationCenter.default.publisher(
+            for: NSApplication.didChangeScreenParametersNotification
+        )) { _ in
+            screenConfigurationRevision += 1
         }
     }
 
@@ -160,11 +170,17 @@ struct SettingsView: View {
     }
 
     private var displayTab: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        // Dependency only: re-renders the display list, the Auto subtitle,
+        // and the notch gates below when the screen configuration changes.
+        _ = screenConfigurationRevision
+        return VStack(alignment: .leading, spacing: 0) {
             usageDisplaySection
             chartSection
             costStyleSection
             targetDisplaySection
+            if logosSectionVisible {
+                logosSection
+            }
             if spacingSectionVisible {
                 spacingSection
             }
@@ -177,6 +193,13 @@ struct SettingsView: View {
     /// the gate stays in sync with where the island actually is.
     private var spacingSectionVisible: Bool {
         DisplayInfo.currentTarget()?.notch.hasNotch == false
+    }
+
+    /// The logo toggle only makes sense on a physical notch. On non-notched
+    /// displays, hiding the logos would leave an empty synthetic pill
+    /// floating at top-center.
+    private var logosSectionVisible: Bool {
+        DisplayInfo.currentTarget()?.notch.hasNotch == true
     }
 
     private var providersTab: some View {
@@ -684,6 +707,25 @@ struct SettingsView: View {
                 subtitle: "Tightens the gap between logos when the island is on a screen without a hardware notch."
             ) {
                 spacingSegmented
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 14)
+        .padding(.bottom, 14)
+    }
+
+    private var logosSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionLabel("Logos")
+            SettingsRow(
+                title: "Provider logos",
+                subtitle: "Show provider logos beside the notch. When off, usage colors identify each provider."
+            ) {
+                SettingsToggle(isOn: logos.visible) {
+                    logos.visible.toggle()
+                }
+                .accessibilityLabel(L10n.tr("Provider logos"))
+                .accessibilityValue(L10n.tr(logos.visible ? "On" : "Off"))
             }
         }
         .padding(.horizontal, 14)

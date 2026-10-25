@@ -86,6 +86,7 @@ struct IslandRootView: View {
                         ProviderMark(provider: visibility.left)
                             .padding(.leading, logoEdgePadding)
                             .padding(.top, max(0, (model.notch.height - 20) / 2))
+                            .modifier(LogoVisibility(visible: model.logosVisible))
                     }
                 }
                 .overlay(alignment: .topTrailing) {
@@ -94,7 +95,8 @@ struct IslandRootView: View {
                             ProviderMark(provider: right)
                                 .padding(.trailing, logoEdgePadding)
                                 .padding(.top, max(0, (model.notch.height - 20) / 2))
-                        } else {
+                                .modifier(LogoVisibility(visible: model.logosVisible))
+                        } else if model.logosVisible {
                             PeekPillOverlay(provider: visibility.left, isLeft: false,
                                 topPadding: 0, pillsVisible: true,
                                 contents: .gauge, edgePadding: logoEdgePadding, slotWidth: 20,
@@ -111,8 +113,9 @@ struct IslandRootView: View {
                             edgePadding: 9,
                             slotWidth: model.state == .peek ? model.pillSlotWidth - 14 : 0,
                             availableHeight: model.notch.height,
-                            showsResetCaption: model.notch.height >= 32,
-                            revealProgress: model.state == .peek ? 1 : 0)
+                            showsCaption: model.notch.height >= 32,
+                            revealProgress: model.state == .peek ? 1 : 0,
+                            preservesBrandTint: !model.logosVisible)
                     }
                 }
                 .overlay(alignment: .topTrailing) {
@@ -121,7 +124,20 @@ struct IslandRootView: View {
                             topPadding: 0, pillsVisible: true, contents: .stacked, edgePadding: 9,
                             slotWidth: model.state == .peek ? model.pillSlotWidth - 14 : 0,
                             availableHeight: model.notch.height,
-                            revealProgress: model.state == .peek ? 1 : 0)
+                            revealProgress: model.state == .peek ? 1 : 0,
+                            preservesBrandTint: !model.logosVisible)
+                    } else if model.state != .expanded, !model.logosVisible {
+                        // Without the logo tab there is no room for the
+                        // unrolling gauge, so a single provider shows its
+                        // percentage in the pill slot, mirroring the reset
+                        // pill on the left.
+                        PeekPillOverlay(provider: visibility.left, isLeft: false,
+                            topPadding: 0, pillsVisible: true, contents: .percentage, edgePadding: 9,
+                            slotWidth: model.state == .peek ? model.pillSlotWidth - 14 : 0,
+                            availableHeight: model.notch.height,
+                            showsCaption: model.notch.height >= 32,
+                            revealProgress: model.state == .peek ? 1 : 0,
+                            preservesBrandTint: true)
                     }
                 }
                 .contentShape(IslandShape())
@@ -365,6 +381,17 @@ struct IslandRootView: View {
     }
 }
 
+private struct LogoVisibility: ViewModifier {
+    let visible: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(visible ? 1 : 0)
+            .animation(.openMorph, value: visible)
+            .accessibilityHidden(!visible)
+    }
+}
+
 /// Silhouette + halo + animated sweep. Bundles every layer whose
 /// appearance depends on alert severity or the Low Power Mode event
 /// predicate, so a UsageStore/AlertEngine/CostStore emission only
@@ -457,8 +484,9 @@ private struct PeekPillOverlay: View {
     var slotWidth: CGFloat? = nil
     var availableHeight: CGFloat? = nil
     var gaugeProgress: CGFloat = 0
-    var showsResetCaption = false
+    var showsCaption = false
     var revealProgress: CGFloat = 1
+    var preservesBrandTint = false
 
     @ObservedObject private var visibility = ProviderVisibilityStore.shared
     @ObservedObject private var connections = ProviderConnectionStore.shared
@@ -478,11 +506,12 @@ private struct PeekPillOverlay: View {
             contents: contents,
             gaugeProgress: gaugeProgress,
             gaugeHeight: availableHeight ?? 38,
-            showsResetCaption: showsResetCaption,
-            valueWidth: slotWidth
+            showsCaption: showsCaption,
+            valueWidth: slotWidth,
+            preservesBrandTint: preservesBrandTint
         )
         Group {
-            if contents == .reset || contents == .stacked {
+            if contents == .reset || contents == .stacked || contents == .percentage {
                 pill
                     .modifier(PeekContentReveal(progress: revealProgress, start: 0.45, end: 1))
                     .animation(PeekMotion.animation(opening: revealProgress > 0), value: revealProgress)
@@ -511,8 +540,8 @@ private struct PeekPillOverlay: View {
         // `isVisible` must be true for the pill to render. Keying the
         // accessibility hide on only `isVisible` lets VoiceOver reach a
         // pill that is visually invisible during the peek-out lifecycle.
-        .accessibilityHidden(!(pillsVisible && isVisible) || contents == .reset || contents == .percentage
-            || (contents == .stacked && revealProgress == 0))
+        .accessibilityHidden(!(pillsVisible && isVisible) || contents == .reset
+            || ((contents == .stacked || contents == .percentage) && revealProgress == 0))
     }
 
     private var isVisible: Bool {
