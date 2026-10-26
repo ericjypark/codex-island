@@ -29,7 +29,7 @@ struct ClaudeFableUsageTests {
         expect(usage.fableWeekly.usedPercent == 0.635, "scoped percent uses percentage units")
         expect(usage.weekly.usedPercent == 0.25, "Fable does not replace the overall weekly quota")
         expect(usage.fableWeekly.resetAt == ISO8601DateFormatter().date(from: "2027-01-15T08:30:00Z"), "Fable retains its own reset boundary")
-        expect(usage.peekWindowKind == .fiveHour, "adding Fable preserves the primary peek metric")
+        expect(usage.peekWindowKind(preferring: .fiveHour) == .fiveHour, "adding Fable preserves the primary peek metric")
         expect(UsageWindow.fableWeekly.span == UsageWindow.weekly.span, "Fable has a weekly history lifetime")
 
         for (name, percent) in [("Fable", 0.0), ("Fable 5.1", 0.5), ("fable", 100.0)] {
@@ -70,7 +70,8 @@ struct ClaudeFableUsageTests {
         expect(!removed.visibleWindows.contains(.fableWeekly) && removed.fableWeekly.isUnreported, "successful omission removes previous Fable reading")
         let onlyFable = parse(["limits": [["kind": "weekly_scoped", "percent": 30,
                                          "scope": ["model": ["display_name": "Fable"]]]]])
-        expect(onlyFable.peekWindowKind == .fableWeekly && onlyFable.peekWindowIsWeekly, "Fable-only fallback preserves weekly identity")
+        expect(onlyFable.peekWindowKind(preferring: .fiveHour) == .fableWeekly
+            && onlyFable.peekWindowKind(preferring: .weekly) == .fableWeekly, "Fable-only fallback preserves weekly identity")
         print("\(checks) Fable checks passed")
     }
 }

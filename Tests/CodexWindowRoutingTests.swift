@@ -87,6 +87,8 @@ struct CodexWindowRoutingTests {
             let request = UsageFetcher.codexRequest(path: "usage", authData: Data(fixture.utf8))
             expect(request != nil && request?.value(forHTTPHeaderField: "ChatGPT-Account-Id") == nil,
                    "legacy credentials without an account retain token-only compatibility")
+            expect(UsageFetcher.codexAccountID(authData: Data(fixture.utf8)) == nil,
+                   "credentials without an account name no account")
         }
         for fixture in ["not-json", "{}", #"{"tokens":{"account_id":"selected-account"}}"#,
                         #"{"tokens":{"access_token":" "}}"#] {
@@ -111,6 +113,63 @@ struct CodexWindowRoutingTests {
                "fetchCodex sends the selected account header")
         expect(fetchedUsage.weekly.usedPercent == 0.40 && fetchedUsage.reportedWindows == [.weekly],
                "fetchCodex parses the mocked weekly quota")
+        expect(fetchedUsage.accountID == "selected-account", "fetchCodex tags the usage with the selected account")
+        let failedUsage = await UsageFetcher.fetchCodex(credentialData: auth) { request in
+            guard let url = request.url,
+                  let response = HTTPURLResponse(url: url, statusCode: 500, httpVersion: nil, headerFields: nil)
+            else { throw URLError(.badURL) }
+            return (Data(), response)
+        }
+        expect(failedUsage.accountID == "selected-account" && !failedUsage.weekly.hasReading,
+               "a failed fetchCodex still names the attempted account")
+        var currentAuth = auth
+        let switchedMidFlight = await UsageFetcher.fetchCodex(credentialData: currentAuth) { request in
+            currentAuth = switchedAuth
+            guard let url = request.url,
+                  let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)
+            else { throw URLError(.badURL) }
+            return (Data(weeklyOnlyResponse.utf8), response)
+        }
+        expect(switchedMidFlight.accountID == "other-account" && !switchedMidFlight.weekly.hasReading,
+               "a response for an account switched away mid-flight is not applied")
+        func midFlight(from initial: Data, to replacement: Data?) async -> AppUsage {
+            var current: Data? = initial
+            return await UsageFetcher.fetchCodex(credentialData: current) { request in
+                current = replacement
+                guard let url = request.url,
+                      let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)
+                else { throw URLError(.badURL) }
+                return (Data(weeklyOnlyResponse.utf8), response)
+            }
+        }
+        let unreadableMidFlight = await midFlight(from: auth, to: Data("not-json".utf8))
+        expect(!unreadableMidFlight.weekly.hasReading && !unreadableMidFlight.accountResolved,
+               "a response is not applied when the credential becomes unusable mid-flight")
+        let tokenOnlyOld = Data(#"{"tokens":{"access_token":"old-token"}}"#.utf8)
+        let tokenOnlyNew = Data(#"{"tokens":{"access_token":"new-token"}}"#.utf8)
+        let tokenOnlySwitched = await midFlight(from: tokenOnlyOld, to: tokenOnlyNew)
+        expect(!tokenOnlySwitched.weekly.hasReading && tokenOnlySwitched.accountResolved && tokenOnlySwitched.accountID == nil,
+               "a token-only credential replaced mid-flight does not apply the old token's response")
+        expect((await midFlight(from: tokenOnlyOld, to: tokenOnlyOld)).weekly.hasReading,
+               "an unchanged token-only credential still applies its response")
+        let rotated = await midFlight(from: auth, to: Data(#"{"tokens":{"access_token":"rotated-token","account_id":"selected-account"}}"#.utf8))
+        expect(rotated.weekly.hasReading && rotated.accountID == "selected-account",
+               "a same-account token rotation mid-flight still applies the response")
+        var thrownAuth = auth
+        let switchedThenThrew = await UsageFetcher.fetchCodex(credentialData: thrownAuth) { _ in
+            thrownAuth = switchedAuth
+            throw URLError(.timedOut)
+        }
+        expect(switchedThenThrew.accountID == "other-account" && switchedThenThrew.weekly.error == "codex credentials changed",
+               "a request that fails after an account switch is tagged with the new account")
+        let identity = UsageFetcher.codexLocalIdentity(credentialData: auth)
+        expect(identity?.accountID == "selected-account" && identity?.accountResolved == true && identity?.visibleWindows.isEmpty == true,
+               "the local credential resolves the account before any request")
+        expect(UsageFetcher.codexLocalIdentity(credentialData: Data(#"{"tokens":{"access_token":"t"}}"#.utf8))
+                .map { $0.accountResolved && $0.accountID == nil } == true,
+               "a local token-only credential resolves to the provider-wide scope")
+        expect(UsageFetcher.codexLocalIdentity(credentialData: Data("not-json".utf8)) == nil,
+               "an unusable local credential leaves the account unresolved")
 
         var creditRequests: [URLRequest] = []
         let fetchedCredits = await UsageFetcher.fetchCodexResetCredits(credentialData: auth) { request in
@@ -149,11 +208,11 @@ struct CodexWindowRoutingTests {
             weekly: weeklyOnly.weekly
         )
         expect(
-            weeklyOnlyUsage.peekWindow.hasReading,
+            weeklyOnlyUsage.peekWindow(preferring: .fiveHour).hasReading,
             "peek selects the reported weekly window instead of rendering an em dash"
         )
         expect(
-            weeklyOnlyUsage.peekWindowIsWeekly,
+            weeklyOnlyUsage.peekWindowKind(preferring: .fiveHour) == .weekly,
             "peek chrome knows the weekly window was selected (a11y label, 7d fallback)"
         )
 
@@ -163,12 +222,90 @@ struct CodexWindowRoutingTests {
         expect(both.fiveHour.usedPercent == 0.12, "18000s primary window lands in 5h")
         expect(both.weekly.usedPercent == 0.34, "604800s secondary window lands in weekly")
         expect(
-            AppUsage(fiveHour: both.fiveHour, weekly: both.weekly).peekWindow.usedPercent == 0.12,
+            AppUsage(fiveHour: both.fiveHour, weekly: both.weekly).peekWindow(preferring: .fiveHour).usedPercent == 0.12,
             "peek continues to prefer 5h when both windows are reported"
         )
         expect(
-            !AppUsage(fiveHour: both.fiveHour, weekly: both.weekly).peekWindowIsWeekly,
+            AppUsage(fiveHour: both.fiveHour, weekly: both.weekly).peekWindowKind(preferring: .fiveHour) == .fiveHour,
             "peek chrome describes the 5h window on two-window plans"
+        )
+
+        // MARK: the peek follows the user's preferred window
+
+        let bothUsage = AppUsage(fiveHour: both.fiveHour, weekly: both.weekly, reportedWindows: both.reported)
+        expect(
+            bothUsage.peekWindowKind(preferring: .weekly) == .weekly
+                && bothUsage.peekWindow(preferring: .weekly).usedPercent == 0.34,
+            "weekly preference shows the weekly reading on two-window plans"
+        )
+        let failure = WindowUsage(usedPercent: 0, resetAt: nil, error: "HTTP 500")
+        let weeklyFailed = AppUsage(fiveHour: both.fiveHour, weekly: failure, reportedWindows: both.reported)
+        expect(
+            weeklyFailed.peekWindowKind(preferring: .weekly) == .fiveHour,
+            "weekly preference falls back to a real 5h reading when weekly has none"
+        )
+        let neitherReading = AppUsage(fiveHour: failure, weekly: failure, reportedWindows: both.reported)
+        expect(
+            neitherReading.peekWindowKind(preferring: .weekly) == .weekly,
+            "weekly preference keeps its identity when no window has a reading"
+        )
+        expect(
+            weeklyOnlyUsage.peekWindowKind(preferring: .fiveHour) == .weekly
+                && AppUsage(fiveHour: both.fiveHour, weekly: .unknown, reportedWindows: [.fiveHour])
+                    .peekWindowKind(preferring: .weekly) == .fiveHour,
+            "single-window plans ignore the preference"
+        )
+        expect(bothUsage.offersPeekWindowChoice, "two-window plans offer the peek window choice")
+
+        // MARK: the selected account travels with the readings
+
+        let accountA = AppUsage(fiveHour: both.fiveHour, weekly: both.weekly, reportedWindows: both.reported, accountID: "acct-a")
+        expect(AppUsage.merged(fetched: AppUsage(fiveHour: failure, weekly: failure), retaining: accountA, at: Date()).accountID == "acct-a",
+               "a failed fetch keeps the account of the readings it carries")
+        expect(AppUsage.merged(fetched: AppUsage(fiveHour: both.fiveHour, weekly: both.weekly, accountID: "acct-b"),
+                               retaining: accountA, at: Date()).accountID == "acct-b",
+               "a successful fetch for another account takes its identity")
+        expect(AppUsage.merged(fetched: AppUsage(fiveHour: both.fiveHour, weekly: both.weekly, reportedWindows: both.reported,
+                                                 accountResolved: true),
+                               retaining: accountA, at: Date()).accountID == nil,
+               "a successful fetch naming no account clears the prior account")
+        let failedForA = AppUsage(fiveHour: failure, weekly: failure, accountID: "acct-a")
+        let coldFailure = AppUsage.merged(fetched: failedForA, retaining: AppUsage(fiveHour: both.fiveHour, weekly: both.weekly),
+                                           at: Date(timeIntervalSince1970: 1_780_000_000))
+        expect(coldFailure.accountID == "acct-a" && coldFailure.weekly.hasReading,
+               "a failed first poll scopes seeded readings to the attempted account")
+        let failedForB = AppUsage(fiveHour: failure, weekly: failure, accountID: "acct-b")
+        let switchedFailure = AppUsage.merged(fetched: failedForB, retaining: accountA, at: Date())
+        expect(switchedFailure.accountID == "acct-b" && !switchedFailure.weekly.hasReading && !switchedFailure.fiveHour.hasReading,
+               "a failed poll for another account does not relabel the prior account's readings")
+        expect(switchedFailure.visibleWindows.isEmpty,
+               "a failed poll for another account shows no undiscovered windows")
+        expect(AppUsage.merged(fetched: failedForB, retaining: switchedFailure, at: Date()).visibleWindows.isEmpty,
+               "repeated failures for the new account stay windowless until discovery")
+        let failedTokenOnly = AppUsage(fiveHour: failure, weekly: failure, accountResolved: true)
+        let tokenOnlySwitch = AppUsage.merged(fetched: failedTokenOnly, retaining: accountA, at: Date())
+        expect(tokenOnlySwitch.accountID == nil && tokenOnlySwitch.accountResolved && !tokenOnlySwitch.weekly.hasReading,
+               "a failed poll with a token-only credential drops the prior account and its readings")
+        expect(AppUsage.merged(fetched: AppUsage(fiveHour: failure, weekly: failure), retaining: tokenOnlySwitch, at: Date()).accountResolved,
+               "an unresolved failure keeps the resolved provider-wide scope")
+
+        let zeroSelected = AppUsage(fiveHour: WindowUsage(usedPercent: 0.9, resetAt: nil, error: nil),
+                                    weekly: WindowUsage(usedPercent: 0, resetAt: nil, error: nil),
+                                    reportedWindows: both.reported)
+        let zeroCarried = AppUsage.merged(fetched: AppUsage(fiveHour: failure, weekly: failure), retaining: zeroSelected, at: Date())
+        expect(zeroCarried.weekly.hasReading && zeroCarried.peekWindowKind(preferring: .weekly) == .weekly,
+               "a carried real zero keeps the selected window across a failed poll")
+        expect(AppUsage.merged(fetched: AppUsage(fiveHour: failure, weekly: failure), retaining: zeroCarried, at: Date())
+                .peekWindowKind(preferring: .weekly) == .weekly,
+               "repeated failures keep carrying the selected zero")
+        expect(
+            !AppUsage(fiveHour: failure, weekly: failure).offersPeekWindowChoice,
+            "a failed fetch before window discovery offers no peek window choice"
+        )
+        expect(
+            !weeklyOnlyUsage.offersPeekWindowChoice
+                && !AppUsage(fiveHour: failure, weekly: both.weekly).offersPeekWindowChoice,
+            "a plan without both rate windows offers no peek window choice"
         )
 
         // MARK: shapes without limit_window_seconds fall back to slot order
@@ -215,12 +352,13 @@ struct CodexWindowRoutingTests {
         let zero = WindowUsage(usedPercent: 0, resetAt: nil, error: nil)
         let zeroWeekly = AppUsage(fiveHour: .unknown, weekly: zero, reportedWindows: [.weekly])
         expect(zeroWeekly.visibleWindows == [.weekly], "genuine zero-percent weekly limit remains visible")
-        expect(zeroWeekly.peekWindowIsWeekly && zeroWeekly.peekWindow.hasReading, "zero-percent weekly peek keeps its identity")
+        expect(zeroWeekly.peekWindowKind(preferring: .fiveHour) == .weekly
+            && zeroWeekly.peekWindow(preferring: .fiveHour).hasReading, "zero-percent weekly peek keeps its identity")
         let error = WindowUsage(usedPercent: 0, resetAt: nil, error: "offline")
         let failed = AppUsage(fiveHour: error, weekly: error)
         let merged = AppUsage.merged(fetched: failed, retaining: weeklyDisplay, at: Date())
         expect(merged.visibleWindows == [.weekly], "offline refresh cannot resurrect the absent 5h tile")
-        expect(merged.peekWindowIsWeekly, "offline weekly plan keeps weekly peek and alert routing")
+        expect(merged.peekWindowKind(preferring: .fiveHour) == .weekly, "offline weekly plan keeps weekly peek and alert routing")
         let failedAgain = AppUsage.merged(fetched: failed, retaining: merged, at: Date())
         expect(failedAgain.visibleWindows == [.weekly], "repeated failures retain the discovered windows")
         let changed = AppUsage.merged(fetched: twoDisplay, retaining: merged, at: Date())
@@ -228,7 +366,7 @@ struct CodexWindowRoutingTests {
         let removed = AppUsage.merged(fetched: weeklyDisplay, retaining: twoDisplay, at: Date())
         expect(removed.visibleWindows == [.weekly], "a removed limit does not remain as a placeholder")
         let fiveOnlyDisplay = AppUsage(fiveHour: zero, weekly: .unknown, reportedWindows: [.fiveHour])
-        expect(fiveOnlyDisplay.visibleWindows == [.fiveHour] && !fiveOnlyDisplay.peekWindowIsWeekly,
+        expect(fiveOnlyDisplay.visibleWindows == [.fiveHour] && fiveOnlyDisplay.peekWindowKind(preferring: .weekly) == .fiveHour,
                "five-hour-only plans keep the correct label")
         expect(AppUsage.empty.visibleWindows.isEmpty, "cold-start unknown does not invent limit windows")
 

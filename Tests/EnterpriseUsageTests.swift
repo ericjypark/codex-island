@@ -68,7 +68,11 @@ struct EnterpriseUsageTests {
         expect(!AppUsage.merged(fetched: .empty, retaining: original, at: Date()).monthly.hasReading, "omitted monthly window displaces old reading")
 
         let weeklyFallback = AppUsage(fiveHour: failure, weekly: limited, reportedWindows: [.fiveHour, .weekly])
-        expect(weeklyFallback.peekWindowKind == .weekly, "unavailable 5h reading still falls back to real weekly reading")
+        expect(weeklyFallback.peekWindowKind(preferring: .fiveHour) == .weekly, "unavailable 5h reading still falls back to real weekly reading")
+        let enterprise = AppUsage(fiveHour: limited, weekly: limited, monthly: limited,
+            reportedWindows: [.fiveHour, .weekly, .monthly])
+        expect(enterprise.peekWindowKind(preferring: .weekly) == .weekly,
+               "weekly preference applies alongside Enterprise monthly credits")
         let response = try! JSONSerialization.jsonObject(with: Data(#"{"extra_usage":{"is_enabled":true,"used_credits":47,"monthly_limit":1600}}"#.utf8)) as! [String: Any]
         let noPlan = UsageFetcher.parseClaudeUsageResponse(response, plan: nil)
         expect(noPlan.visibleWindows == [.monthly] && noPlan.monthly.usedAmount == 0.47,
@@ -118,6 +122,84 @@ struct EnterpriseUsageTests {
         expect(nextCrossing.pulse != nil, "next observed monthly threshold crossing can alert")
         expect(AlertDecision.evaluateCrossings(previous: [], inputs: [noBoundary], warning: 80, critical: 95, warmedUp: false).pulse == nil,
                "startup warmup still suppresses monthly pulses")
+
+        let resetlessWeekly = AlertDecision.WindowInput(provider: .codex, visible: true,
+            window: WindowUsage(usedPercent: 0.85, resetAt: nil, error: nil), windowKind: .weekly)
+        let weeklyCrossing = AlertDecision.evaluateCrossings(previous: [], inputs: [resetlessWeekly], warning: 80, critical: 95, warmedUp: true)
+        expect(weeklyCrossing.pulse?.severity == .warning, "weekly threshold alerts without reset metadata")
+        expect(AlertDecision.evaluateCrossings(previous: weeklyCrossing.next, inputs: [resetlessWeekly], warning: 80, critical: 95, warmedUp: true).pulse == nil,
+               "boundaryless weekly alert fires once")
+        let lowWeekly = AlertDecision.WindowInput(provider: .codex, visible: true,
+            window: WindowUsage(usedPercent: 0.1, resetAt: nil, error: nil), windowKind: .weekly)
+        let weeklyRearmed = AlertDecision.evaluateCrossings(previous: weeklyCrossing.next, inputs: [lowWeekly], warning: 80, critical: 95, warmedUp: true)
+        expect(weeklyRearmed.next.isEmpty, "observed lower weekly usage rearms the next crossing")
+
+        let accountA = AppUsage(fiveHour: .unknown, weekly: .unknown, accountID: "acct-a")
+        let accountB = AppUsage(fiveHour: .unknown, weekly: .unknown, accountID: "acct-b")
+        let scopeA = PeekWindowStore.scope(.codex, usage: accountA)
+        expect(scopeA != PeekWindowStore.scope(.codex, usage: accountB) && scopeA != PeekWindowStore.scope(.claude, usage: accountA),
+               "peek choices are scoped per provider account")
+        expect(PeekWindowStore.scope(.codex, usage: .empty) == "codex", "a credential without an account keeps the provider-wide choice")
+        let tokenOnlyUsage = AppUsage(fiveHour: .unknown, weekly: .unknown, accountResolved: true)
+        expect(!PeekWindowStore.scopeResolved(.codex, usage: .empty, local: tokenOnlyUsage)
+                && PeekWindowStore.scopeResolved(.codex, usage: tokenOnlyUsage, local: tokenOnlyUsage)
+                && PeekWindowStore.scopeResolved(.claude, usage: .empty),
+               "the Codex choice waits for a resolved account, including a resolved token-only one")
+        expect(!PeekWindowStore.scopeResolved(.codex, usage: accountA, local: accountB)
+                && PeekWindowStore.scopeResolved(.codex, usage: accountA, local: accountA)
+                && !PeekWindowStore.scopeResolved(.codex, usage: accountA, local: nil),
+               "the Codex choice waits while cached usage describes an account switched away from")
+        let peekStore = PeekWindowStore.shared
+        let before = peekStore.window(for: .codex, usage: .empty)
+        peekStore.set(before == .weekly ? .fiveHour : .weekly, for: .codex, usage: .empty)
+        expect(peekStore.window(for: .codex, usage: .empty) == before,
+               "an unresolved Codex account cannot write the provider-wide choice")
+        func codexWeekly(_ fraction: Double, _ scope: String) -> AlertDecision.WindowInput {
+            AlertDecision.WindowInput(provider: .codex, visible: true,
+                window: WindowUsage(usedPercent: fraction, resetAt: nil, error: nil), windowKind: .weekly, metricID: scope)
+        }
+        let scopeB = PeekWindowStore.scope(.codex, usage: accountB)
+        let crossedA = AlertDecision.evaluateCrossings(previous: [], inputs: [codexWeekly(0.85, scopeA)], warning: 80, critical: 95, warmedUp: true)
+        let lowB = AlertDecision.evaluateCrossings(previous: crossedA.next, inputs: [codexWeekly(0.1, scopeB)], warning: 80, critical: 95, warmedUp: true)
+        let backToA = AlertDecision.evaluateCrossings(previous: lowB.next, inputs: [codexWeekly(0.85, scopeA)], warning: 80, critical: 95, warmedUp: true)
+        expect(crossedA.pulse != nil && backToA.pulse == nil,
+               "another account's low weekly reading cannot rearm a resetless crossing")
+        expect(AlertDecision.evaluateCrossings(previous: crossedA.next, inputs: [codexWeekly(0.85, scopeB)], warning: 80, critical: 95, warmedUp: true).pulse != nil,
+               "one account's crossing memory does not suppress another account's crossing")
+
+        let ownedByA = AppUsage(fiveHour: .unknown, weekly: WindowUsage(usedPercent: 0, resetAt: nil, error: nil),
+                                reportedWindows: [.weekly], accountID: "acct-a")
+        UsageHistoryStore.shared.record(provider: .codex, usage: ownedByA, at: Date())
+        expect(UsageHistoryStore.shared.belongs(provider: .codex, to: ownedByA) && UsageHistoryStore.shared.belongs(provider: .codex, to: .empty),
+               "history belongs to its recording account and to a not-yet-resolved one")
+        expect(!UsageHistoryStore.shared.belongs(provider: .codex, to: accountB)
+                && !UsageHistoryStore.shared.belongs(provider: .codex, to: AppUsage(fiveHour: .unknown, weekly: .unknown, accountResolved: true)),
+               "history does not belong to another account or a token-only credential")
+        let failedB = AppUsage(fiveHour: failure, weekly: failure, accountID: "acct-b")
+        expect(!UsageStore.seeded(failedB, provider: .codex, fillUnreported: true).weekly.hasReading,
+               "a failed poll for another account is not seeded with this account's history")
+        let zeroSeed = UsageStore.seeded(AppUsage(fiveHour: failure, weekly: failure, accountID: "acct-a"),
+                                         provider: .codex, fillUnreported: true)
+        expect(zeroSeed.weekly.hasReading && zeroSeed.weekly.usedPercent == 0
+                && zeroSeed.peekWindowKind(preferring: .weekly) == .weekly,
+               "a real zero history seed stays a reading and keeps the selected window")
+        UsageHistoryStore.shared.record(provider: .codex, usage: AppUsage(fiveHour: limited, weekly: .unknown,
+            reportedWindows: [.fiveHour], accountID: "acct-a"), at: Date())
+        UsageHistoryStore.shared.record(provider: .codex, usage: AppUsage(fiveHour: failure,
+            weekly: WindowUsage(usedPercent: 0.4, resetAt: nil, error: nil), accountID: "acct-b"), at: Date())
+        expect(UsageHistoryStore.shared.samples(provider: .codex, window: .fiveHour).isEmpty
+                && UsageHistoryStore.shared.samples(provider: .codex, window: .weekly).map(\.used) == [0.4],
+               "another account's first sample starts the provider's history over")
+        UsageHistoryStore.shared.record(provider: .codex, usage: AppUsage(fiveHour: failure, weekly: failure, accountID: "acct-c"), at: Date())
+        expect(UsageHistoryStore.shared.samples(provider: .codex, window: .weekly).count == 1,
+               "a failed poll for another account does not clear history")
+
+        let reseeded = AlertDecision.evaluateCrossings(previous: [], inputs: [resetlessWeekly, monthly], warning: 80, critical: 95,
+            warmedUp: true, reseedingWindows: [AlertDecision.WindowID(provider: .codex, windowKind: .weekly)])
+        expect(reseeded.next.contains { $0.provider == .codex && $0.windowKind == .weekly },
+               "switching the peek window seeds the new window's crossing memory")
+        expect(reseeded.pulse?.lines.map(\.provider) == [.claude],
+               "switching one provider's peek window does not swallow another window's crossing")
 
         let history = UsageHistoryStore.shared
         let fableReading = WindowUsage(usedPercent: 0.635, resetAt: Date().addingTimeInterval(86400), error: nil)
@@ -292,6 +374,19 @@ struct EnterpriseUsageTests {
             usage: connectedUsage, limit: duplicateID)
         expect(connectedCrossing(geminiCrossing.next, otherGroupInput).pulse != nil,
                "Quota groups with matching bucket IDs still alert independently")
+        let legacyDefaults = UserDefaults(suiteName: "enterprise-tests-\(UUID().uuidString)")!
+        let legacyReading = AppUsage(fiveHour: .unknown, weekly: WindowUsage(usedPercent: 0.4, resetAt: nil, error: nil))
+        let legacy = UsageHistoryStore(defaults: legacyDefaults)
+        legacy.record(provider: .codex, usage: legacyReading, at: Date())
+        let resolvedA = AppUsage(fiveHour: .unknown, weekly: .unknown, accountID: "acct-a")
+        expect(legacy.belongs(provider: .codex, to: .empty) && !legacy.belongs(provider: .codex, to: resolvedA),
+               "history from before owners were kept belongs to no resolved account")
+        legacy.record(provider: .codex, usage: AppUsage(fiveHour: .unknown,
+            weekly: WindowUsage(usedPercent: 0.6, resetAt: nil, error: nil), accountID: "acct-a"), at: Date())
+        expect(legacy.samples(provider: .codex, window: .weekly).map(\.used) == [0.6] && legacy.belongs(provider: .codex, to: resolvedA),
+               "the first resolved account's sample replaces ownerless history")
+        expect(UsageHistoryStore(defaults: legacyDefaults).belongs(provider: .codex, to: resolvedA),
+               "history ownership survives relaunch")
         if failures > 0 { exit(1) }
         print("PASS all Enterprise usage checks")
     }

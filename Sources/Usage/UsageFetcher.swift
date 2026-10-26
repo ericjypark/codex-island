@@ -7,56 +7,103 @@ enum UsageFetcher {
     /// the access_token from ~/.codex/auth.json. The endpoint is reliable
     /// and rarely rate-limited, so this is the easy half of the integration.
     static func fetchCodex(
-        credentialData: Data? = nil,
+        credentialData: @autoclosure () -> Data? = nil,
         send: (URLRequest) async throws -> (Data, URLResponse) = { try await URLSession.shared.data(for: $0) }
     ) async -> AppUsage {
-        guard let req = codexRequest(path: "usage", credentialData: credentialData) else {
+        guard let authData = codexAuthData(credentialData()),
+              let req = codexRequest(path: "usage", authData: authData) else {
             return errorPair("no codex auth")
+        }
+        let accountID = codexAccountID(authData: authData)
+        // auth.json can change while the request is in flight; its outcome,
+        // success or failure, then describes the old credential.
+        func changedCredential() -> AppUsage? {
+            // A missing or unusable snapshot (e.g. mid-rewrite) is no credential.
+            guard let current = codexAuthData(credentialData()),
+                  codexRequest(path: "usage", authData: current) != nil else { return errorPair("no codex auth") }
+            // The token identifies a token-only credential; with an account,
+            // a same-account CLI token rotation still describes this account.
+            guard codexAccountID(authData: current) != accountID
+                || (accountID == nil && codexAccessToken(authData: current) != codexAccessToken(authData: authData))
+            else { return nil }
+            return errorPair("codex credentials changed", accountID: codexAccountID(authData: current), accountResolved: true)
         }
 
         do {
             let (data, response) = try await send(req)
+            if let changed = changedCredential() { return changed }
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
 
             // 401 means the access_token in ~/.codex/auth.json has expired.
             // The Codex CLI rotates this token on its own — there's nothing
             // we can do from here, so surface the exact remediation step.
             if status == 401 {
-                return errorPair("auth expired — codex login")
+                return errorPair("auth expired — codex login", accountID: accountID, accountResolved: true)
             }
             if status != 200 {
-                return errorPair("http \(status)")
+                return errorPair("http \(status)", accountID: accountID, accountResolved: true)
             }
 
             guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let rl = obj["rate_limit"] as? [String: Any] else {
-                return errorPair("parse error")
+                return errorPair("parse error", accountID: accountID, accountResolved: true)
             }
             let windows = routeCodexWindows(rl)
             return AppUsage(
                 fiveHour: windows.fiveHour,
                 weekly: windows.weekly,
                 plan: obj["plan_type"] as? String,
-                reportedWindows: windows.reported
+                reportedWindows: windows.reported,
+                accountID: accountID,
+                accountResolved: true
             )
         } catch {
-            return errorPair(error.localizedDescription)
+            if let changed = changedCredential() { return changed }
+            return errorPair(error.localizedDescription, accountID: accountID, accountResolved: true)
         }
     }
 
-    private static func errorPair(_ message: String) -> AppUsage {
+    /// Pass `accountResolved` once a credential was read, even naming no account.
+    private static func errorPair(_ message: String, accountID: String? = nil, accountResolved: Bool = false) -> AppUsage {
         AppUsage(
             fiveHour: WindowUsage(usedPercent: 0, resetAt: nil, error: message),
             weekly: WindowUsage(usedPercent: 0, resetAt: nil, error: message),
             monthly: WindowUsage(usedPercent: 0, resetAt: nil, error: message),
-            fableWeekly: WindowUsage(usedPercent: 0, resetAt: nil, error: message)
+            fableWeekly: WindowUsage(usedPercent: 0, resetAt: nil, error: message),
+            accountID: accountID,
+            accountResolved: accountResolved
         )
     }
 
-    private static func codexRequest(path: String, credentialData: Data?) -> URLRequest? {
+    private static func codexAuthData(_ credentialData: Data?) -> Data? {
         let authPath = NSString("~/.codex/auth.json").expandingTildeInPath
-        guard let data = credentialData ?? (try? Data(contentsOf: URL(fileURLWithPath: authPath))) else { return nil }
+        return credentialData ?? (try? Data(contentsOf: URL(fileURLWithPath: authPath)))
+    }
+
+    private static func codexRequest(path: String, credentialData: Data?) -> URLRequest? {
+        guard let data = codexAuthData(credentialData) else { return nil }
         return codexRequest(path: path, authData: data)
+    }
+
+    private static func codexAccessToken(authData: Data) -> String? {
+        guard let json = try? JSONSerialization.jsonObject(with: authData) as? [String: Any],
+              let tokens = json["tokens"] as? [String: Any] else { return nil }
+        return tokens["access_token"] as? String
+    }
+
+    /// Unfetched usage scoped to the local credential's account, so launch
+    /// seeding knows whose history it may show. nil without a usable credential.
+    static func codexLocalIdentity(credentialData: Data? = nil) -> AppUsage? {
+        guard let data = codexAuthData(credentialData), codexRequest(path: "usage", authData: data) != nil else { return nil }
+        return AppUsage(fiveHour: .unknown, weekly: .unknown, accountID: codexAccountID(authData: data), accountResolved: true)
+    }
+
+    static func codexAccountID(authData: Data) -> String? {
+        guard let json = try? JSONSerialization.jsonObject(with: authData) as? [String: Any],
+              let tokens = json["tokens"] as? [String: Any],
+              let accountID = tokens["account_id"] as? String,
+              !accountID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        return accountID
     }
 
     static func codexRequest(path: String, authData: Data) -> URLRequest? {
@@ -71,8 +118,7 @@ enum UsageFetcher {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         // A token can cover multiple accounts; omitting the selected account
         // lets the backend return another account's quota and reset credits.
-        if let accountID = tokens["account_id"] as? String,
-           !accountID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if let accountID = codexAccountID(authData: authData) {
             request.setValue(accountID, forHTTPHeaderField: "ChatGPT-Account-Id")
         }
         return request

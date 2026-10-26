@@ -4,6 +4,7 @@ struct ProviderSelectionView: View {
     @ObservedObject private var selection = ProviderVisibilityStore.shared
     @ObservedObject private var connections = ProviderConnectionStore.shared
     @ObservedObject private var usage = UsageStore.shared
+    @ObservedObject private var peekWindows = PeekWindowStore.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -101,6 +102,20 @@ struct ProviderSelectionView: View {
                         }
                     }
                     .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, 28)
+                }
+                if value.offersPeekWindowChoice, PeekWindowStore.scopeResolved(provider, usage: value) {
+                    Picker(L10n.tr("Peek and alerts"), selection: Binding(
+                        get: { peekWindows.window(for: provider, usage: value) },
+                        set: { peekWindows.set($0, for: provider, usage: value) }
+                    )) {
+                        ForEach(PeekWindowStore.choices, id: \.self) { window in
+                            Text(L10n.tr(window == .weekly ? "Weekly" : "5-hour")).tag(window)
+                        }
+                    }
+                    .font(.system(size: 12))
+                    .tint(.white.opacity(0.65))
+                    .controlSize(.small)
                     .padding(.leading, 28)
                 }
             }

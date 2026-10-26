@@ -28,15 +28,19 @@ struct WindowUsage {
     let usedAmount: Double?
     let limitAmount: Double?
     let currencyCode: String?
+    /// A real prior reading carried past a failed poll by `AppUsage.merged`.
+    let retained: Bool
 
     init(usedPercent: Double, resetAt: Date?, error: String?,
-         usedAmount: Double? = nil, limitAmount: Double? = nil, currencyCode: String? = nil) {
+         usedAmount: Double? = nil, limitAmount: Double? = nil, currencyCode: String? = nil,
+         retained: Bool = false) {
         self.usedPercent = usedPercent
         self.resetAt = resetAt
         self.error = error
         self.usedAmount = usedAmount
         self.limitAmount = limitAmount
         self.currencyCode = currencyCode
+        self.retained = retained
     }
 
     static let unknown = WindowUsage(usedPercent: 0, resetAt: nil, error: "no data")
@@ -50,10 +54,9 @@ struct WindowUsage {
     /// window we know nothing about. Every consumer that displays or alerts
     /// on a percentage must gate on this first.
     ///
-    /// An error alongside a *non-zero* percentage is the carry-forward shape
-    /// from `AppUsage.merged`: a real prior reading with a fresh failure
-    /// attached. That still counts as a reading.
-    var hasReading: Bool { !(error != nil && usedPercent == 0 && usedAmount == nil) }
+    /// A carried-forward reading from `AppUsage.merged` (a real prior reading
+    /// with a fresh failure attached) still counts, including a real zero.
+    var hasReading: Bool { retained || !(error != nil && usedPercent == 0 && usedAmount == nil) }
 
     var hasPercentageReading: Bool { hasReading && !(usedAmount != nil && limitAmount == nil) }
     var isUnlimitedAmount: Bool { usedAmount != nil && limitAmount == nil }
@@ -94,17 +97,27 @@ struct AppUsage {
 
     // nil means no successful window discovery yet, not a two-window plan.
     var reportedWindows: [UsageWindow]?
+    /// The account the credential selects (Codex `tokens.account_id`), so
+    /// per-account preferences and alert memory don't bleed across
+    /// accounts. nil when the credential names none.
+    var accountID: String?
+    /// Whether `accountID` comes from the credential behind these readings,
+    /// so a nil one means "names no account" rather than "not known yet".
+    var accountResolved: Bool
 
     init(fiveHour: WindowUsage, weekly: WindowUsage, monthly: WindowUsage = .unknown,
          fableWeekly: WindowUsage = .unknown,
          plan: String? = nil,
-         reportedWindows: [UsageWindow]? = nil) {
+         reportedWindows: [UsageWindow]? = nil,
+         accountID: String? = nil, accountResolved: Bool? = nil) {
         self.fiveHour = fiveHour
         self.weekly = weekly
         self.fableWeekly = fableWeekly
         self.monthly = monthly
         self.plan = plan
         self.reportedWindows = reportedWindows
+        self.accountID = accountID
+        self.accountResolved = accountResolved ?? (accountID != nil)
     }
 
     static let empty = AppUsage(fiveHour: .unknown, weekly: .unknown)
@@ -126,18 +139,28 @@ struct AppUsage {
         }
     }
 
-    var peekWindow: WindowUsage { window(peekWindowKind) }
-
-    var peekWindowKind: UsageWindow {
-        let visible = visibleWindows
-        if visible.count == 1 { return visible[0] }
-        return visible.first { window($0).hasReading } ?? visible.first ?? .fiveHour
+    /// Whether the user can choose which rate window the peek follows. A
+    /// failed fetch before window discovery leaves both windows visible as
+    /// errors, which says nothing about the plan, so it doesn't count.
+    var offersPeekWindowChoice: Bool {
+        [UsageWindow.fiveHour, .weekly].allSatisfy { kind in
+            reportedWindows?.contains(kind) ?? window(kind).hasReading
+        }
     }
 
-    /// Which window `peekWindow` selected — the peek chrome (VoiceOver label,
-    /// window-length fallback glyph) must describe the same window it shows.
-    var peekWindowIsWeekly: Bool {
-        peekWindowKind == .weekly || peekWindowKind == .fableWeekly
+    func peekWindow(preferring preferred: UsageWindow) -> WindowUsage {
+        window(peekWindowKind(preferring: preferred))
+    }
+
+    /// Which window the peek shows — the peek chrome (VoiceOver label,
+    /// window-length fallback glyph) and alerts must describe this same
+    /// window. The user's preferred window wins while it has a reading;
+    /// otherwise the peek falls back to another reported window that does.
+    func peekWindowKind(preferring preferred: UsageWindow) -> UsageWindow {
+        let visible = visibleWindows
+        if visible.count == 1 { return visible[0] }
+        let ordered = visible.contains(preferred) ? [preferred] + visible.filter { $0 != preferred } : visible
+        return ordered.first { window($0).hasReading } ?? ordered.first ?? .fiveHour
     }
 
     /// Fold a fetch result into the values currently on screen.
@@ -154,7 +177,16 @@ struct AppUsage {
     /// token can never refresh those numbers again) skip this and assign the
     /// fetched value directly — see `UsageStore.refresh`.
     static func merged(fetched: AppUsage, retaining prior: AppUsage, at now: Date) -> AppUsage {
-        AppUsage(
+        // A poll for a different account than the prior readings, including
+        // one naming no account, must not relabel them as the new account's.
+        // A failure for it hasn't discovered its windows; show none rather
+        // than inventing tiles from the error pair.
+        if fetched.accountResolved, prior.accountResolved, fetched.accountID != prior.accountID {
+            var switched = fetched
+            if switched.reportedWindows == nil { switched.reportedWindows = [] }
+            return switched
+        }
+        return AppUsage(
             fiveHour: carryForward(fetched.fiveHour, prior: prior.fiveHour, at: now),
             weekly: carryForward(fetched.weekly, prior: prior.weekly, at: now),
             monthly: carryForward(fetched.monthly, prior: prior.monthly, at: now),
@@ -162,7 +194,9 @@ struct AppUsage {
             // Plan tier is read from the credential store, not the usage
             // response, so a failed fetch shouldn't blank the chip's badge.
             plan: fetched.plan ?? prior.plan,
-            reportedWindows: fetched.reportedWindows ?? prior.reportedWindows
+            reportedWindows: fetched.reportedWindows ?? prior.reportedWindows,
+            accountID: fetched.accountResolved ? fetched.accountID : prior.accountID,
+            accountResolved: fetched.accountResolved || prior.accountResolved
         )
     }
 
@@ -180,7 +214,7 @@ struct AppUsage {
         return WindowUsage(
             usedPercent: prior.usedPercent, resetAt: prior.resetAt, error: fetched.error,
             usedAmount: prior.usedAmount, limitAmount: prior.limitAmount,
-            currencyCode: prior.currencyCode
+            currencyCode: prior.currencyCode, retained: true
         )
     }
 
