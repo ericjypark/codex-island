@@ -262,6 +262,9 @@ final class CurrencyStore: ObservableObject {
         refreshing = true
         defer { refreshing = false }
         for source in RateSource.allCases {
+            // A cancelled refresh stops here instead of falling through to
+            // the next source; `try?` below would otherwise hide it.
+            if Task.isCancelled { return }
             guard let url = URL(string: source.endpoint) else { continue }
             var request = URLRequest(url: url)
             request.timeoutInterval = 15
@@ -277,6 +280,7 @@ final class CurrencyStore: ObservableObject {
                   decoded.result == "success",
                   decoded.baseCode == "USD",
                   Self.validRates(decoded.rates) else { continue }
+            if Task.isCancelled { return }
             let sourceDate = ISO8601DateFormatter().string(
                 from: Date(timeIntervalSince1970: decoded.timeLastUpdateUnix)
             )
