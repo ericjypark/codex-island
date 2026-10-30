@@ -6,6 +6,11 @@ tag was cut.
 
 ## [Unreleased]
 
+### Added
+
+- Fall back to AllRatesToday's keyless ECB reference rates when the
+  ExchangeRate-API request fails, and link the source the cached table came from.
+
 ## [0.4.2] - 2026-10-18
 
 ### Fixed

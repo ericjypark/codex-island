@@ -115,7 +115,7 @@ struct CurrencyStoreTests {
             requests += 1
             throw URLError(.notConnectedToInternet)
         }
-        precondition(requests == 2 && store.lastUpdated == now)
+        precondition(requests == 3 && store.lastUpdated == now, "Offline tries both sources once")
         precondition(store.converted(usd: 100) == 130000)
         await store.refreshIfNeeded(force: true) { _ in
             (Data("{}".utf8), response)
@@ -132,7 +132,8 @@ struct CurrencyStoreTests {
             requests += 1
             return (data, response)
         }
-        precondition(requests == 3 && store.lastUpdated == now.addingTimeInterval(60))
+        precondition(requests == 4 && store.lastUpdated == now.addingTimeInterval(60))
+        precondition(store.rateSource == .exchangeRateAPI)
         store.currency = .sek
         precondition(store.displayCurrency == .sek && store.converted(usd: 100) == 1050)
         precondition(store.quote(for: .sek)?.converted(usd: 100) == 1050)
@@ -145,6 +146,19 @@ struct CurrencyStoreTests {
         precondition(DisplayCurrency.sek.affixes(locale: swedish).suffix == " kr")
         store.currency = .usd
         precondition(store.usdRate == 1 && store.displaySymbol == "$")
-        print("PASS currency switching, single-flight refresh, expiry, offline retention, validation, persistence, manual refresh")
+
+        var hosts: [String] = []
+        await store.refreshIfNeeded(force: true, now: now.addingTimeInterval(120)) { request in
+            hosts.append(request.url?.host ?? "")
+            if hosts.count == 1 { throw URLError(.timedOut) }
+            return (Data(String(decoding: data, as: UTF8.self)
+                .replacingOccurrences(of: "\"EUR\":0.9", with: "\"EUR\":0.95").utf8), response)
+        }
+        precondition(hosts == ["open.er-api.com", "allratestoday.com"], "Fallback only after the first source fails")
+        precondition(store.rateSource == .allRatesToday && store.lastUpdated == now.addingTimeInterval(120))
+        store.currency = .eur
+        precondition(store.converted(usd: 100) == 95)
+        precondition(CurrencyStore(defaults: defaults).rateSource == .allRatesToday)
+        print("PASS currency switching, single-flight refresh, expiry, offline retention, validation, persistence, manual refresh, fallback source")
     }
 }
