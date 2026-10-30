@@ -46,12 +46,12 @@ struct WindowInteractionTests {
 
         NSEvent.deliverMouseMove()
         await settle()
-        check(NSApp.activations == 1 && window.keyRequests == 1,
-              "Passive restoration does not consume the next real pointer entry")
+        check(NSApp.activations == 0 && window.keyRequests == 0,
+              "Pointer entry preserves the foreground app and keyboard focus")
         check(NSEvent.keyMonitorCount == 1, "Pointer entry does not duplicate the prepared keyboard monitor")
         NSEvent.deliverMouseMove()
         await settle()
-        check(NSApp.activations == 1 && window.keyRequests == 1, "Movement inside does not refocus repeatedly")
+        check(NSApp.activations == 0 && window.keyRequests == 0, "Movement inside also preserves focus")
         NSEvent.mouseLocation = outside
         NSEvent.deliverMouseMove()
         await settle()

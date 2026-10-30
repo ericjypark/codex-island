@@ -501,6 +501,8 @@ struct SettingsView: View {
         switch fullscreen.borderlessStatus {
         case .permissionRequired:
             return "Enable CodexIsland in Accessibility settings, then click Recheck. Native fullscreen hiding works without permission."
+        case .waitingForApp:
+            return "Accessibility access is enabled. Switch to another app to check its windows."
         case .unsupported:
             return "No supported foreground window notifications. Native fullscreen hiding remains available; borderless changes may be missed."
         case .observing:

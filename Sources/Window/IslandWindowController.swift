@@ -18,7 +18,6 @@ final class IslandWindowController {
     private var sessionActiveObserver: NSObjectProtocol?
     private var subs: Set<AnyCancellable> = []
     private var hasSeenMouseEvent = false
-    private var isMouseInsideIsland = false
     private var cmdQMonitor: Any?
     private var visibility = IslandVisibilityState()
 
@@ -121,7 +120,7 @@ final class IslandWindowController {
         trackingTimer = nil
     }
 
-    private func updateMouseEventsBasedOnCursor(activateOnEntry: Bool = true) {
+    private func updateMouseEventsBasedOnCursor() {
         guard visibility.allowsMouseInteraction(windowIsVisible: window.isVisible) else {
             suspendMouseInteraction()
             return
@@ -148,13 +147,6 @@ final class IslandWindowController {
         } else if !inside, let monitor = cmdQMonitor {
             NSEvent.removeMonitor(monitor)
             cmdQMonitor = nil
-        }
-        // Restoring click access must not focus the app or consume the next
-        // real pointer entry. Keyboard handling remains gated by isKeyWindow.
-        guard activateOnEntry else { return }
-        if inside != isMouseInsideIsland {
-            isMouseInsideIsland = inside
-
         }
     }
 
@@ -294,13 +286,12 @@ final class IslandWindowController {
         model.setState(AlwaysShowUsageStore.shared.enabled ? .peek : .compact)
         window.alphaValue = 1
         window.orderFrontRegardless()
-        updateMouseEventsBasedOnCursor(activateOnEntry: false)
+        updateMouseEventsBasedOnCursor()
         WindowOcclusionStore.shared.update(isVisible: window.occlusionState.contains(.visible))
     }
 
     private func suspendMouseInteraction() {
         window.ignoresMouseEvents = true
-        isMouseInsideIsland = false
         trackingTimer?.invalidate()
         trackingTimer = nil
         if let monitor = cmdQMonitor {
@@ -329,6 +320,6 @@ final class IslandWindowController {
         let x = frame.midX - size.width / 2
         let y = frame.maxY - size.height
         window.setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
-        updateMouseEventsBasedOnCursor(activateOnEntry: false)
+        updateMouseEventsBasedOnCursor()
     }
 }

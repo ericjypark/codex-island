@@ -430,6 +430,8 @@
 
 "Open Accessibility settings" = "打开辅助功能设置";
 
+"Accessibility access is enabled. Switch to another app to check its windows." = "辅助功能权限已启用。切换到其他应用以检查其窗口。";
+
 "Enable CodexIsland in Accessibility settings, then click Recheck. Native fullscreen hiding works without permission." = "请在辅助功能设置中启用 CodexIsland，然后点击重新检查。原生全屏隐藏无需此权限。";
 
 "Could not open System Settings. Go to Privacy & Security → Accessibility, enable CodexIsland, then click Recheck." = "无法打开系统设置。请前往隐私与安全性 → 辅助功能，启用 CodexIsland，然后点击重新检查。";

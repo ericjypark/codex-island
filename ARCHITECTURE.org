@@ -20,6 +20,11 @@ Native Space reads use =FullscreenSpaceReader.swift=;
 borderless geometry uses =FullscreenWindowReader.swift=. Missing permission
 fails open; only explicit opt-in requests access. Recheck performs a quiet
 refresh and clears an old Settings-dispatch error once it observes trusted access.
+When the foreground is the island, Finder or absent, trusted access reports
+=waitingForApp= instead of =unsupported=. Settings explains that switching apps
+resumes checking. Recheck stays quiet; a workspace activation reattaches the
+observer for an eligible app. Failed notification registration still reports
+=unsupported=, and missing permission still reports =permissionRequired=.
 There is no recurring fullscreen or permission poll.
 
 The window controller resolves Auto or the explicit display preference once per
@@ -54,8 +59,9 @@ It installs that flag synchronously in the main-queue lock callback, before
 queued model updates can reveal the window. Unlock refreshes detectors before
 clearing the lock reason; the store-owned resume gate remains until sampling
 actually resumes. Restoration resets transient layout, orders front
-without activation, and recomputes pointer hit testing. Real pointer entry
-retains the existing interactive activation behavior.
+without activation, and recomputes pointer hit testing. Pointer entry preserves
+foreground and keyboard focus, matching main's hover behavior; keyboard shortcuts
+remain gated by the island actually being the key window.
 
 * Boundaries and verification
 
@@ -91,7 +97,9 @@ permissions, create desktop windows or claim live focus verification.
 Live acceptance uses the installed app, its Settings entry point, an explicit
 Accessibility grant, fullscreen transitions and foreground-focus observations.
 Rebuilding an ad-hoc-signed app changes its code identity and can require a
-fresh user-authorized permission grant. Build success alone proves delivery.
+fresh user-authorized permission grant. Build success alone does not prove
+installation, permission continuity or correct running behavior; those require
+verification through the installed application.
 
 * Other flows
 

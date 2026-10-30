@@ -36,7 +36,7 @@ final class FullscreenStore: ObservableObject {
     static let accessibilitySettingsURL = URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility")
 
     enum BorderlessStatus {
-        case disabled, permissionRequired, observing, unsupported
+        case disabled, permissionRequired, waitingForApp, observing, unsupported
     }
 
     @Published var detectBorderlessFullscreen: Bool {
@@ -222,7 +222,7 @@ final class FullscreenStore: ObservableObject {
         } else {
             resetPendingCheck()
             windowMonitor?.stop()
-            borderlessStatus = .unsupported
+            borderlessStatus = windowMonitor == nil ? .unsupported : .waitingForApp
             borderlessFullscreen = false
             hasBorderlessResult = false
         }

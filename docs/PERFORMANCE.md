@@ -162,7 +162,7 @@ activate the app or intercept mouse/keyboard input. Restoration does not make
 the window key or activate the application. Restoration immediately recomputes
 click-through at the current pointer position, so a stationary pointer can click
 the restored island. It prepares keyboard handling (still gated by key-window
-status) without consuming the next real pointer entry. The startup mouse-poll
+status); pointer entry also preserves foreground and keyboard focus. The startup mouse-poll
 fallback is stopped while hidden.
 Restoration resets hidden pulse/expansion state to the configured compact or peek
 state before computing the mouse-hit area, so discarded bounds stay click-through.

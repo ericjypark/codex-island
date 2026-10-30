@@ -261,6 +261,23 @@ struct FullscreenTests {
         check(permissionRequests == 2, "Already granted access does not trigger a permission request")
         monitoredStore?.refresh()
         check(monitoredStore?.borderlessStatus == .observing && monitor.running, "Explicit recheck attaches after permission grant")
+        monitor.hasEligibleForegroundApp = false
+        let beforeSettingsGeometry = borderlessReads
+        let beforeSettingsUpdates = monitor.updates
+        let beforeSettingsPrompts = permissionRequests
+        for _ in 0..<2 { monitoredStore?.refresh() }
+        check(monitoredStore?.borderlessStatus == .waitingForApp && !monitor.running,
+              "Recheck with trusted self-focus reports waiting, not unsupported notifications")
+        check(monitoredStore?.isCheckingFullscreen == false && monitoredStore?.isActive == false,
+              "Waiting for another app neither hides the island nor holds a pending check")
+        check(borderlessReads == beforeSettingsGeometry && monitor.updates == beforeSettingsUpdates &&
+              permissionRequests == beforeSettingsPrompts,
+              "Self-focus Recheck does not register windows, read geometry or request access again")
+        monitor.hasEligibleForegroundApp = true
+        events.post(name: NSWorkspace.didActivateApplicationNotification, object: nil)
+        await settle()
+        check(monitoredStore?.borderlessStatus == .observing && monitor.running,
+              "Activating a supported app replaces waiting with observing through the workspace event")
         borderless = true
         for _ in 0..<30 { monitor.onChange?() }
         let beforeBurst = borderlessReads
@@ -534,7 +551,7 @@ struct FullscreenTests {
             eligiblePID = nil
             eligibilityStore.refresh()
             check(suppressed == [false], "Activating \(name) never briefly suppresses the island")
-            check(!eligibilityStore.isCheckingFullscreen && eligibilityStore.borderlessStatus == .unsupported,
+            check(!eligibilityStore.isCheckingFullscreen && eligibilityStore.borderlessStatus == .waitingForApp,
                   "An ineligible \(name) context completes without a pending gate")
             observation.cancel()
         }
