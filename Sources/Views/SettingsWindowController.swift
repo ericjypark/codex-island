@@ -40,9 +40,24 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
 
+    /// `NSWindow.center()` uses the main screen, which on a multi-display
+    /// setup is wherever the key window last was, not where the island
+    /// lives. Open Settings on the island's display so the gear click lands
+    /// next to the thing it configures.
+    private func center(_ window: NSWindow) {
+        guard let screen = DisplayInfo.currentTarget()?.screen else {
+            window.center()
+            return
+        }
+        let visible = screen.visibleFrame
+        let size = window.frame.size
+        window.setFrameOrigin(NSPoint(x: visible.midX - size.width / 2,
+                                      y: visible.midY - size.height / 2))
+    }
+
     func show() {
         NSApp.activate(ignoringOtherApps: true)
-        if let window, !window.isVisible { window.center() }
+        if let window, !window.isVisible { center(window) }
         showWindow(nil)
         window?.makeKeyAndOrderFront(nil)
         // Give the latest values to the live strip the moment the window
