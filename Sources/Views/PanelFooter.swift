@@ -45,15 +45,6 @@ struct PanelFooter: View {
                         WeeklyCardButton()
                     }
 
-                    if !activeStyleCycled {
-                        Text(L10n.tr("click to cycle"))
-                            .font(Typography.label)
-                            .foregroundStyle(.white.opacity(0.42))
-                        .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel(cycleHintAccessibilityLabel)
-                    }
-
                     Spacer()
 
                     liveStatus
@@ -81,23 +72,26 @@ struct PanelFooter: View {
         }
     }
 
-    private var cycleHintAccessibilityLabel: String {
-        switch screenPref.screen {
-        case .overview: return L10n.tr("Overview shows %@ usage history", currentYearString)
-        case .usage, .cost: return L10n.tr("Click to cycle visualization")
-        }
-    }
-
-    /// The chip doubles as the cycle control: a plain click rotates the
-    /// visualization of the active page just like Command-click on the panel.
-    /// Overview has a single fixed view, so its chip stays a static label.
+    /// The chip is the cycle control: a plain click advances the active
+    /// page's visualization. The one-shot caption is part of the same button
+    /// and the hit area spans the footer row, so the ~16pt chip is an easy
+    /// target. Overview has a single fixed view, so its chip stays a static label.
     @ViewBuilder
     private var chip: some View {
         if screenPref.screen == .overview {
             chipLabel
         } else {
             Button(action: cycleActiveStyle) {
-                chipLabel
+                HStack(spacing: 10) {
+                    chipLabel
+                    if !activeStyleCycled {
+                        Text(L10n.tr("click to cycle"))
+                            .font(Typography.label)
+                            .foregroundStyle(.white.opacity(0.42))
+                            .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
+                    }
+                }
+                .contentShape(Rectangle().inset(by: -10))
             }
             .buttonStyle(PressableButtonStyle(scale: 0.95))
             .onHover { h in
@@ -108,11 +102,28 @@ struct PanelFooter: View {
                     NSCursor.pop()
                 }
             }
-            .help(L10n.tr("Click to cycle visualization"))
+            .help(nextStyleHint)
+            .accessibilityElement(children: .ignore)
             .accessibilityLabel(chipLabelText)
-            .accessibilityHint(L10n.tr("Click to cycle visualization"))
+            .accessibilityHint(nextStyleHint)
             .accessibilityAddTraits(.isButton)
         }
+    }
+
+    /// Names the result of a click rather than the mechanism, so the
+    /// sequence teaches itself one step at a time.
+    private var nextStyleHint: String {
+        switch screenPref.screen {
+        case .usage: return L10n.tr("Next: %@", next(pref.style).label)
+        case .cost: return L10n.tr("Next: %@", next(costPref.style).label)
+        case .overview: return ""
+        }
+    }
+
+    private func next<S: CaseIterable & Equatable>(_ style: S) -> S {
+        let all = Array(S.allCases)
+        guard let i = all.firstIndex(of: style) else { return style }
+        return all[(i + 1) % all.count]
     }
 
     private func cycleActiveStyle() {

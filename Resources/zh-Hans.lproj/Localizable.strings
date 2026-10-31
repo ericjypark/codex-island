@@ -45,8 +45,11 @@
 "Claude re-login needed" = "Claude 需要重新登录";
 "Claude session expired" = "Claude 会话已过期";
 "Click to refresh now" = "点击立即刷新";
-"Click to cycle visualization" = "点击切换可视化";
 "click to cycle" = "点击切换";
+"click chip to cycle" = "点击标签切换";
+"Next: %@" = "下一个：%@";
+"Click to expand." = "点击展开。";
+"Hover to peek usage. Click to expand." = "悬停预览用量。点击展开。";
 "Codex" = "Codex";
 "CodexIsland panel" = "CodexIsland 面板";
 "Compact" = "紧凑";
@@ -120,7 +123,6 @@
 "Target display" = "目标屏幕";
 "Target Display" = "目标屏幕";
 "Tint the island and pulse the peek pill when 5-hour usage nears your limit." = "当 5 小时用量接近限额时，为岛和预览胶囊显示提醒效果。";
-"Tip: Command-click to cycle visualization" = "提示：Command 点击可切换可视化";
 "Today" = "今天";
 "Token counting" = "Token 统计";
 "Tokens" = "Token";
@@ -138,7 +140,6 @@
 "You" = "你";
 "Your AI usage limits, living in your notch." = "你的 AI 用量限额，住在 Mac 刘海里。";
 "Your language change will take effect after CodexIsland restarts." = "语言更改会在 CodexIsland 重启后生效。";
-"⌘-click to cycle" = "⌘ 点击切换";
 "⌘1 — pull real provider data" = "⌘1 — 拉取真实服务数据";
 "%@ (hidden)" = "%@（已隐藏）";
 "%@: %d percent of 5-hour window remaining" = "%@：5 小时窗口剩余 %d%%";
@@ -151,9 +152,6 @@
 "%@: %d percent of weekly window used" = "%@：已使用每周窗口的 %d%%";
 "%@: %d percent of weekly window used, %@" = "%@：已使用每周窗口的 %d%%，%@";
 "%@: no data for weekly window" = "%@：每周窗口暂无数据";
-"Click to expand. Command-click to cycle visualization." = "点击展开。Command 点击可切换可视化。";
-"Command-click to cycle visualization." = "Command 点击可切换可视化。";
-"Hover to peek usage. Click to expand. Command-click to cycle visualization." = "悬停预览用量。点击展开。Command 点击可切换可视化。";
 "Hover to show reset expiration details" = "悬停查看重置到期详情";
 "How often to refresh." = "刷新频率。";
 "Percentages" = "百分比";

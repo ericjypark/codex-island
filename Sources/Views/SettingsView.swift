@@ -639,7 +639,7 @@ struct SettingsView: View {
 
     private var chartSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Chart style", hint: "⌘-click to cycle")
+            sectionLabel("Chart style", hint: "click chip to cycle")
             ChartStylePicker(selected: $stylePref.style)
                 .padding(.top, 4)
                 .padding(.horizontal, 10)
@@ -666,7 +666,7 @@ struct SettingsView: View {
 
     private var costStyleSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Cost view", hint: "⌘-click to cycle")
+            sectionLabel("Cost view", hint: "click chip to cycle")
             CostStylePicker(selected: $costStylePref.style)
                 .padding(.top, 4)
                 .padding(.horizontal, 10)

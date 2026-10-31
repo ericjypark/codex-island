@@ -2,7 +2,7 @@ import Foundation
 
 /// Generic UserDefaults-backed store for picker preferences. Holds the
 /// currently-selected style of any `RawRepresentable & CaseIterable` enum,
-/// plus a one-shot `hasCycledStyle` bool that drives the "⌘-click to cycle"
+/// plus a one-shot `hasCycledStyle` bool that drives the "click to cycle"
 /// onboarding hint.
 ///
 /// Used by `StylePref` (chart visualization) and `CostStylePref` (cost

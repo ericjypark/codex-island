@@ -1,8 +1,7 @@
 import Foundation
 
-/// Visualization style for the cost screen — cycled via Cmd-click on the
-/// expanded panel, mirroring how `StylePref` cycles chart styles on the
-/// usage screen. Each style is a different way of bragging about the same
+/// Visualization style for the cost screen — cycled via the footer chip,
+/// mirroring how `StylePref` cycles chart styles on the usage screen. Each style is a different way of bragging about the same
 /// number: pure dollars, value extracted vs a $20/mo subscription baseline,
 /// raw token throughput, or a cumulative trend line.
 enum CostStyle: String, CaseIterable {
