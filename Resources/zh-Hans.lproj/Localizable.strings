@@ -207,6 +207,9 @@
 "First metric" = "第一项指标";
 "Second metric" = "第二项指标";
 "Credits" = "额度";
+"≈ %@ local messages" = "约 %@ 条本地消息";
+"≈ %@ cloud messages" = "约 %@ 条云端消息";
+"%@ Codex credits remaining" = "Codex 剩余 %@ 积分";
 "Check connection" = "检查连接";
 "%@: usage unavailable" = "%@：用量不可用";
 "%@: %d%%" = "%@：%d%%";

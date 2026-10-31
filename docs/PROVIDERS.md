@@ -18,6 +18,12 @@ failed refreshes, so an offline request cannot bring back a removed 5h tile.
 Zero-percent windows remain visible. Peek and alerts select the same available
 window, and chart styles and history keys remain unchanged.
 
+The same response carries a `credits` block. When `has_credits` is true, a
+Credits line under the Codex charts shows the balance (in the provider's credit
+units, not currency) and the provider's own estimate of the local and cloud
+messages it buys. Accounts without credits see no line. A failed poll keeps the
+last balance; a parsed response that omits credits removes it.
+
 ## Claude Fable weekly limit
 
 When Claude reports a Fable `weekly_scoped` entry in `limits[]`, the Usage page

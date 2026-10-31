@@ -97,6 +97,15 @@ swiftc \
 
 "$OUT_DIR/codex-window-routing-tests"
 
+swiftc -parse-as-library -o "$OUT_DIR/codex-credits-tests" \
+  Sources/Model/UsageDisplayModeStore.swift \
+  Sources/Usage/AppUsage.swift \
+  Sources/Usage/ClaudeCredentials.swift \
+  Sources/Usage/CodexResetCredits.swift \
+  Sources/Usage/UsageFetcher.swift \
+  Tests/CodexCreditsTests.swift
+"$OUT_DIR/codex-credits-tests"
+
 swiftc -parse-as-library -o "$OUT_DIR/claude-fable-usage-tests" \
   Sources/Model/UsageDisplayModeStore.swift \
   Sources/Usage/AppUsage.swift \

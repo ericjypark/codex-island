@@ -207,6 +207,9 @@
 "First metric" = "First metric";
 "Second metric" = "Second metric";
 "Credits" = "Credits";
+"≈ %@ local messages" = "≈ %@ local messages";
+"≈ %@ cloud messages" = "≈ %@ cloud messages";
+"%@ Codex credits remaining" = "%@ Codex credits remaining";
 "Check connection" = "Check connection";
 "%@: usage unavailable" = "%@: usage unavailable";
 "%@: %d%%" = "%@: %d%%";
