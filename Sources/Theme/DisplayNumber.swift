@@ -10,6 +10,13 @@ enum DisplayNumber {
         return abbreviated(Double(value), locale: locale)
     }
 
+    /// Plain counts: grouped under a thousand, abbreviated above.
+    static func count(_ value: Int, locale: Locale) -> String {
+        if value < 1_000 { return format(Double(value), digits: 0, locale: locale) }
+        let parts = abbreviated(Double(value), locale: locale)
+        return parts.value + parts.unit
+    }
+
     static func money(_ value: Double, wholeUnits: Bool, compact: Bool = true,
                       abbreviated: Bool = false, locale: Locale) -> String {
         if abbreviated, abs(value).rounded() >= 1_000 {

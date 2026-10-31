@@ -26,6 +26,10 @@ struct DisplayNumberTests {
             let result = DisplayNumber.tokens(input, locale: locale)
             check(result.value + result.unit == expected, "Token boundary \(input)")
         }
+        for (input, expected) in [(0, "0"), (999, "999"), (1_000, "1k"), (12_345, "12.3k"),
+                                  (56_789, "56.8k"), (1_700, "1.7k"), (1_000_000, "1M")] {
+            check(DisplayNumber.count(input, locale: locale) == expected, "Count \(input)")
+        }
         for (value, expected) in [(0.0, "0"), (9.99, "9.99"), (10, "10"), (99.99, "100"),
                                   (100, "100"), (999.49, "999"), (999.5, "1k"),
                                   (1_000, "1k"), (999_950, "1M"), (1_000_000, "1M")] {

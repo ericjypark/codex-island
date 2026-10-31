@@ -98,6 +98,20 @@ struct PageHeightTests {
                          "Removing Fable must release its space")
             print("PASS Fable addition/removal resizes the island and hit-test model")
 
+            UsageStore.shared.codex = AppUsage(fiveHour: .unknown, weekly: measured, reportedWindows: [.weekly],
+                codexCredits: CodexCredits(balance: 12345.75, unlimited: false,
+                                           localMessages: 3100...16200, cloudMessages: 500...3100))
+            await settleLayout()
+            precondition(model.size.height > quotaHeight + 20,
+                         "Codex credits line must contribute to the panel and hit-test height")
+            precondition(model.size.height <= IslandWindowController.windowSize.height,
+                         "Codex credits line must fit the overlay window")
+            UsageStore.shared.codex = AppUsage(fiveHour: .unknown, weekly: measured, reportedWindows: [.weekly])
+            await settleLayout()
+            precondition(abs(model.size.height - quotaHeight) < 1,
+                         "Removing Codex credits must release its space")
+            print("PASS Codex credits addition/removal resizes the island and hit-test model")
+
             // Publishing provider data and navigating in the same turn used to
             // update the footer while leaving the previous page body mounted.
             for repetition in 1...2 {

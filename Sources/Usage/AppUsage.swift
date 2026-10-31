@@ -83,6 +83,54 @@ struct WindowUsage {
     }
 }
 
+/// Purchased or granted Codex credits reported beside the rate limits.
+/// `balance` is in the provider's credit units, not currency. The message
+/// ranges are the provider's own estimate of what the balance buys.
+struct CodexCredits: Equatable {
+    let balance: Double?
+    let unlimited: Bool
+    let localMessages: ClosedRange<Int>?
+    let cloudMessages: ClosedRange<Int>?
+
+    /// nil for the common `has_credits: false` account, so the summary line
+    /// only appears for accounts that actually hold credits.
+    static func parse(_ object: Any?) -> CodexCredits? {
+        guard let dict = object as? [String: Any],
+              (dict["has_credits"] as? Bool) == true else { return nil }
+        let unlimited = (dict["unlimited"] as? Bool) ?? false
+        let balance = amount(dict["balance"])
+        guard unlimited || balance != nil else { return nil }
+        return CodexCredits(balance: balance, unlimited: unlimited,
+                            localMessages: range(dict["approx_local_messages"]),
+                            cloudMessages: range(dict["approx_cloud_messages"]))
+    }
+
+    // The balance arrives as a decimal string; older shapes used a number.
+    private static func amount(_ value: Any?) -> Double? {
+        if let text = value as? String { return Double(text) }
+        if let number = value as? NSNumber { return number.doubleValue }
+        return nil
+    }
+
+    private static func range(_ value: Any?) -> ClosedRange<Int>? {
+        guard let pair = value as? [Any], pair.count == 2,
+              let low = wholeCount(pair[0]), let high = wholeCount(pair[1]),
+              low <= high else { return nil }
+        return low...high
+    }
+
+    // A fractional or non-finite count is not a message count the provider
+    // reported, so it must not be truncated into one.
+    private static func wholeCount(_ value: Any) -> Int? {
+        guard let number = value as? NSNumber else { return nil }
+        let double = number.doubleValue
+        // Double(Int.max) rounds up to 2^63, which Int(_:) cannot hold.
+        guard double.isFinite, double >= 0, double < Double(Int.max),
+              double == double.rounded(.towardZero) else { return nil }
+        return Int(double)
+    }
+}
+
 struct AppUsage {
     var fiveHour: WindowUsage
     var weekly: WindowUsage
@@ -95,16 +143,20 @@ struct AppUsage {
     // nil means no successful window discovery yet, not a two-window plan.
     var reportedWindows: [UsageWindow]?
 
+    var codexCredits: CodexCredits?
+
     init(fiveHour: WindowUsage, weekly: WindowUsage, monthly: WindowUsage = .unknown,
          fableWeekly: WindowUsage = .unknown,
          plan: String? = nil,
-         reportedWindows: [UsageWindow]? = nil) {
+         reportedWindows: [UsageWindow]? = nil,
+         codexCredits: CodexCredits? = nil) {
         self.fiveHour = fiveHour
         self.weekly = weekly
         self.fableWeekly = fableWeekly
         self.monthly = monthly
         self.plan = plan
         self.reportedWindows = reportedWindows
+        self.codexCredits = codexCredits
     }
 
     static let empty = AppUsage(fiveHour: .unknown, weekly: .unknown)
@@ -162,7 +214,10 @@ struct AppUsage {
             // Plan tier is read from the credential store, not the usage
             // response, so a failed fetch shouldn't blank the chip's badge.
             plan: fetched.plan ?? prior.plan,
-            reportedWindows: fetched.reportedWindows ?? prior.reportedWindows
+            reportedWindows: fetched.reportedWindows ?? prior.reportedWindows,
+            // A parsed response is authoritative about credits, including
+            // their absence; only a failed fetch keeps the prior balance.
+            codexCredits: fetched.reportedWindows == nil ? prior.codexCredits : fetched.codexCredits
         )
     }
 

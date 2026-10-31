@@ -106,7 +106,9 @@ final class UsageStore: ObservableObject {
                     resetAt: now.addingTimeInterval(4 * 86400 + 18 * 3600),
                     error: nil
                 ),
-                plan: "pro"
+                plan: "pro",
+                codexCredits: CodexCredits(balance: 1250, unlimited: false,
+                                           localMessages: 310...1620, cloudMessages: 50...310)
             )
             self.codexResetCredits = CodexResetCredits(
                 availableCount: 2,
@@ -285,7 +287,8 @@ final class UsageStore: ObservableObject {
             monthly: current.monthly,
             fableWeekly: fill(.fableWeekly, current.fableWeekly, prior?.fableWeekly),
             plan: current.plan,
-            reportedWindows: current.reportedWindows
+            reportedWindows: current.reportedWindows,
+            codexCredits: current.codexCredits
         )
     }
 

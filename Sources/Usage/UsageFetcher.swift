@@ -37,7 +37,8 @@ enum UsageFetcher {
                 fiveHour: windows.fiveHour,
                 weekly: windows.weekly,
                 plan: obj["plan_type"] as? String,
-                reportedWindows: windows.reported
+                reportedWindows: windows.reported,
+                codexCredits: CodexCredits.parse(obj["credits"])
             )
         } catch {
             return errorPair(error.localizedDescription)

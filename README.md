@@ -79,8 +79,10 @@ for authentication details and data limitations.
 - **Approaching-limit alerts.** Optional warning and critical thresholds tint
   the island and pulse the peek pill as a visible 5-hour window nears its
   limit.
-- **Codex reset credits.** When reset credits are available, the Usage footer
-  shows their count and expiration details.
+- **Codex reset credits and balance.** When reset credits are available, the
+  Usage footer shows their count and expiration details. Accounts holding
+  Codex credits also get a Credits line under the Codex charts with the
+  balance; hover it for the provider's estimate of remaining messages.
 - **Configurable token counting.** The TOKENS hero can sum every token type
   that crossed the wire (cache included, ccusage parity) or input + output
   only — the latter matches Anthropic's claude.ai stats panel.

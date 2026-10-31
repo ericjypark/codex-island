@@ -29,6 +29,10 @@ struct QuotaChartRenderHarness {
                 renderer.scale = 2
                 _ = renderer.cgImage
                 RunLoop.main.run(until: Date().addingTimeInterval(0.8))
+                if scenario.rawValue.hasPrefix("codexCredits") {
+                    precondition(UsageStore.shared.codex.codexCredits != nil,
+                                 "Demo refresh must not overwrite the Codex credits fixture: \(scenario)")
+                }
                 if scenario.rawValue.hasPrefix("credits") {
                     precondition(UsageStore.shared.claude.visibleWindows.contains(.monthly),
                                  "Demo refresh must not overwrite the Credits fixture: \(scenario)")
@@ -108,10 +112,11 @@ enum ChartQAScenario: String, CaseIterable {
     case creditsFirstFailure, creditsLongError, creditsLocalized, creditsWrappedAmount
     case creditsGrok, creditsAntigravity
     case fable, fableRemaining, fableCredits, fableError
+    case codexCredits, codexCreditsUnlimited, codexCreditsLocalized
 
     @MainActor
     func apply() {
-        AppLanguageStore.shared.select(self == .creditsLocalized ? .zhHans : .en)
+        AppLanguageStore.shared.select(self == .creditsLocalized || self == .codexCreditsLocalized ? .zhHans : .en)
         ProviderVisibilityStore.shared.set(.codex, at: 0)
         ProviderVisibilityStore.shared.set(.claude, at: 1)
         if rawValue.hasPrefix("credits") {
@@ -159,6 +164,14 @@ enum ChartQAScenario: String, CaseIterable {
                                          error: self == .fableError ? "HTTP 500" : nil),
                 plan: "Max", reportedWindows: self == .fableCredits
                     ? [.fiveHour, .weekly, .fableWeekly, .monthly] : [.fiveHour, .weekly, .fableWeekly])
+        }
+        if rawValue.hasPrefix("codexCredits") {
+            let credits = self == .codexCreditsUnlimited
+                ? CodexCredits(balance: nil, unlimited: true, localMessages: nil, cloudMessages: nil)
+                : CodexCredits(balance: 12345.75, unlimited: false,
+                               localMessages: 3100...16200, cloudMessages: 500...3100)
+            UsageStore.shared.codex = AppUsage(fiveHour: .unknown, weekly: codexWeek, plan: "Pro",
+                                              reportedWindows: [.weekly], codexCredits: credits)
         }
         if rawValue.hasPrefix("credits") {
             let credit: WindowUsage

@@ -86,7 +86,8 @@ struct ChartsBlock: View {
                                 UsageChartMetric(id: kind.rawValue, label: kind.labelKey,
                                                  window: usage.window(kind),
                                                  historyKey: "\(provider.rawValue).\(kind.rawValue)")
-                            }, credits: usage.visibleWindows.contains(.monthly) ? usage.monthly : nil)
+                            }, credits: usage.visibleWindows.contains(.monthly) ? usage.monthly : nil,
+                            codexCredits: usage.codexCredits)
                     }
                 }
                 .transition(.chartSwap.animation(.chartSwap))
@@ -179,6 +180,7 @@ struct UsageChartsRow: View {
     let seed: Int
     let metrics: [UsageChartMetric]
     var credits: WindowUsage? = nil
+    var codexCredits: CodexCredits? = nil
     @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
     @ObservedObject private var historyStore = UsageHistoryStore.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -212,6 +214,9 @@ struct UsageChartsRow: View {
             }
             if let credits {
                 UsageCreditsSummary(window: credits, color: color, mode: usageDisplay.mode)
+            }
+            if let codexCredits {
+                CodexCreditsSummary(credits: codexCredits)
             }
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
