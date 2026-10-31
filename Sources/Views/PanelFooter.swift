@@ -1,13 +1,13 @@
 import SwiftUI
 import AppKit
 
-/// Hairline divider + chip + cmd-click hint + page indicator + live-status
+/// Hairline divider + chip + cycle hint + page indicator + live-status
 /// group. Lives outside `PagedContent` so it stays fixed while the data
 /// area swipes between pages.
 ///
 /// Two things change with the active screen:
 ///   1. The chip — shows the current chart-style label on the usage page
-///      (since cmd-click cycles styles there), the current cost mode on
+///      (clicking it cycles styles there), the current cost mode on
 ///      the cost page, and a static year label on the overview page.
 ///   2. The live-status group — reflects whichever store powers the
 ///      currently visible page (UsageStore on usage, CostStore on cost
@@ -91,9 +91,9 @@ struct PanelFooter: View {
                             .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
                     }
                 }
-                .contentShape(Rectangle().inset(by: -10))
             }
             .buttonStyle(PressableButtonStyle(scale: 0.95))
+            .contentShape(Rectangle().inset(by: -10))
             .onHover { h in
                 chipHovered = h
                 if h {
@@ -102,11 +102,18 @@ struct PanelFooter: View {
                     NSCursor.pop()
                 }
             }
+            // Switching to Overview swaps the button for the static label
+            // without a hover-out, which would leave the hand cursor pushed.
+            .onDisappear {
+                if chipHovered {
+                    chipHovered = false
+                    NSCursor.pop()
+                }
+            }
             .help(nextStyleHint)
-            .accessibilityElement(children: .ignore)
+            .accessibilityElement(children: .combine)
             .accessibilityLabel(chipLabelText)
             .accessibilityHint(nextStyleHint)
-            .accessibilityAddTraits(.isButton)
         }
     }
 
@@ -114,16 +121,10 @@ struct PanelFooter: View {
     /// sequence teaches itself one step at a time.
     private var nextStyleHint: String {
         switch screenPref.screen {
-        case .usage: return L10n.tr("Next: %@", next(pref.style).label)
-        case .cost: return L10n.tr("Next: %@", next(costPref.style).label)
+        case .usage: return L10n.tr("Next: %@", pref.nextStyle.label)
+        case .cost: return L10n.tr("Next: %@", costPref.nextStyle.label)
         case .overview: return ""
         }
-    }
-
-    private func next<S: CaseIterable & Equatable>(_ style: S) -> S {
-        let all = Array(S.allCases)
-        guard let i = all.firstIndex(of: style) else { return style }
-        return all[(i + 1) % all.count]
     }
 
     private func cycleActiveStyle() {
@@ -160,7 +161,6 @@ struct PanelFooter: View {
                             .strokeBorder(.white.opacity(chipHovered ? 0.18 : 0.10), lineWidth: 0.5)
                     )
             )
-            .contentShape(RoundedRectangle(cornerRadius: 4))
             .contentTransition(.opacity)
             .animation(.hoverFade, value: chipHovered)
             .animation(.strongEaseOut, value: pref.style)

@@ -88,8 +88,8 @@ for authentication details and data limitations.
   the visible silhouette so the menu bar and apps underneath still work.
 - **Five chart styles.** Rails, Ring, Grid, History, and Stepped. Pick the
   default in Settings or click the style chip in the panel footer to cycle.
-  History
-  uses real readings recorded by CodexIsland during successful refreshes.
+  History uses real readings recorded by CodexIsland during successful
+  refreshes.
 - **On-demand refresh.** Click `synced Xs ago` in the panel header to refetch
   immediately; the next scheduled poll re-arms from there.
 - **Cobalt glow + Low Power Mode.** A soft glow around the island signals an

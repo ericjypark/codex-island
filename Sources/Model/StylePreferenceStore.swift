@@ -29,16 +29,19 @@ where S.RawValue == String {
         self.defaults = defaults
         let raw = defaults.string(forKey: styleKey) ?? ""
         self.style = S(rawValue: raw) ?? legacyStyles[raw] ?? defaultStyle
-        // Demo mode keeps the ⌘-click hint visible regardless of prior session.
+        // Demo mode keeps the cycle hint visible regardless of prior session.
         self.hasCycledStyle = AppEnvironment.isDemo ? false : defaults.bool(forKey: cycledKey)
         if legacyStyles[raw] != nil { defaults.set(style.rawValue, forKey: styleKey) }
     }
 
-    func cycle() {
+    var nextStyle: S {
         let all = Array(S.allCases)
-        if let i = all.firstIndex(of: style) {
-            style = all[(i + 1) % all.count]
-        }
+        guard let i = all.firstIndex(of: style) else { return style }
+        return all[(i + 1) % all.count]
+    }
+
+    func cycle() {
+        style = nextStyle
         if !hasCycledStyle { hasCycledStyle = true }
     }
 }

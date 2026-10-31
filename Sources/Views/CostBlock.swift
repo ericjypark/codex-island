@@ -33,8 +33,8 @@ struct CostBlock: View {
 
 /// One cost cell. Branches on `CostStylePref.style` for the hero
 /// visualization — pure dollars, value multiplier vs a $20/mo baseline,
-/// raw token throughput, or a cumulative trend line. Cmd-click on the
-/// expanded panel cycles styles (handled in `IslandRootView`).
+/// raw token throughput, or a cumulative trend line. The footer chip
+/// cycles styles (handled in `PanelFooter`).
 struct CostTile: View {
     let color: Color
     let window: CostWindow
