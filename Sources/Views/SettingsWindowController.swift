@@ -50,9 +50,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             return
         }
         let visible = screen.visibleFrame
-        let size = window.frame.size
-        window.setFrameOrigin(NSPoint(x: visible.midX - size.width / 2,
-                                      y: visible.midY - size.height / 2))
+        var frame = window.frame
+        frame.origin = NSPoint(x: visible.midX - frame.width / 2,
+                               y: visible.midY - frame.height / 2)
+        // A window enlarged on a bigger display must still fit this one.
+        window.setFrame(window.constrainFrameRect(frame, to: screen), display: false)
     }
 
     func show() {
