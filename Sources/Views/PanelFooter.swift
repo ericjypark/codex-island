@@ -58,16 +58,16 @@ struct PanelFooter: View {
             }
             .frame(height: IslandPanelLayout.footerHeight - 1, alignment: .center)
             .padding(.horizontal, IslandPanelLayout.horizontalInset)
-            .animation(.strongEaseOut, value: pref.hasCycledStyle)
-            .animation(.strongEaseOut, value: costPref.hasCycledStyle)
+            .animation(.strongEaseOut, value: pref.hasUsedChip)
+            .animation(.strongEaseOut, value: costPref.hasUsedChip)
             .animation(.strongEaseOut, value: screenPref.screen)
         }
     }
 
     private var activeStyleCycled: Bool {
         switch screenPref.screen {
-        case .usage: return pref.hasCycledStyle
-        case .cost:  return costPref.hasCycledStyle
+        case .usage: return pref.hasUsedChip
+        case .cost:  return costPref.hasUsedChip
         case .overview: return true
         }
     }
@@ -122,26 +122,27 @@ struct PanelFooter: View {
     private var nextStyleHint: String {
         switch screenPref.screen {
         case .usage: return L10n.tr("Next: %@", pref.nextStyle.label)
-        case .cost: return L10n.tr("Next: %@", costPref.nextStyle.label)
+        case .cost: return L10n.tr("Next: %@", costLabel(costPref.nextStyle))
         case .overview: return ""
         }
     }
 
     private func cycleActiveStyle() {
         switch screenPref.screen {
-        case .usage: pref.cycle()
-        case .cost: costPref.cycle()
+        case .usage: pref.cycleFromChip()
+        case .cost: costPref.cycleFromChip()
         case .overview: return
         }
+    }
+
+    private func costLabel(_ style: CostStyle) -> String {
+        style == .dollar ? currencyStore.displayCurrency.rawValue : style.label
     }
 
     private var chipLabelText: String {
         switch screenPref.screen {
         case .usage: return pref.style.label.uppercased()
-        case .cost:
-            return costPref.style == .dollar
-                ? currencyStore.displayCurrency.rawValue
-                : costPref.style.label
+        case .cost: return costLabel(costPref.style)
         case .overview: return currentYearString
         }
     }

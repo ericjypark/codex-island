@@ -21,6 +21,9 @@ where S.RawValue == String {
     @Published var hasCycledStyle: Bool {
         didSet { defaults.set(hasCycledStyle, forKey: cycledKey) }
     }
+    @Published var hasUsedChip: Bool {
+        didSet { defaults.set(hasUsedChip, forKey: cycledKey + ".chip") }
+    }
 
     init(styleKey: String, cycledKey: String, defaultStyle: S,
          legacyStyles: [String: S] = [:], defaults: UserDefaults = .standard) {
@@ -31,6 +34,7 @@ where S.RawValue == String {
         self.style = S(rawValue: raw) ?? legacyStyles[raw] ?? defaultStyle
         // Demo mode keeps the cycle hint visible regardless of prior session.
         self.hasCycledStyle = AppEnvironment.isDemo ? false : defaults.bool(forKey: cycledKey)
+        self.hasUsedChip = AppEnvironment.isDemo ? false : defaults.bool(forKey: cycledKey + ".chip")
         if legacyStyles[raw] != nil { defaults.set(style.rawValue, forKey: styleKey) }
     }
 
@@ -43,5 +47,13 @@ where S.RawValue == String {
     func cycle() {
         style = nextStyle
         if !hasCycledStyle { hasCycledStyle = true }
+    }
+
+    /// The chip hint is tracked apart from `hasCycledStyle`, which Settings
+    /// tiles and Command-click also set, so users who learned the old gesture
+    /// still see the hint until they have clicked the chip once.
+    func cycleFromChip() {
+        cycle()
+        if !hasUsedChip { hasUsedChip = true }
     }
 }
