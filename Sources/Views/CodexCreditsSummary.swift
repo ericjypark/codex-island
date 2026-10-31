@@ -6,9 +6,11 @@ import SwiftUI
 struct CodexCreditsSummary: View {
     let credits: CodexCredits
 
-    private var amountText: String {
+    // Floor so a remaining figure never reads higher than the real balance.
+    private var amountText: String? {
         if credits.unlimited { return L10n.tr("Unlimited") }
-        return DisplayNumber.money(credits.balance ?? 0, wholeUnits: true, locale: L10n.locale)
+        guard let balance = credits.balance else { return nil }
+        return DisplayNumber.money(balance.rounded(.down), wholeUnits: true, locale: L10n.locale)
     }
 
     private var captionText: String? {
@@ -35,10 +37,12 @@ struct CodexCreditsSummary: View {
                     .font(Typography.label)
                     .foregroundStyle(.white.opacity(0.7))
                 Spacer(minLength: 8)
-                Text(amountText)
-                    .font(Typography.bodyNumber)
-                    .foregroundStyle(.white.opacity(0.9))
-                    .lineLimit(1)
+                if let amountText {
+                    Text(amountText)
+                        .font(Typography.bodyNumber)
+                        .foregroundStyle(.white.opacity(0.9))
+                        .lineLimit(1)
+                }
             }
             if let captionText {
                 Text(captionText)
@@ -49,8 +53,8 @@ struct CodexCreditsSummary: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .help(captionText ?? amountText)
+        .help(captionText ?? amountText ?? "")
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(L10n.tr("%@ Codex credits remaining", amountText))
+        .accessibilityLabel(L10n.tr("%@ Codex credits remaining", amountText ?? ""))
     }
 }

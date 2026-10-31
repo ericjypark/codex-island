@@ -15,7 +15,7 @@ struct CodexCreditsTests {
         try! JSONSerialization.jsonObject(with: Data(json.utf8)) as! [String: Any]
     }
 
-    /// Live response observed 2026-10-30 (identifiers redacted).
+    /// Shape of a funded Pro account response (values synthetic).
     static let fundedResponse = """
     {
       "plan_type": "pro",
@@ -34,9 +34,9 @@ struct CodexCreditsTests {
         "has_credits": true,
         "unlimited": false,
         "overage_limit_reached": false,
-        "balance": "43683.7950395000",
-        "approx_local_messages": [10921, 56789],
-        "approx_cloud_messages": [1747, 10921]
+        "balance": "1250.5000000000",
+        "approx_local_messages": [310, 1620],
+        "approx_cloud_messages": [50, 310]
       }
     }
     """
@@ -44,10 +44,10 @@ struct CodexCreditsTests {
     static func main() {
         let funded = CodexCredits.parse(parse(fundedResponse)["credits"])
         expect(funded != nil, "funded account yields credits")
-        expect(funded?.balance.map { abs($0 - 43683.7950395) < 0.0001 } == true, "balance parses from decimal string")
+        expect(funded?.balance.map { abs($0 - 1250.5) < 0.0001 } == true, "balance parses from decimal string")
         expect(funded?.unlimited == false, "funded account is not unlimited")
-        expect(funded?.localMessages == 10921...56789, "local message range parses")
-        expect(funded?.cloudMessages == 1747...10921, "cloud message range parses")
+        expect(funded?.localMessages == 310...1620, "local message range parses")
+        expect(funded?.cloudMessages == 50...310, "cloud message range parses")
 
         let none = CodexCredits.parse(parse("""
         { "credits": { "has_credits": false, "unlimited": false } }
