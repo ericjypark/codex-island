@@ -114,10 +114,19 @@ struct CodexCredits: Equatable {
 
     private static func range(_ value: Any?) -> ClosedRange<Int>? {
         guard let pair = value as? [Any], pair.count == 2,
-              let low = (pair[0] as? NSNumber)?.intValue,
-              let high = (pair[1] as? NSNumber)?.intValue,
-              low >= 0, low <= high else { return nil }
+              let low = wholeCount(pair[0]), let high = wholeCount(pair[1]),
+              low <= high else { return nil }
         return low...high
+    }
+
+    // A fractional or non-finite count is not a message count the provider
+    // reported, so it must not be truncated into one.
+    private static func wholeCount(_ value: Any) -> Int? {
+        guard let number = value as? NSNumber else { return nil }
+        let double = number.doubleValue
+        guard double.isFinite, double >= 0, double <= Double(Int.max),
+              double == double.rounded(.towardZero) else { return nil }
+        return Int(double)
     }
 }
 

@@ -71,6 +71,13 @@ struct CodexCreditsTests {
         expect(numeric?.localMessages == nil, "short range is rejected")
         expect(numeric?.cloudMessages == nil, "inverted range is rejected")
 
+        let fractional = CodexCredits.parse(parse("""
+        { "credits": { "has_credits": true, "unlimited": false, "balance": "5",
+                       "approx_local_messages": [1.9, 2.1], "approx_cloud_messages": [-1, 4] } }
+        """)["credits"])
+        expect(fractional?.localMessages == nil, "fractional counts are rejected rather than truncated")
+        expect(fractional?.cloudMessages == nil, "negative counts are rejected")
+
         let now = Date()
         let weekly = WindowUsage(usedPercent: 0.26, resetAt: now.addingTimeInterval(3600), error: nil)
         let prior = AppUsage(fiveHour: .unknown, weekly: weekly, plan: "pro",
