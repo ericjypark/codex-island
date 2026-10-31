@@ -42,6 +42,10 @@ struct ChartStyleTests {
             check(defaults.string(forKey: styleKey) == expected.rawValue, "Cycle must persist selection")
         }
         check(pref.hasCycledStyle, "Cycling completes the onboarding hint")
+        check(!pref.hasUsedChip, "Cycling elsewhere must not dismiss the chip hint")
+        pref.cycleFromChip()
+        check(pref.style == .ring && pref.hasUsedChip, "Chip click advances the style and dismisses its hint")
+        check(store().hasUsedChip, "Chip hint state must persist across launches")
         print("PASS \(checks) chart style migration and cycle checks")
     }
 }

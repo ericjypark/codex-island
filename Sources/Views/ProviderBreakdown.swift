@@ -9,7 +9,7 @@ import SwiftUI
 //
 // One unified `PerModelBreakdown(provider:, metric:)` struct handles both
 // the usage page (tokens) and the cost page (dollars). The row layout is
-// identical between metrics so a metric swap (cost-page Cmd-click into
+// identical between metrics so a metric swap (cost-page chip click into
 // TOKENS style) doesn't reflow the column.
 //
 // Each row's bar carries TWO meanings via overlapping fills on a single

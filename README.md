@@ -87,8 +87,9 @@ for authentication details and data limitations.
 - **Click-through outside the island.** The window ignores mouse events outside
   the visible silhouette so the menu bar and apps underneath still work.
 - **Five chart styles.** Rails, Ring, Grid, History, and Stepped. Pick the
-  default in Settings or Command-click the expanded panel to cycle. History
-  uses real readings recorded by CodexIsland during successful refreshes.
+  default in Settings or click the style chip in the panel footer to cycle.
+  History uses real readings recorded by CodexIsland during successful
+  refreshes.
 - **On-demand refresh.** Click `synced Xs ago` in the panel header to refetch
   immediately; the next scheduled poll re-arms from there.
 - **Cobalt glow + Low Power Mode.** A soft glow around the island signals an
@@ -196,7 +197,7 @@ the first peek. Opening Settings also triggers a fresh fetch.
 - Swipe horizontally on the panel (or use the indicator dots) to move between
   **Usage**, **Cost**, and **Overview**.
 - Move away to collapse it.
-- Command-click the expanded panel to cycle chart styles on the active screen
+- Click the style chip in the footer to cycle chart styles on the active screen
   (Usage cycles Rails/Ring/Grid/History/Stepped; Cost cycles
   USD/VALUE/TOKENS/TREND; Overview has one calendar view).
 - Click `synced Xs ago` in the panel header to refetch immediately.

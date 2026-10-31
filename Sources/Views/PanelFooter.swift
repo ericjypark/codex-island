@@ -1,13 +1,13 @@
 import SwiftUI
 import AppKit
 
-/// Hairline divider + chip + cmd-click hint + page indicator + live-status
+/// Hairline divider + chip + cycle hint + page indicator + live-status
 /// group. Lives outside `PagedContent` so it stays fixed while the data
 /// area swipes between pages.
 ///
 /// Two things change with the active screen:
 ///   1. The chip — shows the current chart-style label on the usage page
-///      (since cmd-click cycles styles there), the current cost mode on
+///      (clicking it cycles styles there), the current cost mode on
 ///      the cost page, and a static year label on the overview page.
 ///   2. The live-status group — reflects whichever store powers the
 ///      currently visible page (UsageStore on usage, CostStore on cost
@@ -24,6 +24,7 @@ struct PanelFooter: View {
     @ObservedObject private var costStore = CostStore.shared
     @ObservedObject private var currencyStore = CurrencyStore.shared
     @State private var liveStatusHovered = false
+    @State private var chipHovered = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -44,19 +45,6 @@ struct PanelFooter: View {
                         WeeklyCardButton()
                     }
 
-                    if !activeStyleCycled {
-                        HStack(spacing: 5) {
-                            Image(systemName: "command")
-                                .font(Typography.micro)
-                            Text(L10n.tr("click to cycle"))
-                                .font(Typography.label)
-                        }
-                        .foregroundStyle(.white.opacity(0.42))
-                        .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel(cycleHintAccessibilityLabel)
-                    }
-
                     Spacer()
 
                     liveStatus
@@ -70,40 +58,97 @@ struct PanelFooter: View {
             }
             .frame(height: IslandPanelLayout.footerHeight - 1, alignment: .center)
             .padding(.horizontal, IslandPanelLayout.horizontalInset)
-            .animation(.strongEaseOut, value: pref.hasCycledStyle)
-            .animation(.strongEaseOut, value: costPref.hasCycledStyle)
+            .animation(.strongEaseOut, value: pref.hasUsedChip)
+            .animation(.strongEaseOut, value: costPref.hasUsedChip)
             .animation(.strongEaseOut, value: screenPref.screen)
         }
     }
 
     private var activeStyleCycled: Bool {
         switch screenPref.screen {
-        case .usage: return pref.hasCycledStyle
-        case .cost:  return costPref.hasCycledStyle
+        case .usage: return pref.hasUsedChip
+        case .cost:  return costPref.hasUsedChip
         case .overview: return true
         }
     }
 
-    private var cycleHintAccessibilityLabel: String {
-        switch screenPref.screen {
-        case .overview: return L10n.tr("Overview shows %@ usage history", currentYearString)
-        case .usage, .cost: return L10n.tr("Tip: Command-click to cycle visualization")
+    /// The chip is the cycle control: a plain click advances the active
+    /// page's visualization. The one-shot caption is part of the same button
+    /// and the hit area spans the footer row, so the ~16pt chip is an easy
+    /// target. Overview has a single fixed view, so its chip stays a static label.
+    @ViewBuilder
+    private var chip: some View {
+        if screenPref.screen == .overview {
+            chipLabel
+        } else {
+            Button(action: cycleActiveStyle) {
+                HStack(spacing: 10) {
+                    chipLabel
+                    if !activeStyleCycled {
+                        Text(L10n.tr("click to cycle"))
+                            .font(Typography.label)
+                            .foregroundStyle(.white.opacity(0.42))
+                            .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
+                    }
+                }
+            }
+            .buttonStyle(PressableButtonStyle(scale: 0.95))
+            .contentShape(Rectangle().inset(by: -10))
+            .onHover { h in
+                chipHovered = h
+                if h {
+                    NSCursor.pointingHand.push()
+                } else {
+                    NSCursor.pop()
+                }
+            }
+            // Switching to Overview swaps the button for the static label
+            // without a hover-out, which would leave the hand cursor pushed.
+            .onDisappear {
+                if chipHovered {
+                    chipHovered = false
+                    NSCursor.pop()
+                }
+            }
+            .help(nextStyleHint)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(chipLabelText)
+            .accessibilityHint(nextStyleHint)
         }
     }
 
-    @ViewBuilder
-    private var chip: some View {
-        let label: String = {
-            switch screenPref.screen {
-            case .usage: return pref.style.label.uppercased()
-            case .cost:
-                return costPref.style == .dollar
-                    ? currencyStore.displayCurrency.rawValue
-                    : costPref.style.label
-            case .overview: return currentYearString
-            }
-        }()
-        Text(label)
+    /// Names the result of a click rather than the mechanism, so the
+    /// sequence teaches itself one step at a time.
+    private var nextStyleHint: String {
+        switch screenPref.screen {
+        case .usage: return L10n.tr("Next: %@", pref.nextStyle.label)
+        case .cost: return L10n.tr("Next: %@", costLabel(costPref.nextStyle))
+        case .overview: return ""
+        }
+    }
+
+    private func cycleActiveStyle() {
+        switch screenPref.screen {
+        case .usage: pref.cycleFromChip()
+        case .cost: costPref.cycleFromChip()
+        case .overview: return
+        }
+    }
+
+    private func costLabel(_ style: CostStyle) -> String {
+        style == .dollar ? currencyStore.displayCurrency.rawValue : style.label
+    }
+
+    private var chipLabelText: String {
+        switch screenPref.screen {
+        case .usage: return pref.style.label.uppercased()
+        case .cost: return costLabel(costPref.style)
+        case .overview: return currentYearString
+        }
+    }
+
+    private var chipLabel: some View {
+        Text(chipLabelText)
             .font(Typography.chip)
             .tracking(0.8)
             .foregroundStyle(.white.opacity(0.78))
@@ -111,13 +156,14 @@ struct PanelFooter: View {
             .padding(.vertical, 2.5)
             .background(
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(.white.opacity(0.08))
+                    .fill(.white.opacity(chipHovered ? 0.14 : 0.08))
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
-                            .strokeBorder(.white.opacity(0.10), lineWidth: 0.5)
+                            .strokeBorder(.white.opacity(chipHovered ? 0.18 : 0.10), lineWidth: 0.5)
                     )
             )
             .contentTransition(.opacity)
+            .animation(.hoverFade, value: chipHovered)
             .animation(.strongEaseOut, value: pref.style)
             .animation(.strongEaseOut, value: costPref.style)
             .animation(.strongEaseOut, value: currencyStore.displayCurrency)

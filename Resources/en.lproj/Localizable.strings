@@ -46,6 +46,10 @@
 "Claude session expired" = "Claude session expired";
 "Click to refresh now" = "Click to refresh now";
 "click to cycle" = "click to cycle";
+"click chip to cycle" = "click chip to cycle";
+"Next: %@" = "Next: %@";
+"Click to expand." = "Click to expand.";
+"Hover to peek usage. Click to expand." = "Hover to peek usage. Click to expand.";
 "Codex" = "Codex";
 "CodexIsland panel" = "CodexIsland panel";
 "Compact" = "Compact";
@@ -119,7 +123,6 @@
 "Target display" = "Target display";
 "Target Display" = "Target Display";
 "Tint the island and pulse the peek pill when 5-hour usage nears your limit." = "Tint the island and pulse the peek pill when 5-hour usage nears your limit.";
-"Tip: Command-click to cycle visualization" = "Tip: Command-click to cycle visualization";
 "Today" = "Today";
 "Token counting" = "Token counting";
 "Tokens" = "Tokens";
@@ -137,7 +140,6 @@
 "You" = "You";
 "Your AI usage limits, living in your notch." = "Your AI usage limits, living in your notch.";
 "Your language change will take effect after CodexIsland restarts." = "Your language change will take effect after CodexIsland restarts.";
-"⌘-click to cycle" = "⌘-click to cycle";
 "⌘1 — pull real provider data" = "⌘1 — pull real provider data";
 "%@ (hidden)" = "%@ (hidden)";
 "%@: %d percent of 5-hour window remaining" = "%@: %d percent of 5-hour window remaining";
@@ -150,9 +152,6 @@
 "%@: %d percent of weekly window used" = "%@: %d percent of weekly window used";
 "%@: %d percent of weekly window used, %@" = "%@: %d percent of weekly window used, %@";
 "%@: no data for weekly window" = "%@: no data for weekly window";
-"Click to expand. Command-click to cycle visualization." = "Click to expand. Command-click to cycle visualization.";
-"Command-click to cycle visualization." = "Command-click to cycle visualization.";
-"Hover to peek usage. Click to expand. Command-click to cycle visualization." = "Hover to peek usage. Click to expand. Command-click to cycle visualization.";
 "Hover to show reset expiration details" = "Hover to show reset expiration details";
 "How often to refresh." = "How often to refresh.";
 "Percentages" = "Percentages";

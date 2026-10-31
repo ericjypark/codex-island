@@ -341,13 +341,10 @@ struct IslandRootView: View {
         switch model.state {
         case .compact:
             return alwaysShow.enabled
-                ? L10n.tr("Click to expand. Command-click to cycle visualization.")
-                : L10n.tr("Hover to peek usage. Click to expand. Command-click to cycle visualization.")
-        case .peek:     return L10n.tr("Click to expand. Command-click to cycle visualization.")
-        case .expanded:
-            return ScreenPref.shared.screen == .overview
-                ? L10n.tr("Swipe to change pages.")
-                : L10n.tr("Command-click to cycle visualization.")
+                ? L10n.tr("Click to expand.")
+                : L10n.tr("Hover to peek usage. Click to expand.")
+        case .peek:     return L10n.tr("Click to expand.")
+        case .expanded: return L10n.tr("Swipe to change pages.")
         }
     }
 
