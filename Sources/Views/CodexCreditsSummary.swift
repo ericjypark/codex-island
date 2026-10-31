@@ -55,6 +55,7 @@ struct CodexCreditsSummary: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .help(captionText ?? amountText ?? "")
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(L10n.tr("%@ Codex credits remaining", amountText ?? ""))
+        .accessibilityLabel([amountText.map { L10n.tr("%@ Codex credits remaining", $0) }, captionText]
+            .compactMap { $0 }.joined(separator: ". "))
     }
 }
