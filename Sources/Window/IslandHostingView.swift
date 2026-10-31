@@ -52,9 +52,10 @@ final class IslandHostingView: NSHostingView<IslandRootView> {
 
     /// Two-finger trackpad swipe → page change. Only fires when the panel is
     /// expanded and the gesture is horizontal-dominant. Mouse-wheel ticks
-    /// (no precise deltas) change pages only when they are explicitly
-    /// horizontal: Shift+wheel, the macOS convention, or a horizontal wheel
-    /// such as a thumb wheel. Vertical ticks still pass through.
+    /// (no gesture phases, whatever their delta precision) change pages only
+    /// when they are explicitly horizontal: Shift+wheel, the macOS
+    /// convention, or a horizontal wheel such as a thumb wheel. Vertical
+    /// ticks still pass through.
     override func scrollWheel(with event: NSEvent) {
         guard islandModel.state == .expanded else {
             super.scrollWheel(with: event)
@@ -67,7 +68,13 @@ final class IslandHostingView: NSHostingView<IslandRootView> {
         }
 
         let shift = event.modifierFlags.contains(.shift)
-        if shift || !event.hasPreciseScrollingDeltas {
+        // Phases, not `hasPreciseScrollingDeltas`, tell a wheel from a
+        // trackpad: some mouse drivers smooth ticks into precise deltas but
+        // never send phases, so they would otherwise wait for an `.ended`
+        // that never comes.
+        let isTick = event.phase == [] && event.momentumPhase == []
+        if shift || isTick {
+            if shift, event.momentumPhase != [] { return }
             guard let direction = WheelSwipe.direction(
                 deltaX: event.scrollingDeltaX, deltaY: event.scrollingDeltaY, shift: shift,
                 now: event.timestamp, lastChange: lastWheelPageChange)
