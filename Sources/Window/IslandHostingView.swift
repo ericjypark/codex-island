@@ -16,7 +16,7 @@ final class IslandHostingView: NSHostingView<IslandRootView> {
     /// Reset on `.began`, evaluated on `.ended`.
     private var swipeAccumX: CGFloat = 0
     private var swipeAccumY: CGFloat = 0
-    private var lastWheelPageChange: TimeInterval = 0
+    private var lastWheelTick: TimeInterval = 0
 
     init(rootView: IslandRootView, model: IslandModel) {
         self.islandModel = model
@@ -75,17 +75,18 @@ final class IslandHostingView: NSHostingView<IslandRootView> {
         let isTick = event.phase == [] && event.momentumPhase == []
         if shift || isTick {
             if shift, event.momentumPhase != [] { return }
-            guard let direction = WheelSwipe.direction(
-                deltaX: event.scrollingDeltaX, deltaY: event.scrollingDeltaY, shift: shift,
-                now: event.timestamp, lastChange: lastWheelPageChange)
+            guard let delta = WheelSwipe.pageDelta(
+                deltaX: event.scrollingDeltaX, deltaY: event.scrollingDeltaY, shift: shift)
             else {
                 if !shift { super.scrollWheel(with: event) }
                 return
             }
-            lastWheelPageChange = event.timestamp
+            let direction = WheelSwipe.direction(delta: delta, now: event.timestamp, lastTick: lastWheelTick)
+            lastWheelTick = event.timestamp
             switch direction {
-            case .advance: islandModel.advanceScreen()
-            case .rewind: islandModel.rewindScreen()
+            case .advance?: islandModel.advanceScreen()
+            case .rewind?: islandModel.rewindScreen()
+            case nil: break
             }
             return
         }
