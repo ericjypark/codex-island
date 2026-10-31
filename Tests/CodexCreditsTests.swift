@@ -78,6 +78,14 @@ struct CodexCreditsTests {
         expect(fractional?.localMessages == nil, "fractional counts are rejected rather than truncated")
         expect(fractional?.cloudMessages == nil, "negative counts are rejected")
 
+        let huge = CodexCredits.parse(parse("""
+        { "credits": { "has_credits": true, "unlimited": false, "balance": "5",
+                       "approx_local_messages": [1, 9223372036854775807],
+                       "approx_cloud_messages": [1, 1e19] } }
+        """)["credits"])
+        expect(huge?.localMessages == nil, "a count at the Int boundary is rejected rather than trapping")
+        expect(huge?.cloudMessages == nil, "a count beyond Int is rejected")
+
         let now = Date()
         let weekly = WindowUsage(usedPercent: 0.26, resetAt: now.addingTimeInterval(3600), error: nil)
         let prior = AppUsage(fiveHour: .unknown, weekly: weekly, plan: "pro",

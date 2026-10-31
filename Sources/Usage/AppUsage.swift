@@ -124,7 +124,8 @@ struct CodexCredits: Equatable {
     private static func wholeCount(_ value: Any) -> Int? {
         guard let number = value as? NSNumber else { return nil }
         let double = number.doubleValue
-        guard double.isFinite, double >= 0, double <= Double(Int.max),
+        // Double(Int.max) rounds up to 2^63, which Int(_:) cannot hold.
+        guard double.isFinite, double >= 0, double < Double(Int.max),
               double == double.rounded(.towardZero) else { return nil }
         return Int(double)
     }
