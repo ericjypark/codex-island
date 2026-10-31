@@ -6,6 +6,11 @@ tag was cut.
 
 ## [Unreleased]
 
+### Added
+
+- Click the style chip in the panel footer to cycle chart styles on Usage and
+  cost modes on Cost. Command-click on the panel still works.
+
 ## [0.4.2] - 2026-10-18
 
 ### Fixed

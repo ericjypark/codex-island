@@ -24,6 +24,7 @@ struct PanelFooter: View {
     @ObservedObject private var costStore = CostStore.shared
     @ObservedObject private var currencyStore = CurrencyStore.shared
     @State private var liveStatusHovered = false
+    @State private var chipHovered = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -45,13 +46,9 @@ struct PanelFooter: View {
                     }
 
                     if !activeStyleCycled {
-                        HStack(spacing: 5) {
-                            Image(systemName: "command")
-                                .font(Typography.micro)
-                            Text(L10n.tr("click to cycle"))
-                                .font(Typography.label)
-                        }
-                        .foregroundStyle(.white.opacity(0.42))
+                        Text(L10n.tr("click to cycle"))
+                            .font(Typography.label)
+                            .foregroundStyle(.white.opacity(0.42))
                         .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel(cycleHintAccessibilityLabel)
@@ -87,23 +84,58 @@ struct PanelFooter: View {
     private var cycleHintAccessibilityLabel: String {
         switch screenPref.screen {
         case .overview: return L10n.tr("Overview shows %@ usage history", currentYearString)
-        case .usage, .cost: return L10n.tr("Tip: Command-click to cycle visualization")
+        case .usage, .cost: return L10n.tr("Click to cycle visualization")
         }
     }
 
+    /// The chip doubles as the cycle control: a plain click rotates the
+    /// visualization of the active page just like Command-click on the panel.
+    /// Overview has a single fixed view, so its chip stays a static label.
     @ViewBuilder
     private var chip: some View {
-        let label: String = {
-            switch screenPref.screen {
-            case .usage: return pref.style.label.uppercased()
-            case .cost:
-                return costPref.style == .dollar
-                    ? currencyStore.displayCurrency.rawValue
-                    : costPref.style.label
-            case .overview: return currentYearString
+        if screenPref.screen == .overview {
+            chipLabel
+        } else {
+            Button(action: cycleActiveStyle) {
+                chipLabel
             }
-        }()
-        Text(label)
+            .buttonStyle(PressableButtonStyle(scale: 0.95))
+            .onHover { h in
+                chipHovered = h
+                if h {
+                    NSCursor.pointingHand.push()
+                } else {
+                    NSCursor.pop()
+                }
+            }
+            .help(L10n.tr("Click to cycle visualization"))
+            .accessibilityLabel(chipLabelText)
+            .accessibilityHint(L10n.tr("Click to cycle visualization"))
+            .accessibilityAddTraits(.isButton)
+        }
+    }
+
+    private func cycleActiveStyle() {
+        switch screenPref.screen {
+        case .usage: pref.cycle()
+        case .cost: costPref.cycle()
+        case .overview: return
+        }
+    }
+
+    private var chipLabelText: String {
+        switch screenPref.screen {
+        case .usage: return pref.style.label.uppercased()
+        case .cost:
+            return costPref.style == .dollar
+                ? currencyStore.displayCurrency.rawValue
+                : costPref.style.label
+        case .overview: return currentYearString
+        }
+    }
+
+    private var chipLabel: some View {
+        Text(chipLabelText)
             .font(Typography.chip)
             .tracking(0.8)
             .foregroundStyle(.white.opacity(0.78))
@@ -111,13 +143,15 @@ struct PanelFooter: View {
             .padding(.vertical, 2.5)
             .background(
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(.white.opacity(0.08))
+                    .fill(.white.opacity(chipHovered ? 0.14 : 0.08))
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
-                            .strokeBorder(.white.opacity(0.10), lineWidth: 0.5)
+                            .strokeBorder(.white.opacity(chipHovered ? 0.18 : 0.10), lineWidth: 0.5)
                     )
             )
+            .contentShape(RoundedRectangle(cornerRadius: 4))
             .contentTransition(.opacity)
+            .animation(.hoverFade, value: chipHovered)
             .animation(.strongEaseOut, value: pref.style)
             .animation(.strongEaseOut, value: costPref.style)
             .animation(.strongEaseOut, value: currencyStore.displayCurrency)
