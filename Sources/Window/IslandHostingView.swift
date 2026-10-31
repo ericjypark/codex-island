@@ -16,6 +16,7 @@ final class IslandHostingView: NSHostingView<IslandRootView> {
     /// Reset on `.began`, evaluated on `.ended`.
     private var swipeAccumX: CGFloat = 0
     private var swipeAccumY: CGFloat = 0
+    private var lastWheelPageChange: TimeInterval = 0
 
     init(rootView: IslandRootView, model: IslandModel) {
         self.islandModel = model
@@ -50,12 +51,10 @@ final class IslandHostingView: NSHostingView<IslandRootView> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     /// Two-finger trackpad swipe → page change. Only fires when the panel is
-    /// expanded and the gesture is horizontal-dominant. Uses
-    /// `hasPreciseScrollingDeltas` to filter out mouse-wheel ticks (which
-    /// shouldn't be page-changers — only gestures should), with one
-    /// exception: Shift+wheel from a regular mouse, which is the macOS
-    /// convention for horizontal scroll and is the documented fallback
-    /// for users without a trackpad or Magic Mouse.
+    /// expanded and the gesture is horizontal-dominant. Mouse-wheel ticks
+    /// (no precise deltas) change pages only when they are explicitly
+    /// horizontal: Shift+wheel, the macOS convention, or a horizontal wheel
+    /// such as a thumb wheel. Vertical ticks still pass through.
     override func scrollWheel(with event: NSEvent) {
         guard islandModel.state == .expanded else {
             super.scrollWheel(with: event)
@@ -67,28 +66,20 @@ final class IslandHostingView: NSHostingView<IslandRootView> {
             return
         }
 
-        // Shift+scroll fallback (works on trackpad and regular mouse).
-        // We react per-event instead of accumulating across phases:
-        // wheel ticks have no `.began`/`.ended` phase at all, and for
-        // trackpads the edge-clamped advance/rewind makes the many
-        // `.changed` events from one swipe coalesce harmlessly. macOS may
-        // swap deltaY→deltaX with Shift held in some contexts but not
-        // all, so we read whichever axis carries signal.
-        if event.modifierFlags.contains(.shift) {
-            let delta = abs(event.scrollingDeltaX) > abs(event.scrollingDeltaY)
-                ? event.scrollingDeltaX
-                : event.scrollingDeltaY
-            guard abs(delta) > 0.5 else { return }
-            if delta < 0 {
-                islandModel.advanceScreen()
-            } else {
-                islandModel.rewindScreen()
+        let shift = event.modifierFlags.contains(.shift)
+        if shift || !event.hasPreciseScrollingDeltas {
+            guard let direction = WheelSwipe.direction(
+                deltaX: event.scrollingDeltaX, deltaY: event.scrollingDeltaY, shift: shift,
+                now: event.timestamp, lastChange: lastWheelPageChange)
+            else {
+                if !shift { super.scrollWheel(with: event) }
+                return
             }
-            return
-        }
-
-        guard event.hasPreciseScrollingDeltas else {
-            super.scrollWheel(with: event)
+            lastWheelPageChange = event.timestamp
+            switch direction {
+            case .advance: islandModel.advanceScreen()
+            case .rewind: islandModel.rewindScreen()
+            }
             return
         }
 
