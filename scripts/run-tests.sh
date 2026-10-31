@@ -16,6 +16,10 @@ swiftc -parse-as-library -o "$OUT_DIR/display-number-tests" \
   Sources/Theme/DisplayNumber.swift Tests/DisplayNumberTests.swift
 "$OUT_DIR/display-number-tests"
 
+swiftc -parse-as-library -o "$OUT_DIR/wheel-swipe-tests" \
+  Sources/Window/WheelSwipe.swift Tests/WheelSwipeTests.swift
+"$OUT_DIR/wheel-swipe-tests"
+
 swiftc -parse-as-library -o "$OUT_DIR/currency-tests" \
   Sources/Theme/DisplayNumber.swift \
   Sources/Model/CurrencyStore.swift \

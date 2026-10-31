@@ -194,7 +194,8 @@ the first peek. Opening Settings also triggers a fresh fetch.
 - Hover the notch to peek at the current 5-hour usage.
 - Click the island to expand the full panel.
 - Swipe horizontally on the panel (or use the indicator dots) to move between
-  **Usage**, **Cost**, and **Overview**.
+  **Usage**, **Cost**, and **Overview**. A mouse's horizontal wheel, or
+  Shift+wheel, does the same.
 - Move away to collapse it.
 - Command-click the expanded panel to cycle chart styles on the active screen
   (Usage cycles Rails/Ring/Grid/History/Stepped; Cost cycles

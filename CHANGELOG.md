@@ -6,6 +6,12 @@ tag was cut.
 
 ## [Unreleased]
 
+### Fixed
+
+- Change pages with a mouse's horizontal wheel (such as a thumb wheel), not
+  only with a trackpad swipe or Shift+wheel. One flick moves one page, and
+  Shift+wheel now also moves one page per flick instead of one per tick.
+
 ## [0.4.2] - 2026-10-18
 
 ### Fixed
