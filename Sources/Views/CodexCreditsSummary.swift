@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// One line under the Codex charts: the credit balance and the provider's
-/// estimate of how many messages it buys. Shown only for accounts that
-/// hold credits, so the common no-credits account sees no change.
+/// One line under the Codex charts with the credit balance. The provider's
+/// estimate of how many messages it buys stays in the tooltip and the
+/// VoiceOver label so the panel shows a single number. Shown only for
+/// accounts that hold credits, so the common no-credits account sees no change.
 struct CodexCreditsSummary: View {
     let credits: CodexCredits
 
@@ -31,25 +32,16 @@ struct CodexCreditsSummary: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(L10n.tr("Credits"))
-                    .font(Typography.label)
-                    .foregroundStyle(.white.opacity(0.7))
-                Spacer(minLength: 8)
-                if let amountText {
-                    Text(amountText)
-                        .font(Typography.bodyNumber)
-                        .foregroundStyle(.white.opacity(0.9))
-                        .lineLimit(1)
-                }
-            }
-            if let captionText {
-                Text(captionText)
-                    .font(Typography.caption)
-                    .foregroundStyle(.white.opacity(0.65))
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(L10n.tr("Credits"))
+                .font(Typography.label)
+                .foregroundStyle(.white.opacity(0.7))
+            Spacer(minLength: 8)
+            if let amountText {
+                Text(amountText)
+                    .font(Typography.bodyNumber)
+                    .foregroundStyle(.white.opacity(0.9))
+                    .lineLimit(1)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

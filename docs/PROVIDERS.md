@@ -20,8 +20,9 @@ window, and chart styles and history keys remain unchanged.
 
 The same response carries a `credits` block. When `has_credits` is true, a
 Credits line under the Codex charts shows the balance (in the provider's credit
-units, not currency) and the provider's own estimate of the local and cloud
-messages it buys. Accounts without credits see no line. A failed poll keeps the
+units, not currency). The provider's own estimate of the local and cloud
+messages it buys is kept to the tooltip and the accessibility label so the
+panel shows one number. Accounts without credits see no line. A failed poll keeps the
 last balance; a parsed response that omits credits removes it.
 
 ## Claude Fable weekly limit

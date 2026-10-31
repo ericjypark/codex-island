@@ -8,8 +8,8 @@ tag was cut.
 
 ### Added
 
-- Show the Codex credit balance and estimated remaining messages under the
-  Codex charts for accounts that hold credits.
+- Show the Codex credit balance under the Codex charts for accounts that hold
+  credits. The tooltip carries the provider's estimate of remaining messages.
 
 ## [0.4.2] - 2026-10-18
 

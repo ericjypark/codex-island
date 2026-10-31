@@ -82,7 +82,7 @@ for authentication details and data limitations.
 - **Codex reset credits and balance.** When reset credits are available, the
   Usage footer shows their count and expiration details. Accounts holding
   Codex credits also get a Credits line under the Codex charts with the
-  balance and the provider's estimate of remaining local and cloud messages.
+  balance; hover it for the provider's estimate of remaining messages.
 - **Configurable token counting.** The TOKENS hero can sum every token type
   that crossed the wire (cache included, ccusage parity) or input + output
   only — the latter matches Anthropic's claude.ai stats panel.
