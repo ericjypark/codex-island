@@ -5,6 +5,7 @@ enum AppLanguage: String, CaseIterable, Hashable {
     case auto
     case en
     case zhHans = "zh-Hans"
+    case ko
 
     var resourceName: String? {
         switch self {
@@ -18,6 +19,7 @@ enum AppLanguage: String, CaseIterable, Hashable {
         case .auto: Locale.current.identifier
         case .en: "en"
         case .zhHans: "zh-Hans"
+        case .ko: "ko"
         }
     }
 
@@ -26,6 +28,7 @@ enum AppLanguage: String, CaseIterable, Hashable {
         case .auto: L10n.tr("Auto")
         case .en: "English"
         case .zhHans: "简体中文"
+        case .ko: "한국어"
         }
     }
 

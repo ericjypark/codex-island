@@ -6,6 +6,11 @@ tag was cut.
 
 ## [Unreleased]
 
+### Added
+
+- Korean UI. Choose 한국어 in Settings → General → Language, or leave it on
+  Auto to follow a Korean macOS language setting.
+
 ## [0.4.2] - 2026-10-18
 
 ### Fixed
