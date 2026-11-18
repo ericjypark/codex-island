@@ -27,8 +27,10 @@ writers cannot overwrite each other's history, and an older in-flight scan
 cannot replace a newer observation. The database is owner-readable only.
 The ledger maintains an index on source, timestamp, and record identity so a
 refresh can read retained history in display order without materializing a
-temporary SQLite sort. Existing archives gain this index on their next writable
-refresh without changing or replacing saved rows.
+temporary SQLite sort. Existing archives try to add this index on their next
+writable database open, such as a refresh or recovery, without changing or
+replacing saved rows. If the optional index cannot be built, capture continues
+and a later writable open retries it.
 Failed writes preserve the file and keep live totals visible with a saving
 error; the app never silently resets an unreadable archive.
 

@@ -34,6 +34,11 @@ final class UsageLedger {
     let url: URL
     private let lock = NSLock()
     private static let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+    static let historyQuery = """
+        SELECT record_id, provider, timestamp, model, input_tokens, output_tokens,
+               cache_creation_tokens, cache_read_tokens
+        FROM usage_events WHERE source=? ORDER BY timestamp, record_id
+        """
 
     init(url: URL = UsageLedger.defaultURL) {
         self.url = url
@@ -366,7 +371,8 @@ final class UsageLedger {
                 PRAGMA user_version=1;
                 """)
         }
-        try execute(database, """
+        // Retained usage takes precedence over this optional optimization; later writable opens retry it.
+        try? execute(database, """
             CREATE INDEX IF NOT EXISTS usage_events_source_timestamp_record_id
             ON usage_events (source, timestamp, record_id)
             """)
@@ -480,11 +486,7 @@ final class UsageLedger {
     }
 
     private static func read(source: Source, database: OpaquePointer) throws -> [TokenEvent] {
-        let statement = try statement(database, """
-            SELECT record_id, provider, timestamp, model, input_tokens, output_tokens,
-                   cache_creation_tokens, cache_read_tokens
-            FROM usage_events WHERE source=? ORDER BY timestamp, record_id
-            """)
+        let statement = try statement(database, historyQuery)
         defer { sqlite3_finalize(statement) }
         try bind(source.rawValue, at: 1, to: statement)
         var events: [TokenEvent] = []
