@@ -28,6 +28,12 @@ struct UsageLedgerTests {
         events.reduce(0) { $0 + $1.inputTokens + $1.outputTokens + $1.cacheCreationTokens + $1.cacheReadTokens }
     }
 
+    static func identitiesAndCounts(_ events: [TokenEvent]) -> [String] {
+        events.map {
+            "\($0.recordID ?? ""):\($0.inputTokens):\($0.outputTokens):\($0.cacheCreationTokens):\($0.cacheReadTokens)"
+        }
+    }
+
     static func execute(_ url: URL, sql: String) throws {
         var database: OpaquePointer?
         guard sqlite3_open(url.path, &database) == SQLITE_OK, let database else { throw TestError.database }
@@ -36,11 +42,15 @@ struct UsageLedgerTests {
     }
 
     static func count(_ url: URL) throws -> Int {
+        try integer(url, sql: "SELECT COUNT(*) FROM usage_events")
+    }
+
+    static func integer(_ url: URL, sql: String) throws -> Int {
         var database: OpaquePointer?
         guard sqlite3_open_v2(url.path, &database, SQLITE_OPEN_READONLY, nil) == SQLITE_OK, let database else { throw TestError.database }
         defer { sqlite3_close(database) }
         var statement: OpaquePointer?
-        guard sqlite3_prepare_v2(database, "SELECT COUNT(*) FROM usage_events", -1, &statement, nil) == SQLITE_OK,
+        guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK,
               let statement else { throw TestError.database }
         defer { sqlite3_finalize(statement) }
         guard sqlite3_step(statement) == SQLITE_ROW else { throw TestError.database }
@@ -93,12 +103,17 @@ struct UsageLedgerTests {
             """)
         let capturedWithoutIndex = migrationLedger.retain([event("during-index-failure")], source: .claude, now: now)
         let capturedRowCount = try count(migrationURL)
+        let capturedRecords = identitiesAndCounts(capturedWithoutIndex.events)
         expect(capturedWithoutIndex.saveError == nil && capturedWithoutIndex.events.count == 2
                && capturedRowCount == 2,
                "a failed optional index build does not block usage capture")
         try execute(migrationURL, sql: "DROP TABLE usage_events_source_timestamp_record_id;")
-        expect(UsageLedger(url: migrationURL).retain([], source: .claude, now: now).saveError == nil,
-               "an existing archive retries the history-order index on its next writable open")
+        let retriedMigration = UsageLedger(url: migrationURL).retain([], source: .claude, now: now)
+        let retriedSchemaVersion = try integer(migrationURL, sql: "PRAGMA user_version")
+        expect(retriedMigration.saveError == nil
+               && identitiesAndCounts(retriedMigration.events) == capturedRecords
+               && retriedSchemaVersion == 1,
+               "the index retry preserves saved events and the version-1 schema")
         let historyPlan = try queryPlan(migrationURL, sql: UsageLedger.historyQuery, source: "claude")
         expect(historyPlan.contains { $0.contains("USING INDEX usage_events_source_timestamp_record_id") }
                && !historyPlan.contains { $0.contains("USE TEMP B-TREE") },
