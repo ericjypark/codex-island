@@ -326,44 +326,49 @@ final class UsageLedger {
         guard version == 0 || version == 1 else { throw StorageError.schema }
         try execute(database, "PRAGMA journal_mode=WAL")
         try execute(database, "PRAGMA synchronous=FULL")
-        guard version == 0 else { return }
+        if version == 0 {
+            try execute(database, """
+                CREATE TABLE IF NOT EXISTS usage_events (
+                    source TEXT NOT NULL,
+                    record_id TEXT NOT NULL,
+                    provider TEXT NOT NULL,
+                    timestamp REAL NOT NULL,
+                    model TEXT NOT NULL,
+                    input_tokens INTEGER NOT NULL CHECK (input_tokens >= 0),
+                    output_tokens INTEGER NOT NULL CHECK (output_tokens >= 0),
+                    cache_creation_tokens INTEGER NOT NULL CHECK (cache_creation_tokens >= 0),
+                    cache_read_tokens INTEGER NOT NULL CHECK (cache_read_tokens >= 0),
+                    captured_at REAL NOT NULL,
+                    PRIMARY KEY (source, record_id)
+                ) WITHOUT ROWID;
+                CREATE TABLE IF NOT EXISTS event_aliases (
+                    source TEXT NOT NULL,
+                    alias_id TEXT NOT NULL,
+                    record_id TEXT NOT NULL,
+                    PRIMARY KEY (source, alias_id)
+                ) WITHOUT ROWID;
+                CREATE TABLE IF NOT EXISTS source_scans (
+                    source TEXT PRIMARY KEY,
+                    observed_at REAL NOT NULL
+                ) WITHOUT ROWID;
+                CREATE TABLE IF NOT EXISTS historical_daily_usage (
+                    provider TEXT NOT NULL,
+                    interval_start REAL NOT NULL,
+                    interval_end REAL NOT NULL,
+                    source_date TEXT NOT NULL,
+                    utc_offset INTEGER NOT NULL,
+                    tokens INTEGER NOT NULL CHECK (tokens > 0),
+                    billable_tokens INTEGER NOT NULL CHECK (billable_tokens >= 0 AND billable_tokens <= tokens),
+                    evidence_id TEXT NOT NULL,
+                    captured_at REAL NOT NULL,
+                    PRIMARY KEY (provider, interval_start)
+                ) WITHOUT ROWID;
+                PRAGMA user_version=1;
+                """)
+        }
         try execute(database, """
-            CREATE TABLE IF NOT EXISTS usage_events (
-                source TEXT NOT NULL,
-                record_id TEXT NOT NULL,
-                provider TEXT NOT NULL,
-                timestamp REAL NOT NULL,
-                model TEXT NOT NULL,
-                input_tokens INTEGER NOT NULL CHECK (input_tokens >= 0),
-                output_tokens INTEGER NOT NULL CHECK (output_tokens >= 0),
-                cache_creation_tokens INTEGER NOT NULL CHECK (cache_creation_tokens >= 0),
-                cache_read_tokens INTEGER NOT NULL CHECK (cache_read_tokens >= 0),
-                captured_at REAL NOT NULL,
-                PRIMARY KEY (source, record_id)
-            ) WITHOUT ROWID;
-            CREATE TABLE IF NOT EXISTS event_aliases (
-                source TEXT NOT NULL,
-                alias_id TEXT NOT NULL,
-                record_id TEXT NOT NULL,
-                PRIMARY KEY (source, alias_id)
-            ) WITHOUT ROWID;
-            CREATE TABLE IF NOT EXISTS source_scans (
-                source TEXT PRIMARY KEY,
-                observed_at REAL NOT NULL
-            ) WITHOUT ROWID;
-            CREATE TABLE IF NOT EXISTS historical_daily_usage (
-                provider TEXT NOT NULL,
-                interval_start REAL NOT NULL,
-                interval_end REAL NOT NULL,
-                source_date TEXT NOT NULL,
-                utc_offset INTEGER NOT NULL,
-                tokens INTEGER NOT NULL CHECK (tokens > 0),
-                billable_tokens INTEGER NOT NULL CHECK (billable_tokens >= 0 AND billable_tokens <= tokens),
-                evidence_id TEXT NOT NULL,
-                captured_at REAL NOT NULL,
-                PRIMARY KEY (provider, interval_start)
-            ) WITHOUT ROWID;
-            PRAGMA user_version=1;
+            CREATE INDEX IF NOT EXISTS usage_events_source_timestamp_record_id
+            ON usage_events (source, timestamp, record_id)
             """)
     }
 

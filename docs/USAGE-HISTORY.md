@@ -25,6 +25,10 @@ counts dominate the earlier row, never a synthesized sum of multiple rows.
 Writes use SQLite transactions, WAL, and full synchronization. Separate
 writers cannot overwrite each other's history, and an older in-flight scan
 cannot replace a newer observation. The database is owner-readable only.
+The ledger maintains an index on source, timestamp, and record identity so a
+refresh can read retained history in display order without materializing a
+temporary SQLite sort. Existing archives gain this index on their next writable
+refresh without changing or replacing saved rows.
 Failed writes preserve the file and keep live totals visible with a saving
 error; the app never silently resets an unreadable archive.
 
@@ -152,7 +156,7 @@ tool payloads, or credentials, and it is not uploaded anywhere.
 
 Run `bash scripts/test-usage-ledger.sh` to verify persistence across source
 deletion, reopening, repeated scans, corrections, concurrent writers, storage
-errors, and recovered aggregate overlap.
+errors, indexed history ordering, and recovered aggregate overlap.
 Run `bash scripts/test-claude-recovery.sh` for preview isolation, copied backup
 deduplication, source preservation, repeat imports, archive backups, and
 historical timezone checks. It also checks whole-import rollback, frozen

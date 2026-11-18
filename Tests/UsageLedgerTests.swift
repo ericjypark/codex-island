@@ -47,6 +47,25 @@ struct UsageLedgerTests {
         return Int(sqlite3_column_int64(statement, 0))
     }
 
+    static func queryPlan(_ url: URL, sql: String) throws -> [String] {
+        var database: OpaquePointer?
+        guard sqlite3_open_v2(url.path, &database, SQLITE_OPEN_READONLY, nil) == SQLITE_OK, let database else {
+            throw TestError.database
+        }
+        defer { sqlite3_close(database) }
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(database, "EXPLAIN QUERY PLAN \(sql)", -1, &statement, nil) == SQLITE_OK,
+              let statement else { throw TestError.database }
+        defer { sqlite3_finalize(statement) }
+        var details: [String] = []
+        while true {
+            let status = sqlite3_step(statement)
+            if status == SQLITE_DONE { return details }
+            guard status == SQLITE_ROW, let detail = sqlite3_column_text(statement, 3) else { throw TestError.database }
+            details.append(String(cString: detail))
+        }
+    }
+
     private enum TestError: Error { case database }
 
     static func main() throws {
@@ -61,6 +80,17 @@ struct UsageLedgerTests {
         expect(ledger.retain(first.events, source: .claude, now: now).events.count == 1, "saved rows can be read and retained idempotently")
         let reopened = UsageLedger(url: url).retain([], source: .claude, now: now)
         expect(reopened.saveError == nil && total(reopened.events) == 550, "new instance reads saved counts without any provider records")
+        try execute(url, sql: "DROP INDEX usage_events_source_timestamp_record_id;")
+        expect(UsageLedger(url: url).retain([], source: .claude, now: now).saveError == nil,
+               "existing archives gain the history-order index without a schema reset")
+        let historyPlan = try queryPlan(url, sql: """
+            SELECT record_id, provider, timestamp, model, input_tokens, output_tokens,
+                   cache_creation_tokens, cache_read_tokens
+            FROM usage_events WHERE source='claude' ORDER BY timestamp, record_id
+            """)
+        expect(historyPlan.contains { $0.contains("USING INDEX usage_events_source_timestamp_record_id") }
+               && !historyPlan.contains { $0.contains("USE TEMP B-TREE") },
+               "history reads use the persistent ordering index instead of a temporary sort")
         let later = now.addingTimeInterval(500 * 86400)
         expect(total(ledger.retain([], source: .claude, now: later).events) == 550, "history survives year boundaries without expiry")
         let added = ledger.retain([event("two", input: 200, date: later)], source: .claude, now: later)
