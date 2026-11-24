@@ -55,8 +55,30 @@ enum AntigravityLogReader {
     private enum ReadError: Error { case database }
 
     private static func read(_ file: URL) throws -> (records: [Record], skipped: Int) {
+        do {
+            return try read(file, immutable: false)
+        } catch {
+            // agy stores conversations in WAL mode. Once agy closes a database it removes
+            // the -wal and -shm files, and a read-only connection cannot recreate the -shm
+            // file, so the open fails. An immutable open reads the main file and writes nothing.
+            return try read(file, immutable: true)
+        }
+    }
+
+    private static func read(_ file: URL, immutable: Bool) throws -> (records: [Record], skipped: Int) {
         var pointer: OpaquePointer?
-        let status = sqlite3_open_v2(file.path, &pointer, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil)
+        var path = file.path
+        var flags = SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX
+        if immutable {
+            var components = URLComponents()
+            components.scheme = "file"
+            components.path = file.path
+            components.queryItems = [URLQueryItem(name: "immutable", value: "1")]
+            guard let uri = components.string else { throw ReadError.database }
+            path = uri
+            flags |= SQLITE_OPEN_URI
+        }
+        let status = sqlite3_open_v2(path, &pointer, flags, nil)
         guard status == SQLITE_OK, let db = pointer else {
             if let pointer { sqlite3_close(pointer) }
             throw ReadError.database
