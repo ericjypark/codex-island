@@ -60,9 +60,19 @@ enum AntigravityLogReader {
         } catch {
             // agy stores conversations in WAL mode. Once agy closes a database it removes
             // the -wal and -shm files, and a read-only connection cannot recreate the -shm
-            // file, so the open fails. An immutable open reads the main file and writes nothing.
+            // file, so the open fails. With no WAL data left, the main file is the whole
+            // database and an immutable open reads it without writing anything. If the WAL
+            // still holds data, the main file may be older, so keep the failure.
+            guard !hasPendingWAL(file) else { throw error }
             return try read(file, immutable: true)
         }
+    }
+
+    private static func hasPendingWAL(_ file: URL) -> Bool {
+        let wal = file.path + "-wal"
+        guard FileManager.default.fileExists(atPath: wal) else { return false }
+        let size = (try? FileManager.default.attributesOfItem(atPath: wal)[.size] as? NSNumber)?.intValue
+        return size != 0
     }
 
     private static func read(_ file: URL, immutable: Bool) throws -> (records: [Record], skipped: Int) {

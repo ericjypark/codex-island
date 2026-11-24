@@ -29,7 +29,7 @@ struct LocalProviderCostTests {
         let chat = bytes(4, usage) + bytes(19, Data(model.utf8))
         return bytes(1, chat) + bytes(2, Data([1, 2]))
     }
-    static func createDB(_ path: URL, date: Date, journalMode: String? = nil) {
+    static func createDB(_ path: URL, date: Date, journalMode: String? = nil, ) {
         var db: OpaquePointer?
         expect(sqlite3_open(path.path, &db) == SQLITE_OK, "create isolated fixture")
         defer { sqlite3_close(db) }
@@ -45,6 +45,28 @@ struct LocalProviderCostTests {
         INSERT INTO gen_metadata VALUES(0, X'\(hex(generation()))');
         """
         expect(sqlite3_exec(db, sql, nil, nil, nil) == SQLITE_OK, "write metadata fixture")
+    }
+    /// Copies a WAL database while its writer is still open: the main file has the
+    /// steps, and the model call exists only in the copied -wal file.
+    static func createPendingWALDB(_ path: URL, writer: URL, date: Date) {
+        var db: OpaquePointer?
+        expect(sqlite3_open(writer.path, &db) == SQLITE_OK, "create pending WAL writer")
+        defer { sqlite3_close(db) }
+        let metadata = bytes(1, integer(1, Int(date.timeIntervalSince1970)))
+        func hex(_ data: Data) -> String { data.map { String(format: "%02x", $0) }.joined() }
+        let setup = """
+        PRAGMA journal_mode=WAL;
+        PRAGMA wal_autocheckpoint=0;
+        CREATE TABLE steps(idx INTEGER, metadata BLOB);
+        CREATE TABLE gen_metadata(idx INTEGER, data BLOB);
+        INSERT INTO steps VALUES(1, X'\(hex(metadata))'),(2, X'\(hex(metadata))');
+        PRAGMA wal_checkpoint(TRUNCATE);
+        INSERT INTO gen_metadata VALUES(0, X'\(hex(generation()))');
+        """
+        expect(sqlite3_exec(db, setup, nil, nil, nil) == SQLITE_OK, "write pending WAL fixture")
+        expect((try? FileManager.default.copyItem(atPath: writer.path, toPath: path.path)) != nil
+            && (try? FileManager.default.copyItem(atPath: writer.path + "-wal", toPath: path.path + "-wal")) != nil,
+               "copy an open WAL database without its -shm file")
     }
     static func main() throws {
         let now = ISO8601DateFormatter().date(from: "2026-09-08T18:00:00Z") ?? Date()
@@ -80,6 +102,21 @@ struct LocalProviderCostTests {
         expect(walScan.events.count == 1 && walScan.unreadableFiles == 0, "closed WAL database is read without its -shm file")
         expect(["-wal", "-shm"].allSatisfy { !FileManager.default.fileExists(atPath: walDB.path + $0) },
                "reading a closed WAL database leaves no files behind")
+        let pendingDir = dir.appendingPathComponent("pending", isDirectory: true)
+        try FileManager.default.createDirectory(at: pendingDir, withIntermediateDirectories: true)
+        let pendingDB = pendingDir.appendingPathComponent("pending.db")
+        let writer = dir.appendingPathComponent("writer", isDirectory: true)
+        try FileManager.default.createDirectory(at: writer, withIntermediateDirectories: true)
+        createPendingWALDB(pendingDB, writer: writer.appendingPathComponent("writer.db"), date: now.addingTimeInterval(-3600))
+        let pendingWAL = (try FileManager.default.attributesOfItem(atPath: pendingDB.path + "-wal")[.size] as? NSNumber)?.intValue ?? 0
+        expect(pendingWAL > 0 && !FileManager.default.fileExists(atPath: pendingDB.path + "-shm"), "fixture keeps committed rows only in the WAL")
+        // A read-only connection creates the missing -shm itself when the directory is
+        // writable, so make it read-only to reach the failed-open path.
+        try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: pendingDir.path)
+        let pendingScan = AntigravityLogReader.scan(lookbackDays: 10, root: pendingDir, now: now)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: pendingDir.path)
+        expect(pendingScan.events.isEmpty && pendingScan.unreadableFiles == 1,
+               "WAL with data is reported unreadable instead of read from an older main file")
         let future = AntigravityLogReader.scan(lookbackDays: 10, root: dir, now: now.addingTimeInterval(-7200))
         expect(future.events.isEmpty, "future-dated calls excluded")
         try Data("not sqlite".utf8).write(to: dir.appendingPathComponent("broken.db"))
