@@ -1,3 +1,4 @@
+import CFNetwork
 import Foundation
 import Darwin
 
@@ -26,12 +27,42 @@ enum ProviderSessionRecovery {
         return paths.first { FileManager.default.isExecutableFile(atPath: $0) }
     }
 
+    static func proxyEnvironment(
+        _ environment: [String: String], proxies: [[String: Any]]
+    ) -> [String: String] {
+        guard environment["HTTPS_PROXY"] == nil, environment["https_proxy"] == nil,
+              let proxy = proxies.first,
+              let type = proxy[kCFProxyTypeKey as String] as? String,
+              type == kCFProxyTypeHTTPS as String || type == kCFProxyTypeHTTP as String,
+              let host = proxy[kCFProxyHostNameKey as String] as? String,
+              !host.isEmpty,
+              let port = proxy[kCFProxyPortNumberKey as String] as? Int,
+              (1...65535).contains(port) else { return environment }
+
+        // macOS labels the proxy by the destination protocol. The proxy uses HTTP CONNECT.
+        var url = URLComponents()
+        url.scheme = "http"
+        url.host = host.contains(":") && !host.hasPrefix("[") ? "[\(host)]" : host
+        url.port = port
+        guard let address = url.url else { return environment }
+        var result = environment
+        result["HTTPS_PROXY"] = address.absoluteString
+        return result
+    }
+
     static func renew(_ command: String) async throws {
         guard let executable = binary(command) else { throw ProviderConnectionError.expired }
         try Task.checkCancellation()
         let process = Process()
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = ["models"]
+        if command == "agy",
+           let url = URL(string: "https://oauth2.googleapis.com/token"),
+           let settings = CFNetworkCopySystemProxySettings()?.takeRetainedValue(),
+           let proxies = CFNetworkCopyProxiesForURL(url as CFURL, settings)
+               .takeRetainedValue() as? [[String: Any]] {
+            process.environment = proxyEnvironment(ProcessInfo.processInfo.environment, proxies: proxies)
+        }
         process.currentDirectoryURL = FileManager.default.temporaryDirectory
         process.standardInput = FileHandle.nullDevice
         process.standardOutput = FileHandle.nullDevice

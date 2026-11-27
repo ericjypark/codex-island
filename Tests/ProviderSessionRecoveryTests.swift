@@ -1,3 +1,4 @@
+import CFNetwork
 import Foundation
 
 @main
@@ -37,6 +38,21 @@ struct ProviderSessionRecoveryTests {
         } catch is CancellationError { }
         let credential = try GrokConnection.credential(from: Data(#"{"https://auth.x.ai::a":{"key":"old","expires_at":"2000-01-01T00:00:00Z"},"https://auth.x.ai::b":{"key":"current","expires_at":"2099-01-01T00:00:00Z"}}"#.utf8))
         precondition(credential.key == "current")
+        let proxy: [String: Any] = [
+            kCFProxyTypeKey as String: kCFProxyTypeHTTPS as String,
+            kCFProxyHostNameKey as String: "127.0.0.1",
+            kCFProxyPortNumberKey as String: 1087,
+        ]
+        let direct = [kCFProxyTypeKey as String: kCFProxyTypeNone as String]
+        let environment = ["NO_PROXY": "localhost"]
+        let resolved = ProviderSessionRecovery.proxyEnvironment(environment, proxies: [proxy])
+        precondition(resolved == ["NO_PROXY": "localhost", "HTTPS_PROXY": "http://127.0.0.1:1087"])
+        for key in ["HTTPS_PROXY", "https_proxy"] {
+            let explicit = [key: "http://proxy.example:8080"]
+            precondition(ProviderSessionRecovery.proxyEnvironment(explicit, proxies: [proxy]) == explicit)
+        }
+        precondition(ProviderSessionRecovery.proxyEnvironment(environment, proxies: [direct, proxy]) == environment)
+        precondition(ProviderSessionRecovery.proxyEnvironment(environment, proxies: []) == environment)
         print("PASS session renewal, bounded retry, error classification, cancellation, and valid Grok credential selection")
     }
 }
